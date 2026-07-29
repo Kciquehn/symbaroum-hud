@@ -1,0 +1,418 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+
+const warnings = [];
+const chatMessages = [];
+globalThis.game = {
+  user: { id: "user" },
+  i18n: { localize: (key) => key },
+  settings: { get: () => "publicroll" },
+  symbaroum: { config: { expCosts: { power: { novice: 10 } } } }
+};
+globalThis.foundry = {
+  utils: {
+    deepClone: (value) => structuredClone(value),
+    escapeHTML: (value) => String(value)
+  }
+};
+globalThis.ui = {
+  notifications: {
+    warn: (message) => warnings.push(message)
+  }
+};
+globalThis.ChatMessage = {
+  create: async (message) => chatMessages.push(message)
+};
+
+const { ActorService } = await import("../scripts/services/actor-service.mjs");
+
+function actor({ owner = true } = {}) {
+  const calls = [];
+  const power = {
+    id: "power",
+    type: "ability",
+    system: {
+      isPower: true,
+      hasScript: true,
+      reference: "power",
+      novice: { isActive: true, action: "A" }
+    },
+    update: async (changes) => calls.push(["item-update", changes])
+  };
+  const trait = {
+    id: "trait",
+    type: "trait",
+    system: {
+      isPower: true,
+      hasScript: true,
+      isTrait: true,
+      novice: { isActive: true, action: "A" }
+    },
+    update: async (changes) => calls.push(["trait-update", changes])
+  };
+  const ritual = {
+    id: "known-ritual",
+    type: "ritual",
+    name: "Known Ritual",
+    system: {
+      isRitual: true,
+      reference: "knownritual"
+    }
+  };
+  const effect = {
+    id: "effect",
+    delete: async () => calls.push(["delete-effect", "effect"])
+  };
+  return {
+    id: "actor",
+    type: "player",
+    system: {
+      attributes: { strong: { total: 12 } },
+      experience: {
+        total: 10,
+        spent: 3,
+        available: 7,
+        artifactrr: 0
+      },
+      health: {
+        corruption: {
+          permanent: 1,
+          max: 10
+        }
+      },
+      weapons: [{ id: "weapon", name: "Sword" }]
+    },
+    items: new Map([
+      ["power", power],
+      ["trait", trait],
+      ["known-ritual", ritual]
+    ]),
+    effects: new Map([["effect", effect]]),
+    testUserPermission: (_user, permission) => permission === "OBSERVER" || owner,
+    rollAttribute: async (attribute) => calls.push(["attribute", attribute]),
+    rollArmor: async () => calls.push(["armor"]),
+    rollWeapon: async (weapon) => calls.push(["weapon", weapon.id]),
+    usePower: async (item) => calls.push(["power", item.id]),
+    createEmbeddedDocuments: async (type, data) => {
+      calls.push(["create", type, data]);
+      return data.map((source, index) => ({ id: `created-${index}`, ...source }));
+    },
+    update: async (changes) => calls.push(["update", changes]),
+    calls
+  };
+}
+
+test("owned actor actions delegate to the native Symbaroum methods", async () => {
+  const owned = actor();
+  await ActorService.rollAttribute(owned, "strong");
+  await ActorService.rollArmor(owned);
+  await ActorService.rollWeapon(owned, "weapon");
+  await ActorService.usePower(owned, "power");
+
+  assert.deepEqual(owned.calls, [
+    ["attribute", "strong"],
+    ["armor"],
+    ["weapon", "weapon"],
+    ["power", "power"]
+  ]);
+});
+
+test("recovery uses the same failed-death-roll reset as the native sheet", async () => {
+  const owned = actor();
+  await ActorService.recoverDeath(owned);
+
+  assert.deepEqual(owned.calls, [
+    ["update", { "system.nbrOfFailedDeathRoll": 0 }]
+  ]);
+});
+
+test("effect removal delegates to the embedded Active Effect document", async () => {
+  const owned = actor();
+  await ActorService.removeEffect(owned, "effect");
+
+  assert.deepEqual(owned.calls, [["delete-effect", "effect"]]);
+});
+
+test("ability level activation updates the embedded item document", async () => {
+  const owned = actor();
+  await ActorService.setAbilityLevelActive(owned, "power", "novice", true);
+
+  assert.deepEqual(owned.calls, [
+    ["item-update", { "system.novice.isActive": true }]
+  ]);
+});
+
+test("trait-like items cannot be used or activated as abilities", async () => {
+  const owned = actor();
+  await ActorService.usePower(owned, "trait");
+  await ActorService.setAbilityLevelActive(owned, "trait", "novice", true);
+
+  assert.deepEqual(owned.calls, []);
+});
+
+test("world ability picker lists only accessible unowned abilities", () => {
+  const owned = actor();
+  game.items = [
+    {
+      id: "alchemy",
+      name: "Alquimia",
+      type: "ability",
+      system: { reference: "alchemy" },
+      testUserPermission: () => true
+    },
+    {
+      id: "known",
+      name: "Known",
+      type: "ability",
+      system: { reference: "power" },
+      testUserPermission: () => true
+    },
+    {
+      id: "hidden",
+      name: "Hidden",
+      type: "ability",
+      system: { reference: "hidden" },
+      testUserPermission: () => false
+    }
+  ];
+
+  assert.deepEqual(
+    ActorService.availableWorldAbilities(owned).map((item) => item.id),
+    ["alchemy"]
+  );
+});
+
+test("buying a world ability copies it as an active novice embedded item", async () => {
+  warnings.length = 0;
+  const owned = actor();
+  owned.system.experience.available = 10;
+  game.items = [
+    {
+      id: "alchemy",
+      name: "Alquimia",
+      type: "ability",
+      img: "alchemy.webp",
+      system: {
+        reference: "alchemy",
+        novice: { isActive: false },
+        adept: { isActive: true },
+        master: { isActive: true }
+      },
+      testUserPermission: () => true,
+      toObject: () => ({
+        _id: "alchemy",
+        name: "Alquimia",
+        type: "ability",
+        img: "alchemy.webp",
+        system: {
+          reference: "alchemy",
+          novice: { isActive: false },
+          adept: { isActive: true },
+          master: { isActive: true }
+        }
+      })
+    }
+  ];
+
+  const created = await ActorService.buyWorldAbility(owned, "alchemy");
+
+  assert.equal(created.id, "created-0");
+  assert.deepEqual(owned.calls, [
+    [
+      "create",
+      "Item",
+      [
+        {
+          name: "Alquimia",
+          type: "ability",
+          img: "alchemy.webp",
+          system: {
+            reference: "alchemy",
+            novice: { isActive: true },
+            adept: { isActive: false },
+            master: { isActive: false }
+          }
+        }
+      ]
+    ]
+  ]);
+});
+
+test("buying a world ability requires enough available XP", async () => {
+  warnings.length = 0;
+  const owned = actor();
+  owned.system.experience.available = 0;
+  game.items = [
+    {
+      id: "alchemy",
+      name: "Alquimia",
+      type: "ability",
+      system: { reference: "alchemy" },
+      testUserPermission: () => true,
+      toObject: () => ({
+        name: "Alquimia",
+        type: "ability",
+        system: { reference: "alchemy" }
+      })
+    }
+  ];
+
+  await ActorService.buyWorldAbility(owned, "alchemy");
+
+  assert.deepEqual(owned.calls, []);
+  assert.equal(warnings.at(-1), "SYMBAROUMHUD.Notifications.NotEnoughExperience");
+});
+
+test("world ritual picker lists only accessible unowned rituals", () => {
+  const owned = actor();
+  game.items = [
+    {
+      id: "ritual",
+      name: "Ritual Novo",
+      type: "ritual",
+      system: { isRitual: true, reference: "newritual" },
+      testUserPermission: () => true
+    },
+    {
+      id: "known",
+      name: "Known Ritual",
+      type: "ritual",
+      system: { isRitual: true, reference: "knownritual" },
+      testUserPermission: () => true
+    },
+    {
+      id: "hidden",
+      name: "Hidden Ritual",
+      type: "ritual",
+      system: { isRitual: true, reference: "hiddenritual" },
+      testUserPermission: () => false
+    }
+  ];
+
+  assert.deepEqual(
+    ActorService.availableWorldRituals(owned).map((item) => item.id),
+    ["ritual"]
+  );
+});
+
+test("buying a world ritual copies it as an embedded item", async () => {
+  warnings.length = 0;
+  const owned = actor();
+  game.items = [
+    {
+      id: "ritual",
+      name: "Ritual Novo",
+      type: "ritual",
+      img: "ritual.webp",
+      system: { isRitual: true, reference: "newritual" },
+      testUserPermission: () => true,
+      toObject: () => ({
+        _id: "ritual",
+        name: "Ritual Novo",
+        type: "ritual",
+        img: "ritual.webp",
+        system: { isRitual: true, reference: "newritual" }
+      })
+    }
+  ];
+
+  const created = await ActorService.buyWorldRitual(owned, "ritual");
+
+  assert.equal(created.id, "created-0");
+  assert.deepEqual(owned.calls, [
+    [
+      "create",
+      "Item",
+      [
+        {
+          name: "Ritual Novo",
+          type: "ritual",
+          img: "ritual.webp",
+          system: { isRitual: true, reference: "newritual" }
+        }
+      ]
+    ]
+  ]);
+});
+
+test("passive or unscripted powers cannot be used as HUD abilities", async () => {
+  const owned = actor();
+  const passive = {
+    id: "passive",
+    system: {
+      isPower: true,
+      hasScript: true,
+      novice: { isActive: true, action: "P" }
+    }
+  };
+  const unscripted = {
+    id: "unscripted",
+    system: {
+      isPower: true,
+      hasScript: false,
+      novice: { isActive: true, action: "A" }
+    }
+  };
+  owned.items.set(passive.id, passive);
+  owned.items.set(unscripted.id, unscripted);
+
+  await ActorService.usePower(owned, "passive");
+  await ActorService.usePower(owned, "unscripted");
+
+  assert.deepEqual(owned.calls, []);
+});
+
+test("reroll cost uses the native Symbaroum experience and permanent corruption fields", async () => {
+  chatMessages.length = 0;
+  const owned = actor();
+  await ActorService.payRerollCost(owned, "experience");
+  await ActorService.payRerollCost(owned, "corruption");
+
+  assert.deepEqual(owned.calls, [
+    ["update", { "system.experience.artifactrr": 1 }],
+    ["update", { "system.health.corruption.permanent": 2 }]
+  ]);
+  assert.equal(chatMessages.length, 2);
+  assert.equal(chatMessages[0].speaker.actor, "actor");
+});
+
+test("reroll cost does not spend XP when none is available", async () => {
+  warnings.length = 0;
+  const owned = actor();
+  owned.system.experience.available = 0;
+  await ActorService.payRerollCost(owned, "experience");
+
+  assert.deepEqual(owned.calls, []);
+  assert.equal(warnings.at(-1), "SYMBAROUMHUD.Notifications.NoAvailableExperience");
+});
+
+test("lists each accessible actor once for HUD cycling", () => {
+  const current = actor();
+  current.uuid = "Actor.current";
+  const companion = actor();
+  companion.id = "companion";
+  companion.uuid = "Actor.companion";
+  game.actors = [current, companion];
+
+  assert.deepEqual(
+    ActorService.accessibleActors(current).map((entry) => entry.uuid),
+    ["Actor.current", "Actor.companion"]
+  );
+  assert.deepEqual(
+    ActorService.accessibleActors(companion).map((entry) => entry.uuid),
+    ["Actor.current", "Actor.companion"]
+  );
+});
+
+test("observer actions do not roll or use another user's actor", async () => {
+  warnings.length = 0;
+  const observed = actor({ owner: false });
+  await ActorService.rollAttribute(observed, "strong");
+  await ActorService.rollArmor(observed);
+  await ActorService.rollWeapon(observed, "weapon");
+  await ActorService.usePower(observed, "power");
+  await ActorService.removeEffect(observed, "effect");
+
+  assert.deepEqual(observed.calls, []);
+  assert.equal(warnings.length, 5);
+});

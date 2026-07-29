@@ -1,0 +1,226 @@
+{
+  "SYMBAROUMHUD": {
+    "Title": "Symbaroum HUD",
+    "Empty": "Selecione um token de personagem ou criatura.",
+    "None": "Nenhum item disponível.",
+    "ActorTypes": {
+      "player": "Personagem",
+      "monster": "Criatura"
+    },
+    "Actions": {
+      "OpenActor": "Abrir ficha",
+      "PreviousActor": "Ficha anterior",
+      "NextActor": "Próxima ficha",
+      "RollArmor": "Rolar armadura",
+      "RollDefense": "Rolar defesa",
+      "RollWeapon": "Rolar ataque",
+      "ManageMoney": "Gerenciar dinheiro",
+      "ConsumeRation": "Consumir pão de viagem",
+      "CharacterActions": "Ações do personagem",
+      "DeathTest": "Teste de Morte",
+      "Recovery": "Recuperação",
+      "RecoverAmmo": "Recuperar flechas",
+      "Rest": "Descanso",
+      "CloseAttacks": "Fechar ataques",
+      "CloseAbilities": "Fechar habilidades",
+      "CloseMysticalPowers": "Fechar poderes místicos",
+      "CloseRituals": "Fechar rituais",
+      "CloseTraits": "Fechar traços",
+      "UseAbility": "Usar habilidade",
+      "UseMysticalPower": "Usar poder místico",
+      "OpenAbility": "Abrir habilidade",
+      "OpenMysticalPower": "Abrir poder místico",
+      "RemoveEffect": "Remover efeito",
+      "ShortcutActions": "Ações do atalho",
+      "OpenShortcut": "Abrir",
+      "RemoveShortcut": "Remover da hotbar",
+      "HidePlayers": "Ocultar lista de jogadores",
+      "ShowPlayers": "Mostrar lista de jogadores"
+    },
+    "Resources": {
+      "Toughness": "Vitalidade",
+      "Corruption": "Corrupção temporária + permanente"
+    },
+    "Info": {
+      "Title": "Informações do personagem",
+      "Defense": "Defesa",
+      "Armor": "Armadura",
+      "Experience": "Experiência disponível/total",
+      "ExperienceShort": "XP",
+      "InventoryStatus": "Moedas e carga",
+      "Rations": "Pão de viagem",
+      "Quiver": "Aljava"
+    },
+    "Storage": {
+      "Open": "Abrir inventário",
+      "Close": "Fechar inventário",
+      "Inventory": "Inventário",
+      "Pockets": "Bolsos",
+      "NoBackpackShort": "Sem mochila: itens nos bolsos",
+      "Empty": "Esta mochila está vazia.",
+      "InventoryEmpty": "Nenhum item solto no inventário.",
+      "Capacity": "Espaços",
+      "Weight": "Peso",
+      "Overload": "Sobrecarga",
+      "Immobilized": "Imobilizado",
+      "Quiver": "Aljava",
+      "LoadedAmmo": "Flechas/Virotes carregados",
+      "Loaded": "Carregado",
+      "Remaining": "Espaço restante",
+      "Quantity": "Quantidade",
+      "AvailableAmmo": "Flechas e virotes disponíveis",
+      "NoAvailableAmmo": "Nenhuma flecha ou virote solto para recarregar.",
+      "Reload": "Recarregar",
+      "ReloadQuiver": "Recarregar aljava",
+      "Containers": "Mochilas e recipientes",
+      "Sources": "Inventário, aljava e mochilas",
+      "OpenItem": "Abrir item",
+      "DeleteItem": "Excluir item",
+      "DeleteItemConfirm": "Excluir este item do inventário?",
+      "ViewAsGrid": "Visualizar itens em grade",
+      "ViewAsList": "Visualizar itens em lista"
+    },
+    "Abilities": {
+      "Add": "Comprar habilidade",
+      "AddPrompt": "Escolha uma habilidade do mundo para comprar no nível Novato.",
+      "Buy": "Comprar",
+      "Action": "Ação",
+      "Active": "Ativa",
+      "Adept": "Adepto",
+      "Detail": "Descrição da habilidade",
+      "Description": "Descrição",
+      "Empty": "Este personagem não possui habilidades.",
+      "List": "Lista de habilidades",
+      "Master": "Mestre",
+      "NoDescription": "Esta habilidade não possui descrição.",
+      "NoSearchResults": "Nenhuma habilidade encontrada.",
+      "Novice": "Novato",
+      "Reference": "Referência",
+      "Search": "Pesquisar habilidades",
+      "Tabs": "Seções da habilidade"
+    },
+    "Traits": {
+      "Detail": "Descrição do traço",
+      "Empty": "Este personagem não possui traços.",
+      "List": "Lista de traços"
+    },
+    "MysticalPowers": {
+      "Detail": "Descrição do poder místico",
+      "Empty": "Este personagem não possui poderes místicos.",
+      "List": "Lista de poderes místicos"
+    },
+    "Rituals": {
+      "Add": "Comprar ritual",
+      "AddPrompt": "Escolha um ritual do mundo para adicionar ao personagem.",
+      "AdditionalCost": "XP por ritual adicional",
+      "AdditionalEnabled": "Pode aprender além do limite base",
+      "BaseCapacity": "Limite base",
+      "BaseRemaining": "Vagas incluídas",
+      "Buy": "Comprar",
+      "Capacity": "Limite do grau",
+      "Detail": "Descrição do ritual",
+      "Empty": "Nenhum ritual conhecido.",
+      "Extras": "Além do limite",
+      "Known": "Conhecidos",
+      "Level": "Grau",
+      "List": "Lista de rituais conhecidos",
+      "NoSearchResults": "Nenhum ritual encontrado.",
+      "NotLearned": "Não aprendida",
+      "OpenRitual": "Abrir ficha do ritual",
+      "OpenRitualist": "Abrir ficha da habilidade Ritualista",
+      "Progression": "Novato 1 · Adepto 3 · Mestre 6",
+      "Remaining": "Ainda pode aprender",
+      "Ritual": "Ritual",
+      "Search": "Pesquisar rituais"
+    },
+    "Attacks": {
+      "Empty": "Este personagem não possui armas."
+    },
+    "Sections": {
+      "Attributes": "Atributos",
+      "Attacks": "Ataques",
+      "Abilities": "Habilidades",
+      "Traits": "Traços",
+      "Maneuvers": "Manobras",
+      "Actions": "Ações do personagem",
+      "Armor": "Armadura",
+      "Weapons": "Armas",
+      "Powers": "Habilidades e poderes",
+      "Rituals": "Rituais",
+      "MysticalPowers": "Poderes Místicos",
+      "Inventory": "Inventário",
+      "Effects": "Efeitos"
+    },
+    "Keybindings": {
+      "ActivateShortcut": "Ativar atalho {number} da hotbar"
+    },
+    "Settings": {
+      "Enabled": {
+        "Name": "Ativar Symbaroum HUD",
+        "Hint": "Exibe o HUD persistente no cliente atual."
+      },
+      "SelectionMode": {
+        "Name": "Origem do ator",
+        "Hint": "Define como o HUD escolhe o ator exibido.",
+        "Controlled": "Token selecionado",
+        "Combat": "Turno atual",
+        "Character": "Personagem atribuído"
+      },
+      "ShowIndResources": {
+        "Name": "Integração com Ind Resources",
+        "Hint": "Mostra recursos e ações do Symbaroum Ind Resources quando ele estiver ativo."
+      },
+      "HidePlayers": {
+        "Name": "Ocultar lista de jogadores",
+        "Hint": "Oculta no cliente atual o painel de jogadores e desempenho no canto inferior esquerdo."
+      }
+    },
+    "IndResources": {
+      "Title": "Ind Resources",
+      "Load": "Carga",
+      "Rations": "Pão de viagem",
+      "AmmoHits": "Munição utilizada",
+      "Hungry": "Com fome",
+      "Drawn": "Armas sacadas",
+      "Maneuvers": "Manobras",
+      "Rest": "Descanso",
+      "Readiness": "Sacar e guardar",
+      "RitualBrowser": "Rituais",
+      "Effects": "Condições"
+    },
+    "Maneuvers": {
+      "NoSearchResults": "Nenhuma manobra encontrada.",
+      "Prompt": "Escolha uma manobra do Ind Resources para rolar.",
+      "Roll": "Rolar",
+      "Search": "Pesquisar manobras"
+    },
+    "Notifications": {
+      "NoPermission": "Você não tem permissão para alterar este ator.",
+      "SelectActorToken": "Selecione o token deste ator para alterar suas condições.",
+      "ShortcutUnavailable": "Este atalho não está mais disponível ou você não possui acesso.",
+      "StorageUnavailable": "Esta mochila ou item não está mais disponível.",
+      "MoneyUnavailable": "O gerenciador de dinheiro do Ind Resources não está disponível.",
+      "ManeuversUnavailable": "As manobras do Ind Resources não estão disponíveis.",
+      "OnlyWeapons": "Solte apenas armas aqui.",
+      "OnlyRituals": "Solte apenas rituais aqui.",
+      "OnlyMysticalPowers": "Solte apenas poderes místicos aqui.",
+      "AbilityUnavailable": "Esta habilidade não está disponível para este personagem.",
+      "NoAvailableAbilities": "Nenhuma habilidade disponível no mundo para este personagem.",
+      "NotEnoughExperience": "Este personagem não possui XP disponível suficiente para comprar esta habilidade.",
+      "RitualUnavailable": "Este ritual não está disponível para este personagem.",
+      "NoAvailableRituals": "Nenhum ritual disponível no mundo para este personagem.",
+      "NoAvailableExperience": "Este personagem não possui XP disponível para gastar.",
+      "CorruptionMaximumReached": "Este personagem já atingiu o máximo de corrupção.",
+      "ActionFailed": "Não foi possível executar esta ação pelo HUD."
+    },
+    "RerollCost": {
+      "Title": "Pagar custo de rerrolagem",
+      "Prompt": "Escolha o custo usado para rerrolar um dado.",
+      "Experience": "XP",
+      "PermanentCorruption": "Corrupção permanente",
+      "Pay": "Pagar",
+      "ChatTitle": "Custo de rerrolagem",
+      "ChatPaid": "pagou o custo de rerrolagem com"
+    }
+  }
+}

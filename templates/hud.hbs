@@ -1,0 +1,1139 @@
+{{#if effects}}
+  <div class="symbaroum-hud-effects" role="list"
+    aria-label="{{localize 'SYMBAROUMHUD.Sections.Effects'}}">
+    {{#each effects}}
+      <span class="symbaroum-hud-effect" role="listitem" data-effect-id="{{id}}"
+        data-tooltip="{{name}}">
+        <img src="{{img}}" alt="{{name}}">
+      </span>
+    {{/each}}
+  </div>
+{{/if}}
+
+<div class="symbaroum-hud-card-row" data-symba-weapon-drawn="{{weaponDrawn}}">
+  <div class="symbaroum-hud-hotbar-controls">
+    <div class="symbaroum-hud-character-actions" aria-label="{{localize 'SYMBAROUMHUD.Actions.CharacterActions'}}">
+      <button type="button" class="symbaroum-hud-character-action"
+        data-action="death-test" data-tooltip="{{localize 'SYMBAROUMHUD.Actions.DeathTest'}}"
+        aria-label="{{localize 'SYMBAROUMHUD.Actions.DeathTest'}}"
+        {{#unless actions.deathTest}}disabled{{/unless}}>
+        <i class="fa-solid fa-skull" aria-hidden="true"></i>
+      </button>
+      <button type="button" class="symbaroum-hud-character-action"
+        data-action="death-recovery" data-tooltip="{{localize 'SYMBAROUMHUD.Actions.Recovery'}}"
+        aria-label="{{localize 'SYMBAROUMHUD.Actions.Recovery'}}"
+        {{#unless actions.recovery}}disabled{{/unless}}>
+        <i class="fa-solid fa-heart" aria-hidden="true"></i>
+      </button>
+      <button type="button" class="symbaroum-hud-character-action"
+        data-action="rest" data-tooltip="{{localize 'SYMBAROUMHUD.Actions.Rest'}}"
+        aria-label="{{localize 'SYMBAROUMHUD.Actions.Rest'}}"
+        {{#unless actions.rest}}disabled{{/unless}}>
+        <i class="fa-solid fa-bed" aria-hidden="true"></i>
+      </button>
+    </div>
+
+    <button type="button" class="ui-control fa-solid fa-volume icon"
+      data-action="hotbar-control" data-hotbar-action="mute" data-symba-delayed-tooltip
+      aria-label="{{localize 'HOTBAR.MUTE'}}"></button>
+    <button type="button" class="ui-control fa-solid fa-bars icon"
+      data-action="hotbar-control" data-hotbar-action="menu" data-symba-delayed-tooltip
+      aria-label="{{localize 'HOTBAR.MENU'}}"></button>
+    <button type="button"
+      class="ui-control fa-solid {{#if playersHidden}}fa-users{{else}}fa-users-slash{{/if}} icon"
+      data-action="toggle-players" data-symba-delayed-tooltip aria-pressed="{{playersHidden}}"
+      aria-label="{{#if playersHidden}}{{localize 'SYMBAROUMHUD.Actions.ShowPlayers'}}{{else}}{{localize 'SYMBAROUMHUD.Actions.HidePlayers'}}{{/if}}"></button>
+  </div>
+
+  <div class="symbaroum-hud-character-card">
+    <button type="button" class="symbaroum-hud-character-open" data-action="open-actor"
+      data-tooltip="{{localize 'SYMBAROUMHUD.Actions.OpenActor'}}"
+      aria-label="{{localize 'SYMBAROUMHUD.Actions.OpenActor'}}: {{actor.name}}">
+      <img src="{{actor.img}}" alt="{{actor.name}}">
+    </button>
+    <div class="symbaroum-hud-character-name">
+      <button type="button" class="symbaroum-hud-actor-cycle" data-action="previous-actor"
+        data-tooltip="{{localize 'SYMBAROUMHUD.Actions.PreviousActor'}}"
+        aria-label="{{localize 'SYMBAROUMHUD.Actions.PreviousActor'}}"
+        {{#unless canCycleActor}}disabled{{/unless}}>
+        <i class="fa-solid fa-chevron-left" aria-hidden="true"></i>
+      </button>
+      <button type="button" class="symbaroum-hud-character-name-label" data-action="open-actor">
+        {{actor.name}}
+      </button>
+      <button type="button" class="symbaroum-hud-actor-cycle" data-action="next-actor"
+        data-tooltip="{{localize 'SYMBAROUMHUD.Actions.NextActor'}}"
+        aria-label="{{localize 'SYMBAROUMHUD.Actions.NextActor'}}"
+        {{#unless canCycleActor}}disabled{{/unless}}>
+        <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
+      </button>
+    </div>
+    {{#if actor.deathFailures}}
+      <span class="symbaroum-hud-death-failures" data-tooltip="{{localize 'TOOLTIP.DEATH_SKULLS'}}">
+        {{#each actor.deathFailures}}
+          <i class="fa-solid fa-skull" aria-hidden="true"></i>
+        {{/each}}
+      </span>
+    {{/if}}
+    <span class="symbaroum-hud-character-resources">
+      <span data-tooltip="{{localize 'SYMBAROUMHUD.Resources.Toughness'}}">
+        <i class="fa-solid fa-heart" aria-hidden="true"></i>
+        <strong>{{actor.vitality.value}}</strong>/{{actor.vitality.max}}
+      </span>
+      <span data-tooltip="{{localize 'SYMBAROUMHUD.Resources.Corruption'}}">
+        <i class="fa-solid fa-droplet" aria-hidden="true"></i>
+        <strong>{{actor.corruption.temporary}}+{{actor.corruption.permanent}}</strong>/{{actor.corruption.max}}
+      </span>
+    </span>
+  </div>
+
+  <div class="symbaroum-hud-main-column">
+    <div class="symbaroum-hud-upper-row">
+      <section class="symbaroum-hud-attributes" aria-label="{{localize 'SYMBAROUMHUD.Sections.Attributes'}}">
+        {{#each attributes}}
+          <button type="button" class="symbaroum-hud-attribute"
+            data-action="roll-attribute" data-attribute="{{id}}"
+            data-tooltip="{{label}}: {{value}}" aria-label="{{label}}: {{value}}"
+            {{#unless ../actions.attributes}}disabled{{/unless}}>
+            <i class="fa-solid {{icon}}" aria-hidden="true"></i>
+            <span class="symbaroum-hud-attribute-name">{{label}}</span>
+            <strong>{{value}}</strong>
+          </button>
+        {{/each}}
+      </section>
+
+      <section class="symbaroum-hud-info-panel" aria-label="{{localize 'SYMBAROUMHUD.Info.Title'}}">
+        <div class="symbaroum-hud-info-entry"
+          data-tooltip="{{localize 'SYMBAROUMHUD.Info.Defense'}}: {{info.defense}}"
+          aria-label="{{localize 'SYMBAROUMHUD.Info.Defense'}}: {{info.defense}}">
+          <button type="button" class="symbaroum-hud-info-action" data-action="roll-defense"
+            data-tooltip="{{localize 'SYMBAROUMHUD.Actions.RollDefense'}}"
+            aria-label="{{localize 'SYMBAROUMHUD.Actions.RollDefense'}}"
+            {{#unless actions.defense}}disabled{{/unless}}>
+            <i class="fa-solid fa-shield" aria-hidden="true"></i>
+          </button>
+          <strong>{{info.defense}}</strong>
+        </div>
+
+        <div class="symbaroum-hud-info-entry"
+          data-tooltip="{{localize 'SYMBAROUMHUD.Info.Armor'}} — {{info.armorName}}: {{info.armor}}"
+          aria-label="{{localize 'SYMBAROUMHUD.Info.Armor'}}: {{info.armor}}">
+          <i class="fa-solid fa-vest" aria-hidden="true"></i>
+          <strong>{{info.armor}}</strong>
+        </div>
+
+        {{#if info.rations}}
+          <div class="symbaroum-hud-info-entry"
+            data-tooltip="{{localize 'SYMBAROUMHUD.Info.Rations'}}: {{info.rations.quantity}} — {{info.rations.usesRemaining}}/{{info.rations.usesPerUnit}}"
+            aria-label="{{localize 'SYMBAROUMHUD.Info.Rations'}}: {{info.rations.quantity}}, {{info.rations.usesRemaining}}/{{info.rations.usesPerUnit}}">
+            <button type="button" class="symbaroum-hud-info-action" data-action="consume-ration"
+              data-tooltip="{{localize 'SYMBAROUMHUD.Actions.ConsumeRation'}}"
+              aria-label="{{localize 'SYMBAROUMHUD.Actions.ConsumeRation'}}"
+              {{#unless actions.rations}}disabled{{/unless}}>
+              <i class="fa-solid fa-bread-slice" aria-hidden="true"></i>
+            </button>
+            <strong>{{info.rations.quantity}} {{info.rations.usesRemaining}}/{{info.rations.usesPerUnit}}</strong>
+          </div>
+        {{/if}}
+
+        {{#if info.quiver}}
+          <div class="symbaroum-hud-info-entry"
+            data-tooltip="{{info.quiver.name}}: {{info.quiver.loaded}}/{{info.quiver.capacity}}"
+            aria-label="{{localize 'SYMBAROUMHUD.Info.Quiver'}}: {{info.quiver.loaded}}">
+            <i class="fa-solid fa-bullseye-arrow" aria-hidden="true"></i>
+            <strong>{{info.quiver.loaded}}</strong>
+          </div>
+        {{/if}}
+      </section>
+
+      {{#if showEconomy}}
+      <section class="symbaroum-hud-economy-panel" aria-label="{{localize 'SYMBAROUMHUD.Info.InventoryStatus'}}">
+        <button type="button" class="symbaroum-hud-economy-entry symbaroum-hud-economy-action"
+          data-action="open-money"
+          data-tooltip="{{localize 'SYMBAROUMHUD.Actions.ManageMoney'}} - {{localize 'MONEY.THALER'}}: {{info.money.thaler}}"
+          aria-label="{{localize 'SYMBAROUMHUD.Actions.ManageMoney'}} - {{localize 'MONEY.THALER'}}: {{info.money.thaler}}">
+          <i class="fa-solid fa-coins" aria-hidden="true"></i>
+          <strong>{{info.money.thaler}}</strong>
+          <small>T</small>
+        </button>
+        <button type="button" class="symbaroum-hud-economy-entry symbaroum-hud-economy-action"
+          data-action="open-money"
+          data-tooltip="{{localize 'SYMBAROUMHUD.Actions.ManageMoney'}} - {{localize 'MONEY.SHILLING'}}: {{info.money.shilling}}"
+          aria-label="{{localize 'SYMBAROUMHUD.Actions.ManageMoney'}} - {{localize 'MONEY.SHILLING'}}: {{info.money.shilling}}">
+          <i class="fa-solid fa-coin" aria-hidden="true"></i>
+          <strong>{{info.money.shilling}}</strong>
+          <small>X</small>
+        </button>
+        <button type="button" class="symbaroum-hud-economy-entry symbaroum-hud-economy-action"
+          data-action="open-money"
+          data-tooltip="{{localize 'SYMBAROUMHUD.Actions.ManageMoney'}} - {{localize 'MONEY.ORTEG'}}: {{info.money.orteg}}"
+          aria-label="{{localize 'SYMBAROUMHUD.Actions.ManageMoney'}} - {{localize 'MONEY.ORTEG'}}: {{info.money.orteg}}">
+          <i class="fa-solid fa-circle" aria-hidden="true"></i>
+          <strong>{{info.money.orteg}}</strong>
+          <small>O</small>
+        </button>
+        <div class="symbaroum-hud-economy-entry"
+          data-overloaded="{{info.load.overloaded}}"
+          data-immobilized="{{info.load.immobilized}}"
+          data-tooltip="{{localize 'SYMBAROUMHUD.Storage.Weight'}}: {{#if info.load}}{{info.load.current}}/{{info.load.capacity}}{{else}}—{{/if}}"
+          aria-label="{{localize 'SYMBAROUMHUD.Storage.Weight'}}: {{#if info.load}}{{info.load.current}}/{{info.load.capacity}}{{else}}—{{/if}}">
+          <i class="fa-solid fa-weight-hanging" aria-hidden="true"></i>
+          <strong>{{#if info.load}}{{info.load.current}}/{{info.load.capacity}}{{else}}—{{/if}}</strong>
+        </div>
+      </section>
+      {{/if}}
+
+      <div class="symbaroum-hud-panel-stack">
+        <button type="button" class="symbaroum-hud-panel-toggle symbaroum-hud-attacks-toggle"
+          data-action="toggle-attacks" data-panel="attacks"
+          data-weapon-drop="{{attacks.canUse}}"
+          data-open="{{attacks.open}}" aria-expanded="{{attacks.open}}"
+          aria-controls="symbaroum-hud-attacks-panel"
+          data-tooltip="{{localize 'SYMBAROUMHUD.Sections.Attacks'}}"
+          aria-label="{{localize 'SYMBAROUMHUD.Sections.Attacks'}}">
+          <i class="fa-solid fa-sword" aria-hidden="true"></i>
+        </button>
+
+        {{#if storage}}
+          <button type="button" class="symbaroum-hud-panel-toggle symbaroum-hud-storage-toggle"
+            data-action="toggle-storage" data-open="{{storage.open}}"
+            aria-expanded="{{storage.open}}" aria-controls="symbaroum-hud-storage-panel"
+            data-tooltip="{{localize 'SYMBAROUMHUD.Storage.Open'}}"
+            aria-label="{{localize 'SYMBAROUMHUD.Storage.Open'}}">
+            <i class="fa-solid fa-backpack" aria-hidden="true"></i>
+          </button>
+        {{/if}}
+      </div>
+
+      {{#if attacks.open}}
+        <section id="symbaroum-hud-attacks-panel" class="symbaroum-hud-attacks-panel"
+          aria-label="{{localize 'SYMBAROUMHUD.Sections.Attacks'}}">
+          <header class="symbaroum-hud-storage-header symbaroum-hud-attacks-header">
+            <span class="symbaroum-hud-storage-title symbaroum-hud-attacks-title">
+              <i class="fa-solid fa-sword" aria-hidden="true"></i>
+              <strong>{{localize "SYMBAROUMHUD.Sections.Attacks"}}</strong>
+            </span>
+            <button type="button" class="symbaroum-hud-storage-close symbaroum-hud-attacks-close"
+              data-action="close-attacks"
+              data-tooltip="{{localize 'SYMBAROUMHUD.Actions.CloseAttacks'}}"
+              aria-label="{{localize 'SYMBAROUMHUD.Actions.CloseAttacks'}}">
+              <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+            </button>
+          </header>
+
+          <ul class="symbaroum-hud-attacks-body"
+            aria-label="{{localize 'SYMBAROUMHUD.Sections.Weapons'}}">
+            {{#each attacks.items}}
+              <li class="symbaroum-hud-attack-slot">
+                <button type="button" class="symbaroum-hud-attack-entry"
+                  data-action="roll-weapon" data-item-id="{{id}}"
+                  data-item-uuid="{{uuid}}"
+                  data-weapon-draggable="{{draggable}}"
+                  data-tooltip="{{localize 'SYMBAROUMHUD.Actions.RollWeapon'}}: {{name}}"
+                  aria-label="{{localize 'SYMBAROUMHUD.Actions.RollWeapon'}}: {{name}}"
+                  {{#if draggable}}draggable="true"{{/if}}
+                  {{#unless ../attacks.canUse}}disabled{{/unless}}>
+                  <img src="{{img}}" alt="">
+                  <span class="symbaroum-hud-attack-label">
+                    <strong>{{name}}</strong>
+                    <i class="fa-solid fa-dice-d20" aria-hidden="true"></i>
+                  </span>
+                </button>
+              </li>
+            {{else}}
+              <li class="symbaroum-hud-attacks-empty">
+                <i class="fa-solid fa-sword" aria-hidden="true"></i>
+                {{localize "SYMBAROUMHUD.Attacks.Empty"}}
+              </li>
+            {{/each}}
+          </ul>
+        </section>
+      {{/if}}
+
+      {{#if storage}}
+        {{#if storage.open}}
+          <section id="symbaroum-hud-storage-panel" class="symbaroum-hud-storage-panel"
+            aria-label="{{storage.name}}">
+            <header class="symbaroum-hud-storage-header">
+              <span class="symbaroum-hud-storage-title">
+                {{#if storage.quiverSelected}}
+                  <img class="symbaroum-hud-storage-title-img" src="{{storage.img}}" alt="">
+                {{else}}
+                  <i class="fa-solid {{#if storage.containerSelected}}fa-backpack{{else}}fa-boxes-stacked{{/if}}"
+                    aria-hidden="true"></i>
+                {{/if}}
+                <strong>{{storage.name}}</strong>
+                {{#if storage.inventoryActive}}
+                  {{#if storage.load}}
+                    <small class="symbaroum-hud-storage-load"
+                      data-overloaded="{{storage.load.overloaded}}"
+                      data-immobilized="{{storage.load.immobilized}}"
+                      data-tooltip="{{localize 'SYMBAROUMHUD.Storage.Weight'}}: {{storage.load.current}}/{{storage.load.capacity}} - {{localize 'SYMBAROUMHUD.Storage.Overload'}}: {{storage.load.penalty}}">
+                      <span>
+                        <i class="fa-solid fa-weight-hanging" aria-hidden="true"></i>
+                        {{localize "SYMBAROUMHUD.Storage.Weight"}}: {{storage.load.current}}/{{storage.load.capacity}}
+                      </span>
+                      <span>
+                        <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
+                        {{localize "SYMBAROUMHUD.Storage.Overload"}}: {{storage.load.penalty}}
+                      </span>
+                      {{#if storage.load.immobilized}}
+                        <span>{{localize "SYMBAROUMHUD.Storage.Immobilized"}}</span>
+                      {{/if}}
+                    </small>
+                  {{/if}}
+                {{/if}}
+                {{#if storage.capacity}}
+                  <small>{{localize "SYMBAROUMHUD.Storage.Capacity"}}: {{storage.capacity}}</small>
+                {{/if}}
+              </span>
+              <span class="symbaroum-hud-storage-header-actions">
+                <button type="button" class="symbaroum-hud-storage-view-toggle"
+                  data-action="toggle-storage-view"
+                  data-view-mode="{{storage.viewMode}}"
+                  data-tooltip="{{#if storage.listView}}{{localize 'SYMBAROUMHUD.Storage.ViewAsGrid'}}{{else}}{{localize 'SYMBAROUMHUD.Storage.ViewAsList'}}{{/if}}"
+                  aria-label="{{#if storage.listView}}{{localize 'SYMBAROUMHUD.Storage.ViewAsGrid'}}{{else}}{{localize 'SYMBAROUMHUD.Storage.ViewAsList'}}{{/if}}">
+                  <i class="fa-solid {{#if storage.listView}}fa-table-cells-large{{else}}fa-list{{/if}}"
+                    aria-hidden="true"></i>
+                </button>
+                <button type="button" class="symbaroum-hud-storage-close"
+                  data-action="close-storage"
+                  data-tooltip="{{localize 'SYMBAROUMHUD.Storage.Close'}}"
+                  aria-label="{{localize 'SYMBAROUMHUD.Storage.Close'}}">
+                  <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                </button>
+              </span>
+            </header>
+
+            <div class="symbaroum-hud-storage-body">
+              <nav class="symbaroum-hud-storage-sidebar"
+                aria-label="{{localize 'SYMBAROUMHUD.Storage.Sources'}}">
+                <button type="button" data-action="select-storage-container"
+                  data-container-id="" data-active="{{storage.inventoryActive}}"
+                  data-storage-withdraw-zone="inventory"
+                  aria-pressed="{{storage.inventoryActive}}"
+                  data-tooltip="{{localize 'SYMBAROUMHUD.Storage.Inventory'}}"
+                  aria-label="{{localize 'SYMBAROUMHUD.Storage.Inventory'}}">
+                  <i class="fa-solid fa-boxes-stacked" aria-hidden="true"></i>
+                  <span>{{localize "SYMBAROUMHUD.Storage.Inventory"}}</span>
+                  {{#if storage.pockets}}
+                    <small>{{localize "SYMBAROUMHUD.Storage.Pockets"}}</small>
+                  {{/if}}
+                </button>
+
+                {{#each storage.quivers}}
+                  <button type="button" data-action="select-storage-container"
+                    data-container-id="{{storageId}}" data-active="{{active}}"
+                    data-storage-drop-quiver="{{id}}"
+                    data-storage-delete-container="{{id}}"
+                    aria-pressed="{{active}}"
+                    data-tooltip="{{name}}"
+                    aria-label="{{name}}">
+                    <img src="{{img}}" alt="">
+                    <span>{{name}}</span>
+                    <small>{{loaded}}/{{capacity}}</small>
+                  </button>
+                {{/each}}
+
+                {{#each storage.containers}}
+                  <button type="button" data-action="select-storage-container"
+                    data-container-id="{{id}}" data-active="{{active}}"
+                    data-storage-drop-container="{{id}}"
+                    data-storage-delete-container="{{id}}"
+                    aria-pressed="{{active}}" data-tooltip="{{name}}"
+                    aria-label="{{name}}">
+                    <img src="{{img}}" alt="">
+                    <span>{{name}}</span>
+                    {{#if capacity}}<small>{{capacity}}</small>{{/if}}
+                  </button>
+                {{/each}}
+
+                {{#unless storage.hasContainers}}
+                  <span class="symbaroum-hud-storage-pockets-note">
+                    <i class="fa-solid fa-pockets" aria-hidden="true"></i>
+                    {{localize "SYMBAROUMHUD.Storage.NoBackpackShort"}}
+                  </span>
+                {{/unless}}
+              </nav>
+
+              {{#if storage.quiverSelected}}
+                <div class="symbaroum-hud-quiver-page">
+                  <section class="symbaroum-hud-quiver-detail"
+                    data-storage-drop-quiver="{{storage.quiver.id}}"
+                    aria-label="{{storage.quiver.name}}">
+                    <img src="{{storage.quiver.img}}" alt="">
+                    <div class="symbaroum-hud-quiver-detail-info">
+                      <strong>{{storage.quiver.name}}</strong>
+                      <span>
+                        <i class="fa-solid fa-arrow-down-short-wide" aria-hidden="true"></i>
+                        {{localize "SYMBAROUMHUD.Storage.Loaded"}}: {{storage.quiver.loaded}}/{{storage.quiver.capacity}}
+                      </span>
+                      <span>
+                        <i class="fa-solid fa-layer-group" aria-hidden="true"></i>
+                        {{localize "SYMBAROUMHUD.Storage.Quantity"}}: {{storage.quiver.quantity}}
+                      </span>
+                      <span>
+                        <i class="fa-solid fa-box-open" aria-hidden="true"></i>
+                        {{localize "SYMBAROUMHUD.Storage.Remaining"}}: {{storage.quiver.remaining}}
+                      </span>
+                      {{#if storage.quiver.loadedItems}}
+                        <div class="symbaroum-hud-quiver-loaded-list">
+                          {{#each storage.quiver.loadedItems}}
+                            <span>
+                              <img src="{{img}}" alt="">
+                              {{name}} ×{{quantity}}
+                            </span>
+                          {{/each}}
+                        </div>
+                      {{/if}}
+                      <button type="button" class="symbaroum-hud-quiver-reload"
+                        data-action="reload-quiver" data-quiver-id="{{storage.quiver.id}}"
+                        data-tooltip="{{localize 'SYMBAROUMHUD.Storage.ReloadQuiver'}}"
+                        aria-label="{{localize 'SYMBAROUMHUD.Storage.ReloadQuiver'}}">
+                        <i class="fa-solid fa-rotate" aria-hidden="true"></i>
+                        {{localize "SYMBAROUMHUD.Storage.Reload"}}
+                      </button>
+                    </div>
+                  </section>
+
+                  <section class="symbaroum-hud-quiver-ammo-section"
+                    data-storage-drop-quiver="{{storage.quiver.id}}"
+                    aria-label="{{localize 'SYMBAROUMHUD.Storage.AvailableAmmo'}}">
+                    <h3>{{localize "SYMBAROUMHUD.Storage.AvailableAmmo"}}</h3>
+                    <div class="symbaroum-hud-storage-items symbaroum-hud-quiver-ammo-items"
+                      data-view-mode="{{storage.viewMode}}">
+                      {{#if storage.items}}
+                        {{#each storage.items}}
+                          <div class="symbaroum-hud-storage-item"
+                            data-container-id="{{containerId}}" data-item-id="{{id}}"
+                            data-item-uuid="{{uuid}}" data-storage-draggable="{{draggable}}"
+                            {{#if draggable}}draggable="true"{{/if}}>
+                            <button type="button" class="symbaroum-hud-storage-item-main"
+                              data-action="open-storage-item"
+                              data-container-id="{{containerId}}" data-item-id="{{id}}"
+                              data-item-uuid="{{uuid}}"
+                              data-tooltip="{{localize 'SYMBAROUMHUD.Storage.OpenItem'}}: {{name}}"
+                              aria-label="{{localize 'SYMBAROUMHUD.Storage.OpenItem'}}: {{name}}">
+                            <img src="{{img}}" alt="">
+                            <span>{{name}}</span>
+                            <small>×{{quantity}}</small>
+                            </button>
+                            <button type="button" class="symbaroum-hud-storage-item-delete"
+                              data-action="delete-storage-item"
+                              data-container-id="{{containerId}}" data-item-id="{{id}}"
+                              data-tooltip="{{localize 'SYMBAROUMHUD.Storage.DeleteItem'}}"
+                              aria-label="{{localize 'SYMBAROUMHUD.Storage.DeleteItem'}}">
+                              <i class="fa-solid fa-trash" aria-hidden="true"></i>
+                            </button>
+                          </div>
+                        {{/each}}
+                      {{else}}
+                        <span class="symbaroum-hud-storage-empty">
+                          <i class="fa-solid fa-box-open" aria-hidden="true"></i>
+                          {{localize "SYMBAROUMHUD.Storage.NoAvailableAmmo"}}
+                        </span>
+                      {{/if}}
+                    </div>
+                  </section>
+                </div>
+              {{else}}
+              <div class="symbaroum-hud-storage-items" data-view-mode="{{storage.viewMode}}"
+                {{#if storage.containerSelected}}data-storage-drop-container="{{storage.id}}"{{/if}}
+                data-storage-inventory-drop="{{storage.inventoryActive}}">
+                {{#if storage.items}}
+                  {{#each storage.items}}
+                    <div class="symbaroum-hud-storage-item"
+                      data-container-id="{{containerId}}" data-item-id="{{id}}"
+                      data-item-uuid="{{uuid}}" data-storage-draggable="{{draggable}}"
+                      {{#if draggable}}draggable="true"{{/if}}>
+                      <button type="button" class="symbaroum-hud-storage-item-main"
+                        data-action="open-storage-item"
+                        data-container-id="{{containerId}}" data-item-id="{{id}}"
+                        data-item-uuid="{{uuid}}"
+                        {{#if virtual}}disabled{{/if}}
+                        data-tooltip="{{localize 'SYMBAROUMHUD.Storage.OpenItem'}}: {{name}}"
+                        aria-label="{{localize 'SYMBAROUMHUD.Storage.OpenItem'}}: {{name}}">
+                      <img src="{{img}}" alt="">
+                      <span>{{name}}</span>
+                      <small>×{{quantity}}</small>
+                      </button>
+                      {{#unless virtual}}
+                        <button type="button" class="symbaroum-hud-storage-item-delete"
+                          data-action="delete-storage-item"
+                          data-container-id="{{containerId}}" data-item-id="{{id}}"
+                          data-tooltip="{{localize 'SYMBAROUMHUD.Storage.DeleteItem'}}"
+                          aria-label="{{localize 'SYMBAROUMHUD.Storage.DeleteItem'}}">
+                          <i class="fa-solid fa-trash" aria-hidden="true"></i>
+                        </button>
+                      {{/unless}}
+                    </div>
+                  {{/each}}
+                {{else}}
+                  <span class="symbaroum-hud-storage-empty">
+                    <i class="fa-solid fa-box-open" aria-hidden="true"></i>
+                    {{#if storage.containerSelected}}
+                      {{localize "SYMBAROUMHUD.Storage.Empty"}}
+                    {{else}}
+                      {{localize "SYMBAROUMHUD.Storage.InventoryEmpty"}}
+                    {{/if}}
+                  </span>
+                {{/if}}
+              </div>
+              {{/if}}
+            </div>
+          </section>
+        {{/if}}
+      {{/if}}
+
+      {{#if knowledge.available}}
+      <div class="symbaroum-hud-knowledge-stack" data-knowledge-columns="{{knowledge.columns}}" data-has-experience="{{knowledge.showExperience}}">
+        {{#if knowledge.showExperience}}
+        <button type="button" class="symbaroum-hud-experience-panel"
+          data-action="reroll-cost"
+          data-tooltip="{{localize 'SYMBAROUMHUD.Info.Experience'}}: {{info.experience.available}}/{{info.experience.total}}"
+          aria-label="{{localize 'SYMBAROUMHUD.RerollCost.Title'}}"
+          {{#unless actions.rerollCost}}disabled{{/unless}}>
+          <i class="fa-solid fa-star" aria-hidden="true"></i>
+          <span>{{localize "SYMBAROUMHUD.Info.ExperienceShort"}}</span>
+          <strong>{{info.experience.available}}/{{info.experience.total}}</strong>
+        </button>
+        {{/if}}
+
+        {{#if actions.maneuvers}}
+          <button type="button" class="symbaroum-hud-panel-toggle symbaroum-hud-maneuvers-toggle"
+            data-action="maneuver"
+            data-tooltip="{{localize 'SYMBAROUMHUD.Sections.Maneuvers'}}"
+            aria-label="{{localize 'SYMBAROUMHUD.Sections.Maneuvers'}}">
+            <i class="fa-solid fa-dice-d20" aria-hidden="true"></i>
+          </button>
+        {{/if}}
+
+        {{#if rituals.available}}
+          <button type="button" class="symbaroum-hud-panel-toggle symbaroum-hud-rituals-toggle"
+            data-action="toggle-rituals" data-panel="rituals"
+            data-ritual-drop="{{rituals.canUse}}"
+            data-open="{{rituals.open}}" aria-expanded="{{rituals.open}}"
+            aria-controls="symbaroum-hud-rituals-panel"
+            data-tooltip="{{localize 'SYMBAROUMHUD.Sections.Rituals'}}"
+            aria-label="{{localize 'SYMBAROUMHUD.Sections.Rituals'}}">
+            <i class="fa-solid fa-book-open" aria-hidden="true"></i>
+          </button>
+        {{/if}}
+
+        {{#if mysticalPowers.available}}
+          <button type="button" class="symbaroum-hud-panel-toggle symbaroum-hud-mystical-powers-toggle"
+            data-action="toggle-mystical-powers" data-panel="mystical-powers"
+            data-mystical-power-drop="{{mysticalPowers.canUse}}"
+            data-open="{{mysticalPowers.open}}" aria-expanded="{{mysticalPowers.open}}"
+            aria-controls="symbaroum-hud-mystical-powers-panel"
+            data-tooltip="{{localize 'SYMBAROUMHUD.Sections.MysticalPowers'}}"
+            aria-label="{{localize 'SYMBAROUMHUD.Sections.MysticalPowers'}}">
+            <i class="fa-solid fa-hand-sparkles" aria-hidden="true"></i>
+          </button>
+        {{/if}}
+
+        {{#if abilities.available}}
+          <button type="button" class="symbaroum-hud-panel-toggle symbaroum-hud-abilities-toggle"
+            data-action="toggle-abilities" data-panel="abilities"
+            data-open="{{abilities.open}}" aria-expanded="{{abilities.open}}"
+            aria-controls="symbaroum-hud-abilities-panel"
+            data-tooltip="{{localize 'SYMBAROUMHUD.Sections.Abilities'}}"
+            aria-label="{{localize 'SYMBAROUMHUD.Sections.Abilities'}}">
+            <i class="fa-solid fa-bolt" aria-hidden="true"></i>
+          </button>
+        {{/if}}
+
+        {{#if traits.available}}
+          <button type="button" class="symbaroum-hud-panel-toggle symbaroum-hud-traits-toggle"
+            data-action="toggle-traits" data-panel="traits"
+            data-open="{{traits.open}}" aria-expanded="{{traits.open}}"
+            aria-controls="symbaroum-hud-traits-panel"
+            data-tooltip="{{localize 'SYMBAROUMHUD.Sections.Traits'}}"
+            aria-label="{{localize 'SYMBAROUMHUD.Sections.Traits'}}">
+            <i class="fa-solid fa-fingerprint" aria-hidden="true"></i>
+          </button>
+        {{/if}}
+      </div>
+      {{/if}}
+
+      {{#if rituals.open}}
+        <section id="symbaroum-hud-rituals-panel" class="symbaroum-hud-abilities-panel symbaroum-hud-rituals-panel"
+          aria-labelledby="symbaroum-hud-ritualist-title">
+          <header class="symbaroum-hud-ritualist-header">
+            <img src="{{rituals.ritualist.img}}" alt="">
+
+            <div class="symbaroum-hud-ritualist-overview">
+              <div class="symbaroum-hud-ritualist-identity">
+                <span>
+                  <i class="fa-solid fa-book-open" aria-hidden="true"></i>
+                  {{localize "SYMBAROUMHUD.Sections.Rituals"}}
+                </span>
+                <h2 id="symbaroum-hud-ritualist-title">{{rituals.ritualist.name}}</h2>
+              </div>
+
+              <dl class="symbaroum-hud-ritualist-stats">
+                <div>
+                  <dt>{{localize "SYMBAROUMHUD.Rituals.Level"}}</dt>
+                  <dd>{{rituals.ritualist.levelLabel}}</dd>
+                </div>
+                <div>
+                  <dt>{{localize "SYMBAROUMHUD.Rituals.Known"}}</dt>
+                  <dd>{{rituals.ritualist.known}}</dd>
+                </div>
+                <div>
+                  <dt>
+                    {{#if rituals.ritualist.canLearnAdditional}}
+                      {{localize "SYMBAROUMHUD.Rituals.BaseCapacity"}}
+                    {{else}}
+                      {{localize "SYMBAROUMHUD.Rituals.Capacity"}}
+                    {{/if}}
+                  </dt>
+                  <dd>{{rituals.ritualist.capacity}}</dd>
+                </div>
+                <div data-at-capacity="{{rituals.ritualist.atCapacity}}">
+                  <dt>
+                    {{#if rituals.ritualist.canLearnAdditional}}
+                      {{localize "SYMBAROUMHUD.Rituals.BaseRemaining"}}
+                    {{else}}
+                      {{localize "SYMBAROUMHUD.Rituals.Remaining"}}
+                    {{/if}}
+                  </dt>
+                  <dd>{{rituals.ritualist.remaining}}</dd>
+                </div>
+              </dl>
+
+              <div class="symbaroum-hud-ritualist-rules">
+                <span>
+                  <i class="fa-solid fa-star" aria-hidden="true"></i>
+                  {{localize "SYMBAROUMHUD.Rituals.Progression"}}
+                </span>
+                {{#if rituals.ritualist.extras}}
+                  <span class="symbaroum-hud-ritualist-extra"
+                    data-additional-allowed="{{rituals.ritualist.canLearnAdditional}}">
+                    {{localize "SYMBAROUMHUD.Rituals.Extras"}}:
+                    <strong>{{rituals.ritualist.extras}}</strong>
+                  </span>
+                {{/if}}
+                {{#if rituals.ritualist.canLearnAdditional}}
+                  <span class="symbaroum-hud-ritualist-additional">
+                    {{localize "SYMBAROUMHUD.Rituals.AdditionalEnabled"}}
+                    {{#if rituals.ritualist.additionalRitualCost}}
+                      · <strong>{{rituals.ritualist.additionalRitualCost}}</strong>
+                      {{localize "SYMBAROUMHUD.Rituals.AdditionalCost"}}
+                    {{/if}}
+                  </span>
+                {{/if}}
+              </div>
+            </div>
+
+            <div class="symbaroum-hud-ritualist-actions">
+              <button type="button" class="symbaroum-hud-ritualist-action"
+                data-action="open-ability" data-item-id="{{rituals.ritualist.id}}"
+                data-tooltip="{{localize 'SYMBAROUMHUD.Rituals.OpenRitualist'}}"
+                aria-label="{{localize 'SYMBAROUMHUD.Rituals.OpenRitualist'}}">
+                <i class="fa-solid fa-up-right-from-square" aria-hidden="true"></i>
+              </button>
+              <button type="button"
+                class="symbaroum-hud-storage-close symbaroum-hud-abilities-close symbaroum-hud-ritualist-action"
+                data-action="close-rituals"
+                data-tooltip="{{localize 'SYMBAROUMHUD.Actions.CloseRituals'}}"
+                aria-label="{{localize 'SYMBAROUMHUD.Actions.CloseRituals'}}">
+                <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+              </button>
+            </div>
+          </header>
+
+          <div class="symbaroum-hud-abilities-body">
+            <nav class="symbaroum-hud-abilities-sidebar" role="list"
+              aria-label="{{localize 'SYMBAROUMHUD.Rituals.List'}}">
+              {{#each rituals.items}}
+                <button type="button" class="symbaroum-hud-ability-entry symbaroum-hud-ritual-entry" role="listitem"
+                  data-action="select-ritual" data-item-id="{{id}}"
+                  data-item-uuid="{{uuid}}"
+                  data-active="{{active}}"
+                  aria-pressed="{{active}}"
+                  data-tooltip="{{name}}"
+                  aria-label="{{name}}">
+                  <img src="{{img}}" alt="">
+                  <span>{{name}}</span>
+                  <small>{{action}}</small>
+                </button>
+              {{else}}
+                <span class="symbaroum-hud-abilities-empty">
+                  <i class="fa-solid fa-book-open" aria-hidden="true"></i>
+                  {{localize "SYMBAROUMHUD.Rituals.Empty"}}
+                </span>
+              {{/each}}
+              <button type="button" class="symbaroum-hud-ability-add symbaroum-hud-ritual-add"
+                data-action="add-ritual"
+                data-tooltip="{{localize 'SYMBAROUMHUD.Rituals.Add'}}"
+                aria-label="{{localize 'SYMBAROUMHUD.Rituals.Add'}}"
+                {{#unless rituals.canUse}}disabled{{/unless}}>
+                <i class="fa-solid fa-plus" aria-hidden="true"></i>
+              </button>
+            </nav>
+
+            <article class="symbaroum-hud-ability-detail"
+              aria-label="{{localize 'SYMBAROUMHUD.Rituals.Detail'}}">
+              {{#if rituals.selected}}
+                <header class="symbaroum-hud-ability-detail-header">
+                  <img src="{{rituals.selected.img}}" alt="">
+                  <div class="symbaroum-hud-ability-detail-title">
+                    <strong>{{rituals.selected.name}}</strong>
+                    {{#if rituals.selected.reference}}
+                      <span>{{localize "SYMBAROUMHUD.Abilities.Reference"}}: {{rituals.selected.reference}}</span>
+                    {{/if}}
+                  </div>
+                  <div class="symbaroum-hud-ability-detail-actions">
+                    <span class="symbaroum-hud-ability-tab-action">
+                      <strong>{{rituals.selected.action}}</strong>
+                    </span>
+                    <button type="button" class="symbaroum-hud-ability-detail-action"
+                      data-action="open-ritual" data-item-id="{{rituals.selected.id}}"
+                      data-tooltip="{{localize 'SYMBAROUMHUD.Rituals.OpenRitual'}}"
+                      aria-label="{{localize 'SYMBAROUMHUD.Rituals.OpenRitual'}}">
+                      <i class="fa-solid fa-up-right-from-square" aria-hidden="true"></i>
+                    </button>
+                  </div>
+                </header>
+
+                <section class="symbaroum-hud-ability-tab-panel" role="tabpanel"
+                  data-ability-section="{{rituals.selected.activeTab.id}}">
+                  <header class="symbaroum-hud-ability-page-heading">
+                    <div class="symbaroum-hud-ability-page-title">
+                      <span aria-hidden="true"></span>
+                      <h3>{{rituals.selected.activeTab.label}}</h3>
+                      <span aria-hidden="true"></span>
+                    </div>
+                  </header>
+                  <div class="symbaroum-hud-ability-page-content">
+                    {{#if rituals.selected.activeTab.description}}
+                      <div class="symbaroum-hud-ability-description">
+                        {{{rituals.selected.activeTab.description}}}
+                      </div>
+                    {{else}}
+                      <span class="symbaroum-hud-ability-no-description">
+                        {{localize "SYMBAROUMHUD.Abilities.NoDescription"}}
+                      </span>
+                    {{/if}}
+                  </div>
+                </section>
+              {{else}}
+                <span class="symbaroum-hud-ability-no-description">
+                  {{localize "SYMBAROUMHUD.Rituals.Empty"}}
+                </span>
+              {{/if}}
+            </article>
+          </div>
+        </section>
+      {{/if}}
+
+      {{#if mysticalPowers.open}}
+        <section id="symbaroum-hud-mystical-powers-panel" class="symbaroum-hud-abilities-panel symbaroum-hud-mystical-powers-panel"
+          aria-label="{{localize 'SYMBAROUMHUD.Sections.MysticalPowers'}}">
+          <header class="symbaroum-hud-storage-header symbaroum-hud-abilities-header">
+            <span class="symbaroum-hud-storage-title symbaroum-hud-abilities-title">
+              <i class="fa-solid fa-hand-sparkles" aria-hidden="true"></i>
+              <strong>{{localize "SYMBAROUMHUD.Sections.MysticalPowers"}}</strong>
+            </span>
+            <button type="button" class="symbaroum-hud-storage-close symbaroum-hud-abilities-close"
+              data-action="close-mystical-powers"
+              data-tooltip="{{localize 'SYMBAROUMHUD.Actions.CloseMysticalPowers'}}"
+              aria-label="{{localize 'SYMBAROUMHUD.Actions.CloseMysticalPowers'}}">
+              <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+            </button>
+          </header>
+
+          <div class="symbaroum-hud-abilities-body">
+            <nav class="symbaroum-hud-abilities-sidebar" role="list"
+              aria-label="{{localize 'SYMBAROUMHUD.MysticalPowers.List'}}">
+              {{#each mysticalPowers.items}}
+                <button type="button" class="symbaroum-hud-ability-entry" role="listitem"
+                  data-action="select-mystical-power" data-item-id="{{id}}"
+                  data-ability-id="{{id}}"
+                  data-item-uuid="{{uuid}}"
+                  data-ability-draggable="{{../mysticalPowers.canUse}}"
+                  data-active="{{active}}"
+                  aria-pressed="{{active}}"
+                  {{#if ../mysticalPowers.canUse}}draggable="true"{{/if}}
+                  data-tooltip="{{name}}"
+                  aria-label="{{name}}">
+                  <img src="{{img}}" alt="">
+                  <span>{{name}}</span>
+                </button>
+              {{else}}
+                <span class="symbaroum-hud-abilities-empty">
+                  <i class="fa-solid fa-hand-sparkles" aria-hidden="true"></i>
+                  {{localize "SYMBAROUMHUD.MysticalPowers.Empty"}}
+                </span>
+              {{/each}}
+            </nav>
+
+            <article class="symbaroum-hud-ability-detail"
+              aria-label="{{localize 'SYMBAROUMHUD.MysticalPowers.Detail'}}">
+              {{#if mysticalPowers.selected}}
+                <header class="symbaroum-hud-ability-detail-header">
+                  <img src="{{mysticalPowers.selected.img}}" alt="">
+                  <div class="symbaroum-hud-ability-detail-title">
+                    <strong>{{mysticalPowers.selected.name}}</strong>
+                    {{#if mysticalPowers.selected.reference}}
+                      <span>{{localize "SYMBAROUMHUD.Abilities.Reference"}}: {{mysticalPowers.selected.reference}}</span>
+                    {{/if}}
+                  </div>
+                  <div class="symbaroum-hud-ability-detail-actions">
+                    {{#if mysticalPowers.selected.canUsePower}}
+                      <button type="button" class="symbaroum-hud-ability-detail-action"
+                        data-action="use-mystical-power" data-item-id="{{mysticalPowers.selected.id}}"
+                        data-tooltip="{{localize 'SYMBAROUMHUD.Actions.UseMysticalPower'}}"
+                        aria-label="{{localize 'SYMBAROUMHUD.Actions.UseMysticalPower'}}"
+                        {{#unless mysticalPowers.canUse}}disabled{{/unless}}>
+                        <i class="fa-solid fa-dice-d20" aria-hidden="true"></i>
+                        <span>{{localize "SYMBAROUMHUD.Actions.UseMysticalPower"}}</span>
+                      </button>
+                    {{/if}}
+                    <button type="button" class="symbaroum-hud-ability-detail-action"
+                      data-action="open-mystical-power" data-item-id="{{mysticalPowers.selected.id}}"
+                      data-tooltip="{{localize 'SYMBAROUMHUD.Actions.OpenMysticalPower'}}"
+                      aria-label="{{localize 'SYMBAROUMHUD.Actions.OpenMysticalPower'}}">
+                      <i class="fa-solid fa-up-right-from-square" aria-hidden="true"></i>
+                    </button>
+                  </div>
+                </header>
+
+                {{#if mysticalPowers.selected.hasLevels}}
+                  <nav class="symbaroum-hud-ability-tabs" role="tablist"
+                    aria-label="{{localize 'SYMBAROUMHUD.Abilities.Tabs'}}">
+                    {{#each mysticalPowers.selected.tabs}}
+                      <button type="button" class="symbaroum-hud-ability-tab"
+                        role="tab" data-action="select-mystical-power-tab"
+                        data-ability-tab="{{id}}" data-active="{{active}}"
+                        data-learned="{{learned}}"
+                        aria-selected="{{active}}">
+                        {{#if learned}}
+                          <i class="fa-solid fa-check" aria-hidden="true"></i>
+                        {{/if}}
+                        {{label}}
+                      </button>
+                    {{/each}}
+                  </nav>
+                {{/if}}
+
+                <section class="symbaroum-hud-ability-tab-panel" role="tabpanel"
+                  data-ability-section="{{mysticalPowers.selected.activeTab.id}}">
+                  <header class="symbaroum-hud-ability-page-heading">
+                    <div class="symbaroum-hud-ability-page-title">
+                      <span aria-hidden="true"></span>
+                      <h3>{{mysticalPowers.selected.activeTab.label}}</h3>
+                      <span aria-hidden="true"></span>
+                    </div>
+                    {{#if mysticalPowers.selected.activeTab.level}}
+                      <div class="symbaroum-hud-ability-level-controls">
+                        {{#if mysticalPowers.selected.activeTab.action}}
+                          <span class="symbaroum-hud-ability-tab-action">
+                            <strong>{{mysticalPowers.selected.activeTab.action}}</strong>
+                          </span>
+                        {{/if}}
+                        <button type="button" class="symbaroum-hud-ability-active-toggle"
+                          data-action="toggle-ability-level"
+                          data-item-id="{{mysticalPowers.selected.id}}"
+                          data-ability-level="{{mysticalPowers.selected.activeTab.level}}"
+                          data-active="{{mysticalPowers.selected.activeTab.learned}}"
+                          aria-pressed="{{mysticalPowers.selected.activeTab.learned}}"
+                          data-tooltip="{{localize 'SYMBAROUMHUD.Abilities.Active'}}"
+                          aria-label="{{localize 'SYMBAROUMHUD.Abilities.Active'}}"
+                          {{#unless mysticalPowers.canUse}}disabled{{/unless}}>
+                          <span>{{localize "SYMBAROUMHUD.Abilities.Active"}}</span>
+                          <i class="fa-solid {{#if mysticalPowers.selected.activeTab.learned}}fa-square-check{{else}}fa-square{{/if}}"
+                            aria-hidden="true"></i>
+                        </button>
+                      </div>
+                    {{/if}}
+                  </header>
+                  <div class="symbaroum-hud-ability-page-content">
+                    {{#if mysticalPowers.selected.activeTab.description}}
+                      <div class="symbaroum-hud-ability-description">
+                        {{{mysticalPowers.selected.activeTab.description}}}
+                      </div>
+                    {{else}}
+                      <span class="symbaroum-hud-ability-no-description">
+                        {{localize "SYMBAROUMHUD.Abilities.NoDescription"}}
+                      </span>
+                    {{/if}}
+                  </div>
+                </section>
+              {{else}}
+                <span class="symbaroum-hud-ability-no-description">
+                  {{localize "SYMBAROUMHUD.MysticalPowers.Empty"}}
+                </span>
+              {{/if}}
+            </article>
+          </div>
+        </section>
+      {{/if}}
+
+      {{#if abilities.open}}
+        <section id="symbaroum-hud-abilities-panel" class="symbaroum-hud-abilities-panel"
+          aria-label="{{localize 'SYMBAROUMHUD.Sections.Abilities'}}">
+          <header class="symbaroum-hud-storage-header symbaroum-hud-abilities-header">
+            <span class="symbaroum-hud-storage-title symbaroum-hud-abilities-title">
+              <i class="fa-solid fa-bolt" aria-hidden="true"></i>
+              <strong>{{localize "SYMBAROUMHUD.Sections.Abilities"}}</strong>
+            </span>
+            <button type="button" class="symbaroum-hud-storage-close symbaroum-hud-abilities-close"
+              data-action="close-abilities"
+              data-tooltip="{{localize 'SYMBAROUMHUD.Actions.CloseAbilities'}}"
+              aria-label="{{localize 'SYMBAROUMHUD.Actions.CloseAbilities'}}">
+              <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+            </button>
+          </header>
+
+          <div class="symbaroum-hud-abilities-body">
+            <nav class="symbaroum-hud-abilities-sidebar" role="list"
+              aria-label="{{localize 'SYMBAROUMHUD.Abilities.List'}}">
+              {{#each abilities.items}}
+                <button type="button" class="symbaroum-hud-ability-entry" role="listitem"
+                  data-action="select-ability" data-item-id="{{id}}"
+                  data-ability-id="{{id}}"
+                  data-item-uuid="{{uuid}}"
+                  data-ability-draggable="{{../abilities.canUse}}"
+                  data-active="{{active}}"
+                  aria-pressed="{{active}}"
+                  {{#if ../abilities.canUse}}draggable="true"{{/if}}
+                  data-tooltip="{{name}}"
+                  aria-label="{{name}}">
+                  <img src="{{img}}" alt="">
+                  <span>{{name}}</span>
+                </button>
+              {{else}}
+                <span class="symbaroum-hud-abilities-empty">
+                  <i class="fa-solid fa-bolt" aria-hidden="true"></i>
+                  {{localize "SYMBAROUMHUD.Abilities.Empty"}}
+                </span>
+              {{/each}}
+              <button type="button" class="symbaroum-hud-ability-add"
+                data-action="add-ability"
+                data-tooltip="{{localize 'SYMBAROUMHUD.Abilities.Add'}}"
+                aria-label="{{localize 'SYMBAROUMHUD.Abilities.Add'}}"
+                {{#unless abilities.canUse}}disabled{{/unless}}>
+                <i class="fa-solid fa-plus" aria-hidden="true"></i>
+              </button>
+            </nav>
+
+            <article class="symbaroum-hud-ability-detail"
+              aria-label="{{localize 'SYMBAROUMHUD.Abilities.Detail'}}">
+              {{#if abilities.selected}}
+                <header class="symbaroum-hud-ability-detail-header">
+                  <img src="{{abilities.selected.img}}" alt="">
+                  <div class="symbaroum-hud-ability-detail-title">
+                    <strong>{{abilities.selected.name}}</strong>
+                    {{#if abilities.selected.reference}}
+                      <span>{{localize "SYMBAROUMHUD.Abilities.Reference"}}: {{abilities.selected.reference}}</span>
+                    {{/if}}
+                  </div>
+                  <div class="symbaroum-hud-ability-detail-actions">
+                    {{#if abilities.selected.canUsePower}}
+                      <button type="button" class="symbaroum-hud-ability-detail-action"
+                        data-action="use-ability" data-item-id="{{abilities.selected.id}}"
+                        data-tooltip="{{localize 'SYMBAROUMHUD.Actions.UseAbility'}}"
+                        aria-label="{{localize 'SYMBAROUMHUD.Actions.UseAbility'}}"
+                        {{#unless abilities.canUse}}disabled{{/unless}}>
+                        <i class="fa-solid fa-dice-d20" aria-hidden="true"></i>
+                        <span>{{localize "SYMBAROUMHUD.Actions.UseAbility"}}</span>
+                      </button>
+                    {{/if}}
+                    <button type="button" class="symbaroum-hud-ability-detail-action"
+                      data-action="open-ability" data-item-id="{{abilities.selected.id}}"
+                      data-tooltip="{{localize 'SYMBAROUMHUD.Actions.OpenAbility'}}"
+                      aria-label="{{localize 'SYMBAROUMHUD.Actions.OpenAbility'}}">
+                      <i class="fa-solid fa-up-right-from-square" aria-hidden="true"></i>
+                    </button>
+                  </div>
+                </header>
+
+                {{#if abilities.selected.hasLevels}}
+                  <nav class="symbaroum-hud-ability-tabs" role="tablist"
+                    aria-label="{{localize 'SYMBAROUMHUD.Abilities.Tabs'}}">
+                    {{#each abilities.selected.tabs}}
+                      <button type="button" class="symbaroum-hud-ability-tab"
+                        role="tab" data-action="select-ability-tab"
+                        data-ability-tab="{{id}}" data-active="{{active}}"
+                        data-learned="{{learned}}"
+                        aria-selected="{{active}}">
+                        {{#if learned}}
+                          <i class="fa-solid fa-check" aria-hidden="true"></i>
+                        {{/if}}
+                        {{label}}
+                      </button>
+                    {{/each}}
+                  </nav>
+                {{/if}}
+
+                <section class="symbaroum-hud-ability-tab-panel" role="tabpanel"
+                  data-ability-section="{{abilities.selected.activeTab.id}}">
+                  <header class="symbaroum-hud-ability-page-heading">
+                    <div class="symbaroum-hud-ability-page-title">
+                      <span aria-hidden="true"></span>
+                      <h3>{{abilities.selected.activeTab.label}}</h3>
+                      <span aria-hidden="true"></span>
+                    </div>
+                    {{#if abilities.selected.activeTab.level}}
+                      <div class="symbaroum-hud-ability-level-controls">
+                        {{#if abilities.selected.activeTab.action}}
+                          <span class="symbaroum-hud-ability-tab-action">
+                            <strong>{{abilities.selected.activeTab.action}}</strong>
+                          </span>
+                        {{/if}}
+                        <button type="button" class="symbaroum-hud-ability-active-toggle"
+                          data-action="toggle-ability-level"
+                          data-item-id="{{abilities.selected.id}}"
+                          data-ability-level="{{abilities.selected.activeTab.level}}"
+                          data-active="{{abilities.selected.activeTab.learned}}"
+                          aria-pressed="{{abilities.selected.activeTab.learned}}"
+                          data-tooltip="{{localize 'SYMBAROUMHUD.Abilities.Active'}}"
+                          aria-label="{{localize 'SYMBAROUMHUD.Abilities.Active'}}"
+                          {{#unless abilities.canUse}}disabled{{/unless}}>
+                          <span>{{localize "SYMBAROUMHUD.Abilities.Active"}}</span>
+                          <i class="fa-solid {{#if abilities.selected.activeTab.learned}}fa-square-check{{else}}fa-square{{/if}}"
+                            aria-hidden="true"></i>
+                        </button>
+                      </div>
+                    {{/if}}
+                  </header>
+                  <div class="symbaroum-hud-ability-page-content">
+                    {{#if abilities.selected.activeTab.description}}
+                      <div class="symbaroum-hud-ability-description">
+                        {{{abilities.selected.activeTab.description}}}
+                      </div>
+                    {{else}}
+                      <span class="symbaroum-hud-ability-no-description">
+                        {{localize "SYMBAROUMHUD.Abilities.NoDescription"}}
+                      </span>
+                    {{/if}}
+                  </div>
+                </section>
+              {{else}}
+                <span class="symbaroum-hud-ability-no-description">
+                  {{localize "SYMBAROUMHUD.Abilities.Empty"}}
+                </span>
+              {{/if}}
+            </article>
+          </div>
+        </section>
+      {{/if}}
+
+      {{#if traits.open}}
+        <section id="symbaroum-hud-traits-panel" class="symbaroum-hud-abilities-panel symbaroum-hud-traits-panel"
+          aria-label="{{localize 'SYMBAROUMHUD.Sections.Traits'}}">
+          <header class="symbaroum-hud-storage-header symbaroum-hud-abilities-header">
+            <span class="symbaroum-hud-storage-title symbaroum-hud-abilities-title">
+              <i class="fa-solid fa-fingerprint" aria-hidden="true"></i>
+              <strong>{{localize "SYMBAROUMHUD.Sections.Traits"}}</strong>
+            </span>
+            <button type="button" class="symbaroum-hud-storage-close symbaroum-hud-abilities-close"
+              data-action="close-traits"
+              data-tooltip="{{localize 'SYMBAROUMHUD.Actions.CloseTraits'}}"
+              aria-label="{{localize 'SYMBAROUMHUD.Actions.CloseTraits'}}">
+              <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+            </button>
+          </header>
+
+          <div class="symbaroum-hud-abilities-body">
+            <nav class="symbaroum-hud-abilities-sidebar" role="list"
+              aria-label="{{localize 'SYMBAROUMHUD.Traits.List'}}">
+              {{#each traits.items}}
+                <button type="button" class="symbaroum-hud-ability-entry" role="listitem"
+                  data-action="select-trait" data-item-id="{{id}}"
+                  data-ability-id="{{id}}"
+                  data-item-uuid="{{uuid}}"
+                  data-active="{{active}}"
+                  aria-pressed="{{active}}"
+                  data-tooltip="{{name}}"
+                  aria-label="{{name}}">
+                  <img src="{{img}}" alt="">
+                  <span>{{name}}</span>
+                </button>
+              {{else}}
+                <span class="symbaroum-hud-abilities-empty">
+                  <i class="fa-solid fa-fingerprint" aria-hidden="true"></i>
+                  {{localize "SYMBAROUMHUD.Traits.Empty"}}
+                </span>
+              {{/each}}
+            </nav>
+
+            <article class="symbaroum-hud-ability-detail"
+              aria-label="{{localize 'SYMBAROUMHUD.Traits.Detail'}}">
+              {{#if traits.selected}}
+                <header class="symbaroum-hud-ability-detail-header">
+                  <img src="{{traits.selected.img}}" alt="">
+                  <div class="symbaroum-hud-ability-detail-title">
+                    <strong>{{traits.selected.name}}</strong>
+                    {{#if traits.selected.reference}}
+                      <span>{{localize "SYMBAROUMHUD.Abilities.Reference"}}: {{traits.selected.reference}}</span>
+                    {{/if}}
+                  </div>
+                  <div class="symbaroum-hud-ability-detail-actions">
+                    <button type="button" class="symbaroum-hud-ability-detail-action"
+                      data-action="open-ability" data-item-id="{{traits.selected.id}}"
+                      data-tooltip="{{localize 'SYMBAROUMHUD.Actions.OpenAbility'}}"
+                      aria-label="{{localize 'SYMBAROUMHUD.Actions.OpenAbility'}}">
+                      <i class="fa-solid fa-up-right-from-square" aria-hidden="true"></i>
+                    </button>
+                  </div>
+                </header>
+
+                <section class="symbaroum-hud-ability-tab-panel" role="tabpanel"
+                  data-ability-section="{{traits.selected.activeTab.id}}">
+                  <header class="symbaroum-hud-ability-page-heading">
+                    <div class="symbaroum-hud-ability-page-title">
+                      <span aria-hidden="true"></span>
+                      <h3>{{traits.selected.activeTab.label}}</h3>
+                      <span aria-hidden="true"></span>
+                    </div>
+                  </header>
+                  <div class="symbaroum-hud-ability-page-content">
+                    {{#if traits.selected.activeTab.description}}
+                      <div class="symbaroum-hud-ability-description">
+                        {{{traits.selected.activeTab.description}}}
+                      </div>
+                    {{else}}
+                      <span class="symbaroum-hud-ability-no-description">
+                        {{localize "SYMBAROUMHUD.Abilities.NoDescription"}}
+                      </span>
+                    {{/if}}
+                  </div>
+                </section>
+              {{else}}
+                <span class="symbaroum-hud-ability-no-description">
+                  {{localize "SYMBAROUMHUD.Traits.Empty"}}
+                </span>
+              {{/if}}
+            </article>
+          </div>
+        </section>
+      {{/if}}
+
+    </div>
+
+    <div class="symbaroum-hud-hotbar-row">
+      {{#if ammoRecovery}}
+        <button type="button" class="symbaroum-hud-ammo-recovery-slot"
+          data-action="recover-ammo"
+          data-tooltip="{{localize 'SYMBAROUMHUD.Actions.RecoverAmmo'}}: {{ammoRecovery.count}}"
+          aria-label="{{localize 'SYMBAROUMHUD.Actions.RecoverAmmo'}}: {{ammoRecovery.count}}">
+          <i class="fa-solid fa-arrows-rotate" aria-hidden="true"></i>
+          <span aria-hidden="true">{{ammoRecovery.count}}</span>
+        </button>
+      {{/if}}
+      {{#if readiness}}
+        <button type="button" class="symbaroum-hud-readiness-slot"
+          data-action="weapon-readiness" data-drawn="{{#if readiness.drawn}}true{{else}}false{{/if}}"
+          data-tooltip="{{localize 'SYMBAROUMHUD.IndResources.Readiness'}}: {{readiness.drawn}}/{{readiness.total}}"
+          aria-label="{{localize 'SYMBAROUMHUD.IndResources.Readiness'}}: {{readiness.drawn}}/{{readiness.total}}">
+          <img src="{{readiness.icon}}" alt="" aria-hidden="true">
+          <span aria-hidden="true">{{readiness.drawn}}/{{readiness.total}}</span>
+        </button>
+      {{/if}}
+      <div class="symbaroum-hud-hotbar" data-symba-hotbar></div>
+    </div>
+  </div>
+</div>

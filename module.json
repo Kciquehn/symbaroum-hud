@@ -1,0 +1,53 @@
+{
+  "id": "symbaroum-hud",
+  "title": "Symbaroum HUD",
+  "description": "HUD independente para o sistema Symbaroum, com integração opcional ao Symbaroum Ind Resources.",
+  "version": "0.1.0",
+  "authors": [
+    {
+      "name": "kaciquehn"
+    }
+  ],
+  "compatibility": {
+    "minimum": "13",
+    "verified": "13.350",
+    "maximum": "13"
+  },
+  "relationships": {
+    "systems": [
+      {
+        "id": "symbaroum",
+        "type": "system",
+        "compatibility": {
+          "minimum": "6.1.6",
+          "verified": "6.1.6"
+        }
+      }
+    ],
+    "recommends": [
+      {
+        "id": "symbaroum-ind-resources",
+        "type": "module",
+        "reason": "Adiciona ao HUD carga, rações, munição, fome, manobras, rituais, descanso, efeitos e prontidão de armas."
+      }
+    ]
+  },
+  "esmodules": [
+    "scripts/main.mjs"
+  ],
+  "styles": [
+    "styles/symbaroum-hud.css"
+  ],
+  "languages": [
+    {
+      "lang": "en",
+      "name": "English",
+      "path": "languages/en.json"
+    },
+    {
+      "lang": "pt-BR",
+      "name": "Português do Brasil",
+      "path": "languages/pt-BR.json"
+    }
+  ]
+}

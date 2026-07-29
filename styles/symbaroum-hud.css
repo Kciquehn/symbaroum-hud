@@ -1,0 +1,3946 @@
+#symbaroum-hud {
+  position: fixed;
+  inset: auto auto 8px 8px;
+  z-index: 70;
+  width: max-content;
+  height: 178px;
+  margin: 0;
+  filter: drop-shadow(0 4px 10px rgb(0 0 0 / 78%));
+  pointer-events: none;
+}
+
+#symbaroum-hud.symbaroum-hud {
+  inset: auto auto 8px 8px;
+}
+
+#symbaroum-hud-hostility-tint {
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  box-sizing: border-box;
+  border: 3px solid rgb(90 0 0 / 20%);
+  background: transparent;
+  box-shadow: inset 0 0 75px 14px rgb(95 0 0 / 16%);
+  animation: symbaroum-hud-hostility-pulse 2.4s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes symbaroum-hud-hostility-pulse {
+  0%,
+  100% {
+    border-color: rgb(90 0 0 / 16%);
+    box-shadow: inset 0 0 65px 10px rgb(95 0 0 / 13%);
+    opacity: 0.65;
+  }
+
+  50% {
+    border-color: rgb(110 0 0 / 28%);
+    box-shadow: inset 0 0 95px 20px rgb(110 0 0 / 23%);
+    opacity: 0.9;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #symbaroum-hud-hostility-tint {
+    animation: none;
+  }
+}
+
+#symbaroum-hud .window-content {
+  position: relative;
+  padding: 0;
+  overflow: visible;
+  border: 0;
+  background: transparent;
+  pointer-events: none;
+}
+
+#symbaroum-hud .symbaroum-hud-effects {
+  position: absolute;
+  bottom: 184px;
+  left: 30px;
+  z-index: 3;
+  display: flex;
+  width: max-content;
+  max-width: 430px;
+  flex-wrap: wrap;
+  gap: 4px;
+  pointer-events: auto;
+}
+
+#symbaroum-hud .symbaroum-hud-effect {
+  display: block;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  overflow: hidden;
+  border: 1px solid #050505;
+  border-radius: 4px;
+  background: rgb(8 8 10 / 82%);
+  box-shadow:
+    inset 0 0 6px rgb(0 0 0 / 75%),
+    0 2px 6px rgb(0 0 0 / 68%);
+  cursor: context-menu;
+}
+
+#symbaroum-hud .symbaroum-hud-effect > img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  border: 0;
+  object-fit: cover;
+}
+
+.symbaroum-hud-effect-context-menu {
+  position: fixed;
+  z-index: 10001;
+  min-width: 150px;
+  padding: 4px;
+  border: 1px solid #050505;
+  border-radius: 5px;
+  background: rgb(8 8 10 / 94%);
+  box-shadow: 0 4px 12px rgb(0 0 0 / 72%);
+}
+
+.symbaroum-hud-effect-context-menu button {
+  display: flex;
+  width: 100%;
+  min-height: 28px;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  margin: 0;
+  padding: 4px 8px;
+  border: 0;
+  color: rgb(245 245 245 / 92%);
+  background: transparent;
+  text-align: left;
+}
+
+.symbaroum-hud-effect-context-menu button:hover,
+.symbaroum-hud-effect-context-menu button:focus-visible {
+  color: #fff;
+  background: rgb(112 22 22 / 78%);
+  outline: 1px solid rgb(198 83 63 / 82%);
+}
+
+.symbaroum-hud-effect-context-menu button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.symbaroum-hud-reroll-dialog {
+  display: grid;
+  gap: 8px;
+}
+
+.symbaroum-hud-reroll-dialog p {
+  margin: 0 0 4px;
+}
+
+.symbaroum-hud-reroll-dialog label {
+  display: grid;
+  padding: 6px 8px;
+  align-items: center;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 8px;
+  border: 1px solid rgb(0 0 0 / 28%);
+  border-radius: 3px;
+  background: rgb(0 0 0 / 6%);
+}
+
+.symbaroum-hud-reroll-dialog small {
+  opacity: 0.7;
+}
+
+.symbaroum-hud-ability-picker {
+  display: grid;
+  gap: 10px;
+}
+
+.symbaroum-hud-ability-picker p {
+  margin: 0;
+}
+
+.symbaroum-hud-ability-picker-search {
+  display: grid;
+  align-items: center;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 8px;
+  padding: 5px 8px;
+  border: 1px solid rgb(0 0 0 / 42%);
+  border-radius: 3px;
+  background: rgb(0 0 0 / 12%);
+}
+
+.symbaroum-hud-ability-picker-search > i {
+  opacity: 0.72;
+}
+
+.symbaroum-hud-ability-picker-search > input {
+  width: 100%;
+  height: 28px;
+  min-width: 0;
+  margin: 0;
+  border: 0;
+  color: inherit;
+  background: transparent;
+  box-shadow: none;
+}
+
+.symbaroum-hud-ability-picker-search > input:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+.symbaroum-hud-ability-picker-list {
+  display: grid;
+  max-height: min(420px, 60vh);
+  gap: 6px;
+  overflow-y: auto;
+}
+
+.symbaroum-hud-ability-picker-entry {
+  display: grid;
+  padding: 6px;
+  align-items: center;
+  grid-template-columns: auto 42px minmax(0, 1fr);
+  gap: 8px;
+  border: 1px solid rgb(0 0 0 / 28%);
+  border-radius: 3px;
+  background: rgb(0 0 0 / 6%);
+}
+
+.symbaroum-hud-ability-picker-entry > img {
+  width: 42px;
+  height: 42px;
+  border: 1px solid rgb(0 0 0 / 58%);
+  object-fit: cover;
+}
+
+.symbaroum-hud-maneuver-picker-entry > i {
+  display: inline-flex;
+  width: 42px;
+  height: 42px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgb(0 0 0 / 58%);
+  background: rgb(0 0 0 / 28%);
+  font-size: var(--font-size-18, 1.125rem);
+}
+
+.symbaroum-hud-ability-picker-entry span {
+  display: grid;
+  min-width: 0;
+}
+
+.symbaroum-hud-ability-picker-entry strong,
+.symbaroum-hud-ability-picker-entry small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.symbaroum-hud-ability-picker-entry small {
+  opacity: 0.7;
+}
+
+.symbaroum-hud-ability-picker-empty {
+  opacity: 0.72;
+  font-style: italic;
+}
+
+#symbaroum-hud .symbaroum-hud-card-row {
+  display: flex;
+  width: max-content;
+  height: 178px;
+  align-items: flex-start;
+  gap: 6px;
+  pointer-events: none;
+}
+
+#symbaroum-hud .symbaroum-hud-hotbar-controls {
+  display: flex;
+  width: 24px;
+  flex: 0 0 24px;
+  flex-direction: column;
+  align-self: flex-end;
+  gap: 4px;
+  pointer-events: auto;
+}
+
+#symbaroum-hud .symbaroum-hud-hotbar-controls button {
+  --button-size: 24px;
+  --control-size: 24px;
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
+  min-height: 24px;
+  margin: 0;
+  padding: 0;
+  color: var(--control-icon-color, rgb(255 255 255 / 70%));
+  background: var(--control-bg-color, rgb(11 10 19 / 75%));
+  border: 1px solid var(--control-border-color, #302831);
+  border-radius: 5px;
+  box-shadow: none;
+  pointer-events: auto;
+}
+
+#symbaroum-hud .symbaroum-hud-hotbar-controls button:hover,
+#symbaroum-hud .symbaroum-hud-hotbar-controls button:focus-visible {
+  color: var(--control-hover-icon-color, #fff);
+  background: var(--control-hover-bg-color, #0b0a13);
+  border-color: var(--control-hover-border-color, #584a75);
+  outline: none;
+}
+
+#symbaroum-hud .symbaroum-hud-hotbar-controls button[aria-pressed="true"] {
+  color: var(--color-warm-1, #ee9b3a);
+  border-color: var(--color-warm-1, #ee9b3a);
+}
+
+#symbaroum-hud .symbaroum-hud-character-card {
+  position: relative;
+  display: block;
+  box-sizing: border-box;
+  width: 150px;
+  height: 178px;
+  min-width: 150px;
+  min-height: 178px;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 2px solid #050505;
+  border-radius: 2px;
+  color: var(--color-light-1, #f7f3e8);
+  background: #050505;
+  box-shadow:
+    inset 0 0 8px #000,
+    0 0 0 1px rgb(255 255 255 / 18%);
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+#symbaroum-hud .symbaroum-hud-character-card:has(.symbaroum-hud-character-open:hover),
+#symbaroum-hud .symbaroum-hud-character-card:has(.symbaroum-hud-character-open:focus-visible) {
+  border-color: var(--color-warm-1, #ee9b3a);
+  box-shadow:
+    inset 0 0 8px #000,
+    0 0 9px var(--color-warm-1, #ee9b3a);
+  outline: none;
+}
+
+#symbaroum-hud button.symbaroum-hud-character-open {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: #050505;
+  box-shadow: none;
+}
+
+#symbaroum-hud .symbaroum-hud-character-open > img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  border: 0;
+  object-fit: cover;
+  object-position: center;
+}
+
+#symbaroum-hud .symbaroum-hud-character-name,
+#symbaroum-hud .symbaroum-hud-character-resources {
+  position: absolute;
+  right: 0;
+  left: 0;
+  z-index: 1;
+  color: var(--color-light-1, #f7f3e8);
+  background: rgb(8 8 10 / 48%);
+  font-family: var(--font-primary);
+  text-shadow:
+    0 1px 2px #000,
+    0 0 4px #000;
+}
+
+#symbaroum-hud .symbaroum-hud-character-name {
+  top: 0;
+  display: grid;
+  min-height: 25px;
+  padding: 2px;
+  grid-template-columns: 21px minmax(0, 1fr) 21px;
+  align-items: center;
+  overflow: hidden;
+  border-bottom: 1px solid rgb(255 255 255 / 16%);
+  font-size: var(--font-size-13, 0.8125rem);
+  font-weight: bold;
+  line-height: 16px;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#symbaroum-hud button.symbaroum-hud-character-name-label,
+#symbaroum-hud button.symbaroum-hud-actor-cycle {
+  height: 20px;
+  min-height: 20px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  color: inherit;
+  background: transparent;
+  box-shadow: none;
+  font: inherit;
+  text-shadow: inherit;
+}
+
+#symbaroum-hud button.symbaroum-hud-character-name-label {
+  min-width: 0;
+  overflow: hidden;
+  font-weight: bold;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#symbaroum-hud button.symbaroum-hud-actor-cycle {
+  appearance: none;
+  width: 21px;
+  min-width: 21px;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 120ms ease;
+}
+
+#symbaroum-hud .symbaroum-hud-character-name:hover .symbaroum-hud-actor-cycle,
+#symbaroum-hud .symbaroum-hud-character-name:focus-within .symbaroum-hud-actor-cycle {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+#symbaroum-hud button.symbaroum-hud-actor-cycle:hover,
+#symbaroum-hud button.symbaroum-hud-actor-cycle:focus-visible {
+  color: var(--color-warm-1, #ee9b3a);
+  background: transparent !important;
+  box-shadow: none !important;
+  outline: none;
+}
+
+#symbaroum-hud button.symbaroum-hud-actor-cycle:disabled {
+  background: transparent !important;
+  box-shadow: none !important;
+  opacity: 0;
+  pointer-events: none;
+}
+
+#symbaroum-hud .symbaroum-hud-character-resources {
+  bottom: 0;
+  display: grid;
+  min-height: 34px;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  border-top: 1px solid rgb(255 255 255 / 18%);
+  font-size: var(--font-size-12, 0.75rem);
+  pointer-events: none;
+}
+
+#symbaroum-hud .symbaroum-hud-character-resources > span {
+  display: inline-flex;
+  min-width: 0;
+  min-height: 32px;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+}
+
+#symbaroum-hud .symbaroum-hud-character-resources > span + span {
+  border-left: 1px solid rgb(255 255 255 / 18%);
+}
+
+#symbaroum-hud .symbaroum-hud-character-resources i {
+  color: var(--color-light-2, #efe6d8);
+  font-size: var(--font-size-11, 0.6875rem);
+}
+
+#symbaroum-hud .symbaroum-hud-character-resources strong {
+  font-weight: 700;
+}
+
+#symbaroum-hud .symbaroum-hud-death-failures {
+  position: absolute;
+  bottom: 38px;
+  left: 7px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: #fff;
+  font-size: var(--font-size-15, 0.9375rem);
+  line-height: 1;
+  text-shadow:
+    -1px -1px 0 #000,
+    1px -1px 0 #000,
+    -1px 1px 0 #000,
+    1px 1px 0 #000,
+    0 0 4px #000;
+  pointer-events: auto;
+}
+
+body:has(#symbaroum-hud .symbaroum-hud-character-card) #ui-left-column-1 #players {
+  margin-bottom: 184px;
+}
+
+body.symbaroum-hud-hide-players #players {
+  display: none !important;
+}
+
+body:has(#symbaroum-hud .symbaroum-hud-character-card) #hotbar #hotbar-controls-left {
+  display: none;
+}
+
+#symbaroum-hud .symbaroum-hud-main-column {
+  display: flex;
+  width: max-content;
+  height: 178px;
+  min-width: 0;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 6px;
+  pointer-events: none;
+}
+
+#symbaroum-hud .symbaroum-hud-upper-row {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  gap: 5px;
+  pointer-events: none;
+}
+
+#symbaroum-hud .symbaroum-hud-character-actions {
+  display: flex;
+  width: 24px;
+  flex: 0 0 auto;
+  flex-direction: column;
+  gap: 3px;
+  pointer-events: auto;
+}
+
+#symbaroum-hud button.symbaroum-hud-character-action {
+  display: inline-flex;
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
+  min-height: 24px;
+  margin: 0;
+  padding: 0;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--control-border-color, #302831);
+  border-radius: 3px;
+  color: var(--control-icon-color, rgb(255 255 255 / 72%));
+  background: var(--control-bg-color, rgb(11 10 19 / 75%));
+  box-shadow: inset 0 0 4px rgb(0 0 0 / 55%);
+  font-size: var(--font-size-12, 0.75rem);
+  pointer-events: auto;
+}
+
+#symbaroum-hud button.symbaroum-hud-character-action:hover,
+#symbaroum-hud button.symbaroum-hud-character-action:focus-visible {
+  border-color: var(--control-hover-border-color, #584a75);
+  color: var(--control-hover-icon-color, #fff);
+  background: var(--control-hover-bg-color, #0b0a13);
+  outline: none;
+}
+
+#symbaroum-hud button.symbaroum-hud-character-action:disabled {
+  border-color: rgb(48 40 49 / 60%);
+  color: rgb(255 255 255 / 25%);
+  background: rgb(11 10 19 / 42%);
+  cursor: default;
+}
+
+#symbaroum-hud .symbaroum-hud-attributes {
+  box-sizing: border-box;
+  display: grid;
+  width: 220px;
+  height: 117px;
+  min-height: 117px;
+  flex: 0 0 220px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: repeat(4, minmax(0, 1fr));
+  overflow: hidden;
+  border: 1px solid #050505;
+  border-radius: 3px;
+  background: rgb(8 8 10 / 66%);
+  box-shadow:
+    inset 0 0 8px rgb(0 0 0 / 75%),
+    0 0 0 1px rgb(255 255 255 / 12%);
+  pointer-events: auto;
+}
+
+#symbaroum-hud button.symbaroum-hud-attribute {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  margin: 0;
+  padding: 3px 5px;
+  align-items: center;
+  gap: 4px;
+  border: 0;
+  border-radius: 0;
+  color: var(--color-light-1, #f7f3e8);
+  background: transparent;
+  box-shadow: none;
+  font-family: var(--font-primary);
+  text-shadow: 0 1px 2px #000;
+}
+
+#symbaroum-hud button.symbaroum-hud-attribute:nth-child(even) {
+  border-left: 1px solid rgb(255 255 255 / 14%);
+}
+
+#symbaroum-hud button.symbaroum-hud-attribute:nth-child(n + 3) {
+  border-top: 1px solid rgb(255 255 255 / 14%);
+}
+
+#symbaroum-hud .symbaroum-hud-attribute > i {
+  width: 15px;
+  flex: 0 0 15px;
+  color: var(--color-light-2, #efe6d8);
+  font-size: var(--font-size-12, 0.75rem);
+  text-align: center;
+}
+
+#symbaroum-hud .symbaroum-hud-attribute > strong {
+  min-width: 18px;
+  flex: 0 0 auto;
+  font-size: var(--font-size-13, 0.8125rem);
+  line-height: 18px;
+  text-align: right;
+}
+
+#symbaroum-hud .symbaroum-hud-attribute-name {
+  min-width: 0;
+  flex: 1 1 auto;
+  overflow: hidden;
+  font-size: var(--font-size-11, 0.6875rem);
+  line-height: 18px;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#symbaroum-hud button.symbaroum-hud-attribute:hover,
+#symbaroum-hud button.symbaroum-hud-attribute:focus-visible {
+  color: var(--color-warm-1, #ee9b3a);
+  background: rgb(255 255 255 / 7%);
+  outline: none;
+}
+
+#symbaroum-hud button.symbaroum-hud-attribute:hover > i,
+#symbaroum-hud button.symbaroum-hud-attribute:focus-visible > i {
+  color: var(--color-warm-1, #ee9b3a);
+}
+
+#symbaroum-hud button.symbaroum-hud-attribute:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+#symbaroum-hud .symbaroum-hud-hotbar-row {
+  display: flex;
+  width: max-content;
+  height: 55px;
+  align-items: flex-end;
+  gap: 4px;
+  pointer-events: none;
+}
+
+#symbaroum-hud button.symbaroum-hud-readiness-slot,
+#symbaroum-hud button.symbaroum-hud-ammo-recovery-slot {
+  display: grid;
+  width: 55px;
+  height: 55px;
+  min-width: 55px;
+  min-height: 55px;
+  margin: 0;
+  padding: 4px 4px 3px;
+  grid-template-rows: 1fr auto;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid var(--control-border-color, #302831);
+  border-radius: 7px;
+  color: var(--color-light-1, #f7f3e8);
+  background: var(--control-bg-color, rgb(11 10 19 / 75%));
+  box-shadow: inset 0 0 8px rgb(0 0 0 / 70%);
+  pointer-events: auto;
+}
+
+#symbaroum-hud button.symbaroum-hud-readiness-slot:hover,
+#symbaroum-hud button.symbaroum-hud-readiness-slot:focus-visible,
+#symbaroum-hud button.symbaroum-hud-readiness-slot[data-drawn="true"],
+#symbaroum-hud button.symbaroum-hud-ammo-recovery-slot:hover,
+#symbaroum-hud button.symbaroum-hud-ammo-recovery-slot:focus-visible {
+  border-color: var(--color-warm-1, #ee9b3a);
+  box-shadow:
+    inset 0 0 8px rgb(0 0 0 / 70%),
+    0 0 6px rgb(238 155 58 / 62%);
+  outline: none;
+}
+
+#symbaroum-hud button.symbaroum-hud-ammo-recovery-slot {
+  color: #f2e6cf;
+  background:
+    linear-gradient(rgb(53 28 10 / 38%), rgb(18 13 12 / 42%)),
+    var(--symbaroum-hud-red-ornament) center / cover;
+}
+
+#symbaroum-hud .symbaroum-hud-ammo-recovery-slot > i {
+  display: grid;
+  width: 29px;
+  height: 29px;
+  place-items: center;
+  color: #f2e6cf;
+  font-size: 1.3rem;
+  filter: drop-shadow(0 1px 2px #000);
+  pointer-events: none;
+}
+
+#symbaroum-hud .symbaroum-hud-readiness-slot > img {
+  width: 29px;
+  height: 29px;
+  margin: 0;
+  border: 0;
+  object-fit: contain;
+  filter: sepia(1) saturate(1.8) brightness(1.05);
+  pointer-events: none;
+}
+
+#symbaroum-hud .symbaroum-hud-readiness-slot > span,
+#symbaroum-hud .symbaroum-hud-ammo-recovery-slot > span {
+  min-width: 28px;
+  padding: 0 3px;
+  border-radius: 3px;
+  background: rgb(0 0 0 / 58%);
+  color: #fff;
+  font-size: var(--font-size-10, 0.625rem);
+  line-height: 13px;
+  text-align: center;
+  pointer-events: none;
+}
+
+body:has(#symbaroum-hud .symbaroum-hud-readiness-slot) > #tenebre-weapon-readiness-floating {
+  display: none !important;
+}
+
+body:has(#symbaroum-hud .symbaroum-hud-ammo-recovery-slot) > #tenebre-ammo-hud-left {
+  display: none !important;
+}
+
+#symbaroum-hud .symbaroum-hud-info-panel {
+  box-sizing: border-box;
+  display: grid;
+  width: 68px;
+  height: 117px;
+  min-height: 117px;
+  flex: 0 0 auto;
+  grid-template-columns: minmax(0, 1fr);
+  grid-auto-rows: minmax(0, 1fr);
+  overflow: hidden;
+  border: 1px solid #050505;
+  border-radius: 3px;
+  color: var(--color-light-1, #f7f3e8);
+  background: rgb(8 8 10 / 66%);
+  box-shadow:
+    inset 0 0 8px rgb(0 0 0 / 75%),
+    0 0 0 1px rgb(255 255 255 / 12%);
+  font-family: var(--font-primary);
+  text-shadow: 0 1px 2px #000;
+  pointer-events: auto;
+}
+
+#symbaroum-hud .symbaroum-hud-economy-panel {
+  box-sizing: border-box;
+  display: grid;
+  width: 82px;
+  height: 117px;
+  min-height: 117px;
+  flex: 0 0 auto;
+  grid-template-columns: minmax(0, 1fr);
+  grid-auto-rows: minmax(0, 1fr);
+  overflow: hidden;
+  border: 1px solid #050505;
+  border-radius: 3px;
+  color: var(--color-light-1, #f7f3e8);
+  background: rgb(8 8 10 / 66%);
+  box-shadow:
+    inset 0 0 8px rgb(0 0 0 / 75%),
+    0 0 0 1px rgb(255 255 255 / 12%);
+  font-family: var(--font-primary);
+  text-shadow: 0 1px 2px #000;
+  pointer-events: auto;
+}
+
+#symbaroum-hud .symbaroum-hud-info-entry {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 5px;
+}
+
+#symbaroum-hud .symbaroum-hud-economy-entry {
+  display: grid;
+  min-width: 0;
+  padding: 3px 5px;
+  align-items: center;
+  grid-template-columns: 16px minmax(0, 1fr) auto;
+  gap: 4px;
+}
+
+#symbaroum-hud button.symbaroum-hud-economy-action {
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  color: inherit;
+  background: transparent;
+  font: inherit;
+  text-shadow: inherit;
+  cursor: pointer;
+}
+
+#symbaroum-hud button.symbaroum-hud-economy-action:hover,
+#symbaroum-hud button.symbaroum-hud-economy-action:focus-visible {
+  color: #fff;
+  background: rgb(255 255 255 / 8%);
+  outline: none;
+}
+
+#symbaroum-hud .symbaroum-hud-info-entry + .symbaroum-hud-info-entry {
+  border-top: 1px solid rgb(255 255 255 / 14%);
+}
+
+#symbaroum-hud .symbaroum-hud-economy-entry + .symbaroum-hud-economy-entry {
+  border-top: 1px solid rgb(255 255 255 / 14%);
+}
+
+#symbaroum-hud .symbaroum-hud-info-entry > i,
+#symbaroum-hud button.symbaroum-hud-info-action {
+  width: 16px;
+  flex: 0 0 16px;
+}
+
+#symbaroum-hud .symbaroum-hud-info-entry > i,
+#symbaroum-hud .symbaroum-hud-info-action > i,
+#symbaroum-hud .symbaroum-hud-economy-entry > i {
+  color: var(--color-light-2, #efe6d8);
+  font-size: var(--font-size-13, 0.8125rem);
+  text-align: center;
+}
+
+#symbaroum-hud .symbaroum-hud-economy-entry > strong {
+  min-width: 0;
+  overflow: hidden;
+  font-size: var(--font-size-12, 0.75rem);
+  line-height: 18px;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#symbaroum-hud .symbaroum-hud-economy-entry > small {
+  width: 10px;
+  color: rgb(255 255 255 / 58%);
+  font-size: var(--font-size-9, 0.5625rem);
+  line-height: 18px;
+  text-align: right;
+  text-transform: uppercase;
+}
+
+#symbaroum-hud .symbaroum-hud-economy-entry[data-overloaded="true"] > i,
+#symbaroum-hud .symbaroum-hud-economy-entry[data-overloaded="true"] > strong,
+#symbaroum-hud .symbaroum-hud-economy-entry[data-immobilized="true"] > i,
+#symbaroum-hud .symbaroum-hud-economy-entry[data-immobilized="true"] > strong {
+  color: #ff4d3d;
+}
+
+#symbaroum-hud button.symbaroum-hud-info-action {
+  display: inline-flex;
+  height: 19px;
+  min-width: 16px;
+  min-height: 19px;
+  margin: 0;
+  padding: 0;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  color: inherit;
+  background: transparent;
+  box-shadow: none;
+  pointer-events: auto;
+}
+
+#symbaroum-hud button.symbaroum-hud-info-action:hover,
+#symbaroum-hud button.symbaroum-hud-info-action:focus-visible {
+  color: var(--color-warm-1, #ee9b3a);
+  background: transparent;
+  outline: none;
+}
+
+#symbaroum-hud button.symbaroum-hud-info-action:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+#symbaroum-hud button.symbaroum-hud-panel-toggle {
+  display: inline-flex;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  margin: 0;
+  padding: 0;
+  align-items: center;
+  align-self: flex-end;
+  justify-content: center;
+  border: 1px solid var(--control-border-color, #302831);
+  border-radius: 5px;
+  color: var(--control-icon-color, rgb(255 255 255 / 72%));
+  background: rgb(8 8 10 / 78%);
+  box-shadow:
+    inset 0 0 8px rgb(0 0 0 / 70%),
+    0 0 0 1px rgb(255 255 255 / 8%);
+  font-size: var(--font-size-20, 1.25rem);
+  pointer-events: auto;
+}
+
+#symbaroum-hud button.symbaroum-hud-panel-toggle:hover,
+#symbaroum-hud button.symbaroum-hud-panel-toggle:focus-visible,
+#symbaroum-hud button.symbaroum-hud-panel-toggle[data-open="true"] {
+  border-color: var(--color-warm-1, #ee9b3a);
+  color: var(--color-warm-1, #ee9b3a);
+  background: rgb(14 12 16 / 92%);
+  box-shadow:
+    inset 0 0 8px rgb(0 0 0 / 70%),
+    0 0 6px rgb(238 155 58 / 55%);
+  outline: none;
+}
+
+#symbaroum-hud .symbaroum-hud-panel-stack {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  gap: 5px;
+  pointer-events: auto;
+}
+
+#symbaroum-hud .symbaroum-hud-knowledge-stack {
+  display: grid;
+  width: 93px;
+  height: auto;
+  flex: 0 0 auto;
+  grid-template-columns: repeat(2, 44px);
+  grid-template-rows: 19px;
+  grid-auto-rows: 44px;
+  gap: 5px;
+  pointer-events: auto;
+}
+
+#symbaroum-hud .symbaroum-hud-knowledge-stack[data-knowledge-columns="1"] {
+  width: 44px;
+  grid-template-columns: 44px;
+}
+
+#symbaroum-hud .symbaroum-hud-knowledge-stack[data-has-experience="false"] {
+  grid-template-rows: 44px;
+}
+
+#symbaroum-hud .symbaroum-hud-experience-panel {
+  box-sizing: border-box;
+  display: grid;
+  width: calc(100% + 49px);
+  min-width: 0;
+  height: 19px;
+  margin-left: -49px;
+  padding: 0 4px;
+  align-items: center;
+  grid-column: span 2;
+  grid-template-columns: 14px minmax(0, 1fr) auto;
+  gap: 3px;
+  overflow: hidden;
+  border: 1px solid #050505;
+  border-radius: 3px;
+  color: var(--color-light-1, #f7f3e8);
+  background: rgb(8 8 10 / 66%);
+  box-shadow:
+    inset 0 0 8px rgb(0 0 0 / 75%),
+    0 0 0 1px rgb(255 255 255 / 12%);
+  font-family: var(--font-primary);
+  font-size: var(--font-size-10, 0.625rem);
+  font-weight: inherit;
+  line-height: 17px;
+  margin-top: 0;
+  margin-right: 0;
+  margin-bottom: 0;
+  text-shadow: 0 1px 2px #000;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+#symbaroum-hud .symbaroum-hud-knowledge-stack[data-knowledge-columns="1"] .symbaroum-hud-experience-panel {
+  grid-column: span 1;
+}
+
+#symbaroum-hud .symbaroum-hud-experience-panel > i {
+  color: var(--color-light-2, #efe6d8);
+  font-size: var(--font-size-10, 0.625rem);
+  text-align: center;
+}
+
+#symbaroum-hud .symbaroum-hud-experience-panel > span {
+  min-width: 0;
+  overflow: hidden;
+  color: rgb(255 255 255 / 62%);
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+#symbaroum-hud .symbaroum-hud-experience-panel > strong {
+  min-width: 0;
+  overflow: hidden;
+  font-size: var(--font-size-10, 0.625rem);
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#symbaroum-hud button.symbaroum-hud-experience-panel:hover,
+#symbaroum-hud button.symbaroum-hud-experience-panel:focus-visible {
+  color: var(--color-warm-1, #ee9b3a);
+  outline: none;
+}
+
+#symbaroum-hud button.symbaroum-hud-experience-panel:disabled {
+  width: 100%;
+  margin-left: 0;
+  opacity: 0.5;
+  cursor: default;
+}
+
+#symbaroum-hud .symbaroum-hud-storage-panel {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 0;
+  z-index: 3;
+  box-sizing: border-box;
+  display: flex;
+  width: min(760px, calc(100vw - 16px));
+  height: min(380px, calc(100vh - 220px));
+  min-height: 240px;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid #050505;
+  border-radius: 7px;
+  color: var(--color-light-1, #f7f3e8);
+  background:
+    linear-gradient(rgb(8 8 10 / 92%), rgb(10 9 12 / 88%)),
+    var(--control-bg-color, #0b0a13);
+  box-shadow:
+    inset 0 0 24px rgb(0 0 0 / 58%),
+    0 8px 24px rgb(0 0 0 / 72%),
+    0 0 0 1px rgb(255 255 255 / 10%);
+  font-family: var(--font-primary);
+  text-shadow: 0 1px 2px #000;
+  pointer-events: auto;
+}
+
+#symbaroum-hud .symbaroum-hud-storage-header {
+  display: flex;
+  min-height: 42px;
+  padding: 0 8px 0 12px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border-bottom: 1px solid rgb(255 255 255 / 14%);
+  background: rgb(0 0 0 / 28%);
+}
+
+#symbaroum-hud .symbaroum-hud-storage-title {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+}
+
+#symbaroum-hud .symbaroum-hud-storage-title-img {
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
+  margin: 0;
+  border: 1px solid rgb(255 255 255 / 18%);
+  border-radius: 3px;
+  object-fit: cover;
+}
+
+#symbaroum-hud .symbaroum-hud-storage-title > i {
+  color: var(--color-warm-1, #ee9b3a);
+  font-size: var(--font-size-16, 1rem);
+}
+
+#symbaroum-hud .symbaroum-hud-storage-title > strong {
+  overflow: hidden;
+  font-size: var(--font-size-15, 0.9375rem);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#symbaroum-hud .symbaroum-hud-storage-title > small {
+  flex: 0 0 auto;
+  color: rgb(255 255 255 / 58%);
+  font-size: var(--font-size-11, 0.6875rem);
+}
+
+#symbaroum-hud .symbaroum-hud-storage-title > .symbaroum-hud-storage-load {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 7px;
+  overflow: hidden;
+  color: rgb(255 255 255 / 64%);
+}
+
+#symbaroum-hud .symbaroum-hud-storage-load > span {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 3px;
+  white-space: nowrap;
+}
+
+#symbaroum-hud .symbaroum-hud-storage-load i {
+  color: rgb(255 255 255 / 58%);
+  font-size: var(--font-size-10, 0.625rem);
+}
+
+#symbaroum-hud .symbaroum-hud-storage-load[data-overloaded="true"] {
+  color: var(--color-warm-1, #ee9b3a);
+}
+
+#symbaroum-hud .symbaroum-hud-storage-load[data-overloaded="true"] i {
+  color: var(--color-warm-1, #ee9b3a);
+}
+
+#symbaroum-hud .symbaroum-hud-storage-load[data-immobilized="true"] {
+  color: #ff8f74;
+}
+
+#symbaroum-hud .symbaroum-hud-storage-load[data-immobilized="true"] i {
+  color: #ff8f74;
+}
+
+#symbaroum-hud button.symbaroum-hud-quiver-reload {
+  display: inline-flex;
+  min-width: 0;
+  height: 26px;
+  min-height: 26px;
+  margin: 0;
+  padding: 0 8px;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid var(--control-border-color, #302831);
+  border-radius: 4px;
+  color: var(--color-light-1, #f7f3e8);
+  background: rgb(8 8 10 / 72%);
+  box-shadow: inset 0 0 6px rgb(0 0 0 / 62%);
+  font-size: var(--font-size-11, 0.6875rem);
+}
+
+#symbaroum-hud button.symbaroum-hud-quiver-reload:hover,
+#symbaroum-hud button.symbaroum-hud-quiver-reload:focus-visible {
+  border-color: var(--color-warm-1, #ee9b3a);
+  color: var(--color-warm-1, #ee9b3a);
+  outline: none;
+}
+
+#symbaroum-hud .symbaroum-hud-storage-header-actions {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 4px;
+}
+
+#symbaroum-hud button.symbaroum-hud-storage-view-toggle {
+  display: inline-flex;
+  width: 30px;
+  height: 28px;
+  min-width: 30px;
+  min-height: 28px;
+  margin: 0;
+  padding: 0;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgb(255 255 255 / 14%);
+  border-radius: 4px;
+  color: rgb(255 255 255 / 72%);
+  background: rgb(8 8 10 / 72%);
+  box-shadow: inset 0 0 6px rgb(0 0 0 / 62%);
+}
+
+#symbaroum-hud button.symbaroum-hud-storage-view-toggle:hover,
+#symbaroum-hud button.symbaroum-hud-storage-view-toggle:focus-visible {
+  border-color: var(--color-warm-1, #ee9b3a);
+  color: var(--color-warm-1, #ee9b3a);
+  outline: none;
+}
+
+#symbaroum-hud button.symbaroum-hud-storage-close {
+  display: inline-flex;
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  min-height: 28px;
+  margin: 0;
+  padding: 0;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  color: rgb(255 255 255 / 68%);
+  background: transparent;
+  box-shadow: none;
+}
+
+#symbaroum-hud button.symbaroum-hud-storage-close:hover,
+#symbaroum-hud button.symbaroum-hud-storage-close:focus-visible {
+  color: #fff;
+  background: rgb(112 22 22 / 78%);
+  outline: 1px solid rgb(198 83 63 / 82%);
+}
+
+#symbaroum-hud .symbaroum-hud-storage-body {
+  display: grid;
+  min-height: 0;
+  flex: 1 1 auto;
+  grid-template-columns: 185px minmax(0, 1fr);
+}
+
+#symbaroum-hud .symbaroum-hud-quiver-page {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+#symbaroum-hud .symbaroum-hud-quiver-detail {
+  display: grid;
+  min-height: 112px;
+  margin: 12px 12px 0;
+  padding: 8px;
+  grid-template-columns: 96px minmax(0, 1fr);
+  gap: 12px;
+  border: 1px solid var(--control-border-color, #302831);
+  border-radius: 6px;
+  background: rgb(8 8 10 / 52%);
+  box-shadow: inset 0 0 10px rgb(0 0 0 / 54%);
+}
+
+#symbaroum-hud .symbaroum-hud-quiver-detail > img {
+  width: 96px;
+  height: 96px;
+  margin: 0;
+  border: 1px solid rgb(255 255 255 / 14%);
+  border-radius: 4px;
+  object-fit: cover;
+}
+
+#symbaroum-hud .symbaroum-hud-quiver-detail-info {
+  display: grid;
+  min-width: 0;
+  align-content: start;
+  grid-template-columns: repeat(3, max-content);
+  gap: 6px 12px;
+}
+
+#symbaroum-hud .symbaroum-hud-quiver-detail-info > strong {
+  grid-column: 1 / -1;
+  overflow: hidden;
+  font-size: var(--font-size-16, 1rem);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#symbaroum-hud .symbaroum-hud-quiver-detail-info > span,
+#symbaroum-hud .symbaroum-hud-quiver-loaded-list > span {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 5px;
+  color: rgb(255 255 255 / 70%);
+  font-size: var(--font-size-12, 0.75rem);
+  white-space: nowrap;
+}
+
+#symbaroum-hud .symbaroum-hud-quiver-detail-info i {
+  width: 13px;
+  color: var(--color-warm-1, #ee9b3a);
+  text-align: center;
+}
+
+#symbaroum-hud .symbaroum-hud-quiver-loaded-list {
+  display: flex;
+  min-width: 0;
+  grid-column: 1 / -1;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+#symbaroum-hud .symbaroum-hud-quiver-loaded-list img {
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  border: 0;
+  border-radius: 2px;
+  object-fit: cover;
+}
+
+#symbaroum-hud .symbaroum-hud-quiver-detail-info > .symbaroum-hud-quiver-reload {
+  width: max-content;
+  grid-column: 1 / -1;
+}
+
+#symbaroum-hud .symbaroum-hud-quiver-ammo-section {
+  display: flex;
+  min-height: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+#symbaroum-hud .symbaroum-hud-quiver-ammo-section > h3 {
+  margin: 8px 12px 0;
+  border: 0;
+  color: rgb(255 255 255 / 68%);
+  font-size: var(--font-size-12, 0.75rem);
+  line-height: 18px;
+}
+
+#symbaroum-hud .symbaroum-hud-quiver-ammo-items {
+  flex: 1 1 auto;
+  padding-top: 8px;
+}
+
+#symbaroum-hud .symbaroum-hud-abilities-panel,
+#symbaroum-hud .symbaroum-hud-attacks-panel {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 0;
+  z-index: 3;
+  display: flex;
+  box-sizing: border-box;
+  width: min(640px, calc(100vw - 16px));
+  height: min(280px, calc(100vh - 220px));
+  min-height: 190px;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid #050505;
+  border-radius: 7px;
+  color: var(--color-light-1, #f7f3e8);
+  background:
+    linear-gradient(rgb(8 8 10 / 92%), rgb(10 9 12 / 88%)),
+    var(--control-bg-color, #0b0a13);
+  box-shadow:
+    inset 0 0 24px rgb(0 0 0 / 58%),
+    0 8px 24px rgb(0 0 0 / 72%),
+    0 0 0 1px rgb(255 255 255 / 10%);
+  font-family: var(--font-primary);
+  text-shadow: 0 1px 2px #000;
+  pointer-events: auto;
+}
+
+#symbaroum-hud .symbaroum-hud-abilities-panel,
+#symbaroum-hud .symbaroum-hud-rituals-panel,
+#symbaroum-hud .symbaroum-hud-mystical-powers-panel,
+#symbaroum-hud .symbaroum-hud-traits-panel {
+  left: calc(-1 * (24px + 6px + 150px + 6px));
+  width: min(980px, calc(100vw - 16px));
+  height: min(560px, calc(100vh - 180px));
+  min-height: 360px;
+}
+
+#symbaroum-hud .symbaroum-hud-attacks-body {
+  display: grid;
+  min-height: 0;
+  margin: 0;
+  flex: 1 1 auto;
+  padding: 14px;
+  grid-auto-flow: row;
+  grid-auto-rows: 150px;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  align-content: start;
+  gap: 12px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  list-style: none;
+}
+
+#symbaroum-hud .symbaroum-hud-abilities-body {
+  display: grid;
+  min-height: 0;
+  flex: 1 1 auto;
+  grid-template-columns: 240px minmax(0, 1fr);
+  overflow: hidden;
+}
+
+#symbaroum-hud .symbaroum-hud-abilities-sidebar {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  padding: 8px;
+  flex-direction: column;
+  gap: 6px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  border-right: 1px solid rgb(255 255 255 / 10%);
+}
+
+#symbaroum-hud .symbaroum-hud-ability-detail {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  padding: 16px;
+  flex-direction: column;
+  gap: 10px;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+#symbaroum-hud .symbaroum-hud-ability-detail-header {
+  display: grid;
+  min-width: 0;
+  align-items: center;
+  grid-template-columns: 64px minmax(0, 1fr) auto;
+  gap: 12px;
+}
+
+#symbaroum-hud .symbaroum-hud-ability-detail-header > img {
+  width: 64px;
+  height: 64px;
+  border: 1px solid rgb(255 255 255 / 16%);
+  border-radius: 3px;
+  object-fit: cover;
+}
+
+#symbaroum-hud .symbaroum-hud-ability-detail-title {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 3px;
+}
+
+#symbaroum-hud .symbaroum-hud-ability-detail-title > strong {
+  overflow: hidden;
+  font-size: var(--font-size-14, 0.875rem);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#symbaroum-hud .symbaroum-hud-ability-detail-title > span {
+  overflow: hidden;
+  color: rgb(255 255 255 / 58%);
+  font-size: var(--font-size-11, 0.6875rem);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#symbaroum-hud .symbaroum-hud-ability-detail-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+#symbaroum-hud button.symbaroum-hud-ability-detail-action {
+  display: inline-flex;
+  height: 28px;
+  margin: 0;
+  padding: 0 8px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid var(--control-border-color, #302831);
+  border-radius: 4px;
+  color: var(--color-light-1, #f7f3e8);
+  background: rgb(8 8 10 / 74%);
+  box-shadow: inset 0 0 6px rgb(0 0 0 / 60%);
+  font-size: var(--font-size-11, 0.6875rem);
+  cursor: pointer;
+}
+
+#symbaroum-hud button.symbaroum-hud-ability-detail-action:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+#symbaroum-hud .symbaroum-hud-ability-tabs {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: flex-end;
+  gap: 4px;
+  border-bottom: 1px solid rgb(255 255 255 / 16%);
+}
+
+#symbaroum-hud button.symbaroum-hud-ability-tab {
+  height: 30px;
+  margin: 0;
+  padding: 0 12px;
+  border: 1px solid var(--control-border-color, #302831);
+  border-bottom: 0;
+  border-radius: 4px 4px 0 0;
+  color: var(--color-light-1, #f7f3e8);
+  background: rgb(8 8 10 / 62%);
+  box-shadow: inset 0 0 6px rgb(0 0 0 / 54%);
+  font-size: var(--font-size-12, 0.75rem);
+  font-weight: 700;
+  pointer-events: auto;
+}
+
+#symbaroum-hud button.symbaroum-hud-ability-tab:hover,
+#symbaroum-hud button.symbaroum-hud-ability-tab:focus-visible,
+#symbaroum-hud button.symbaroum-hud-ability-tab[data-active="true"] {
+  border-color: var(--color-warm-1, #ee9b3a);
+  color: var(--color-warm-1, #ee9b3a);
+  background: rgb(14 12 16 / 88%);
+  outline: none;
+}
+
+#symbaroum-hud button.symbaroum-hud-ability-tab[data-learned="false"] {
+  opacity: 0.72;
+}
+
+#symbaroum-hud button.symbaroum-hud-ability-tab[data-active="true"],
+#symbaroum-hud button.symbaroum-hud-ability-tab:hover,
+#symbaroum-hud button.symbaroum-hud-ability-tab:focus-visible {
+  opacity: 1;
+}
+
+#symbaroum-hud .symbaroum-hud-ability-tab-panel {
+  min-height: 0;
+  flex: 1 1 auto;
+  padding: 12px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  border: 1px solid rgb(255 255 255 / 12%);
+  border-top: 0;
+  background: rgb(8 8 10 / 24%);
+}
+
+#symbaroum-hud .symbaroum-hud-ability-level-controls {
+  display: flex;
+  margin: 0 0 10px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+#symbaroum-hud .symbaroum-hud-ability-tab-action {
+  display: inline-flex;
+  margin: 0;
+  padding: 5px 10px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgb(255 255 255 / 12%);
+  border-radius: 3px;
+  color: rgb(255 255 255 / 68%);
+  background: rgb(8 8 10 / 32%);
+  font-size: var(--font-size-11, 0.6875rem);
+}
+
+#symbaroum-hud .symbaroum-hud-ability-tab-action > strong {
+  color: var(--color-light-1, #f7f3e8);
+  font-weight: 700;
+}
+
+#symbaroum-hud button.symbaroum-hud-ability-active-toggle {
+  display: inline-flex;
+  height: 28px;
+  margin: 0;
+  padding: 0 9px;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 1px solid var(--control-border-color, #302831);
+  border-radius: 4px;
+  color: var(--color-light-1, #f7f3e8);
+  background: rgb(8 8 10 / 62%);
+  box-shadow: inset 0 0 6px rgb(0 0 0 / 54%);
+  font-size: var(--font-size-12, 0.75rem);
+  font-weight: 700;
+  pointer-events: auto;
+}
+
+#symbaroum-hud button.symbaroum-hud-ability-active-toggle[data-active="true"] {
+  border-color: var(--color-warm-1, #ee9b3a);
+  color: var(--color-warm-1, #ee9b3a);
+}
+
+#symbaroum-hud button.symbaroum-hud-ability-active-toggle:hover,
+#symbaroum-hud button.symbaroum-hud-ability-active-toggle:focus-visible {
+  border-color: var(--color-warm-1, #ee9b3a);
+  outline: none;
+}
+
+#symbaroum-hud button.symbaroum-hud-ability-active-toggle:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+#symbaroum-hud .symbaroum-hud-ability-description,
+#symbaroum-hud .symbaroum-hud-ability-level-description {
+  color: rgb(255 255 255 / 82%);
+  font-size: var(--font-size-13, 0.8125rem);
+  line-height: 1.5;
+  text-shadow: none;
+  user-select: text;
+}
+
+#symbaroum-hud .symbaroum-hud-ability-description :is(p, ul, ol),
+#symbaroum-hud .symbaroum-hud-ability-level-description :is(p, ul, ol) {
+  margin: 0 0 0.55em;
+}
+
+#symbaroum-hud .symbaroum-hud-ability-description :last-child,
+#symbaroum-hud .symbaroum-hud-ability-level-description :last-child {
+  margin-bottom: 0;
+}
+
+#symbaroum-hud .symbaroum-hud-ability-levels {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+#symbaroum-hud .symbaroum-hud-ability-level {
+  padding: 8px;
+  border: 1px solid rgb(255 255 255 / 10%);
+  border-radius: 4px;
+  background: rgb(8 8 10 / 34%);
+}
+
+#symbaroum-hud .symbaroum-hud-ability-level > h3 {
+  display: flex;
+  margin: 0 0 6px;
+  border: 0;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--color-light-1, #f7f3e8);
+  font-size: var(--font-size-12, 0.75rem);
+  line-height: 1.2;
+}
+
+#symbaroum-hud .symbaroum-hud-ability-level > h3 > small {
+  min-width: 0;
+  overflow: hidden;
+  color: rgb(255 255 255 / 58%);
+  font-size: var(--font-size-10, 0.625rem);
+  font-weight: 400;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#symbaroum-hud .symbaroum-hud-ability-no-description {
+  display: flex;
+  min-height: 100%;
+  align-items: center;
+  justify-content: center;
+  color: rgb(255 255 255 / 46%);
+  font-size: var(--font-size-12, 0.75rem);
+  text-align: center;
+}
+
+#symbaroum-hud button.symbaroum-hud-ability-entry,
+#symbaroum-hud button.symbaroum-hud-attack-entry {
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  height: 54px;
+  margin: 0;
+  padding: 5px 8px 5px 5px;
+  grid-template-columns: 42px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  overflow: hidden;
+  border: 1px solid var(--control-border-color, #302831);
+  border-radius: 5px;
+  color: var(--color-light-1, #f7f3e8);
+  background: rgb(8 8 10 / 72%);
+  box-shadow: inset 0 0 8px rgb(0 0 0 / 68%);
+  font-size: var(--font-size-12, 0.75rem);
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+#symbaroum-hud button.symbaroum-hud-ability-entry {
+  flex: 0 0 54px;
+}
+
+#symbaroum-hud button.symbaroum-hud-ability-entry > img,
+#symbaroum-hud button.symbaroum-hud-attack-entry > img {
+  display: block;
+  width: 42px;
+  height: 42px;
+  margin: 0;
+  border: 0;
+  border-radius: 2px;
+  object-fit: cover;
+}
+
+#symbaroum-hud button.symbaroum-hud-ability-entry > span,
+#symbaroum-hud button.symbaroum-hud-attack-entry > span {
+  min-width: 0;
+  overflow: hidden;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#symbaroum-hud button.symbaroum-hud-ritual-entry > small {
+  grid-column: 2;
+  min-width: 0;
+  overflow: hidden;
+  color: rgb(255 255 255 / 58%);
+  font-size: var(--font-size-10, 0.625rem);
+  line-height: 1;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#symbaroum-hud button.symbaroum-hud-ability-entry:hover,
+#symbaroum-hud button.symbaroum-hud-ability-entry:focus-visible,
+#symbaroum-hud button.symbaroum-hud-ability-entry[data-active="true"],
+#symbaroum-hud button.symbaroum-hud-attack-entry:hover,
+#symbaroum-hud button.symbaroum-hud-attack-entry:focus-visible {
+  border-color: var(--color-warm-1, #ee9b3a);
+  box-shadow:
+    inset 0 0 8px rgb(0 0 0 / 68%),
+    0 0 8px rgb(238 155 58 / 58%);
+  outline: none;
+}
+
+#symbaroum-hud button.symbaroum-hud-ability-entry:disabled,
+#symbaroum-hud button.symbaroum-hud-attack-entry:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+#symbaroum-hud button.symbaroum-hud-ability-entry[data-ability-draggable="true"] {
+  cursor: grab;
+}
+
+#symbaroum-hud button.symbaroum-hud-ability-entry[data-ability-draggable="true"]:active {
+  cursor: grabbing;
+}
+
+#symbaroum-hud button.symbaroum-hud-ability-add {
+  display: inline-flex;
+  width: calc(100% - 12px);
+  min-height: 34px;
+  margin: 6px;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed rgb(209 185 87 / 68%);
+  border-radius: 0;
+  color: #d1b957;
+  background:
+    linear-gradient(rgb(0 0 0 / 28%), rgb(0 0 0 / 28%)),
+    var(--symbaroum-hud-green-ornament) center / cover;
+  font-size: var(--font-size-16, 1rem);
+}
+
+#symbaroum-hud button.symbaroum-hud-ability-add:hover,
+#symbaroum-hud button.symbaroum-hud-ability-add:focus-visible {
+  border-color: #f2d97a;
+  color: #fff0ad;
+  outline: none;
+}
+
+#symbaroum-hud button.symbaroum-hud-ability-add:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+#symbaroum-hud .symbaroum-hud-abilities-empty,
+#symbaroum-hud .symbaroum-hud-attacks-empty {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  color: rgb(255 255 255 / 48%);
+  background: rgb(8 8 10 / 82%);
+  font-size: var(--font-size-11, 0.6875rem);
+  pointer-events: none;
+}
+
+#symbaroum-hud .symbaroum-hud-storage-sidebar {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  padding: 8px;
+  flex-direction: column;
+  gap: 6px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  border-right: 1px solid rgb(255 255 255 / 12%);
+  background: rgb(0 0 0 / 22%);
+}
+
+#symbaroum-hud .symbaroum-hud-storage-sidebar > button {
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  min-height: 50px;
+  margin: 0;
+  padding: 5px 7px;
+  grid-template-columns: 38px minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 7px;
+  border: 1px solid var(--control-border-color, #302831);
+  border-radius: 5px;
+  color: rgb(255 255 255 / 72%);
+  background: rgb(8 8 10 / 72%);
+  box-shadow: inset 0 0 7px rgb(0 0 0 / 62%);
+}
+
+#symbaroum-hud .symbaroum-hud-storage-sidebar > button[data-active="true"],
+#symbaroum-hud .symbaroum-hud-storage-sidebar > button:hover,
+#symbaroum-hud .symbaroum-hud-storage-sidebar > button:focus-visible {
+  border-color: var(--color-warm-1, #ee9b3a);
+  color: #fff;
+  background: rgb(20 15 12 / 86%);
+  box-shadow:
+    inset 0 0 7px rgb(0 0 0 / 62%),
+    0 0 5px rgb(238 155 58 / 35%);
+  outline: none;
+}
+
+#symbaroum-hud .symbaroum-hud-storage-sidebar > button[data-storage-drop-target="true"] {
+  border-color: #75c96b;
+  color: #fff;
+  background: rgb(32 78 35 / 82%);
+  box-shadow:
+    inset 0 0 7px rgb(0 0 0 / 62%),
+    0 0 8px rgb(117 201 107 / 68%);
+}
+
+#symbaroum-hud .symbaroum-hud-storage-sidebar > button[data-storage-withdraw-target="true"] {
+  border-color: #75c96b;
+  color: #fff;
+  background: rgb(32 78 35 / 82%);
+  box-shadow:
+    inset 0 0 7px rgb(0 0 0 / 62%),
+    0 0 8px rgb(117 201 107 / 68%);
+}
+
+#symbaroum-hud .symbaroum-hud-storage-sidebar img,
+#symbaroum-hud .symbaroum-hud-storage-sidebar button > i {
+  width: 38px;
+  height: 38px;
+  margin: 0;
+  border: 0;
+  grid-row: 1 / -1;
+  object-fit: cover;
+}
+
+#symbaroum-hud .symbaroum-hud-storage-sidebar button > i {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-warm-1, #ee9b3a);
+  font-size: var(--font-size-20, 1.25rem);
+}
+
+#symbaroum-hud .symbaroum-hud-storage-sidebar button > span {
+  width: 100%;
+  overflow: hidden;
+  font-size: var(--font-size-12, 0.75rem);
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#symbaroum-hud .symbaroum-hud-storage-sidebar button > small {
+  width: 100%;
+  overflow: hidden;
+  color: rgb(255 255 255 / 54%);
+  font-size: var(--font-size-10, 0.625rem);
+  line-height: 13px;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#symbaroum-hud .symbaroum-hud-storage-pockets-note {
+  display: flex;
+  margin-top: auto;
+  padding: 8px 4px 2px;
+  align-items: center;
+  gap: 6px;
+  color: rgb(255 255 255 / 48%);
+  font-size: var(--font-size-10, 0.625rem);
+  line-height: 1.3;
+}
+
+#symbaroum-hud .symbaroum-hud-storage-pockets-note > i {
+  flex: 0 0 auto;
+  font-size: var(--font-size-14, 0.875rem);
+}
+
+#symbaroum-hud .symbaroum-hud-storage-items {
+  box-sizing: border-box;
+  display: grid;
+  width: 100%;
+  min-height: 0;
+  padding: 12px;
+  grid-auto-rows: 96px;
+  grid-template-columns: repeat(auto-fill, minmax(105px, 1fr));
+  gap: 9px;
+  align-content: start;
+  overflow-y: auto;
+}
+
+#symbaroum-hud .symbaroum-hud-storage-items[data-view-mode="list"] {
+  grid-auto-rows: 52px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 6px;
+}
+
+#symbaroum-hud .symbaroum-hud-storage-items[data-view-mode="list"] > .symbaroum-hud-storage-item {
+  height: 52px;
+}
+
+#symbaroum-hud .symbaroum-hud-storage-items[data-view-mode="list"] .symbaroum-hud-storage-item-main {
+  padding: 5px 8px;
+  grid-template-columns: 40px minmax(0, 1fr) auto;
+  grid-template-rows: minmax(0, 1fr);
+  column-gap: 9px;
+  place-items: center stretch;
+  text-align: left;
+}
+
+#symbaroum-hud .symbaroum-hud-storage-items[data-view-mode="list"] .symbaroum-hud-storage-item-main > img {
+  width: 40px;
+  height: 40px;
+}
+
+#symbaroum-hud .symbaroum-hud-storage-items[data-view-mode="list"] .symbaroum-hud-storage-item-main > span {
+  align-self: center;
+  font-size: var(--font-size-12, 0.75rem);
+  line-height: 1.2;
+  text-align: left;
+}
+
+#symbaroum-hud .symbaroum-hud-storage-items[data-view-mode="list"] .symbaroum-hud-storage-item-main > small {
+  position: static;
+  align-self: center;
+  justify-self: end;
+}
+
+#symbaroum-hud .symbaroum-hud-storage-items[data-storage-inventory-target="true"] {
+  outline: 2px dashed #75c96b;
+  outline-offset: -7px;
+  background: rgb(32 78 35 / 18%);
+}
+
+#symbaroum-hud .symbaroum-hud-storage-item {
+  position: relative;
+  min-width: 0;
+  height: 96px;
+}
+
+#symbaroum-hud .symbaroum-hud-storage-item-main {
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  margin: 0;
+  padding: 5px;
+  grid-template-rows: 58px minmax(0, 1fr);
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid var(--control-border-color, #302831);
+  border-radius: 6px;
+  color: var(--color-light-1, #f7f3e8);
+  background: rgb(8 8 10 / 72%);
+  box-shadow: inset 0 0 8px rgb(0 0 0 / 68%);
+}
+
+#symbaroum-hud .symbaroum-hud-storage-item[data-storage-draggable="true"] {
+  cursor: grab;
+}
+
+#symbaroum-hud .symbaroum-hud-storage-item[data-storage-draggable="true"]:active {
+  cursor: grabbing;
+}
+
+#symbaroum-hud .symbaroum-hud-storage-item-main:disabled {
+  opacity: 0.78;
+  cursor: default;
+}
+
+#symbaroum-hud .symbaroum-hud-storage-item:hover .symbaroum-hud-storage-item-main,
+#symbaroum-hud .symbaroum-hud-storage-item-main:focus-visible {
+  border-color: var(--color-warm-1, #ee9b3a);
+  box-shadow:
+    inset 0 0 8px rgb(0 0 0 / 68%),
+    0 0 6px rgb(238 155 58 / 48%);
+  outline: none;
+}
+
+#symbaroum-hud .symbaroum-hud-storage-item-main > img {
+  width: 56px;
+  height: 56px;
+  margin: 0;
+  border: 0;
+  border-radius: 3px;
+  object-fit: cover;
+}
+
+#symbaroum-hud .symbaroum-hud-storage-item-main > span {
+  width: 100%;
+  overflow: hidden;
+  font-size: var(--font-size-11, 0.6875rem);
+  line-height: 20px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#symbaroum-hud .symbaroum-hud-storage-item-main > small {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  min-width: 20px;
+  padding: 1px 4px;
+  border-radius: 3px;
+  color: #fff;
+  background: rgb(0 0 0 / 78%);
+  font-size: var(--font-size-10, 0.625rem);
+  line-height: 15px;
+}
+
+#symbaroum-hud .symbaroum-hud-storage-item-delete {
+  position: absolute;
+  top: 5px;
+  right: 31px;
+  z-index: 1;
+  display: inline-flex;
+  width: 22px;
+  height: 19px;
+  min-width: 22px;
+  min-height: 19px;
+  margin: 0;
+  padding: 0;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgb(0 0 0 / 42%);
+  border-radius: 3px;
+  color: rgb(255 255 255 / 82%);
+  background: rgb(20 8 8 / 76%);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 42%);
+  font-size: var(--font-size-10, 0.625rem);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 120ms ease, color 120ms ease, background 120ms ease;
+}
+
+#symbaroum-hud .symbaroum-hud-storage-items[data-view-mode="list"] .symbaroum-hud-storage-item-delete {
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+#symbaroum-hud .symbaroum-hud-storage-item:hover .symbaroum-hud-storage-item-delete,
+#symbaroum-hud .symbaroum-hud-storage-item:focus-within .symbaroum-hud-storage-item-delete {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+#symbaroum-hud .symbaroum-hud-storage-item-delete:hover,
+#symbaroum-hud .symbaroum-hud-storage-item-delete:focus-visible {
+  border-color: #e36b5b;
+  color: #fff;
+  background: rgb(96 14 10 / 92%);
+  outline: none;
+}
+
+#symbaroum-hud .symbaroum-hud-storage-empty {
+  display: flex;
+  grid-column: 1 / -1;
+  min-height: 0;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 10px;
+  padding: 24px;
+  color: rgb(255 255 255 / 58%);
+  text-align: center;
+}
+
+#symbaroum-hud .symbaroum-hud-storage-empty > i {
+  color: rgb(255 255 255 / 42%);
+  font-size: 42px;
+}
+
+#symbaroum-hud .symbaroum-hud-info-entry > strong {
+  display: block;
+  min-width: 0;
+  flex: 1 1 auto;
+  overflow: hidden;
+  color: var(--color-light-1, #f7f3e8);
+  font-size: var(--font-size-12, 0.75rem);
+  line-height: 18px;
+  letter-spacing: -0.2px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#symbaroum-hud .symbaroum-hud-hotbar {
+  min-width: 0;
+  min-height: 55px;
+  margin-left: 0;
+  pointer-events: auto;
+}
+
+#symbaroum-hud .symbaroum-hud-hotbar > #hotbar {
+  --hotbar-size: 55px;
+  --button-size: 22px;
+  --slot-color: rgb(8 8 10 / 82%);
+  --key-bg-color-empty: rgb(4 4 6 / 88%);
+  --key-bg-color-full: rgb(4 4 6 / 88%);
+  --key-text-color: var(--color-light-1, #f7f3e8);
+  width: max-content;
+  height: 55px;
+  min-height: 55px;
+  margin: 0;
+  gap: 4px;
+  flex-wrap: nowrap;
+  transform: none;
+  pointer-events: auto;
+}
+
+#symbaroum-hud .symbaroum-hud-hotbar > #hotbar.faded-ui {
+  opacity: 1;
+  transition: transform 250ms ease;
+}
+
+#symbaroum-hud #hotbar #action-bar .slot {
+  background: var(--slot-color);
+  box-shadow:
+    inset 0 0 9px rgb(0 0 0 / 68%),
+    0 0 0 1px rgb(255 255 255 / 7%);
+}
+
+#symbaroum-hud #hotbar #action-bar .symbaroum-hud-document-shortcut {
+  cursor: pointer;
+}
+
+#symbaroum-hud #hotbar #action-bar .symbaroum-hud-document-shortcut > .slot-icon {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  border: 0;
+  object-fit: cover;
+}
+
+.symbaroum-hud-shortcut-context-menu {
+  position: fixed;
+  z-index: 10001;
+  min-width: 170px;
+  padding: 4px;
+  border: 1px solid #050505;
+  border-radius: 5px;
+  background: rgb(8 8 10 / 94%);
+  box-shadow: 0 4px 12px rgb(0 0 0 / 72%);
+}
+
+.symbaroum-hud-shortcut-context-menu button {
+  display: flex;
+  width: 100%;
+  min-height: 28px;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  margin: 0;
+  padding: 4px 8px;
+  border: 0;
+  color: rgb(245 245 245 / 92%);
+  background: transparent;
+  text-align: left;
+}
+
+.symbaroum-hud-shortcut-context-menu button:hover,
+.symbaroum-hud-shortcut-context-menu button:focus-visible {
+  color: #fff;
+  background: rgb(112 22 22 / 78%);
+  outline: 1px solid rgb(198 83 63 / 82%);
+}
+
+#symbaroum-hud #hotbar.compact,
+#symbaroum-hud #hotbar.md.offset,
+#symbaroum-hud #hotbar.sm,
+#symbaroum-hud #hotbar.min {
+  width: max-content;
+  height: 55px;
+  transform: none;
+}
+
+#symbaroum-hud #hotbar #action-bar,
+#symbaroum-hud #hotbar.compact #action-bar,
+#symbaroum-hud #hotbar.md.offset #action-bar,
+#symbaroum-hud #hotbar.sm #action-bar {
+  width: 586px;
+  height: 55px;
+  gap: 4px;
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+}
+
+#symbaroum-hud #hotbar #hotbar-controls-right {
+  height: 55px;
+}
+
+/* Official Symbaroum sheet theme.
+ * The HUD keeps its compact layout and interactions, while reusing the
+ * typography, parchment and ornamental textures shipped with the system. */
+@font-face {
+  font-family: "Symbaroum HUD Primitive";
+  src: url("/systems/symbaroum/fonts/Primitive-4yGY.ttf") format("truetype");
+  font-display: swap;
+}
+
+#symbaroum-hud {
+  --symbaroum-hud-ink: #191713;
+  --symbaroum-hud-muted-ink: #625d53;
+  --symbaroum-hud-blood: #73271d;
+  --symbaroum-hud-gold: #a48b02;
+  --symbaroum-hud-paper: url("/systems/symbaroum/asset/image/foreground.webp");
+  --symbaroum-hud-title: url("/systems/symbaroum/asset/image/background/title.webp");
+  --symbaroum-hud-red-ornament: url("/systems/symbaroum/asset/image/background/red_square_light.webp");
+  --symbaroum-hud-green-ornament: url("/systems/symbaroum/asset/image/background/green_gold_dark.webp");
+  font-family: "Philosopher", var(--font-primary), serif;
+  filter: drop-shadow(0 5px 9px rgb(0 0 0 / 72%));
+}
+
+#symbaroum-hud .symbaroum-hud-character-card,
+#symbaroum-hud .symbaroum-hud-attributes,
+#symbaroum-hud .symbaroum-hud-info-panel,
+#symbaroum-hud .symbaroum-hud-experience-panel,
+#symbaroum-hud .symbaroum-hud-readiness-slot,
+#symbaroum-hud .symbaroum-hud-panel-toggle,
+#symbaroum-hud .symbaroum-hud-effect {
+  border-color: #171613;
+  box-shadow:
+    inset 0 0 0 1px rgb(198 177 117 / 34%),
+    inset 0 0 8px rgb(0 0 0 / 72%),
+    0 1px 4px rgb(0 0 0 / 62%);
+}
+
+#symbaroum-hud .symbaroum-hud-character-card {
+  border-width: 3px;
+  border-radius: 0;
+  background: var(--symbaroum-hud-title) repeat;
+}
+
+#symbaroum-hud .symbaroum-hud-character-card:has(.symbaroum-hud-character-open:hover),
+#symbaroum-hud .symbaroum-hud-character-card:has(.symbaroum-hud-character-open:focus-visible) {
+  border-color: var(--symbaroum-hud-gold);
+  box-shadow:
+    inset 0 0 0 1px rgb(255 239 180 / 45%),
+    inset 0 0 8px #000,
+    0 0 9px rgb(164 139 2 / 78%);
+}
+
+#symbaroum-hud .symbaroum-hud-character-name {
+  min-height: 27px;
+  border-bottom-color: rgb(207 187 125 / 42%);
+  background:
+    linear-gradient(rgb(0 0 0 / 18%), rgb(0 0 0 / 18%)),
+    var(--symbaroum-hud-title) repeat;
+  font-family: "Symbaroum HUD Primitive", "Philosopher", serif;
+  font-size: var(--font-size-15, 0.9375rem);
+  font-weight: 400;
+  letter-spacing: 0.2px;
+  text-shadow: 0 1px 2px #000;
+}
+
+#symbaroum-hud button.symbaroum-hud-character-name-label {
+  font-weight: 400;
+}
+
+#symbaroum-hud .symbaroum-hud-character-resources {
+  border-top: 0;
+  color: #fff9e9;
+  background: transparent;
+  text-shadow:
+    -1px -1px 1px #000,
+    1px 1px 2px #000,
+    0 0 4px #000;
+}
+
+#symbaroum-hud .symbaroum-hud-character-resources > span + span {
+  border-left: 0;
+}
+
+#symbaroum-hud .symbaroum-hud-character-resources i {
+  color: #f4d69a;
+}
+
+#symbaroum-hud .symbaroum-hud-character-resources > span:first-child i {
+  color: #ffb1a1;
+}
+
+#symbaroum-hud .symbaroum-hud-character-resources > span:last-child i {
+  color: #d6b6e5;
+}
+
+#symbaroum-hud .symbaroum-hud-attributes,
+#symbaroum-hud .symbaroum-hud-info-panel,
+#symbaroum-hud .symbaroum-hud-economy-panel,
+#symbaroum-hud .symbaroum-hud-experience-panel {
+  border-radius: 0;
+  background: var(--symbaroum-hud-title) repeat;
+}
+
+#symbaroum-hud button.symbaroum-hud-attribute {
+  color: #f8f3e8;
+  background: var(--symbaroum-hud-title) repeat;
+  text-shadow: 0 1px 2px #000;
+}
+
+#symbaroum-hud button.symbaroum-hud-attribute:nth-child(even) {
+  border-left-color: rgb(226 211 166 / 28%);
+}
+
+#symbaroum-hud button.symbaroum-hud-attribute:nth-child(n + 3) {
+  border-top-color: rgb(226 211 166 / 28%);
+}
+
+#symbaroum-hud .symbaroum-hud-attribute > i {
+  color: #c8af52;
+}
+
+#symbaroum-hud .symbaroum-hud-attribute > strong {
+  display: inline-flex;
+  box-sizing: border-box;
+  width: 26px;
+  min-width: 26px;
+  padding: 0;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #4b463e;
+  color: var(--symbaroum-hud-ink);
+  background: var(--symbaroum-hud-paper) repeat;
+  box-shadow: inset 0 0 4px rgb(0 0 0 / 38%);
+  line-height: 18px;
+  text-align: center;
+  text-shadow: none;
+}
+
+#symbaroum-hud button.symbaroum-hud-attribute:hover,
+#symbaroum-hud button.symbaroum-hud-attribute:focus-visible {
+  color: #fff;
+  background:
+    linear-gradient(rgb(105 27 18 / 65%), rgb(105 27 18 / 65%)),
+    var(--symbaroum-hud-title) repeat;
+}
+
+#symbaroum-hud button.symbaroum-hud-attribute:hover > i,
+#symbaroum-hud button.symbaroum-hud-attribute:focus-visible > i {
+  color: #f2d97a;
+}
+
+#symbaroum-hud .symbaroum-hud-info-entry + .symbaroum-hud-info-entry {
+  border-top-color: rgb(226 211 166 / 28%);
+}
+
+#symbaroum-hud .symbaroum-hud-economy-entry + .symbaroum-hud-economy-entry {
+  border-top-color: rgb(226 211 166 / 28%);
+}
+
+#symbaroum-hud .symbaroum-hud-info-entry > i,
+#symbaroum-hud .symbaroum-hud-info-action > i,
+#symbaroum-hud .symbaroum-hud-economy-entry > i,
+#symbaroum-hud .symbaroum-hud-experience-panel > i {
+  color: #c8af52;
+}
+
+#symbaroum-hud .symbaroum-hud-info-entry > strong,
+#symbaroum-hud .symbaroum-hud-economy-entry > strong,
+#symbaroum-hud .symbaroum-hud-experience-panel > strong {
+  padding: 0 3px;
+  border: 1px solid #4b463e;
+  color: var(--symbaroum-hud-ink);
+  background: var(--symbaroum-hud-paper) repeat;
+  box-shadow: inset 0 0 4px rgb(0 0 0 / 38%);
+  text-align: center;
+  text-shadow: none;
+}
+
+#symbaroum-hud .symbaroum-hud-economy-entry > small {
+  color: #d1b957;
+  text-shadow: 0 1px 2px #000;
+}
+
+#symbaroum-hud .symbaroum-hud-economy-entry[data-overloaded="true"] > i,
+#symbaroum-hud .symbaroum-hud-economy-entry[data-overloaded="true"] > strong,
+#symbaroum-hud .symbaroum-hud-economy-entry[data-immobilized="true"] > i,
+#symbaroum-hud .symbaroum-hud-economy-entry[data-immobilized="true"] > strong {
+  color: #ff4d3d;
+}
+
+#symbaroum-hud button.symbaroum-hud-economy-action:hover,
+#symbaroum-hud button.symbaroum-hud-economy-action:focus-visible {
+  color: #f2d97a;
+  background:
+    linear-gradient(rgb(105 27 18 / 48%), rgb(105 27 18 / 48%)),
+    var(--symbaroum-hud-title) repeat;
+  text-shadow: 0 0 7px var(--symbaroum-hud-gold);
+}
+
+#symbaroum-hud button.symbaroum-hud-info-action:hover,
+#symbaroum-hud button.symbaroum-hud-info-action:focus-visible {
+  color: #f2d97a;
+  text-shadow: 0 0 7px var(--symbaroum-hud-gold);
+}
+
+#symbaroum-hud .symbaroum-hud-hotbar-controls button,
+#symbaroum-hud button.symbaroum-hud-character-action {
+  border-color: #171613;
+  border-radius: 0;
+  color: #e7dfcf;
+  background: var(--symbaroum-hud-title) repeat;
+  box-shadow:
+    inset 0 0 0 1px rgb(198 177 117 / 20%),
+    inset 0 0 5px rgb(0 0 0 / 68%);
+}
+
+#symbaroum-hud .symbaroum-hud-hotbar-controls button:hover,
+#symbaroum-hud .symbaroum-hud-hotbar-controls button:focus-visible,
+#symbaroum-hud button.symbaroum-hud-character-action:hover,
+#symbaroum-hud button.symbaroum-hud-character-action:focus-visible {
+  border-color: var(--symbaroum-hud-gold);
+  color: #f2d97a;
+  background:
+    linear-gradient(rgb(68 52 8 / 25%), rgb(68 52 8 / 25%)),
+    var(--symbaroum-hud-title) repeat;
+}
+
+#symbaroum-hud button.symbaroum-hud-character-action:disabled {
+  border-color: #171613;
+  color: rgb(231 223 207 / 28%);
+  background: var(--symbaroum-hud-title) repeat;
+  filter: grayscale(0.7);
+}
+
+#symbaroum-hud button.symbaroum-hud-readiness-slot,
+#symbaroum-hud button.symbaroum-hud-ammo-recovery-slot {
+  border-radius: 0;
+  background:
+    linear-gradient(rgb(0 0 0 / 12%), rgb(0 0 0 / 12%)),
+    var(--symbaroum-hud-green-ornament) center / cover;
+}
+
+#symbaroum-hud button.symbaroum-hud-ammo-recovery-slot {
+  background:
+    linear-gradient(rgb(80 13 8 / 28%), rgb(80 13 8 / 28%)),
+    var(--symbaroum-hud-red-ornament) center / cover;
+}
+
+#symbaroum-hud button.symbaroum-hud-readiness-slot:hover,
+#symbaroum-hud button.symbaroum-hud-readiness-slot:focus-visible,
+#symbaroum-hud button.symbaroum-hud-readiness-slot[data-drawn="true"],
+#symbaroum-hud button.symbaroum-hud-ammo-recovery-slot:hover,
+#symbaroum-hud button.symbaroum-hud-ammo-recovery-slot:focus-visible {
+  border-color: #d1b957;
+  box-shadow:
+    inset 0 0 0 1px rgb(255 240 177 / 24%),
+    inset 0 0 8px rgb(0 0 0 / 66%),
+    0 0 7px rgb(164 139 2 / 68%);
+}
+
+#symbaroum-hud .symbaroum-hud-readiness-slot > span,
+#symbaroum-hud .symbaroum-hud-ammo-recovery-slot > span {
+  border: 1px solid rgb(207 187 125 / 38%);
+  border-radius: 0;
+  background: rgb(13 30 25 / 78%);
+  color: #fff5d8;
+}
+
+#symbaroum-hud button.symbaroum-hud-panel-toggle {
+  border-radius: 0;
+  color: #f5e7ba;
+}
+
+#symbaroum-hud button.symbaroum-hud-storage-toggle {
+  background:
+    linear-gradient(rgb(0 0 0 / 15%), rgb(0 0 0 / 15%)),
+    var(--symbaroum-hud-green-ornament) center / cover;
+}
+
+#symbaroum-hud button.symbaroum-hud-maneuvers-toggle {
+  background:
+    linear-gradient(rgb(67 40 25 / 26%), rgb(67 40 25 / 26%)),
+    var(--symbaroum-hud-red-ornament) center / cover;
+}
+
+#symbaroum-hud button.symbaroum-hud-attacks-toggle {
+  background:
+    linear-gradient(rgb(80 13 8 / 28%), rgb(80 13 8 / 28%)),
+    var(--symbaroum-hud-red-ornament) center / cover;
+}
+
+#symbaroum-hud button.symbaroum-hud-attacks-toggle[data-weapon-drop-target="true"] {
+  border-color: #d1b957;
+  color: #fff0ad;
+  box-shadow:
+    inset 0 0 0 1px rgb(255 240 177 / 32%),
+    inset 0 0 10px rgb(0 0 0 / 70%),
+    0 0 10px rgb(238 155 58 / 62%);
+}
+
+#symbaroum-hud button.symbaroum-hud-attack-entry[data-weapon-draggable="true"] {
+  cursor: grab;
+}
+
+#symbaroum-hud button.symbaroum-hud-attack-entry[data-weapon-draggable="true"]:active {
+  cursor: grabbing;
+}
+
+#symbaroum-hud button.symbaroum-hud-abilities-toggle {
+  background:
+    linear-gradient(rgb(80 13 8 / 20%), rgb(80 13 8 / 20%)),
+    var(--symbaroum-hud-red-ornament) center / cover;
+}
+
+#symbaroum-hud button.symbaroum-hud-rituals-toggle {
+  background:
+    linear-gradient(rgb(22 18 64 / 28%), rgb(22 18 64 / 28%)),
+    var(--symbaroum-hud-green-ornament) center / cover;
+}
+
+#symbaroum-hud button.symbaroum-hud-rituals-toggle[data-ritual-drop-target="true"] {
+  border-color: #d1b957;
+  color: #fff0ad;
+  box-shadow:
+    inset 0 0 0 1px rgb(255 240 177 / 32%),
+    inset 0 0 10px rgb(0 0 0 / 70%),
+    0 0 10px rgb(238 155 58 / 62%);
+}
+
+#symbaroum-hud button.symbaroum-hud-mystical-powers-toggle {
+  background:
+    linear-gradient(rgb(80 13 8 / 22%), rgb(80 13 8 / 22%)),
+    var(--symbaroum-hud-red-ornament) center / cover;
+}
+
+#symbaroum-hud button.symbaroum-hud-mystical-powers-toggle[data-mystical-power-drop-target="true"] {
+  border-color: #d1b957;
+  color: #fff0ad;
+  box-shadow:
+    inset 0 0 0 1px rgb(255 240 177 / 32%),
+    inset 0 0 10px rgb(0 0 0 / 70%),
+    0 0 10px rgb(238 155 58 / 62%);
+}
+
+#symbaroum-hud button.symbaroum-hud-traits-toggle {
+  background:
+    linear-gradient(rgb(34 78 55 / 26%), rgb(34 78 55 / 26%)),
+    var(--symbaroum-hud-green-ornament) center / cover;
+}
+
+#symbaroum-hud button.symbaroum-hud-panel-toggle:hover,
+#symbaroum-hud button.symbaroum-hud-panel-toggle:focus-visible,
+#symbaroum-hud button.symbaroum-hud-panel-toggle[data-open="true"] {
+  border-color: #d1b957;
+  color: #fff0ad;
+  background-color: #2b2010;
+  box-shadow:
+    inset 0 0 0 1px rgb(255 240 177 / 28%),
+    inset 0 0 8px rgb(0 0 0 / 66%),
+    0 0 7px rgb(164 139 2 / 68%);
+}
+
+#symbaroum-hud .symbaroum-hud-effect {
+  border-radius: 0;
+  background: var(--symbaroum-hud-title) repeat;
+}
+
+#symbaroum-hud .symbaroum-hud-storage-panel,
+#symbaroum-hud .symbaroum-hud-abilities-panel,
+#symbaroum-hud .symbaroum-hud-attacks-panel {
+  border: 5px solid #181713;
+  border-radius: 0;
+  color: var(--symbaroum-hud-ink);
+  background: var(--symbaroum-hud-paper) repeat;
+  box-shadow:
+    inset 0 0 18px rgb(66 52 31 / 20%),
+    0 8px 24px rgb(0 0 0 / 72%);
+  font-family: "Philosopher", var(--font-primary), serif;
+  text-shadow: none;
+}
+
+#symbaroum-hud .symbaroum-hud-storage-header {
+  min-height: 44px;
+  border-bottom: 2px solid #6f241b;
+  color: #f8f3e8;
+  background: var(--symbaroum-hud-title) repeat;
+  box-shadow: inset 0 -1px 0 rgb(207 187 125 / 28%);
+}
+
+#symbaroum-hud .symbaroum-hud-storage-title > strong {
+  font-family: "Symbaroum HUD Primitive", "Philosopher", serif;
+  font-size: var(--font-size-18, 1.125rem);
+  font-weight: 400;
+  letter-spacing: 0.25px;
+}
+
+#symbaroum-hud .symbaroum-hud-storage-title > i,
+#symbaroum-hud .symbaroum-hud-quiver-detail-info i {
+  color: #d1b957;
+}
+
+#symbaroum-hud .symbaroum-hud-storage-title > small,
+#symbaroum-hud .symbaroum-hud-storage-title > .symbaroum-hud-storage-load {
+  color: rgb(248 243 232 / 68%);
+}
+
+#symbaroum-hud .symbaroum-hud-storage-load i {
+  color: rgb(248 243 232 / 62%);
+}
+
+#symbaroum-hud button.symbaroum-hud-storage-view-toggle,
+#symbaroum-hud button.symbaroum-hud-quiver-reload {
+  border-color: rgb(207 187 125 / 44%);
+  border-radius: 0;
+  color: #eee3c8;
+  background: var(--symbaroum-hud-title) repeat;
+}
+
+#symbaroum-hud button.symbaroum-hud-storage-view-toggle:hover,
+#symbaroum-hud button.symbaroum-hud-storage-view-toggle:focus-visible,
+#symbaroum-hud button.symbaroum-hud-quiver-reload:hover,
+#symbaroum-hud button.symbaroum-hud-quiver-reload:focus-visible {
+  border-color: #d1b957;
+  color: #fff0ad;
+  text-shadow: 0 0 7px var(--symbaroum-hud-gold);
+}
+
+#symbaroum-hud button.symbaroum-hud-storage-close {
+  color: #eee3c8;
+}
+
+#symbaroum-hud button.symbaroum-hud-storage-close:hover,
+#symbaroum-hud button.symbaroum-hud-storage-close:focus-visible {
+  color: #fff;
+  background: var(--symbaroum-hud-blood);
+  outline-color: #b74d3a;
+}
+
+#symbaroum-hud .symbaroum-hud-storage-sidebar {
+  border-right: 2px solid #6f241b;
+  background:
+    linear-gradient(rgb(6 25 19 / 18%), rgb(6 25 19 / 18%)),
+    var(--symbaroum-hud-green-ornament) center / cover;
+}
+
+#symbaroum-hud .symbaroum-hud-storage-sidebar > button {
+  border-color: rgb(207 187 125 / 38%);
+  border-radius: 0;
+  color: #f4ecda;
+  background: var(--symbaroum-hud-title) repeat;
+}
+
+#symbaroum-hud .symbaroum-hud-storage-sidebar > button[data-active="true"],
+#symbaroum-hud .symbaroum-hud-storage-sidebar > button:hover,
+#symbaroum-hud .symbaroum-hud-storage-sidebar > button:focus-visible {
+  border-color: #d1b957;
+  color: #fff;
+  background:
+    linear-gradient(rgb(34 78 55 / 42%), rgb(34 78 55 / 42%)),
+    var(--symbaroum-hud-title) repeat;
+  box-shadow:
+    inset 0 0 7px rgb(0 0 0 / 62%),
+    0 0 5px rgb(164 139 2 / 50%);
+}
+
+#symbaroum-hud .symbaroum-hud-storage-sidebar button > i {
+  color: #d1b957;
+}
+
+#symbaroum-hud .symbaroum-hud-storage-sidebar button > small,
+#symbaroum-hud .symbaroum-hud-storage-pockets-note {
+  color: rgb(244 236 218 / 68%);
+}
+
+#symbaroum-hud .symbaroum-hud-storage-items,
+#symbaroum-hud .symbaroum-hud-abilities-body,
+#symbaroum-hud .symbaroum-hud-attacks-body,
+#symbaroum-hud .symbaroum-hud-quiver-page {
+  background:
+    linear-gradient(rgb(255 255 255 / 9%), rgb(255 255 255 / 9%)),
+    var(--symbaroum-hud-paper) repeat;
+}
+
+#symbaroum-hud .symbaroum-hud-abilities-sidebar {
+  border-right-color: #625b4e;
+  background:
+    linear-gradient(rgb(34 78 55 / 34%), rgb(34 78 55 / 34%)),
+    var(--symbaroum-hud-title) repeat;
+}
+
+#symbaroum-hud .symbaroum-hud-ability-detail {
+  color: var(--symbaroum-hud-ink);
+}
+
+#symbaroum-hud .symbaroum-hud-ability-detail-header > img {
+  border-color: #28241e;
+  border-radius: 0;
+  box-shadow: 0 0 0 1px rgb(207 187 125 / 36%);
+}
+
+#symbaroum-hud .symbaroum-hud-ability-detail-title > strong,
+#symbaroum-hud .symbaroum-hud-ability-level > h3 {
+  color: var(--symbaroum-hud-ink);
+}
+
+#symbaroum-hud .symbaroum-hud-ability-detail-title > span,
+#symbaroum-hud .symbaroum-hud-ability-level > h3 > small {
+  color: var(--symbaroum-hud-muted-ink);
+}
+
+#symbaroum-hud button.symbaroum-hud-ability-detail-action {
+  border-color: #413d35;
+  border-radius: 0;
+  color: #f8f3e8;
+  background: var(--symbaroum-hud-title) repeat;
+}
+
+#symbaroum-hud button.symbaroum-hud-ability-detail-action:hover,
+#symbaroum-hud button.symbaroum-hud-ability-detail-action:focus-visible {
+  border-color: #d1b957;
+  box-shadow:
+    inset 0 0 7px rgb(0 0 0 / 58%),
+    0 0 7px rgb(164 139 2 / 55%);
+  outline: none;
+}
+
+#symbaroum-hud .symbaroum-hud-ability-tabs {
+  border-bottom-color: #6f241b;
+}
+
+#symbaroum-hud button.symbaroum-hud-ability-tab {
+  border-color: #413d35;
+  border-radius: 0;
+  color: #eee3c8;
+  background: var(--symbaroum-hud-title) repeat;
+  font-family: "Philosopher", var(--font-primary), serif;
+}
+
+#symbaroum-hud button.symbaroum-hud-ability-tab:hover,
+#symbaroum-hud button.symbaroum-hud-ability-tab:focus-visible,
+#symbaroum-hud button.symbaroum-hud-ability-tab[data-active="true"] {
+  border-color: #d1b957;
+  color: #fff0ad;
+  background:
+    linear-gradient(rgb(105 27 18 / 58%), rgb(105 27 18 / 58%)),
+    var(--symbaroum-hud-title) repeat;
+  box-shadow:
+    inset 0 0 7px rgb(0 0 0 / 58%),
+    0 -1px 5px rgb(164 139 2 / 40%);
+}
+
+#symbaroum-hud button.symbaroum-hud-ability-tab[data-learned="true"] {
+  color: #fff0ad;
+}
+
+#symbaroum-hud .symbaroum-hud-ability-tab-panel {
+  border-color: rgb(98 91 78 / 72%);
+  background:
+    linear-gradient(rgb(255 255 255 / 10%), rgb(255 255 255 / 10%)),
+    var(--symbaroum-hud-paper) repeat;
+}
+
+#symbaroum-hud .symbaroum-hud-ability-tab-action {
+  border-color: rgb(98 91 78 / 72%);
+  border-radius: 0;
+  color: var(--symbaroum-hud-muted-ink);
+  background:
+    linear-gradient(rgb(255 255 255 / 14%), rgb(255 255 255 / 14%)),
+    var(--symbaroum-hud-paper) repeat;
+}
+
+#symbaroum-hud .symbaroum-hud-ability-tab-action > strong {
+  color: var(--symbaroum-hud-ink);
+}
+
+#symbaroum-hud button.symbaroum-hud-ability-active-toggle {
+  border-color: #413d35;
+  border-radius: 0;
+  color: #eee3c8;
+  background: var(--symbaroum-hud-title) repeat;
+  font-family: "Philosopher", var(--font-primary), serif;
+}
+
+#symbaroum-hud button.symbaroum-hud-ability-active-toggle[data-active="true"],
+#symbaroum-hud button.symbaroum-hud-ability-active-toggle:hover,
+#symbaroum-hud button.symbaroum-hud-ability-active-toggle:focus-visible {
+  border-color: #d1b957;
+  color: #fff0ad;
+  background:
+    linear-gradient(rgb(34 78 55 / 42%), rgb(34 78 55 / 42%)),
+    var(--symbaroum-hud-title) repeat;
+  box-shadow:
+    inset 0 0 7px rgb(0 0 0 / 58%),
+    0 0 5px rgb(164 139 2 / 40%);
+}
+
+#symbaroum-hud .symbaroum-hud-ability-description,
+#symbaroum-hud .symbaroum-hud-ability-level-description {
+  color: var(--symbaroum-hud-ink);
+}
+
+#symbaroum-hud .symbaroum-hud-ability-level {
+  border-color: rgb(98 91 78 / 72%);
+  border-radius: 0;
+  background:
+    linear-gradient(rgb(255 255 255 / 14%), rgb(255 255 255 / 14%)),
+    var(--symbaroum-hud-paper) repeat;
+}
+
+#symbaroum-hud .symbaroum-hud-ability-no-description {
+  color: var(--symbaroum-hud-muted-ink);
+}
+
+#symbaroum-hud .symbaroum-hud-storage-item-main {
+  border-color: #625b4e;
+  border-radius: 0;
+  color: var(--symbaroum-hud-ink);
+  background:
+    linear-gradient(rgb(255 255 255 / 18%), rgb(255 255 255 / 18%)),
+    var(--symbaroum-hud-paper) repeat;
+  box-shadow:
+    inset 0 0 7px rgb(66 52 31 / 20%),
+    0 1px 2px rgb(0 0 0 / 26%);
+}
+
+#symbaroum-hud .symbaroum-hud-storage-item:hover .symbaroum-hud-storage-item-main,
+#symbaroum-hud .symbaroum-hud-storage-item-main:focus-visible {
+  border-color: var(--symbaroum-hud-blood);
+  color: #46150f;
+  box-shadow:
+    inset 0 0 7px rgb(115 39 29 / 18%),
+    0 0 6px rgb(115 39 29 / 46%);
+}
+
+#symbaroum-hud .symbaroum-hud-storage-item-main > img,
+#symbaroum-hud button.symbaroum-hud-ability-entry > img,
+#symbaroum-hud .symbaroum-hud-quiver-detail > img,
+#symbaroum-hud .symbaroum-hud-storage-title-img {
+  border: 1px solid #28241e;
+  border-radius: 0;
+  box-shadow: 0 0 0 1px rgb(207 187 125 / 36%);
+}
+
+#symbaroum-hud .symbaroum-hud-storage-item-main > small {
+  border: 1px solid rgb(207 187 125 / 35%);
+  border-radius: 0;
+  background: var(--symbaroum-hud-title) repeat;
+}
+
+#symbaroum-hud .symbaroum-hud-storage-item-delete {
+  border-color: rgb(98 91 78 / 76%);
+  border-radius: 0;
+  color: #f6ede0;
+  background: var(--symbaroum-hud-title) repeat;
+}
+
+#symbaroum-hud .symbaroum-hud-storage-item-delete:hover,
+#symbaroum-hud .symbaroum-hud-storage-item-delete:focus-visible {
+  border-color: var(--symbaroum-hud-blood);
+  color: #fff;
+  background:
+    linear-gradient(rgb(90 11 8 / 72%), rgb(90 11 8 / 72%)),
+    var(--symbaroum-hud-title) repeat;
+}
+
+#symbaroum-hud .symbaroum-hud-quiver-detail {
+  border-color: #625b4e;
+  border-radius: 0;
+  background:
+    linear-gradient(rgb(255 255 255 / 18%), rgb(255 255 255 / 18%)),
+    var(--symbaroum-hud-paper) repeat;
+  box-shadow: inset 0 0 8px rgb(66 52 31 / 24%);
+}
+
+#symbaroum-hud .symbaroum-hud-quiver-detail-info > span,
+#symbaroum-hud .symbaroum-hud-quiver-loaded-list > span,
+#symbaroum-hud .symbaroum-hud-quiver-ammo-section > h3 {
+  color: var(--symbaroum-hud-muted-ink);
+}
+
+#symbaroum-hud button.symbaroum-hud-ability-entry,
+#symbaroum-hud button.symbaroum-hud-attack-entry {
+  border-color: #413d35;
+  border-radius: 0;
+  color: #f8f3e8;
+  background: var(--symbaroum-hud-title) repeat;
+  box-shadow:
+    inset 0 0 7px rgb(0 0 0 / 58%),
+    0 1px 2px rgb(0 0 0 / 34%);
+}
+
+#symbaroum-hud button.symbaroum-hud-ability-entry:hover,
+#symbaroum-hud button.symbaroum-hud-ability-entry:focus-visible,
+#symbaroum-hud button.symbaroum-hud-ability-entry[data-active="true"],
+#symbaroum-hud button.symbaroum-hud-attack-entry:hover,
+#symbaroum-hud button.symbaroum-hud-attack-entry:focus-visible {
+  border-color: #d1b957;
+  box-shadow:
+    inset 0 0 7px rgb(0 0 0 / 58%),
+    0 0 7px rgb(164 139 2 / 55%);
+}
+
+#symbaroum-hud .symbaroum-hud-attack-slot {
+  min-width: 0;
+  min-height: 0;
+}
+
+#symbaroum-hud button.symbaroum-hud-attack-entry {
+  position: relative;
+  display: grid;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  padding: 7px 7px 0;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr) 38px;
+  gap: 0;
+  overflow: hidden;
+  border: 1px solid #27231d;
+  color: #f8f3e8;
+  background:
+    linear-gradient(rgb(85 15 10 / 24%), rgb(6 8 7 / 52%)),
+    var(--symbaroum-hud-red-ornament) center / cover;
+  box-shadow:
+    inset 0 0 0 1px rgb(207 187 125 / 18%),
+    inset 0 0 14px rgb(0 0 0 / 66%),
+    0 2px 4px rgb(0 0 0 / 38%);
+  transition:
+    border-color 120ms ease,
+    box-shadow 120ms ease,
+    filter 120ms ease,
+    transform 120ms ease;
+}
+
+#symbaroum-hud button.symbaroum-hud-attack-entry::before {
+  position: absolute;
+  inset: 5px;
+  z-index: 2;
+  border: 1px solid rgb(220 194 118 / 24%);
+  content: "";
+  pointer-events: none;
+}
+
+#symbaroum-hud button.symbaroum-hud-attack-entry > img {
+  position: relative;
+  z-index: 1;
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  margin: 0;
+  padding: 7px;
+  border: 1px solid #15130f;
+  border-radius: 0;
+  background:
+    radial-gradient(circle, rgb(132 43 31 / 34%), rgb(4 8 7 / 72%) 72%),
+    var(--symbaroum-hud-title) repeat;
+  box-shadow:
+    0 0 0 1px rgb(207 187 125 / 32%),
+    inset 0 0 12px rgb(0 0 0 / 54%);
+  object-fit: contain;
+  transition:
+    filter 120ms ease,
+    transform 120ms ease;
+}
+
+#symbaroum-hud button.symbaroum-hud-attack-entry > .symbaroum-hud-attack-label {
+  position: relative;
+  z-index: 3;
+  display: grid;
+  min-width: 0;
+  margin: 0 -7px;
+  padding: 0 11px 0 12px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  overflow: hidden;
+  border-top: 2px solid #6f241b;
+  color: #f8f0dc;
+  background: var(--symbaroum-hud-title) repeat;
+  text-align: left;
+  white-space: normal;
+}
+
+#symbaroum-hud .symbaroum-hud-attack-label > strong {
+  display: -webkit-box;
+  min-width: 0;
+  overflow: hidden;
+  font-family: "Philosopher", var(--font-primary), serif;
+  font-size: var(--font-size-14, 0.875rem);
+  font-weight: 700;
+  line-height: 1.05;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+#symbaroum-hud .symbaroum-hud-attack-label > i {
+  color: rgb(209 185 87 / 72%);
+  font-size: var(--font-size-14, 0.875rem);
+  transition:
+    color 120ms ease,
+    text-shadow 120ms ease;
+}
+
+#symbaroum-hud button.symbaroum-hud-attack-entry:hover {
+  border-color: #d1b957;
+  filter: saturate(1.08);
+  box-shadow:
+    inset 0 0 0 1px rgb(255 240 177 / 26%),
+    inset 0 0 14px rgb(0 0 0 / 62%),
+    0 0 9px rgb(164 139 2 / 58%);
+  transform: translateY(-2px);
+}
+
+#symbaroum-hud button.symbaroum-hud-attack-entry:hover > img {
+  filter: brightness(1.08) saturate(1.08);
+  transform: scale(1.025);
+}
+
+#symbaroum-hud button.symbaroum-hud-attack-entry:hover .symbaroum-hud-attack-label > i,
+#symbaroum-hud button.symbaroum-hud-attack-entry:focus-visible .symbaroum-hud-attack-label > i {
+  color: #fff0ad;
+  text-shadow: 0 0 6px var(--symbaroum-hud-gold);
+}
+
+#symbaroum-hud button.symbaroum-hud-attack-entry:focus-visible {
+  border-color: #d1b957;
+  box-shadow:
+    inset 0 0 0 1px rgb(255 240 177 / 26%),
+    inset 0 0 14px rgb(0 0 0 / 62%),
+    0 0 9px rgb(164 139 2 / 58%);
+  outline: 2px solid #d1b957;
+  outline-offset: 2px;
+}
+
+#symbaroum-hud button.symbaroum-hud-attack-entry:active {
+  filter: brightness(0.94);
+  transform: translateY(0) scale(0.985);
+}
+
+#symbaroum-hud button.symbaroum-hud-attack-entry:disabled {
+  filter: grayscale(0.28);
+  opacity: 0.58;
+}
+
+#symbaroum-hud button.symbaroum-hud-attack-entry:disabled:hover {
+  border-color: #413d35;
+  box-shadow:
+    inset 0 0 0 1px rgb(207 187 125 / 18%),
+    inset 0 0 14px rgb(0 0 0 / 66%),
+    0 2px 4px rgb(0 0 0 / 38%);
+  transform: none;
+}
+
+#symbaroum-hud button.symbaroum-hud-attack-entry:disabled:hover > img {
+  filter: none;
+  transform: none;
+}
+
+#symbaroum-hud button.symbaroum-hud-attack-entry:disabled:hover .symbaroum-hud-attack-label > i {
+  color: rgb(209 185 87 / 72%);
+  text-shadow: none;
+}
+
+#symbaroum-hud .symbaroum-hud-abilities-empty,
+#symbaroum-hud .symbaroum-hud-attacks-empty,
+#symbaroum-hud .symbaroum-hud-storage-empty {
+  color: var(--symbaroum-hud-muted-ink);
+  background: transparent;
+}
+
+#symbaroum-hud .symbaroum-hud-attacks-body > .symbaroum-hud-attacks-empty {
+  grid-column: 1 / -1;
+  align-self: center;
+  justify-self: center;
+}
+
+#symbaroum-hud .symbaroum-hud-storage-empty > i {
+  color: rgb(98 93 83 / 64%);
+}
+
+#symbaroum-hud .symbaroum-hud-hotbar > #hotbar {
+  --slot-color: rgb(16 15 13 / 88%);
+  --key-bg-color-empty: rgb(16 15 13 / 92%);
+  --key-bg-color-full: rgb(16 15 13 / 92%);
+}
+
+#symbaroum-hud #hotbar #action-bar .slot {
+  border-color: #171613;
+  border-radius: 0;
+  background:
+    linear-gradient(rgb(0 0 0 / 12%), rgb(0 0 0 / 12%)),
+    var(--symbaroum-hud-title) repeat;
+  box-shadow:
+    inset 0 0 0 1px rgb(198 177 117 / 18%),
+    inset 0 0 8px rgb(0 0 0 / 68%);
+}
+
+#symbaroum-hud #hotbar #action-bar .slot:hover,
+#symbaroum-hud #hotbar #action-bar .slot:focus-within {
+  border-color: var(--symbaroum-hud-gold);
+  box-shadow:
+    inset 0 0 0 1px rgb(255 240 177 / 24%),
+    inset 0 0 8px rgb(0 0 0 / 68%),
+    0 0 6px rgb(164 139 2 / 58%);
+}
+
+#symbaroum-hud .symbaroum-hud-storage-items:not([data-view-mode="list"]) {
+  grid-auto-rows: 96px;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 120px));
+  gap: 10px;
+}
+
+#symbaroum-hud .symbaroum-hud-storage-items:not([data-view-mode="list"]) .symbaroum-hud-storage-item-main {
+  padding: 2px;
+  grid-template-rows: 70px 18px;
+  border-color: transparent;
+  color: var(--symbaroum-hud-ink);
+  background: transparent;
+  box-shadow: none;
+}
+
+#symbaroum-hud .symbaroum-hud-storage-items:not([data-view-mode="list"]) .symbaroum-hud-storage-item:hover .symbaroum-hud-storage-item-main {
+  border-color: transparent;
+  color: #46150f;
+  background: transparent;
+  box-shadow: none;
+}
+
+#symbaroum-hud .symbaroum-hud-storage-items:not([data-view-mode="list"]) .symbaroum-hud-storage-item-main:focus-visible {
+  border-color: transparent;
+  outline: 1px solid var(--symbaroum-hud-gold);
+  outline-offset: -1px;
+  background: transparent;
+  box-shadow: none;
+}
+
+#symbaroum-hud .symbaroum-hud-storage-items:not([data-view-mode="list"]) .symbaroum-hud-storage-item-main > img {
+  width: 70px;
+  height: 70px;
+  border: 0;
+  box-shadow: none;
+}
+
+#symbaroum-hud .symbaroum-hud-storage-items:not([data-view-mode="list"]) .symbaroum-hud-storage-item-main > span {
+  align-self: start;
+  color: var(--symbaroum-hud-muted-ink);
+  line-height: 18px;
+  text-align: center;
+}
+
+#symbaroum-hud .symbaroum-hud-storage-items:not([data-view-mode="list"]) .symbaroum-hud-storage-item-main > small {
+  display: none;
+}
+
+/* Ability reader: a compact Symbaroum codex built from the system assets. */
+#symbaroum-hud {
+  --symbaroum-hud-codex-paper:
+    url("/systems/symbaroum/asset/modules/foreground2a.png");
+  --symbaroum-hud-codex-header:
+    url("/systems/symbaroum/asset/modules/sym-journal-header.webp");
+  --symbaroum-hud-codex-divider:
+    url("/systems/symbaroum/asset/modules/fancytextheader.png");
+}
+
+#symbaroum-hud .symbaroum-hud-ability-detail {
+  position: relative;
+  isolation: isolate;
+  padding: 0;
+  gap: 0;
+  overflow: hidden;
+  background:
+    linear-gradient(rgb(255 252 239 / 18%), rgb(230 220 193 / 13%)),
+    var(--symbaroum-hud-codex-paper) center / 512px 512px repeat,
+    var(--symbaroum-hud-paper) repeat;
+  box-shadow: inset 0 0 34px rgb(70 47 27 / 14%);
+}
+
+#symbaroum-hud .symbaroum-hud-ability-detail::after {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  border: 1px solid rgb(76 61 39 / 34%);
+  box-shadow:
+    inset 0 0 18px rgb(55 34 17 / 13%),
+    inset 0 0 0 4px rgb(255 248 222 / 15%);
+  content: "";
+  pointer-events: none;
+}
+
+#symbaroum-hud .symbaroum-hud-ability-detail-header {
+  position: relative;
+  z-index: 1;
+  box-sizing: border-box;
+  min-height: 114px;
+  padding: 14px 18px;
+  grid-template-columns: 84px minmax(0, 1fr) auto;
+  gap: 15px;
+  overflow: hidden;
+  border-bottom: 3px double #a88945;
+  color: #f8f0dc;
+  background:
+    linear-gradient(90deg, rgb(5 13 10 / 35%), rgb(9 18 14 / 8%) 50%, rgb(4 7 6 / 46%)),
+    var(--symbaroum-hud-codex-header) center 44% / cover no-repeat,
+    var(--symbaroum-hud-title) repeat;
+  box-shadow:
+    inset 0 -12px 24px rgb(0 0 0 / 24%),
+    0 3px 8px rgb(59 35 18 / 35%);
+}
+
+#symbaroum-hud .symbaroum-hud-ability-detail-header::before {
+  position: absolute;
+  inset: 7px;
+  border: 1px solid rgb(219 194 119 / 26%);
+  content: "";
+  pointer-events: none;
+}
+
+#symbaroum-hud .symbaroum-hud-ability-detail-header > * {
+  position: relative;
+  z-index: 1;
+}
+
+#symbaroum-hud .symbaroum-hud-ability-detail-header > img {
+  box-sizing: border-box;
+  width: 84px;
+  height: 84px;
+  padding: 3px;
+  border: 1px solid #b99c55;
+  outline: 2px solid #171a14;
+  outline-offset: -4px;
+  background: #101510;
+  box-shadow:
+    0 0 0 1px #080a08,
+    0 4px 12px rgb(0 0 0 / 72%);
+}
+
+#symbaroum-hud .symbaroum-hud-ability-detail-title {
+  gap: 6px;
+}
+
+#symbaroum-hud .symbaroum-hud-ability-detail-title > strong {
+  color: #fff5d5;
+  font-family: "Symbaroum HUD Primitive", "Philosopher", serif;
+  font-size: var(--font-size-24, 1.5rem);
+  font-weight: 400;
+  letter-spacing: 0.35px;
+  line-height: 1.05;
+  text-shadow:
+    0 2px 2px #000,
+    0 0 8px rgb(0 0 0 / 72%);
+}
+
+#symbaroum-hud .symbaroum-hud-ability-detail-title > span {
+  width: max-content;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 3px 8px;
+  border-left: 2px solid #b59a4f;
+  color: rgb(246 234 199 / 74%);
+  background: rgb(0 0 0 / 24%);
+  font-size: var(--font-size-11, 0.6875rem);
+  letter-spacing: 0.2px;
+  text-shadow: 0 1px 2px #000;
+}
+
+#symbaroum-hud .symbaroum-hud-ability-detail-actions {
+  align-self: end;
+  padding-bottom: 2px;
+  gap: 7px;
+}
+
+#symbaroum-hud button.symbaroum-hud-ability-detail-action {
+  min-width: 34px;
+  height: 34px;
+  padding: 0 11px;
+  border-color: #a88e4b;
+  color: #fff4cf;
+  background:
+    linear-gradient(rgb(79 22 16 / 46%), rgb(34 10 8 / 42%)),
+    var(--symbaroum-hud-red-ornament) center / cover;
+  box-shadow:
+    inset 0 0 8px rgb(0 0 0 / 66%),
+    0 2px 4px rgb(0 0 0 / 52%);
+  font-family: "Philosopher", var(--font-primary), serif;
+  font-size: var(--font-size-12, 0.75rem);
+  font-weight: 700;
+}
+
+#symbaroum-hud button.symbaroum-hud-ability-detail-action:last-child {
+  padding-inline: 9px;
+}
+
+#symbaroum-hud button.symbaroum-hud-ability-detail-action:hover,
+#symbaroum-hud button.symbaroum-hud-ability-detail-action:focus-visible {
+  border-color: #ead783;
+  color: #fff9df;
+  background:
+    linear-gradient(rgb(119 33 23 / 64%), rgb(54 15 11 / 48%)),
+    var(--symbaroum-hud-red-ornament) center / cover;
+  box-shadow:
+    inset 0 0 8px rgb(0 0 0 / 58%),
+    0 0 8px rgb(196 166 74 / 58%);
+}
+
+#symbaroum-hud .symbaroum-hud-ability-tabs {
+  position: relative;
+  z-index: 1;
+  min-height: 45px;
+  box-sizing: border-box;
+  padding: 9px 18px 0;
+  align-items: stretch;
+  gap: 6px;
+  border-bottom: 2px solid #762a20;
+  background:
+    linear-gradient(rgb(236 226 198 / 12%), rgb(207 190 154 / 9%)),
+    var(--symbaroum-hud-codex-paper) center / 512px 512px repeat;
+  box-shadow: inset 0 -5px 8px rgb(84 50 28 / 10%);
+}
+
+#symbaroum-hud button.symbaroum-hud-ability-tab {
+  position: relative;
+  min-width: 92px;
+  height: 36px;
+  padding: 0 14px;
+  border-color: #4a4439;
+  color: #e8dfc9;
+  background:
+    linear-gradient(rgb(22 38 29 / 20%), rgb(0 0 0 / 24%)),
+    var(--symbaroum-hud-title) repeat;
+  box-shadow:
+    inset 0 0 8px rgb(0 0 0 / 58%),
+    0 -1px 2px rgb(0 0 0 / 34%);
+  letter-spacing: 0.2px;
+  transition:
+    color 120ms ease,
+    border-color 120ms ease,
+    box-shadow 120ms ease;
+}
+
+#symbaroum-hud button.symbaroum-hud-ability-tab > i {
+  color: #d8bd5d;
+  font-size: 0.78em;
+}
+
+#symbaroum-hud button.symbaroum-hud-ability-tab:hover,
+#symbaroum-hud button.symbaroum-hud-ability-tab:focus-visible,
+#symbaroum-hud button.symbaroum-hud-ability-tab[data-active="true"] {
+  border-color: #bda557;
+  color: #fff5cb;
+  background:
+    linear-gradient(rgb(93 30 22 / 58%), rgb(50 16 12 / 48%)),
+    var(--symbaroum-hud-title) repeat;
+  box-shadow:
+    inset 0 0 8px rgb(0 0 0 / 56%),
+    0 0 6px rgb(135 101 24 / 46%);
+}
+
+#symbaroum-hud button.symbaroum-hud-ability-tab[data-active="true"]::after {
+  position: absolute;
+  right: 13px;
+  bottom: -3px;
+  left: 13px;
+  height: 3px;
+  background: #e2cb72;
+  box-shadow: 0 0 5px rgb(167 132 38 / 64%);
+  content: "";
+}
+
+#symbaroum-hud .symbaroum-hud-ability-tab-panel {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  min-height: 0;
+  margin: 14px 18px 18px;
+  padding: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid #5d5548;
+  border-top: 1px solid #5d5548;
+  background:
+    linear-gradient(90deg, rgb(111 37 27 / 8%), transparent 18%, transparent 82%, rgb(45 76 52 / 6%)),
+    var(--symbaroum-hud-codex-paper) center / 512px 512px repeat,
+    var(--symbaroum-hud-paper) repeat;
+  box-shadow:
+    inset 0 0 0 4px rgb(255 252 232 / 30%),
+    inset 0 0 22px rgb(67 45 24 / 16%),
+    0 2px 6px rgb(52 33 18 / 24%);
+}
+
+#symbaroum-hud .symbaroum-hud-ability-tab-panel::before,
+#symbaroum-hud .symbaroum-hud-ability-tab-panel::after {
+  position: absolute;
+  z-index: 3;
+  width: 26px;
+  height: 26px;
+  content: "";
+  pointer-events: none;
+}
+
+#symbaroum-hud .symbaroum-hud-ability-tab-panel::before {
+  top: 6px;
+  left: 6px;
+  border-top: 2px solid #8b3529;
+  border-left: 2px solid #8b3529;
+}
+
+#symbaroum-hud .symbaroum-hud-ability-tab-panel::after {
+  right: 6px;
+  bottom: 6px;
+  border-right: 2px solid #8b3529;
+  border-bottom: 2px solid #8b3529;
+}
+
+#symbaroum-hud .symbaroum-hud-ability-page-heading {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  min-height: 52px;
+  box-sizing: border-box;
+  padding: 9px 20px 8px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 18px;
+  border-bottom: 1px solid rgb(94 76 52 / 38%);
+  background:
+    linear-gradient(rgb(255 252 237 / 48%), rgb(230 219 190 / 24%)),
+    var(--symbaroum-hud-codex-paper) center / 512px 512px repeat;
+  box-shadow: 0 2px 7px rgb(75 49 28 / 11%);
+}
+
+#symbaroum-hud .symbaroum-hud-ability-page-title {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: minmax(26px, 1fr) auto minmax(26px, 1fr);
+  align-items: center;
+  gap: 10px;
+}
+
+#symbaroum-hud .symbaroum-hud-ability-page-title > span {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #8b3529);
+}
+
+#symbaroum-hud .symbaroum-hud-ability-page-title > span:last-child {
+  background: linear-gradient(90deg, #8b3529, transparent);
+}
+
+#symbaroum-hud .symbaroum-hud-ability-page-title > h3 {
+  margin: 0;
+  border: 0;
+  color: #5e2018;
+  font-family: "Symbaroum HUD Primitive", "Philosopher", serif;
+  font-size: var(--font-size-19, 1.1875rem);
+  font-weight: 400;
+  letter-spacing: 0.3px;
+  line-height: 1;
+  text-align: center;
+  text-shadow: 0 1px 0 rgb(255 255 255 / 55%);
+}
+
+#symbaroum-hud .symbaroum-hud-ability-level-controls {
+  margin: 0;
+}
+
+#symbaroum-hud .symbaroum-hud-ability-tab-action {
+  min-height: 28px;
+  box-sizing: border-box;
+  padding: 5px 10px;
+  border-color: rgb(98 79 51 / 54%);
+  color: #635c51;
+  background: rgb(255 252 235 / 34%);
+  box-shadow: inset 0 0 5px rgb(82 56 29 / 10%);
+  letter-spacing: 0.15px;
+}
+
+#symbaroum-hud .symbaroum-hud-ability-tab-action > strong {
+  color: #352d25;
+}
+
+#symbaroum-hud button.symbaroum-hud-ability-active-toggle {
+  height: 30px;
+  border-color: #655b47;
+  color: #eee3c8;
+  background:
+    linear-gradient(rgb(18 43 31 / 28%), rgb(0 0 0 / 18%)),
+    var(--symbaroum-hud-title) repeat;
+  box-shadow:
+    inset 0 0 7px rgb(0 0 0 / 58%),
+    0 1px 2px rgb(46 28 14 / 38%);
+}
+
+#symbaroum-hud button.symbaroum-hud-ability-active-toggle[data-active="true"],
+#symbaroum-hud button.symbaroum-hud-ability-active-toggle:hover,
+#symbaroum-hud button.symbaroum-hud-ability-active-toggle:focus-visible {
+  border-color: #b69d50;
+  color: #fff0ad;
+  background:
+    linear-gradient(rgb(35 86 59 / 48%), rgb(8 31 21 / 32%)),
+    var(--symbaroum-hud-title) repeat;
+}
+
+#symbaroum-hud .symbaroum-hud-ability-page-content {
+  position: relative;
+  z-index: 1;
+  min-height: 0;
+  flex: 1 1 auto;
+  padding: 18px 28px 26px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-color: #7a3025 rgb(62 51 37 / 12%);
+  scrollbar-width: thin;
+}
+
+#symbaroum-hud .symbaroum-hud-ability-page-content::before {
+  display: block;
+  width: min(330px, 70%);
+  height: 24px;
+  margin: -4px auto 8px;
+  background: var(--symbaroum-hud-codex-divider) center / contain no-repeat;
+  content: "";
+  opacity: 0.72;
+  pointer-events: none;
+}
+
+#symbaroum-hud .symbaroum-hud-ability-description {
+  max-width: 760px;
+  margin: 0 auto;
+  color: #29241e;
+  font-size: var(--font-size-14, 0.875rem);
+  line-height: 1.68;
+  text-shadow: 0 1px 0 rgb(255 255 255 / 32%);
+}
+
+#symbaroum-hud .symbaroum-hud-ability-description :is(p, ul, ol) {
+  margin: 0 0 0.9em;
+}
+
+#symbaroum-hud .symbaroum-hud-ability-description :is(h1, h2, h3, h4) {
+  margin: 1em 0 0.45em;
+  padding-bottom: 0.22em;
+  border-bottom: 1px solid rgb(112 38 29 / 38%);
+  color: #5f2119;
+  font-family: "Symbaroum HUD Primitive", "Philosopher", serif;
+  font-weight: 400;
+  line-height: 1.15;
+}
+
+#symbaroum-hud .symbaroum-hud-ability-description :is(ul, ol) {
+  padding-left: 1.6em;
+}
+
+#symbaroum-hud .symbaroum-hud-ability-description li::marker {
+  color: #792c22;
+  font-weight: 700;
+}
+
+#symbaroum-hud .symbaroum-hud-ability-description blockquote {
+  margin: 1em 0;
+  padding: 9px 13px;
+  border: 0;
+  border-left: 3px solid #5e704d;
+  color: #35352d;
+  background: rgb(57 80 55 / 9%);
+  box-shadow: inset 0 0 7px rgb(36 62 44 / 8%);
+  font-style: italic;
+}
+
+#symbaroum-hud .symbaroum-hud-ability-description :is(a, .content-link, .inline-roll) {
+  color: #31533e;
+  text-decoration-color: rgb(49 83 62 / 46%);
+  text-underline-offset: 2px;
+}
+
+#symbaroum-hud .symbaroum-hud-ability-description :is(.content-link, .inline-roll) {
+  padding: 1px 4px;
+  border: 1px solid rgb(55 83 59 / 30%);
+  border-radius: 2px;
+  background: rgb(55 83 59 / 8%);
+}
+
+#symbaroum-hud .symbaroum-hud-ability-description table {
+  width: 100%;
+  margin: 1em 0;
+  border-collapse: collapse;
+  color: #29241e;
+  background: rgb(255 252 237 / 24%);
+}
+
+#symbaroum-hud .symbaroum-hud-ability-description :is(th, td) {
+  padding: 5px 7px;
+  border: 1px solid rgb(80 67 48 / 40%);
+}
+
+#symbaroum-hud .symbaroum-hud-ability-description th {
+  color: #f1e7cf;
+  background:
+    linear-gradient(rgb(22 51 37 / 26%), rgb(0 0 0 / 18%)),
+    var(--symbaroum-hud-title) repeat;
+}
+
+#symbaroum-hud .symbaroum-hud-ability-description img {
+  max-width: 100%;
+  height: auto;
+  border: 1px solid #5d5548;
+  box-shadow:
+    0 0 0 3px rgb(255 249 222 / 34%),
+    0 3px 8px rgb(54 33 17 / 28%);
+}
+
+#symbaroum-hud .symbaroum-hud-ability-page-content > .symbaroum-hud-ability-no-description {
+  min-height: calc(100% - 28px);
+  color: #746c5f;
+}
+
+#symbaroum-hud .symbaroum-hud-ritualist-header {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  min-height: 126px;
+  box-sizing: border-box;
+  padding: 13px 10px 12px 14px;
+  grid-template-columns: 86px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  overflow: hidden;
+  border-bottom: 3px double #a88945;
+  color: #f8f0dc;
+  background:
+    linear-gradient(90deg, rgb(5 13 10 / 48%), rgb(9 18 14 / 12%) 52%, rgb(4 7 6 / 62%)),
+    var(--symbaroum-hud-codex-header) center 42% / cover no-repeat,
+    var(--symbaroum-hud-title) repeat;
+  box-shadow:
+    inset 0 -12px 24px rgb(0 0 0 / 26%),
+    0 3px 8px rgb(59 35 18 / 35%);
+  text-shadow: 0 1px 2px #000;
+}
+
+#symbaroum-hud .symbaroum-hud-ritualist-header::before {
+  position: absolute;
+  inset: 7px;
+  border: 1px solid rgb(219 194 119 / 28%);
+  content: "";
+  pointer-events: none;
+}
+
+#symbaroum-hud .symbaroum-hud-ritualist-header > * {
+  position: relative;
+  z-index: 1;
+}
+
+#symbaroum-hud .symbaroum-hud-ritualist-header > img {
+  box-sizing: border-box;
+  width: 86px;
+  height: 86px;
+  padding: 3px;
+  border: 1px solid #b99c55;
+  outline: 2px solid #171a14;
+  outline-offset: -4px;
+  background: #101510;
+  box-shadow:
+    0 0 0 1px #080a08,
+    0 4px 12px rgb(0 0 0 / 72%);
+  object-fit: cover;
+}
+
+#symbaroum-hud .symbaroum-hud-ritualist-overview {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 7px;
+}
+
+#symbaroum-hud .symbaroum-hud-ritualist-identity {
+  display: flex;
+  min-width: 0;
+  align-items: baseline;
+  gap: 10px;
+}
+
+#symbaroum-hud .symbaroum-hud-ritualist-identity > span {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 5px;
+  color: #d8bd5d;
+  font-size: var(--font-size-10, 0.625rem);
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+
+#symbaroum-hud .symbaroum-hud-ritualist-identity > h2 {
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  border: 0;
+  color: #fff5d5;
+  font-family: "Symbaroum HUD Primitive", "Philosopher", serif;
+  font-size: var(--font-size-24, 1.5rem);
+  font-weight: 400;
+  letter-spacing: 0.35px;
+  line-height: 1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#symbaroum-hud .symbaroum-hud-ritualist-stats {
+  display: grid;
+  min-width: 0;
+  margin: 0;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+
+#symbaroum-hud .symbaroum-hud-ritualist-stats > div {
+  min-width: 0;
+  padding: 5px 8px 4px;
+  border: 1px solid rgb(213 189 111 / 26%);
+  border-left: 2px solid #b59a4f;
+  background: rgb(0 0 0 / 28%);
+  box-shadow: inset 0 0 7px rgb(0 0 0 / 25%);
+}
+
+#symbaroum-hud .symbaroum-hud-ritualist-stats dt {
+  overflow: hidden;
+  color: rgb(246 234 199 / 66%);
+  font-size: var(--font-size-11, 0.6875rem);
+  font-weight: 700;
+  letter-spacing: 0.45px;
+  line-height: 1.15;
+  text-transform: uppercase;
+  white-space: normal;
+}
+
+#symbaroum-hud .symbaroum-hud-ritualist-stats dd {
+  min-width: 0;
+  margin: 2px 0 0;
+  color: #fff5d5;
+  font-family: "Philosopher", var(--font-primary), serif;
+  font-size: var(--font-size-15, 0.9375rem);
+  font-weight: 700;
+  line-height: 1.1;
+  white-space: normal;
+}
+
+#symbaroum-hud .symbaroum-hud-ritualist-stats > div[data-at-capacity="true"] {
+  border-left-color: #a64231;
+}
+
+#symbaroum-hud .symbaroum-hud-ritualist-stats > div[data-at-capacity="true"] dd {
+  color: #f2c0a5;
+}
+
+#symbaroum-hud .symbaroum-hud-ritualist-rules {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 6px;
+  overflow: hidden;
+}
+
+#symbaroum-hud .symbaroum-hud-ritualist-rules > span {
+  display: inline-flex;
+  min-width: 0;
+  padding: 2px 6px;
+  align-items: center;
+  gap: 5px;
+  overflow: hidden;
+  border: 1px solid rgb(213 189 111 / 20%);
+  color: rgb(246 234 199 / 72%);
+  background: rgb(0 0 0 / 24%);
+  font-size: var(--font-size-11, 0.6875rem);
+  line-height: 1.2;
+  white-space: normal;
+}
+
+#symbaroum-hud .symbaroum-hud-ritualist-rules > span:first-child {
+  flex: 1 1 auto;
+}
+
+#symbaroum-hud .symbaroum-hud-ritualist-rules .symbaroum-hud-ritualist-extra {
+  border-color: rgb(166 66 49 / 48%);
+  color: #f2c0a5;
+}
+
+#symbaroum-hud .symbaroum-hud-ritualist-rules .symbaroum-hud-ritualist-additional {
+  border-color: rgb(88 132 84 / 54%);
+  color: #d7e4c6;
+}
+
+#symbaroum-hud .symbaroum-hud-ritualist-rules .symbaroum-hud-ritualist-extra[data-additional-allowed="true"] {
+  border-color: rgb(88 132 84 / 54%);
+  color: #d7e4c6;
+}
+
+#symbaroum-hud .symbaroum-hud-ritualist-actions {
+  display: flex;
+  align-self: start;
+  gap: 4px;
+}
+
+#symbaroum-hud button.symbaroum-hud-ritualist-action {
+  display: inline-flex;
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  min-height: 28px;
+  margin: 0;
+  padding: 0;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgb(207 187 125 / 42%);
+  border-radius: 0;
+  color: #eee3c8;
+  background: rgb(5 10 8 / 64%);
+  box-shadow: inset 0 0 6px rgb(0 0 0 / 58%);
+}
+
+#symbaroum-hud button.symbaroum-hud-ritualist-action:hover,
+#symbaroum-hud button.symbaroum-hud-ritualist-action:focus-visible {
+  border-color: #d1b957;
+  color: #fff0ad;
+  background: rgb(18 39 28 / 78%);
+  box-shadow:
+    inset 0 0 6px rgb(0 0 0 / 52%),
+    0 0 6px rgb(164 139 2 / 52%);
+  outline: none;
+}
+
+#symbaroum-hud button.symbaroum-hud-ritualist-action:last-child:hover,
+#symbaroum-hud button.symbaroum-hud-ritualist-action:last-child:focus-visible {
+  border-color: #b74d3a;
+  color: #fff;
+  background: var(--symbaroum-hud-blood);
+  box-shadow: 0 0 6px rgb(119 38 28 / 55%);
+}
+
+@media (max-width: 760px) {
+  #symbaroum-hud .symbaroum-hud-abilities-body {
+    grid-template-columns: 190px minmax(0, 1fr);
+  }
+
+  #symbaroum-hud .symbaroum-hud-ritualist-header {
+    min-height: 154px;
+    padding-inline: 11px 8px;
+    grid-template-columns: 66px minmax(0, 1fr) auto;
+    gap: 10px;
+  }
+
+  #symbaroum-hud .symbaroum-hud-ritualist-header > img {
+    width: 66px;
+    height: 66px;
+  }
+
+  #symbaroum-hud .symbaroum-hud-ritualist-identity > h2 {
+    font-size: var(--font-size-19, 1.1875rem);
+  }
+
+  #symbaroum-hud .symbaroum-hud-ritualist-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  #symbaroum-hud .symbaroum-hud-ritualist-rules {
+    flex-wrap: wrap;
+  }
+
+  #symbaroum-hud .symbaroum-hud-ritualist-rules > span:first-child {
+    flex-basis: 100%;
+  }
+
+  #symbaroum-hud .symbaroum-hud-ability-detail-header {
+    padding-inline: 12px;
+    grid-template-columns: 70px minmax(0, 1fr) auto;
+    gap: 10px;
+  }
+
+  #symbaroum-hud .symbaroum-hud-ability-detail-header > img {
+    width: 70px;
+    height: 70px;
+  }
+
+  #symbaroum-hud .symbaroum-hud-ability-detail-title > strong {
+    font-size: var(--font-size-19, 1.1875rem);
+  }
+
+  #symbaroum-hud button.symbaroum-hud-ability-detail-action > span {
+    display: none;
+  }
+
+  #symbaroum-hud .symbaroum-hud-ability-tabs {
+    padding-inline: 12px;
+    gap: 3px;
+  }
+
+  #symbaroum-hud button.symbaroum-hud-ability-tab {
+    min-width: 0;
+    padding-inline: 8px;
+  }
+
+  #symbaroum-hud .symbaroum-hud-ability-tab-panel {
+    margin-inline: 12px;
+  }
+
+  #symbaroum-hud .symbaroum-hud-ability-page-heading {
+    padding-inline: 14px;
+    gap: 10px;
+  }
+
+  #symbaroum-hud .symbaroum-hud-ability-page-content {
+    padding-inline: 20px;
+  }
+}
+
+.symbaroum-hud-effect-context-menu,
+.symbaroum-hud-shortcut-context-menu {
+  border-color: #171613;
+  border-radius: 0;
+  background: var(--symbaroum-hud-title) repeat;
+  box-shadow:
+    inset 0 0 0 1px rgb(198 177 117 / 22%),
+    0 4px 12px rgb(0 0 0 / 72%);
+  font-family: "Philosopher", var(--font-primary), serif;
+}

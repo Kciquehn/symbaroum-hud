@@ -1,0 +1,226 @@
+{
+  "SYMBAROUMHUD": {
+    "Title": "Symbaroum HUD",
+    "Empty": "Select a character or creature token.",
+    "None": "No items available.",
+    "ActorTypes": {
+      "player": "Character",
+      "monster": "Creature"
+    },
+    "Actions": {
+      "OpenActor": "Open sheet",
+      "PreviousActor": "Previous sheet",
+      "NextActor": "Next sheet",
+      "RollArmor": "Roll armor",
+      "RollDefense": "Roll defense",
+      "RollWeapon": "Roll attack",
+      "ManageMoney": "Manage money",
+      "ConsumeRation": "Consume travel bread",
+      "CharacterActions": "Character actions",
+      "DeathTest": "Death Test",
+      "Recovery": "Recovery",
+      "RecoverAmmo": "Recover arrows",
+      "Rest": "Rest",
+      "CloseAttacks": "Close attacks",
+      "CloseAbilities": "Close abilities",
+      "CloseMysticalPowers": "Close mystical powers",
+      "CloseRituals": "Close rituals",
+      "CloseTraits": "Close traits",
+      "UseAbility": "Use ability",
+      "UseMysticalPower": "Use mystical power",
+      "OpenAbility": "Open ability",
+      "OpenMysticalPower": "Open mystical power",
+      "RemoveEffect": "Remove effect",
+      "ShortcutActions": "Shortcut actions",
+      "OpenShortcut": "Open",
+      "RemoveShortcut": "Remove from hotbar",
+      "HidePlayers": "Hide player list",
+      "ShowPlayers": "Show player list"
+    },
+    "Resources": {
+      "Toughness": "Toughness",
+      "Corruption": "Temporary + permanent corruption"
+    },
+    "Info": {
+      "Title": "Character information",
+      "Defense": "Defense",
+      "Armor": "Armor",
+      "Experience": "Available/total experience",
+      "ExperienceShort": "XP",
+      "InventoryStatus": "Coins and load",
+      "Rations": "Travel bread",
+      "Quiver": "Quiver"
+    },
+    "Storage": {
+      "Open": "Open inventory",
+      "Close": "Close inventory",
+      "Inventory": "Inventory",
+      "Pockets": "Pockets",
+      "NoBackpackShort": "No backpack: items are in pockets",
+      "Empty": "This backpack is empty.",
+      "InventoryEmpty": "No loose items in the inventory.",
+      "Capacity": "Slots",
+      "Weight": "Weight",
+      "Overload": "Overload",
+      "Immobilized": "Immobilized",
+      "Quiver": "Quiver",
+      "LoadedAmmo": "Loaded arrows/bolts",
+      "Loaded": "Loaded",
+      "Remaining": "Remaining space",
+      "Quantity": "Quantity",
+      "AvailableAmmo": "Available arrows and bolts",
+      "NoAvailableAmmo": "No loose arrows or bolts available to reload.",
+      "Reload": "Reload",
+      "ReloadQuiver": "Reload quiver",
+      "Containers": "Backpacks and containers",
+      "Sources": "Inventory, quiver, and backpacks",
+      "OpenItem": "Open item",
+      "DeleteItem": "Delete item",
+      "DeleteItemConfirm": "Delete this item from the inventory?",
+      "ViewAsGrid": "View items as a grid",
+      "ViewAsList": "View items as a list"
+    },
+    "Abilities": {
+      "Add": "Buy ability",
+      "AddPrompt": "Choose a world ability to buy at Novice level.",
+      "Buy": "Buy",
+      "Action": "Action",
+      "Active": "Active",
+      "Adept": "Adept",
+      "Detail": "Ability description",
+      "Description": "Description",
+      "Empty": "This character has no abilities.",
+      "List": "Ability list",
+      "Master": "Master",
+      "NoDescription": "This ability has no description.",
+      "NoSearchResults": "No abilities found.",
+      "Novice": "Novice",
+      "Reference": "Reference",
+      "Search": "Search abilities",
+      "Tabs": "Ability sections"
+    },
+    "Traits": {
+      "Detail": "Trait description",
+      "Empty": "This character has no traits.",
+      "List": "Trait list"
+    },
+    "MysticalPowers": {
+      "Detail": "Mystical power description",
+      "Empty": "This character has no mystical powers.",
+      "List": "Mystical power list"
+    },
+    "Rituals": {
+      "Add": "Buy ritual",
+      "AddPrompt": "Choose a world ritual to add to the character.",
+      "AdditionalCost": "XP per additional ritual",
+      "AdditionalEnabled": "Can learn beyond the base limit",
+      "BaseCapacity": "Base limit",
+      "BaseRemaining": "Included slots",
+      "Buy": "Buy",
+      "Capacity": "Rank limit",
+      "Detail": "Ritual description",
+      "Empty": "No known rituals.",
+      "Extras": "Above the rank limit",
+      "Known": "Known",
+      "Level": "Rank",
+      "List": "Known ritual list",
+      "NoSearchResults": "No rituals found.",
+      "NotLearned": "Not learned",
+      "OpenRitual": "Open ritual sheet",
+      "OpenRitualist": "Open the Ritualist ability sheet",
+      "Progression": "Novice 1 · Adept 3 · Master 6",
+      "Remaining": "Can still learn",
+      "Ritual": "Ritual",
+      "Search": "Search rituals"
+    },
+    "Attacks": {
+      "Empty": "This character has no weapons."
+    },
+    "Sections": {
+      "Attributes": "Attributes",
+      "Attacks": "Attacks",
+      "Abilities": "Abilities",
+      "Traits": "Traits",
+      "Maneuvers": "Maneuvers",
+      "Actions": "Character actions",
+      "Armor": "Armor",
+      "Weapons": "Weapons",
+      "Powers": "Abilities and powers",
+      "Rituals": "Rituals",
+      "MysticalPowers": "Mystical Powers",
+      "Inventory": "Inventory",
+      "Effects": "Effects"
+    },
+    "Keybindings": {
+      "ActivateShortcut": "Activate hotbar shortcut {number}"
+    },
+    "Settings": {
+      "Enabled": {
+        "Name": "Enable Symbaroum HUD",
+        "Hint": "Displays the persistent HUD on this client."
+      },
+      "SelectionMode": {
+        "Name": "Actor source",
+        "Hint": "Defines how the HUD chooses the displayed actor.",
+        "Controlled": "Controlled token",
+        "Combat": "Current turn",
+        "Character": "Assigned character"
+      },
+      "ShowIndResources": {
+        "Name": "Ind Resources integration",
+        "Hint": "Shows Symbaroum Ind Resources data and actions while it is active."
+      },
+      "HidePlayers": {
+        "Name": "Hide player list",
+        "Hint": "Hides the player and performance panel in the lower-left corner for this client."
+      }
+    },
+    "IndResources": {
+      "Title": "Ind Resources",
+      "Load": "Load",
+      "Rations": "Travel bread",
+      "AmmoHits": "Ammunition used",
+      "Hungry": "Hungry",
+      "Drawn": "Drawn weapons",
+      "Maneuvers": "Maneuvers",
+      "Rest": "Rest",
+      "Readiness": "Draw and sheathe",
+      "RitualBrowser": "Rituals",
+      "Effects": "Conditions"
+    },
+    "Maneuvers": {
+      "NoSearchResults": "No maneuvers found.",
+      "Prompt": "Choose an Ind Resources maneuver to roll.",
+      "Roll": "Roll",
+      "Search": "Search maneuvers"
+    },
+    "Notifications": {
+      "NoPermission": "You do not have permission to update this actor.",
+      "SelectActorToken": "Select this actor's token to change its conditions.",
+      "ShortcutUnavailable": "This shortcut is no longer available or you do not have access.",
+      "StorageUnavailable": "This backpack or item is no longer available.",
+      "MoneyUnavailable": "The Ind Resources money manager is not available.",
+      "ManeuversUnavailable": "Ind Resources maneuvers are not available.",
+      "OnlyWeapons": "Drop only weapons here.",
+      "OnlyRituals": "Drop only rituals here.",
+      "OnlyMysticalPowers": "Drop only mystical powers here.",
+      "AbilityUnavailable": "This ability is not available for this character.",
+      "NoAvailableAbilities": "No world abilities are available for this character.",
+      "NotEnoughExperience": "This character does not have enough available XP to buy this ability.",
+      "RitualUnavailable": "This ritual is not available for this character.",
+      "NoAvailableRituals": "No world rituals are available for this character.",
+      "NoAvailableExperience": "This character has no available XP to spend.",
+      "CorruptionMaximumReached": "This character has already reached maximum corruption.",
+      "ActionFailed": "The HUD could not execute this action."
+    },
+    "RerollCost": {
+      "Title": "Pay reroll cost",
+      "Prompt": "Choose the cost used to reroll a die.",
+      "Experience": "XP",
+      "PermanentCorruption": "Permanent corruption",
+      "Pay": "Pay",
+      "ChatTitle": "Reroll cost",
+      "ChatPaid": "paid the reroll cost with"
+    }
+  }
+}
