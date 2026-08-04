@@ -63,7 +63,7 @@ globalThis.game = {
         { id: "sword", name: "Espada" },
         { id: "shield", name: "Escudo" }
       ],
-      getDrawnWeapons: () => [{ name: "Espada" }],
+      getDrawnWeapons: (actor) => [actor.items.get("sword") ?? { name: "Espada" }],
       open: async () => "readiness"
     },
     maneuvers: {
@@ -338,7 +338,11 @@ test("normalizes the public Ind Resources API into HUD context", () => {
   assert.equal(quiverStorageContext.storage.quiverSelected, true);
   assert.equal(quiverStorageContext.storage.name, "Aljava de Caçador");
   assert.deepEqual(quiverStorageContext.storage.items, context.quiver.availableAmmo);
-  assert.deepEqual(context.drawnWeapons, ["Espada"]);
+  assert.deepEqual(context.drawnWeapons, [{
+    id: "sword",
+    uuid: "Actor.actor.Item.sword",
+    name: "Espada"
+  }]);
   assert.deepEqual(context.maneuvers, ["Guarda"]);
   assert.equal(context.actions.rest, true);
   assert.equal(context.actions.ammoRecovery, true);

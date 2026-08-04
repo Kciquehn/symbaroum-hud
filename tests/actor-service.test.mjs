@@ -142,12 +142,12 @@ test("ability level activation updates the embedded item document", async () => 
   ]);
 });
 
-test("trait-like items cannot be used or activated as abilities", async () => {
+test("trait-like items can be used but cannot be activated as ability levels", async () => {
   const owned = actor();
   await ActorService.usePower(owned, "trait");
   await ActorService.setAbilityLevelActive(owned, "trait", "novice", true);
 
-  assert.deepEqual(owned.calls, []);
+  assert.deepEqual(owned.calls, [["power", "trait"]]);
 });
 
 test("world ability picker lists only accessible unowned abilities", () => {

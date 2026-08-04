@@ -149,6 +149,31 @@ test("clicking a weapon shortcut delegates to the owning Symbaroum actor", async
   assert.deepEqual(weapon.actor.calls, [["weapon", "weapon"]]);
 });
 
+test("clicking a weapon shortcut accepts native weapon item types", async () => {
+  const owner = actor("native-weapon-owner");
+  currentActor = owner;
+  const weapon = {
+    id: "weapon",
+    uuid: "Actor.native-weapon-owner.Item.weapon",
+    name: "Espada",
+    img: "espada.webp",
+    documentName: "Item",
+    type: "weapon",
+    actor: owner,
+    system: {},
+    testUserPermission: () => true
+  };
+  documents.set(weapon.uuid, weapon);
+
+  await HotbarShortcutService.assignDocumentDrop({
+    type: "Item",
+    uuid: weapon.uuid
+  }, 3);
+  await HotbarShortcutService.activate(3);
+
+  assert.deepEqual(owner.calls, [["weapon", "weapon"]]);
+});
+
 test("removing a shortcut does not delete its source document", async () => {
   currentActor = documents.get("Actor.actor.Item.weapon").actor;
   await HotbarShortcutService.remove(2);

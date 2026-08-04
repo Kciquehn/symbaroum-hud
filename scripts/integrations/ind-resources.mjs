@@ -18,13 +18,15 @@ export class IndResourcesIntegration {
 
     const rations = safeCall(() => api.rations?.getState?.(actor));
     const load = safeCall(() => api.encumbrance?.calculateLoad?.(actor));
-    const drawn = safeCall(() => api.weaponReadiness?.getDrawnWeapons?.(actor)) ?? [];
     const readinessEnabled = Boolean(
       safeCall(() => api.weaponReadiness?.isEnabled?.())
       && typeof api.weaponReadiness?.open === "function"
     );
     const readinessWeapons = readinessEnabled
       ? safeCall(() => api.weaponReadiness?.getEligibleWeapons?.(actor)) ?? []
+      : [];
+    const drawn = readinessEnabled
+      ? safeCall(() => api.weaponReadiness?.getDrawnWeapons?.(actor)) ?? []
       : [];
     const maneuvers = safeCall(() => api.maneuvers?.getActiveEffects?.(actor)) ?? [];
     const trackedHits = safeCall(() => api.ammo?.getTrackedHits?.(actor));
@@ -65,7 +67,7 @@ export class IndResourcesIntegration {
             icon: "/systems/symbaroum/asset/image/weapon.png"
           }
         : null,
-      drawnWeapons: Array.from(drawn, (weapon) => weapon?.name).filter(Boolean),
+      drawnWeapons: Array.from(drawn, normalizeReadinessWeapon).filter((weapon) => weapon.name),
       maneuvers: Array.from(maneuvers, (effect) => effect?.name ?? effect?.label).filter(Boolean),
       actions: {
         rest: typeof api.rest?.openRestDialog === "function",
@@ -464,6 +466,14 @@ function normalizeStorageItem(item, containerId, draggable) {
       ?? item.texture?.src
       ?? "icons/svg/item-bag.svg",
     quantity: Math.max(0, number(item?.system?.number ?? 1))
+  };
+}
+
+function normalizeReadinessWeapon(weapon) {
+  return {
+    id: weapon?.id ?? null,
+    uuid: weapon?.uuid ?? null,
+    name: weapon?.name ?? null
   };
 }
 

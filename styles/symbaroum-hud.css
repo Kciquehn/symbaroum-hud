@@ -413,11 +413,15 @@
   width: 21px;
   min-width: 21px;
   border: 0 !important;
+  color: #f6e7bd;
   background: transparent !important;
   box-shadow: none !important;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 120ms ease;
+  opacity: 0.92;
+  pointer-events: auto;
+  transition:
+    color 120ms ease,
+    opacity 120ms ease,
+    text-shadow 120ms ease;
 }
 
 #symbaroum-hud .symbaroum-hud-character-name:hover .symbaroum-hud-actor-cycle,
@@ -432,6 +436,9 @@
   background: transparent !important;
   box-shadow: none !important;
   outline: none;
+  text-shadow:
+    0 0 4px rgb(238 155 58 / 80%),
+    0 1px 2px #000;
 }
 
 #symbaroum-hud button.symbaroum-hud-actor-cycle:disabled {
@@ -3021,6 +3028,62 @@ body:has(#symbaroum-hud .symbaroum-hud-ammo-recovery-slot) > #tenebre-ammo-hud-l
   transition:
     color 120ms ease,
     text-shadow 120ms ease;
+}
+
+#symbaroum-hud .symbaroum-hud-attack-readiness {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 4;
+  display: inline-flex;
+  max-width: calc(100% - 24px);
+  padding: 2px 6px;
+  align-items: center;
+  gap: 4px;
+  overflow: hidden;
+  border: 1px solid rgb(18 15 12 / 82%);
+  border-radius: 0;
+  color: #f5ead0;
+  background:
+    linear-gradient(rgb(0 0 0 / 42%), rgb(0 0 0 / 72%)),
+    var(--symbaroum-hud-title) repeat;
+  box-shadow:
+    inset 0 0 0 1px rgb(255 233 155 / 14%),
+    0 1px 5px rgb(0 0 0 / 56%);
+  font-size: var(--font-size-10, 0.625rem);
+  font-weight: 700;
+  line-height: 1;
+  pointer-events: none;
+  text-transform: uppercase;
+}
+
+#symbaroum-hud .symbaroum-hud-attack-readiness > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#symbaroum-hud button.symbaroum-hud-attack-entry[data-readiness-known="true"][data-drawn="true"] {
+  border-color: #d1b957;
+  box-shadow:
+    inset 0 0 0 1px rgb(255 240 177 / 28%),
+    inset 0 0 16px rgb(0 0 0 / 58%),
+    0 0 9px rgb(164 139 2 / 46%);
+}
+
+#symbaroum-hud button.symbaroum-hud-attack-entry[data-readiness-known="true"][data-drawn="true"] .symbaroum-hud-attack-readiness {
+  color: #fff2b8;
+  border-color: rgb(209 185 87 / 78%);
+  text-shadow: 0 0 5px rgb(209 185 87 / 72%);
+}
+
+#symbaroum-hud button.symbaroum-hud-attack-entry[data-readiness-known="true"][data-drawn="false"] {
+  filter: saturate(0.72) brightness(0.86);
+}
+
+#symbaroum-hud button.symbaroum-hud-attack-entry[data-readiness-known="true"][data-drawn="false"] .symbaroum-hud-attack-readiness {
+  color: rgb(218 207 184 / 74%);
+  border-color: rgb(112 105 90 / 62%);
 }
 
 #symbaroum-hud button.symbaroum-hud-attack-entry:hover {

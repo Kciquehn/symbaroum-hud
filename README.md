@@ -2,6 +2,12 @@
 
 HUD independente para o sistema Symbaroum 6.1.6 no Foundry VTT v13.
 
+Manifest URL:
+
+```text
+https://github.com/Kciquehn/symbaroum-hud/releases/latest/download/module.json
+```
+
 ## Recursos
 
 - HUD persistente no canto inferior esquerdo, integrado à hotbar do Foundry;
@@ -28,6 +34,8 @@ prontidão de armas e rituais continuam delegadas para a API pública dele.
 
 Este módulo não altera o schema do sistema e não executa migrações.
 
+Não declarei compatibilidade com Foundry v14 porque este módulo foi desenvolvido e validado para o alvo atual v13/Symbaroum 6.1.6.
+
 ## Validação local
 
 ```powershell
@@ -45,10 +53,33 @@ Antes de publicar uma release, teste em um mundo de teste do Foundry v13:
 
 ## Publicação
 
-Para instalação direta pelo Foundry a partir do GitHub, o `module.json` ainda precisa receber URLs públicas quando o repositório existir:
+O manifesto já aponta para os assets esperados em GitHub Releases:
 
-- `url`: página do repositório;
-- `manifest`: URL estável para o `module.json`;
-- `download`: arquivo `.zip` da release correspondente.
+- Repositório: `https://github.com/Kciquehn/symbaroum-hud`
+- Manifest: `https://github.com/Kciquehn/symbaroum-hud/releases/latest/download/module.json`
+- Download: `https://github.com/Kciquehn/symbaroum-hud/releases/latest/download/symbaroum-hud.zip`
 
-Não declare compatibilidade com Foundry v14 sem teste real nessa versão.
+Para publicar uma versão:
+
+```powershell
+git tag v0.1.0
+git push origin main
+git push origin v0.1.0
+```
+
+O workflow `.github/workflows/release.yml` cria uma GitHub Release com `module.json` e `symbaroum-hud.zip`.
+
+Para a loja oficial do Foundry:
+
+1. publique o repositório no GitHub;
+2. publique a release com os dois assets;
+3. verifique se a Manifest URL instala em um Foundry v13 limpo;
+4. envie o pacote pelo formulário oficial de criadores do Foundry;
+5. use o conteúdo de `FOUNDRY-PACKAGE-DESCRIPTION.html` como descrição HTML.
+
+## Licença e aviso
+
+Código sob licença MIT. Veja `LICENSE`.
+
+Este módulo não inclui conteúdo, regras textuais ou arte oficial de Symbaroum. Symbaroum pertence à Free League Publishing.
+Este é um projeto independente da comunidade e não é afiliado nem endossado pela Free League Publishing ou pela Foundry Virtual Tabletop.

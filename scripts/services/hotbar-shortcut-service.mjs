@@ -133,7 +133,7 @@ export class HotbarShortcutService {
       return this.#openDocument(document);
     }
 
-    if (document.system?.isWeapon) {
+    if (document.type === "weapon" || document.system?.isWeapon) {
       return ActorService.rollWeapon(document.actor, document.id);
     }
     if (document.system?.isArmor) {

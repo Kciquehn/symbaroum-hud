@@ -229,8 +229,10 @@
                   data-action="roll-weapon" data-item-id="{{id}}"
                   data-item-uuid="{{uuid}}"
                   data-weapon-draggable="{{draggable}}"
-                  data-tooltip="{{localize 'SYMBAROUMHUD.Actions.RollWeapon'}}: {{name}}"
-                  aria-label="{{localize 'SYMBAROUMHUD.Actions.RollWeapon'}}: {{name}}"
+                  data-readiness-known="{{readinessKnown}}"
+                  data-drawn="{{drawn}}"
+                  data-tooltip="{{localize 'SYMBAROUMHUD.Actions.RollWeapon'}}: {{name}}{{#if readinessKnown}} — {{readinessLabel}}{{/if}}"
+                  aria-label="{{localize 'SYMBAROUMHUD.Actions.RollWeapon'}}: {{name}}{{#if readinessKnown}} — {{readinessLabel}}{{/if}}"
                   {{#if draggable}}draggable="true"{{/if}}
                   {{#unless ../attacks.canUse}}disabled{{/unless}}>
                   <img src="{{img}}" alt="">
@@ -238,6 +240,12 @@
                     <strong>{{name}}</strong>
                     <i class="fa-solid fa-dice-d20" aria-hidden="true"></i>
                   </span>
+                  {{#if readinessKnown}}
+                    <span class="symbaroum-hud-attack-readiness">
+                      <i class="fa-solid {{#if drawn}}fa-hand-fist{{else}}fa-hand{{/if}}" aria-hidden="true"></i>
+                      <span>{{readinessLabel}}</span>
+                    </span>
+                  {{/if}}
                 </button>
               </li>
             {{else}}
@@ -499,15 +507,6 @@
         </button>
         {{/if}}
 
-        {{#if actions.maneuvers}}
-          <button type="button" class="symbaroum-hud-panel-toggle symbaroum-hud-maneuvers-toggle"
-            data-action="maneuver"
-            data-tooltip="{{localize 'SYMBAROUMHUD.Sections.Maneuvers'}}"
-            aria-label="{{localize 'SYMBAROUMHUD.Sections.Maneuvers'}}">
-            <i class="fa-solid fa-dice-d20" aria-hidden="true"></i>
-          </button>
-        {{/if}}
-
         {{#if rituals.available}}
           <button type="button" class="symbaroum-hud-panel-toggle symbaroum-hud-rituals-toggle"
             data-action="toggle-rituals" data-panel="rituals"
@@ -551,6 +550,15 @@
             data-tooltip="{{localize 'SYMBAROUMHUD.Sections.Traits'}}"
             aria-label="{{localize 'SYMBAROUMHUD.Sections.Traits'}}">
             <i class="fa-solid fa-fingerprint" aria-hidden="true"></i>
+          </button>
+        {{/if}}
+
+        {{#if actions.maneuvers}}
+          <button type="button" class="symbaroum-hud-panel-toggle symbaroum-hud-maneuvers-toggle"
+            data-action="maneuver"
+            data-tooltip="{{localize 'SYMBAROUMHUD.Sections.Maneuvers'}}"
+            aria-label="{{localize 'SYMBAROUMHUD.Sections.Maneuvers'}}">
+            <i class="fa-solid fa-dice-d20" aria-hidden="true"></i>
           </button>
         {{/if}}
       </div>
@@ -1072,6 +1080,16 @@
                     {{/if}}
                   </div>
                   <div class="symbaroum-hud-ability-detail-actions">
+                    {{#if traits.selected.canUsePower}}
+                      <button type="button" class="symbaroum-hud-ability-detail-action"
+                        data-action="use-trait" data-item-id="{{traits.selected.id}}"
+                        data-tooltip="{{localize 'SYMBAROUMHUD.Actions.UseTrait'}}"
+                        aria-label="{{localize 'SYMBAROUMHUD.Actions.UseTrait'}}"
+                        {{#unless traits.canUse}}disabled{{/unless}}>
+                        <i class="fa-solid fa-dice-d20" aria-hidden="true"></i>
+                        <span>{{localize "SYMBAROUMHUD.Actions.UseTrait"}}</span>
+                      </button>
+                    {{/if}}
                     <button type="button" class="symbaroum-hud-ability-detail-action"
                       data-action="open-ability" data-item-id="{{traits.selected.id}}"
                       data-tooltip="{{localize 'SYMBAROUMHUD.Actions.OpenAbility'}}"

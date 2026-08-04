@@ -26,34 +26,20 @@ export function registerHotbarShortcutKeybindings() {
 
 export function registerHotbarShortcuts() {
   Hooks.on("hotbarDrop", (hotbar, data, slot) => {
-    if (!HotbarShortcutService.isEnabled()) return;
-
-    const handled = data?.type === HOTBAR_SHORTCUT_DRAG_TYPE
-      || (data?.type === "Macro" && HotbarShortcutService.get(slot))
-      || HotbarShortcutService.acceptsDocumentDrop(data);
-    if (!handled) return;
-    if (hotbar.locked) return false;
-
-    if (data?.type === HOTBAR_SHORTCUT_DRAG_TYPE) {
-      run(() => HotbarShortcutService.move(data.slot, slot, {
-        actorKey: data.actorKey
-      }));
-      return false;
-    }
-
-    if (data?.type === "Macro" && HotbarShortcutService.get(slot)) {
-      run(() => HotbarShortcutService.assignMacroDrop(data, slot));
-      return false;
-    }
-
-    run(() => HotbarShortcutService.assignDocumentDrop(data, slot));
-    return false;
+    return handleHotbarDrop(hotbar, data, slot);
   });
 
   Hooks.on("renderHotbar", (_application, element) => decorateHotbar(element));
 }
 
-function decorateHotbar(root) {
+export function refreshHotbarShortcuts(element = document.getElementById("hotbar")) {
+  decorateHotbar(element);
+}
+
+function decorateHotbar(element) {
+  const root = hotbarRoot(element);
+  if (!root) return;
+
   listenerController?.abort();
   listenerController = new AbortController();
   const signal = listenerController.signal;
@@ -130,6 +116,62 @@ function decorateHotbar(root) {
       uuid: shortcut.uuid
     }));
   }, { capture: true, signal });
+
+  root.addEventListener("dragover", (event) => {
+    const slot = hotbarSlot(event.target, root);
+    if (!slot) return;
+
+    const data = readDragData(event);
+    if (!canHandleHotbarDrop(data, slot.dataset.slot)) return;
+
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    event.dataTransfer.dropEffect = data?.type === HOTBAR_SHORTCUT_DRAG_TYPE ? "move" : "copy";
+  }, { capture: true, signal });
+
+  root.addEventListener("drop", (event) => {
+    const slot = hotbarSlot(event.target, root);
+    if (!slot) return;
+
+    const data = readDragData(event);
+    if (!canHandleHotbarDrop(data, slot.dataset.slot)) return;
+
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    handleHotbarDrop(ui.hotbar, data, slot.dataset.slot);
+  }, { capture: true, signal });
+}
+
+function handleHotbarDrop(hotbar, data, slot) {
+  if (!canHandleHotbarDrop(data, slot)) return;
+  if (hotbar?.locked) return false;
+
+  if (data?.type === HOTBAR_SHORTCUT_DRAG_TYPE) {
+    run(() => HotbarShortcutService.move(data.slot, slot, {
+      actorKey: data.actorKey
+    }));
+    return false;
+  }
+
+  if (data?.type === "Macro" && HotbarShortcutService.get(slot)) {
+    run(() => HotbarShortcutService.assignMacroDrop(data, slot));
+    return false;
+  }
+
+  run(() => HotbarShortcutService.assignDocumentDrop(data, slot));
+  return false;
+}
+
+function canHandleHotbarDrop(data, slot) {
+  return Boolean(
+    HotbarShortcutService.isEnabled()
+    && slot
+    && (
+      data?.type === HOTBAR_SHORTCUT_DRAG_TYPE
+      || (data?.type === "Macro" && HotbarShortcutService.get(slot))
+      || HotbarShortcutService.acceptsDocumentDrop(data)
+    )
+  );
 }
 
 function clearShortcutDecoration(slot) {
@@ -148,6 +190,29 @@ function clearShortcutDecoration(slot) {
 function shortcutSlot(target, root) {
   const slot = target?.closest?.(".symbaroum-hud-document-shortcut[data-slot]");
   return slot && root.contains(slot) ? slot : null;
+}
+
+function hotbarSlot(target, root) {
+  const slot = target?.closest?.("#action-bar .slot[data-slot]");
+  return slot && root.contains(slot) ? slot : null;
+}
+
+function hotbarRoot(element) {
+  if (element?.querySelectorAll) return element;
+  if (element?.[0]?.querySelectorAll) return element[0];
+  return null;
+}
+
+function readDragData(event) {
+  try {
+    return TextEditor.implementation.getDragEventData(event);
+  } catch (_error) {
+    try {
+      return JSON.parse(event.dataTransfer?.getData("text/plain") ?? "{}");
+    } catch {
+      return {};
+    }
+  }
 }
 
 function openMenu(slot, event) {

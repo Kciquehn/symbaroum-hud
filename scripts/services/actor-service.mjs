@@ -13,7 +13,7 @@ export function isTraitLikeItem(item) {
 }
 
 export function canUsePowerItem(item) {
-  if (!item?.system?.isPower || isTraitLikeItem(item) || !item.system?.hasScript) {
+  if (!item?.system?.isPower || !item.system?.hasScript) {
     return false;
   }
 

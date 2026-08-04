@@ -28,6 +28,7 @@
       "CloseTraits": "Fechar traços",
       "UseAbility": "Usar habilidade",
       "UseMysticalPower": "Usar poder místico",
+      "UseTrait": "Usar traço",
       "OpenAbility": "Abrir habilidade",
       "OpenMysticalPower": "Abrir poder místico",
       "RemoveEffect": "Remover efeito",
@@ -134,7 +135,9 @@
       "Search": "Pesquisar rituais"
     },
     "Attacks": {
-      "Empty": "Este personagem não possui armas."
+      "Drawn": "Sacada",
+      "Empty": "Este personagem não possui armas.",
+      "Sheathed": "Guardada"
     },
     "Sections": {
       "Attributes": "Atributos",

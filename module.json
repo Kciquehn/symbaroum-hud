@@ -3,9 +3,17 @@
   "title": "Symbaroum HUD",
   "description": "HUD independente para o sistema Symbaroum, com integração opcional ao Symbaroum Ind Resources.",
   "version": "0.1.0",
+  "url": "https://github.com/Kciquehn/symbaroum-hud",
+  "manifest": "https://github.com/Kciquehn/symbaroum-hud/releases/latest/download/module.json",
+  "download": "https://github.com/Kciquehn/symbaroum-hud/releases/latest/download/symbaroum-hud.zip",
+  "readme": "https://github.com/Kciquehn/symbaroum-hud/blob/main/README.md",
+  "changelog": "https://github.com/Kciquehn/symbaroum-hud/blob/main/CHANGELOG.md",
+  "license": "https://github.com/Kciquehn/symbaroum-hud/blob/main/LICENSE",
+  "bugs": "https://github.com/Kciquehn/symbaroum-hud/issues",
   "authors": [
     {
-      "name": "kaciquehn"
+      "name": "Kciquehn",
+      "url": "https://github.com/Kciquehn"
     }
   ],
   "compatibility": {

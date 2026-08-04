@@ -1,0 +1,50 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate manifest version
+        shell: bash
+        run: |
+          VERSION="$(node -p "require('./module.json').version")"
+          if [ "v${VERSION}" != "${GITHUB_REF_NAME}" ]; then
+            echo "Tag ${GITHUB_REF_NAME} does not match module.json version ${VERSION}."
+            exit 1
+          fi
+
+      - name: Build Foundry package
+        shell: bash
+        run: |
+          mkdir -p dist/symbaroum-hud
+          rsync -av \
+            --exclude ".git" \
+            --exclude ".github" \
+            --exclude "dist" \
+            --exclude "node_modules" \
+            --exclude "tests" \
+            --exclude "package-lock.json" \
+            --exclude "*.zip" \
+            ./ dist/symbaroum-hud/
+          cp module.json dist/module.json
+          cd dist
+          zip -r symbaroum-hud.zip symbaroum-hud
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/module.json
+            dist/symbaroum-hud.zip
+          generate_release_notes: true

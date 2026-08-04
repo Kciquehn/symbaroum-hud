@@ -28,6 +28,7 @@
       "CloseTraits": "Close traits",
       "UseAbility": "Use ability",
       "UseMysticalPower": "Use mystical power",
+      "UseTrait": "Use trait",
       "OpenAbility": "Open ability",
       "OpenMysticalPower": "Open mystical power",
       "RemoveEffect": "Remove effect",
@@ -134,7 +135,9 @@
       "Search": "Search rituals"
     },
     "Attacks": {
-      "Empty": "This character has no weapons."
+      "Drawn": "Drawn",
+      "Empty": "This character has no weapons.",
+      "Sheathed": "Sheathed"
     },
     "Sections": {
       "Attributes": "Attributes",

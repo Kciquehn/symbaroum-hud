@@ -3,6 +3,7 @@ import {
   SETTINGS,
   STORAGE_VIEW_MODES
 } from "../constants.mjs";
+import { refreshHotbarShortcuts } from "../integrations/hotbar-shortcuts.mjs";
 import { IndResourcesIntegration } from "../integrations/ind-resources.mjs";
 import {
   applyPlayerListVisibility,
@@ -235,7 +236,10 @@ export class SymbaroumHud extends ApplicationV2 {
       },
       attacks: {
         canUse: canRollActor,
-        items: attackContext(actor, { canDrag: canRollActor }),
+        items: attackContext(actor, {
+          canDrag: canRollActor,
+          drawnWeapons: indResources.drawnWeapons
+        }),
         open: this.#attacksOpen
       },
       effects: activeEffectContext(actor),
@@ -420,14 +424,15 @@ export class SymbaroumHud extends ApplicationV2 {
 
       const actor = this.#actor;
       const item = findActorItem(actor, weaponElement.dataset.itemId);
-      if (!ActorService.canUpdate(actor) || !IndResourcesIntegration.isWeaponItem(item) || !item?.uuid) {
+      const uuid = weaponElement.dataset.itemUuid || item?.uuid;
+      if (!ActorService.canUpdate(actor) || !uuid) {
         event.preventDefault();
         return;
       }
 
       const serializedDocument = JSON.stringify({
         type: "Item",
-        uuid: item.uuid
+        uuid
       });
       event.dataTransfer.effectAllowed = "copy";
       event.dataTransfer.setData("text/plain", serializedDocument);
@@ -1175,6 +1180,7 @@ export class SymbaroumHud extends ApplicationV2 {
     }
 
     slot.appendChild(hotbar);
+    refreshHotbarShortcuts(hotbar);
   }
 
   #restoreHotbar() {
@@ -1468,6 +1474,9 @@ export class SymbaroumHud extends ApplicationV2 {
         return ActorService.usePower(actor, element.dataset.itemId);
       }
       if (action === "use-mystical-power") {
+        return ActorService.usePower(actor, element.dataset.itemId);
+      }
+      if (action === "use-trait") {
         return ActorService.usePower(actor, element.dataset.itemId);
       }
       if (action === "open-ability") {
@@ -2153,21 +2162,57 @@ function escapeHtml(value) {
   });
 }
 
-function attackContext(actor, { canDrag = false } = {}) {
+function attackContext(actor, { canDrag = false, drawnWeapons = null } = {}) {
+  const readiness = readinessContext(drawnWeapons);
   return Array.from(actor?.system?.weapons ?? [])
     .filter((weapon) => weapon?.id && weapon?.name)
     .sort((left, right) => left.name.localeCompare(right.name, game.i18n.lang))
     .map((weapon) => {
       const item = findActorItem(actor, weapon.id);
       const uuid = item?.uuid ?? weapon.uuid ?? "";
+      const drawn = readiness ? readiness.has(weapon, item, uuid) : false;
       return {
         id: weapon.id,
         img: weapon.img ?? item?.img ?? "icons/svg/sword.svg",
         name: weapon.name,
         uuid,
+        drawn,
+        readinessKnown: Boolean(readiness),
+        readinessLabel: readiness
+          ? game.i18n.localize(drawn ? "SYMBAROUMHUD.Attacks.Drawn" : "SYMBAROUMHUD.Attacks.Sheathed")
+          : null,
         draggable: Boolean(canDrag && uuid)
       };
     });
+}
+
+function readinessContext(drawnWeapons) {
+  if (!Array.isArray(drawnWeapons)) return null;
+  const ids = new Set();
+  const uuids = new Set();
+  const names = new Set();
+
+  for (const weapon of drawnWeapons) {
+    if (weapon?.id) ids.add(String(weapon.id));
+    if (weapon?.uuid) uuids.add(String(weapon.uuid));
+    if (weapon?.name) names.add(normalizeText(weapon.name));
+  }
+
+  return {
+    has: (weapon, item, uuid) => {
+      return ids.has(String(item?.id ?? weapon?.id ?? ""))
+        || uuids.has(String(uuid ?? item?.uuid ?? weapon?.uuid ?? ""))
+        || names.has(normalizeText(weapon?.name ?? item?.name ?? ""));
+    }
+  };
+}
+
+function normalizeText(value) {
+  return String(value ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLocaleLowerCase()
+    .trim();
 }
 
 function activeEffectContext(actor) {
