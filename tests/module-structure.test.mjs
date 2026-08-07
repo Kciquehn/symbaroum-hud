@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const manifest = JSON.parse(fs.readFileSync(path.join(root, "module.json"), "utf8"));
+const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
 
 assert.equal(manifest.id, path.basename(root));
 assert.equal(manifest.compatibility.minimum, "13");
@@ -21,6 +22,20 @@ assert.ok(fs.existsSync(path.join(root, "LICENSE")), "Missing LICENSE file");
 assert.ok(fs.existsSync(path.join(root, "CHANGELOG.md")), "Missing CHANGELOG.md file");
 assert.ok(fs.existsSync(path.join(root, "FOUNDRY-PACKAGE-DESCRIPTION.html")), "Missing Foundry package description HTML");
 assert.ok(fs.existsSync(path.join(root, ".github", "workflows", "release.yml")), "Missing GitHub release workflow");
+assert.ok(fs.existsSync(path.join(root, ".github", "workflows", "check.yml")), "Missing GitHub check workflow");
+assert.equal(packageJson.version, manifest.version, "package.json and module.json versions must match");
+assert.equal(packageJson.engines.node, ">=20");
+
+const checkWorkflow = fs.readFileSync(
+  path.join(root, ".github", "workflows", "check.yml"),
+  "utf8"
+);
+const releaseWorkflow = fs.readFileSync(
+  path.join(root, ".github", "workflows", "release.yml"),
+  "utf8"
+);
+assert.match(checkWorkflow, /run: npm test/);
+assert.match(releaseWorkflow, /run: npm test/);
 
 for (const relativePath of [
   ...manifest.esmodules,

@@ -1,85 +1,150 @@
 # Symbaroum HUD
 
-HUD independente para o sistema Symbaroum 6.1.6 no Foundry VTT v13.
+[![Check](https://github.com/Kciquehn/symbaroum-hud/actions/workflows/check.yml/badge.svg)](https://github.com/Kciquehn/symbaroum-hud/actions/workflows/check.yml)
+[![Foundry VTT v13](https://img.shields.io/badge/Foundry_VTT-v13-5c1f1f)](https://foundryvtt.com/)
+[![Symbaroum 6.1.6](https://img.shields.io/badge/Symbaroum-6.1.6-3f4b35)](https://foundryvtt.com/packages/symbaroum)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-Manifest URL:
+Um HUD independente para **Symbaroum**, criado para manter as informações e ações mais usadas do personagem ao alcance da hotbar do Foundry VTT.
+
+O módulo usa as rolagens e os documentos nativos do sistema. Ele não altera o schema do Symbaroum, não executa migrações e não substitui as regras do sistema ou de módulos integrados.
+
+> Compatibilidade atual: **Foundry VTT v13** e **Symbaroum 6.1.6**.
+
+## Principais recursos
+
+- HUD persistente integrado à hotbar do Foundry;
+- seleção pelo token controlado, combatente atual ou personagem atribuído;
+- troca rápida entre atores que o usuário pode acessar;
+- Vitalidade, Corrupção, Defesa, armadura, carga, dinheiro e experiência;
+- rolagem dos oito atributos, armas, armadura e teste de morte;
+- recuperação, descanso, custo de nova rolagem e efeitos ativos;
+- painéis de ataques, habilidades, traços, poderes místicos e rituais;
+- busca e adição de habilidades ou rituais existentes no mundo;
+- painel de Ritualista com grau, capacidade e progressão;
+- atalhos de documentos na hotbar, separados por ator para jogadores;
+- drag-and-drop entre inventário, recipientes, aljava, armas, rituais, poderes místicos e hotbar;
+- indicação visual de armas sacadas;
+- interface em português do Brasil e inglês.
+
+## Instalação
+
+### Pelo manifesto
+
+No Foundry VTT, abra **Add-on Modules**, escolha **Install Module** e cole esta URL em **Manifest URL**:
 
 ```text
 https://github.com/Kciquehn/symbaroum-hud/releases/latest/download/module.json
 ```
 
-## Recursos
+Depois da instalação, ative **Symbaroum HUD** em **Manage Modules** dentro do mundo.
 
-- HUD persistente no canto inferior esquerdo, integrado à hotbar do Foundry;
-- seleção pelo token controlado, combatente atual ou personagem atribuído, com troca entre fichas acessíveis;
-- Vitalidade, Corrupção, Defesa, armadura, carga, moedas, experiência e os oito atributos;
-- rolagem dos oito atributos, teste de morte, recuperação, descanso e efeitos ativos;
-- painel de habilidades, traços, poderes místicos e rituais;
-- compra/adiciona habilidades e rituais a partir dos itens do mundo, com busca e sem precisar arrastar para a ficha;
-- painel de Ritualista com imagem, grau, capacidade e progressão;
-- atalhos de Documents na hotbar, por ator e sem criação obrigatória de macros;
-- integração opcional com Symbaroum Ind Resources para inventário, recipientes, pão de viagem, aljava, munição, dinheiro, manobras, descanso e prontidão de armas;
-- arrastar itens entre inventário, mochila, aljava, armas, rituais, poderes místicos e hotbar;
-- indicação visual quando o personagem está com uma arma sacada.
+### Instalação manual
 
-O HUD chama métodos nativos do ator, como `rollAttribute`, `rollArmor`, `rollWeapon` e `usePower`.
-Quando o Symbaroum Ind Resources está ativo, regras de inventário, munição, fome, dinheiro, manobras, descanso,
-prontidão de armas e rituais continuam delegadas para a API pública dele.
+1. Baixe `symbaroum-hud.zip` na [release mais recente](https://github.com/Kciquehn/symbaroum-hud/releases/latest).
+2. Extraia a pasta `symbaroum-hud` no diretório `Data/modules` do Foundry.
+3. Reinicie o Foundry e ative o módulo no mundo.
 
-## Compatibilidade
+## Requisitos e compatibilidade
 
-- Foundry VTT: v13
-- Sistema: Symbaroum 6.1.6
-- Módulo recomendado: Symbaroum Ind Resources
+| Componente | Versão | Situação |
+| --- | --- | --- |
+| Foundry Virtual Tabletop | 13 | Obrigatório e validado |
+| Symbaroum | 6.1.6 ou superior na série compatível | Obrigatório; validado em 6.1.6 |
+| Symbaroum Ind Resources | Compatível com sua instalação | Opcional e recomendado |
 
-Este módulo não altera o schema do sistema e não executa migrações.
+O manifesto está limitado ao Foundry v13. O módulo ainda não declara compatibilidade com v14 porque essa versão não faz parte do ambiente atualmente validado.
 
-Não declarei compatibilidade com Foundry v14 porque este módulo foi desenvolvido e validado para o alvo atual v13/Symbaroum 6.1.6.
+## Como o ator é escolhido
 
-## Validação local
+O modo padrão procura, nesta ordem:
+
+1. um token controlado;
+2. o combatente do turno atual;
+3. o personagem atribuído ao usuário.
+
+Essa preferência pode ser alterada nas configurações do módulo. As setas próximas ao retrato percorrem os atores acessíveis sem alterar a seleção de tokens.
+
+O HUD permite visualizar atores com permissão de **Observer**, mas ações, rolagens e alterações exigem permissão de **Owner**.
+
+## Configurações
+
+As configurações são individuais por cliente:
+
+- **Ativar HUD:** mostra ou oculta toda a interface;
+- **Modo de seleção:** escolhe entre token controlado, combate ou personagem atribuído;
+- **Mostrar Ind Resources:** habilita os elementos da integração quando o módulo estiver ativo;
+- **Ocultar lista de jogadores:** libera espaço na lateral da tela enquanto o HUD estiver em uso.
+
+O modo de visualização do inventário, em grade ou lista, também é lembrado individualmente.
+
+## Uso rápido
+
+- Clique no retrato para abrir a ficha do ator.
+- Clique em um atributo, arma ou ação disponível para usar a operação nativa do Symbaroum.
+- Use os botões laterais para abrir inventário, ataques, habilidades, traços, poderes místicos e rituais.
+- Clique com o botão direito em um efeito ativo para abrir o menu de remoção.
+- Arraste documentos para a hotbar para criar atalhos sem precisar criar macros.
+- Para jogadores, esses atalhos acompanham o ator exibido no HUD. O GM continua usando a hotbar normal do Foundry.
+
+## Integração com Symbaroum Ind Resources
+
+[Symbaroum Ind Resources](https://foundryvtt.com/packages/symbaroum-ind-resources) é opcional, mas recomendado para aproveitar todos os recursos do HUD.
+
+Quando a integração está ativa, o HUD usa a API pública do Ind Resources para:
+
+- carga e recipientes;
+- pão de viagem e fome;
+- aljavas, munição e recuperação de munição;
+- dinheiro;
+- manobras;
+- descanso;
+- prontidão de armas;
+- recursos relacionados a rituais.
+
+Essas regras continuam pertencendo ao Ind Resources; o HUD apenas apresenta e aciona sua API. Sem ele, os recursos nativos do Symbaroum continuam disponíveis normalmente.
+
+## Solução de problemas
+
+### O HUD não aparece
+
+- confirme que o mundo usa o sistema Symbaroum;
+- confirme que o módulo está ativo e que **Ativar HUD** está habilitado;
+- selecione um token ou atribua um personagem ao usuário;
+- recarregue o navegador com `Ctrl+F5` após atualizar o módulo.
+
+### Uma ação está desabilitada
+
+O usuário precisa ter permissão de **Owner** sobre o ator. Permissão de **Observer** permite visualizar o HUD, mas não alterar a ficha nem executar rolagens.
+
+### Os recursos de inventário ou munição não aparecem
+
+Confirme que o Symbaroum Ind Resources está ativo, compatível e habilitado nas configurações do HUD.
+
+Se o problema persistir, abra uma [issue](https://github.com/Kciquehn/symbaroum-hud/issues) informando as versões do Foundry, Symbaroum e módulos relacionados, além dos erros exibidos no console do navegador (`F12`).
+
+## Desenvolvimento
+
+O projeto usa módulos JavaScript nativos e não possui etapa de build. É necessário Node.js 20 ou superior para executar as verificações locais:
 
 ```powershell
-npm run check
+npm test
 ```
 
-Antes de publicar uma release, teste em um mundo de teste do Foundry v13:
+A suíte cobre serviços do ator, permissões, contexto, hooks, armazenamento, integração com Ind Resources, rituais e atalhos da hotbar.
+
+Antes de publicar uma versão, também é recomendável validar em um mundo de teste:
 
 - GM e jogador;
-- token selecionado, personagem atribuído e troca entre atores acessíveis;
+- token selecionado, personagem atribuído e troca entre atores;
 - Ind Resources ativo e desativado;
 - hotbar por ator para jogador e hotbar comum para GM;
-- inventário, recipientes, aljava, armas, habilidades, rituais e poderes místicos;
-- reload completo do navegador ou Ctrl+F5 após atualizar arquivos.
+- inventário, recipientes, aljava, armas, habilidades, rituais e poderes místicos.
 
-## Publicação
+Tags no formato `v*` acionam o workflow de release. A tag precisa corresponder à versão declarada em `module.json`; os testes são executados antes da criação do pacote.
 
-O manifesto já aponta para os assets esperados em GitHub Releases:
+## Licença e aviso legal
 
-- Repositório: `https://github.com/Kciquehn/symbaroum-hud`
-- Manifest: `https://github.com/Kciquehn/symbaroum-hud/releases/latest/download/module.json`
-- Download: `https://github.com/Kciquehn/symbaroum-hud/releases/latest/download/symbaroum-hud.zip`
+O código está disponível sob a [licença MIT](LICENSE).
 
-Para publicar uma versão:
-
-```powershell
-git tag v0.1.0
-git push origin main
-git push origin v0.1.0
-```
-
-O workflow `.github/workflows/release.yml` cria uma GitHub Release com `module.json` e `symbaroum-hud.zip`.
-
-Para a loja oficial do Foundry:
-
-1. publique o repositório no GitHub;
-2. publique a release com os dois assets;
-3. verifique se a Manifest URL instala em um Foundry v13 limpo;
-4. envie o pacote pelo formulário oficial de criadores do Foundry;
-5. use o conteúdo de `FOUNDRY-PACKAGE-DESCRIPTION.html` como descrição HTML.
-
-## Licença e aviso
-
-Código sob licença MIT. Veja `LICENSE`.
-
-Este módulo não inclui conteúdo, regras textuais ou arte oficial de Symbaroum. Symbaroum pertence à Free League Publishing.
-Este é um projeto independente da comunidade e não é afiliado nem endossado pela Free League Publishing ou pela Foundry Virtual Tabletop.
+Este módulo não inclui textos de regras, conteúdo ou arte oficial de Symbaroum. Symbaroum pertence à Free League Publishing. Este é um projeto independente da comunidade e não é afiliado nem endossado pela Free League Publishing ou pela Foundry Virtual Tabletop.

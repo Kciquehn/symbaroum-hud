@@ -1,8 +1,17 @@
 {
   "name": "symbaroum-hud",
   "version": "0.1.0",
+  "description": "HUD independente para o sistema Symbaroum no Foundry VTT.",
   "private": true,
   "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Kciquehn/symbaroum-hud.git"
+  },
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "check": "node --test tests/*.test.mjs",
     "test": "node --test tests/*.test.mjs",
