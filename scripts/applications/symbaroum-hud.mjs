@@ -1700,16 +1700,34 @@ export class SymbaroumHud extends ApplicationV2 {
       return;
     }
 
-    const entries = maneuvers.map((maneuver, index) => `
-      <label class="symbaroum-hud-ability-picker-entry symbaroum-hud-maneuver-picker-entry" data-search-index="${escapeHtml(`${maneuver.label ?? ""} ${(maneuver.notes ?? []).join(" ")}`.toLocaleLowerCase())}">
-        <input type="radio" name="maneuverId" value="${escapeHtml(maneuver.id)}" ${index === 0 ? "checked" : ""}>
-        <i class="fa-solid ${escapeHtml(maneuver.icon)}" aria-hidden="true"></i>
-        <span>
-          <strong>${escapeHtml(maneuver.label)}</strong>
-          ${maneuver.notes?.length ? `<small>${escapeHtml(maneuver.notes.join(" · "))}</small>` : ""}
-        </span>
-      </label>
-    `).join("");
+    const showDescriptionLabel = game.i18n.localize("SYMBAROUMHUD.Maneuvers.ShowDescription");
+    const entries = maneuvers.map((maneuver, index) => {
+      const notes = maneuver.notes ?? [];
+      const description = notes
+        .map((note) => `<p>${escapeHtml(note)}</p>`)
+        .join("");
+      return `
+        <div class="symbaroum-hud-ability-picker-entry symbaroum-hud-maneuver-picker-entry" data-search-index="${escapeHtml(`${maneuver.label ?? ""} ${notes.join(" ")}`.toLocaleLowerCase())}">
+          <label class="symbaroum-hud-maneuver-picker-choice">
+            <input type="radio" name="maneuverId" value="${escapeHtml(maneuver.id)}" ${index === 0 ? "checked" : ""}>
+            <i class="fa-solid ${escapeHtml(maneuver.icon)}" aria-hidden="true"></i>
+            <span>
+              <strong>${escapeHtml(maneuver.label)}</strong>
+              ${notes.length ? `<small>${escapeHtml(notes.join(" · "))}</small>` : ""}
+            </span>
+          </label>
+          ${notes.length ? `
+            <button type="button" class="symbaroum-hud-maneuver-description-toggle"
+              data-maneuver-description-toggle aria-expanded="false"
+              data-tooltip="${escapeHtml(showDescriptionLabel)}"
+              aria-label="${escapeHtml(showDescriptionLabel)}">
+              <i class="fa-solid fa-book-open" aria-hidden="true"></i>
+            </button>
+            <div class="symbaroum-hud-maneuver-description" hidden>${description}</div>
+          ` : ""}
+        </div>
+      `;
+    }).join("");
     const content = `
       <form class="symbaroum-hud-ability-picker symbaroum-hud-maneuver-picker">
         <p>${game.i18n.localize("SYMBAROUMHUD.Maneuvers.Prompt")}</p>
@@ -1739,7 +1757,7 @@ export class SymbaroumHud extends ApplicationV2 {
         }
       },
       default: "ok",
-      render: setupAbilityPickerSearch
+      render: setupManeuverPicker
     });
     dialog.render(true);
   }
@@ -2251,6 +2269,29 @@ function setupAbilityPickerSearch(html) {
   };
 
   input.addEventListener("input", update);
+}
+
+function setupManeuverPicker(html) {
+  setupAbilityPickerSearch(html);
+  const root = html?.[0] ?? html;
+  if (!root?.querySelectorAll) return;
+
+  const showLabel = game.i18n.localize("SYMBAROUMHUD.Maneuvers.ShowDescription");
+  const hideLabel = game.i18n.localize("SYMBAROUMHUD.Maneuvers.HideDescription");
+  for (const button of root.querySelectorAll("[data-maneuver-description-toggle]")) {
+    button.addEventListener("click", () => {
+      const description = button.closest(".symbaroum-hud-maneuver-picker-entry")
+        ?.querySelector(".symbaroum-hud-maneuver-description");
+      if (!description) return;
+
+      const expanded = button.getAttribute("aria-expanded") !== "true";
+      button.setAttribute("aria-expanded", String(expanded));
+      description.hidden = !expanded;
+      const label = expanded ? hideLabel : showLabel;
+      button.setAttribute("aria-label", label);
+      button.dataset.tooltip = label;
+    });
+  }
 }
 
 function escapeHtml(value) {

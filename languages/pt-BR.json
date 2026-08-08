@@ -192,10 +192,12 @@
       "Effects": "Condições"
     },
     "Maneuvers": {
+      "HideDescription": "Ocultar descrição completa",
       "NoSearchResults": "Nenhuma manobra encontrada.",
       "Prompt": "Escolha uma manobra do Ind Resources para rolar.",
       "Roll": "Rolar",
-      "Search": "Pesquisar manobras"
+      "Search": "Pesquisar manobras",
+      "ShowDescription": "Mostrar descrição completa"
     },
     "Notifications": {
       "NoPermission": "Você não tem permissão para alterar este ator.",

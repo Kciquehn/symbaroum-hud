@@ -192,10 +192,12 @@
       "Effects": "Conditions"
     },
     "Maneuvers": {
+      "HideDescription": "Hide full description",
       "NoSearchResults": "No maneuvers found.",
       "Prompt": "Choose an Ind Resources maneuver to roll.",
       "Roll": "Roll",
-      "Search": "Search maneuvers"
+      "Search": "Search maneuvers",
+      "ShowDescription": "Show full description"
     },
     "Notifications": {
       "NoPermission": "You do not have permission to update this actor.",

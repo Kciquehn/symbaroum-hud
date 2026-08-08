@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.4
+
+- Adds an expand/collapse button to every maneuver with descriptive notes.
+- Displays the complete maneuver description in a readable, scrollable area.
+
 ## 0.1.3
 
 - Keeps the abilities and traits buttons visible even when their lists are empty.
