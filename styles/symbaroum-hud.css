@@ -3214,6 +3214,29 @@ body:has(#symbaroum-hud .symbaroum-hud-ammo-recovery-slot) > #tenebre-ammo-hud-l
   border-color: rgb(112 105 90 / 62%);
 }
 
+.symbaroum-hud-draw-weapon-dialog {
+  display: grid;
+  gap: 10px;
+}
+
+.symbaroum-hud-draw-weapon-dialog > p {
+  margin: 0;
+}
+
+.symbaroum-hud-draw-weapon-warning {
+  display: flex;
+  padding: 8px 10px;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid rgb(164 139 2 / 58%);
+  color: #f6e7bd;
+  background: rgb(58 43 12 / 62%);
+}
+
+.symbaroum-hud-draw-weapon-warning i {
+  color: #e5bc54;
+}
+
 #symbaroum-hud button.symbaroum-hud-attack-entry:hover {
   border-color: #d1b957;
   filter: saturate(1.08);

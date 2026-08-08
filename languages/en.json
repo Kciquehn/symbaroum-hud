@@ -137,7 +137,10 @@
     "Attacks": {
       "Drawn": "Drawn",
       "Empty": "This character has no weapons.",
-      "Sheathed": "Sheathed"
+      "Sheathed": "Sheathed",
+      "DrawPromptTitle": "Draw weapon",
+      "DrawPrompt": "{weapon} is not drawn. Do you want to draw it and continue the attack?",
+      "DrawMovementReminder": "Remember: drawing a weapon costs a movement action."
     },
     "Sections": {
       "Attributes": "Attributes",

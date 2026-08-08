@@ -189,6 +189,41 @@ export class IndResourcesIntegration {
     return maneuvers.execute(actor, maneuverId);
   }
 
+  static weaponReadinessState(actor, itemId) {
+    const readiness = this.api?.weaponReadiness;
+    if (
+      !actor
+      || !itemId
+      || !safeCall(() => readiness?.isEnabled?.())
+      || typeof readiness?.getEligibleWeapons !== "function"
+      || typeof readiness?.getDrawnWeapons !== "function"
+      || typeof readiness?.setDrawn !== "function"
+    ) return null;
+
+    const weapon = actorItems(actor).find((item) => item?.id === itemId);
+    const eligible = Array.from(
+      safeCall(() => readiness.getEligibleWeapons(actor)) ?? []
+    ).find((item) => item?.id === itemId);
+    if (!weapon || !eligible) return null;
+
+    const drawn = Array.from(
+      safeCall(() => readiness.getDrawnWeapons(actor)) ?? []
+    ).some((item) => item?.id === itemId);
+    return {
+      drawn,
+      name: weapon.name ?? eligible.name ?? ""
+    };
+  }
+
+  static async drawWeapon(actor, itemId) {
+    const state = this.weaponReadinessState(actor, itemId);
+    if (!state) return false;
+    if (state.drawn) return true;
+
+    const weapon = actorItems(actor).find((item) => item?.id === itemId);
+    return Boolean(await this.api.weaponReadiness.setDrawn(weapon, true));
+  }
+
   static isRitualistAbility(item) {
     const checker = this.api?.ritualBrowser?.isRitualistAbility;
     if (typeof checker === "function") {

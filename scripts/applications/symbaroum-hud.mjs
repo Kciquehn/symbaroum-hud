@@ -1602,7 +1602,7 @@ export class SymbaroumHud extends ApplicationV2 {
         return ActorService.openItem(actor, element.dataset.itemId);
       }
       if (action === "roll-weapon") {
-        return ActorService.rollWeapon(actor, element.dataset.itemId);
+        return this.#rollWeapon(actor, element.dataset.itemId);
       }
       if (action === "roll-attribute") {
         return ActorService.rollAttribute(actor, element.dataset.attribute);
@@ -1627,6 +1627,37 @@ export class SymbaroumHud extends ApplicationV2 {
       console.error(`${MODULE_ID} | HUD action failed.`, error);
       ui.notifications.error(game.i18n.localize("SYMBAROUMHUD.Notifications.ActionFailed"));
     }
+  }
+
+  async #rollWeapon(actor, itemId) {
+    const readiness = IndResourcesIntegration.weaponReadinessState(actor, itemId);
+    if (!readiness || readiness.drawn) {
+      return ActorService.rollWeapon(actor, itemId);
+    }
+
+    const confirmed = await globalThis.Dialog.confirm({
+      title: game.i18n.localize("SYMBAROUMHUD.Attacks.DrawPromptTitle"),
+      content: `
+        <div class="symbaroum-hud-draw-weapon-dialog">
+          <p>${escapeHtml(game.i18n.format("SYMBAROUMHUD.Attacks.DrawPrompt", {
+            weapon: readiness.name
+          }))}</p>
+          <p class="symbaroum-hud-draw-weapon-warning">
+            <i class="fa-solid fa-person-running" aria-hidden="true"></i>
+            <strong>${escapeHtml(game.i18n.localize("SYMBAROUMHUD.Attacks.DrawMovementReminder"))}</strong>
+          </p>
+        </div>
+      `,
+      yes: () => true,
+      no: () => false,
+      defaultYes: false
+    });
+    if (!confirmed) return null;
+
+    const drawn = await IndResourcesIntegration.drawWeapon(actor, itemId);
+    if (!drawn) return null;
+    await this.render();
+    return ActorService.rollWeapon(actor, itemId);
   }
 
   #openAddAbilityDialog(actor) {

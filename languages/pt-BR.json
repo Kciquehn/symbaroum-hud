@@ -137,7 +137,10 @@
     "Attacks": {
       "Drawn": "Sacada",
       "Empty": "Este personagem não possui armas.",
-      "Sheathed": "Guardada"
+      "Sheathed": "Guardada",
+      "DrawPromptTitle": "Sacar arma",
+      "DrawPrompt": "{weapon} não está sacada. Deseja sacá-la e continuar o ataque?",
+      "DrawMovementReminder": "Lembre-se: sacar uma arma gasta uma ação de movimento."
     },
     "Sections": {
       "Attributes": "Atributos",

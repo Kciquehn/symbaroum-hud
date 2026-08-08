@@ -10,6 +10,7 @@ const moneyDialogs = [];
 const maneuverRolls = [];
 const warnings = [];
 const recoveredAmmo = [];
+const drawnWeapons = [];
 let confirmations = 0;
 
 globalThis.game = {
@@ -64,6 +65,10 @@ globalThis.game = {
         { id: "shield", name: "Escudo" }
       ],
       getDrawnWeapons: (actor) => [actor.items.get("sword") ?? { name: "Espada" }],
+      setDrawn: async (weapon, drawn) => {
+        drawnWeapons.push([weapon.id, drawn]);
+        return true;
+      },
       open: async () => "readiness"
     },
     maneuvers: {
@@ -364,6 +369,26 @@ test("lists and executes maneuvers through the public Ind Resources API", async 
     "maneuver"
   );
   assert.deepEqual(maneuverRolls.at(-1), ["actor", "grapple"]);
+});
+
+test("detects and draws a specific sheathed weapon through the public readiness API", async () => {
+  const shield = {
+    id: "shield",
+    name: "Escudo",
+    type: "weapon",
+    system: { state: "equipped" }
+  };
+  const actor = {
+    id: "actor",
+    items: new Map([[shield.id, shield]])
+  };
+
+  assert.deepEqual(IndResourcesIntegration.weaponReadinessState(actor, shield.id), {
+    drawn: false,
+    name: "Escudo"
+  });
+  assert.equal(await IndResourcesIntegration.drawWeapon(actor, shield.id), true);
+  assert.deepEqual(drawnWeapons.at(-1), [shield.id, true]);
 });
 
 test("delegates ammunition recovery to Ind Resources", async () => {

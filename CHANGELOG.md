@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.7
+
+- Ao atacar com uma arma guardada, oferece sacá-la antes de continuar o ataque.
+- A confirmação lembra que sacar a arma consome uma ação de movimento e delega a alteração ao Ind Resources.
+
 ## 0.1.6
 
 - Oculta o nome e os controles de troca do ator até o retrato receber foco ou o cursor do mouse.

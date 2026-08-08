@@ -27,6 +27,7 @@ O módulo usa as rolagens e os documentos nativos do sistema. Ele não altera o 
 - drag-and-drop entre inventário, recipientes, aljava, armas, rituais, poderes místicos e hotbar;
 - adição de traços, dádivas e fardos ao arrastá-los diretamente para o botão de traços;
 - indicação visual de armas sacadas;
+- confirmação para sacar uma arma guardada antes do ataque, com lembrete do custo de ação de movimento;
 - interface em português do Brasil e inglês.
 
 ## Instalação
@@ -84,6 +85,7 @@ O modo de visualização do inventário, em grade ou lista, também é lembrado 
 
 - Passe o mouse sobre o retrato para revelar o nome e as setas de troca; clique na imagem para abrir a ficha do ator.
 - Clique em um atributo, arma ou ação disponível para usar a operação nativa do Symbaroum.
+- Ao atacar com uma arma guardada, confirme o aviso para sacá-la pelo Ind Resources e continuar o ataque.
 - Use os botões laterais para abrir inventário, ataques, habilidades, traços, poderes místicos e rituais.
 - Clique com o botão direito em um efeito ativo para abrir o menu de remoção.
 - Arraste documentos para a hotbar para criar atalhos sem precisar criar macros.
