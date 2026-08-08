@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.1
+
+- Aligns the experience bar above the knowledge buttons.
+- Makes the experience bar automatically match the width of the button grid.
+- Improves the GitHub documentation and adds automated validation before releases.
+
 ## 0.1.0
 
 - Initial public release for Foundry VTT v13 and Symbaroum 6.1.6.
