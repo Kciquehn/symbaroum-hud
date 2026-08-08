@@ -327,12 +327,14 @@
 }
 
 #symbaroum-hud .symbaroum-hud-hotbar-controls {
+  --symbaroum-hud-side-button-height: 27.1667px;
   display: flex;
   width: 24px;
+  height: 178px;
   flex: 0 0 24px;
   flex-direction: column;
-  align-self: flex-end;
-  gap: 4px;
+  align-self: flex-start;
+  gap: 3px;
   pointer-events: auto;
 }
 
@@ -340,9 +342,9 @@
   --button-size: 24px;
   --control-size: 24px;
   width: 24px;
-  height: 24px;
+  height: var(--symbaroum-hud-side-button-height);
   min-width: 24px;
-  min-height: 24px;
+  min-height: var(--symbaroum-hud-side-button-height);
   margin: 0;
   padding: 0;
   color: var(--control-icon-color, rgb(255 255 255 / 70%));
@@ -652,9 +654,9 @@ body:has(#symbaroum-hud .symbaroum-hud-character-card) #hotbar #hotbar-controls-
 #symbaroum-hud button.symbaroum-hud-character-action {
   display: inline-flex;
   width: 24px;
-  height: 24px;
+  height: var(--symbaroum-hud-side-button-height);
   min-width: 24px;
-  min-height: 24px;
+  min-height: var(--symbaroum-hud-side-button-height);
   margin: 0;
   padding: 0;
   align-items: center;

@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.8
+
+- Alinha a coluna de controles laterais ao topo e ao rodapé do HUD.
+- Distribui uniformemente a altura disponível entre os seis botões laterais.
+
 ## 0.1.7
 
 - Ao atacar com uma arma guardada, oferece sacá-la antes de continuar o ataque.
