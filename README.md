@@ -16,7 +16,7 @@ O módulo usa as rolagens e os documentos nativos do sistema. Ele não altera o 
 - HUD persistente integrado à hotbar do Foundry;
 - seleção pelo token controlado, combatente atual ou personagem atribuído;
 - troca rápida entre atores que o usuário pode acessar;
-- Vitalidade, Corrupção, Defesa, armadura, carga, dinheiro e experiência;
+- barras de Vitalidade e Corrupção sobre o retrato, além de Defesa, armadura, carga, dinheiro e experiência;
 - rolagem dos oito atributos, armas, armadura e teste de morte;
 - recuperação, descanso, custo de nova rolagem e efeitos ativos;
 - painéis de ataques, habilidades, traços, poderes místicos e rituais;
@@ -82,7 +82,7 @@ O modo de visualização do inventário, em grade ou lista, também é lembrado 
 
 ## Uso rápido
 
-- Clique no retrato para abrir a ficha do ator.
+- Passe o mouse sobre o retrato para revelar o nome e as setas de troca; clique na imagem para abrir a ficha do ator.
 - Clique em um atributo, arma ou ação disponível para usar a operação nativa do Symbaroum.
 - Use os botões laterais para abrir inventário, ataques, habilidades, traços, poderes místicos e rituais.
 - Clique com o botão direito em um efeito ativo para abrir o menu de remoção.

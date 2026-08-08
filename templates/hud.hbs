@@ -76,13 +76,27 @@
       </span>
     {{/if}}
     <span class="symbaroum-hud-character-resources">
-      <span data-tooltip="{{localize 'SYMBAROUMHUD.Resources.Toughness'}}">
-        <i class="fa-solid fa-heart" aria-hidden="true"></i>
-        <strong>{{actor.vitality.value}}</strong>/{{actor.vitality.max}}
+      <span class="symbaroum-hud-character-resource" data-resource="vitality"
+        role="progressbar" aria-valuemin="0" aria-valuemax="{{actor.vitality.max}}"
+        aria-valuenow="{{actor.vitality.value}}"
+        data-tooltip="{{localize 'SYMBAROUMHUD.Resources.Toughness'}}: {{actor.vitality.value}}/{{actor.vitality.max}}"
+        style="--symbaroum-hud-resource-percent: {{actor.vitality.percent}}%;">
+        <span class="symbaroum-hud-character-resource-fill" aria-hidden="true"></span>
+        <span class="symbaroum-hud-character-resource-value">
+          <i class="fa-solid fa-heart" aria-hidden="true"></i>
+          <strong>{{actor.vitality.value}}</strong>/{{actor.vitality.max}}
+        </span>
       </span>
-      <span data-tooltip="{{localize 'SYMBAROUMHUD.Resources.Corruption'}}">
-        <i class="fa-solid fa-droplet" aria-hidden="true"></i>
-        <strong>{{actor.corruption.temporary}}+{{actor.corruption.permanent}}</strong>/{{actor.corruption.max}}
+      <span class="symbaroum-hud-character-resource" data-resource="corruption"
+        role="progressbar" aria-valuemin="0" aria-valuemax="{{actor.corruption.max}}"
+        aria-valuenow="{{actor.corruption.total}}"
+        data-tooltip="{{localize 'SYMBAROUMHUD.Resources.Corruption'}}: {{actor.corruption.temporary}}+{{actor.corruption.permanent}}/{{actor.corruption.max}}"
+        style="--symbaroum-hud-resource-percent: {{actor.corruption.percent}}%;">
+        <span class="symbaroum-hud-character-resource-fill" aria-hidden="true"></span>
+        <span class="symbaroum-hud-character-resource-value">
+          <i class="fa-solid fa-droplet" aria-hidden="true"></i>
+          <strong>{{actor.corruption.temporary}}+{{actor.corruption.permanent}}</strong>/{{actor.corruption.max}}
+        </span>
       </span>
     </span>
   </div>

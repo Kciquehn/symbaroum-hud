@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.6
+
+- Oculta o nome e os controles de troca do ator até o retrato receber foco ou o cursor do mouse.
+- Substitui os números soltos de Vitalidade e Corrupção por barras de progresso sobre o retrato.
+
 ## 0.1.5
 
 - Ativa por padrão o controle que oculta a lista de jogadores.

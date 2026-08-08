@@ -450,6 +450,22 @@
   text-align: center;
   text-overflow: ellipsis;
   white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateY(-4px);
+  transition:
+    opacity 140ms ease,
+    transform 140ms ease,
+    visibility 140ms ease;
+}
+
+#symbaroum-hud .symbaroum-hud-character-card:hover .symbaroum-hud-character-name,
+#symbaroum-hud .symbaroum-hud-character-card:focus-within .symbaroum-hud-character-name {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateY(0);
 }
 
 #symbaroum-hud button.symbaroum-hud-character-name-label,
@@ -516,26 +532,52 @@
 
 #symbaroum-hud .symbaroum-hud-character-resources {
   bottom: 0;
-  display: grid;
-  min-height: 34px;
-  grid-template-columns: 1fr 1fr;
-  align-items: center;
-  border-top: 1px solid rgb(255 255 255 / 18%);
-  font-size: var(--font-size-12, 0.75rem);
+  display: flex;
+  min-height: 38px;
+  padding: 2px;
+  flex-direction: column;
+  gap: 2px;
+  background: rgb(4 4 6 / 72%);
+  font-size: var(--font-size-11, 0.6875rem);
   pointer-events: none;
 }
 
-#symbaroum-hud .symbaroum-hud-character-resources > span {
-  display: inline-flex;
+#symbaroum-hud .symbaroum-hud-character-resource {
+  position: relative;
+  display: flex;
   min-width: 0;
-  min-height: 32px;
+  min-height: 16px;
+  overflow: hidden;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgb(224 207 156 / 38%);
+  background: rgb(5 5 7 / 82%);
+  box-shadow: inset 0 0 3px #000;
+}
+
+#symbaroum-hud .symbaroum-hud-character-resource-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: var(--symbaroum-hud-resource-percent, 0%);
+  box-shadow: inset 0 0 5px rgb(255 255 255 / 16%);
+  transition: width 180ms ease;
+}
+
+#symbaroum-hud .symbaroum-hud-character-resource[data-resource="vitality"] .symbaroum-hud-character-resource-fill {
+  background: linear-gradient(90deg, #641814, #a72b22);
+}
+
+#symbaroum-hud .symbaroum-hud-character-resource[data-resource="corruption"] .symbaroum-hud-character-resource-fill {
+  background: linear-gradient(90deg, #44205d, #794395);
+}
+
+#symbaroum-hud .symbaroum-hud-character-resource-value {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 3px;
-}
-
-#symbaroum-hud .symbaroum-hud-character-resources > span + span {
-  border-left: 1px solid rgb(255 255 255 / 18%);
 }
 
 #symbaroum-hud .symbaroum-hud-character-resources i {
@@ -2385,19 +2427,15 @@ body:has(#symbaroum-hud .symbaroum-hud-ammo-recovery-slot) > #tenebre-ammo-hud-l
     0 0 4px #000;
 }
 
-#symbaroum-hud .symbaroum-hud-character-resources > span + span {
-  border-left: 0;
-}
-
 #symbaroum-hud .symbaroum-hud-character-resources i {
   color: #f4d69a;
 }
 
-#symbaroum-hud .symbaroum-hud-character-resources > span:first-child i {
+#symbaroum-hud .symbaroum-hud-character-resource[data-resource="vitality"] i {
   color: #ffb1a1;
 }
 
-#symbaroum-hud .symbaroum-hud-character-resources > span:last-child i {
+#symbaroum-hud .symbaroum-hud-character-resource[data-resource="corruption"] i {
   color: #d6b6e5;
 }
 

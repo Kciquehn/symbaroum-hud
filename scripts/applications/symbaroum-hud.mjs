@@ -146,6 +146,12 @@ export class SymbaroumHud extends ApplicationV2 {
     const actor = this.#actor;
     const toughness = actor?.system?.health?.toughness ?? {};
     const corruption = actor?.system?.health?.corruption ?? {};
+    const vitalityValue = number(toughness.value);
+    const vitalityMax = number(toughness.max);
+    const temporaryCorruption = number(corruption.temporary);
+    const permanentCorruption = number(corruption.permanent);
+    const corruptionMax = number(corruption.max);
+    const totalCorruption = temporaryCorruption + permanentCorruption;
     const indResources = actor && getSetting(SETTINGS.SHOW_IND_RESOURCES)
       ? IndResourcesIntegration.context(actor, {
           containerId: this.#storageContainerId
@@ -272,21 +278,24 @@ export class SymbaroumHud extends ApplicationV2 {
             img: actor.img,
             deathFailures: failedDeathRolls(actor),
             vitality: {
-              value: number(toughness.value),
-              max: number(toughness.max)
+              value: vitalityValue,
+              max: vitalityMax,
+              percent: resourcePercent(vitalityValue, vitalityMax)
             },
             corruption: {
-              temporary: number(corruption.temporary),
-              permanent: number(corruption.permanent),
-              max: number(corruption.max)
+              temporary: temporaryCorruption,
+              permanent: permanentCorruption,
+              total: totalCorruption,
+              max: corruptionMax,
+              percent: resourcePercent(totalCorruption, corruptionMax)
             }
           }
         : {
             name: game.i18n.localize("SYMBAROUMHUD.Empty"),
             img: "icons/svg/mystery-man.svg",
             deathFailures: [],
-            vitality: { value: 0, max: 0 },
-            corruption: { temporary: 0, permanent: 0, max: 0 }
+            vitality: { value: 0, max: 0, percent: 0 },
+            corruption: { temporary: 0, permanent: 0, total: 0, max: 0, percent: 0 }
           }
     };
   }
@@ -1927,6 +1936,11 @@ export class SymbaroumHud extends ApplicationV2 {
 function number(value) {
   const result = Number(value);
   return Number.isFinite(result) ? result : 0;
+}
+
+function resourcePercent(value, max) {
+  if (max <= 0) return 0;
+  return Math.min(100, Math.max(0, Math.round((value / max) * 1000) / 10));
 }
 
 function defenseValue(actor) {
