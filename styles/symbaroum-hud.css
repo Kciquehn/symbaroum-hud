@@ -974,13 +974,13 @@ body:has(#symbaroum-hud .symbaroum-hud-ammo-recovery-slot) > #tenebre-ammo-hud-l
 #symbaroum-hud .symbaroum-hud-experience-panel {
   box-sizing: border-box;
   display: grid;
-  width: calc(100% + 49px);
+  width: 100%;
   min-width: 0;
   height: 19px;
-  margin-left: -49px;
+  margin: 0;
   padding: 0 4px;
   align-items: center;
-  grid-column: span 2;
+  grid-column: 1 / -1;
   grid-template-columns: 14px minmax(0, 1fr) auto;
   gap: 3px;
   overflow: hidden;
@@ -995,16 +995,9 @@ body:has(#symbaroum-hud .symbaroum-hud-ammo-recovery-slot) > #tenebre-ammo-hud-l
   font-size: var(--font-size-10, 0.625rem);
   font-weight: inherit;
   line-height: 17px;
-  margin-top: 0;
-  margin-right: 0;
-  margin-bottom: 0;
   text-shadow: 0 1px 2px #000;
   cursor: pointer;
   pointer-events: auto;
-}
-
-#symbaroum-hud .symbaroum-hud-knowledge-stack[data-knowledge-columns="1"] .symbaroum-hud-experience-panel {
-  grid-column: span 1;
 }
 
 #symbaroum-hud .symbaroum-hud-experience-panel > i {
@@ -1038,8 +1031,6 @@ body:has(#symbaroum-hud .symbaroum-hud-ammo-recovery-slot) > #tenebre-ammo-hud-l
 }
 
 #symbaroum-hud button.symbaroum-hud-experience-panel:disabled {
-  width: 100%;
-  margin-left: 0;
   opacity: 0.5;
   cursor: default;
 }
