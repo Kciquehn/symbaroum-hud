@@ -102,12 +102,24 @@ assert.match(template, /data-symba-hotbar/);
 assert.match(template, /class="symbaroum-hud-info-panel"/);
 assert.match(template, /class="symbaroum-hud-economy-panel"/);
 assert.match(template, /class="symbaroum-hud-economy-entry"/);
+assert.match(template, /class="symbaroum-hud-action-area"/);
 assert.match(template, /class="symbaroum-hud-experience-panel"/);
 assert.match(template, /#if showEconomy/);
 assert.match(template, /#if knowledge\.available/);
 assert.match(template, /#if knowledge\.showExperience/);
 assert.match(template, /data-knowledge-columns="{{knowledge\.columns}}"/);
 assert.match(template, /data-has-experience="{{knowledge\.showExperience}}"/);
+assert.match(template, /data-has-knowledge="{{knowledge\.available}}"/);
+assert.ok(
+  template.indexOf('class="symbaroum-hud-experience-panel"')
+    < template.indexOf('class="symbaroum-hud-panel-stack"'),
+  "The experience bar must appear above the attack and storage buttons"
+);
+assert.ok(
+  template.indexOf('class="symbaroum-hud-experience-panel"')
+    < template.indexOf('class="symbaroum-hud-knowledge-stack"'),
+  "The experience bar must appear above the knowledge buttons"
+);
 assert.match(template, /symbaroum-hud-economy-action/);
 assert.match(template, /data-action="open-money"/);
 assert.match(template, /info\.money\.thaler/);
@@ -452,10 +464,12 @@ assert.doesNotMatch(stylesheet, /margin-left: -49px/);
 assert.match(stylesheet, /\.symbaroum-hud-panel-toggle/);
 assert.match(stylesheet, /\.symbaroum-hud-maneuvers-toggle/);
 assert.match(stylesheet, /\.symbaroum-hud-maneuver-picker-entry/);
+assert.match(stylesheet, /\.symbaroum-hud-action-area \{[\s\S]*?grid-template-columns: 44px auto/);
+assert.match(stylesheet, /\.symbaroum-hud-action-area \{[\s\S]*?grid-template-rows: 19px auto/);
 assert.match(stylesheet, /\.symbaroum-hud-panel-stack/);
 assert.match(stylesheet, /\.symbaroum-hud-knowledge-stack/);
 assert.match(stylesheet, /data-knowledge-columns="1"[\s\S]*width: 44px/);
-assert.match(stylesheet, /data-has-experience="false"[\s\S]*grid-template-rows: 44px/);
+assert.match(stylesheet, /data-has-experience="false"[\s\S]*grid-template-rows: auto/);
 assert.match(stylesheet, /grid-template-columns: 44px/);
 assert.match(stylesheet, /grid-auto-rows: 44px/);
 assert.match(stylesheet, /\.symbaroum-hud-rituals-toggle/);

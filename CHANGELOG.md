@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.2
+
+- Moves the experience bar above the complete action area.
+- Keeps the experience bar aligned with the attack, storage and knowledge buttons below it.
+
 ## 0.1.1
 
 - Aligns the experience bar above the knowledge buttons.

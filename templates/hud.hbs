@@ -183,7 +183,22 @@
       </section>
       {{/if}}
 
-      <div class="symbaroum-hud-panel-stack">
+      <div class="symbaroum-hud-action-area"
+        data-has-experience="{{knowledge.showExperience}}"
+        data-has-knowledge="{{knowledge.available}}">
+        {{#if knowledge.showExperience}}
+        <button type="button" class="symbaroum-hud-experience-panel"
+          data-action="reroll-cost"
+          data-tooltip="{{localize 'SYMBAROUMHUD.Info.Experience'}}: {{info.experience.available}}/{{info.experience.total}}"
+          aria-label="{{localize 'SYMBAROUMHUD.RerollCost.Title'}}"
+          {{#unless actions.rerollCost}}disabled{{/unless}}>
+          <i class="fa-solid fa-star" aria-hidden="true"></i>
+          <span>{{localize "SYMBAROUMHUD.Info.ExperienceShort"}}</span>
+          <strong>{{info.experience.available}}/{{info.experience.total}}</strong>
+        </button>
+        {{/if}}
+
+        <div class="symbaroum-hud-panel-stack">
         <button type="button" class="symbaroum-hud-panel-toggle symbaroum-hud-attacks-toggle"
           data-action="toggle-attacks" data-panel="attacks"
           data-weapon-drop="{{attacks.canUse}}"
@@ -203,7 +218,7 @@
             <i class="fa-solid fa-backpack" aria-hidden="true"></i>
           </button>
         {{/if}}
-      </div>
+        </div>
 
       {{#if attacks.open}}
         <section id="symbaroum-hud-attacks-panel" class="symbaroum-hud-attacks-panel"
@@ -494,19 +509,7 @@
       {{/if}}
 
       {{#if knowledge.available}}
-      <div class="symbaroum-hud-knowledge-stack" data-knowledge-columns="{{knowledge.columns}}" data-has-experience="{{knowledge.showExperience}}">
-        {{#if knowledge.showExperience}}
-        <button type="button" class="symbaroum-hud-experience-panel"
-          data-action="reroll-cost"
-          data-tooltip="{{localize 'SYMBAROUMHUD.Info.Experience'}}: {{info.experience.available}}/{{info.experience.total}}"
-          aria-label="{{localize 'SYMBAROUMHUD.RerollCost.Title'}}"
-          {{#unless actions.rerollCost}}disabled{{/unless}}>
-          <i class="fa-solid fa-star" aria-hidden="true"></i>
-          <span>{{localize "SYMBAROUMHUD.Info.ExperienceShort"}}</span>
-          <strong>{{info.experience.available}}/{{info.experience.total}}</strong>
-        </button>
-        {{/if}}
-
+      <div class="symbaroum-hud-knowledge-stack" data-knowledge-columns="{{knowledge.columns}}">
         {{#if rituals.available}}
           <button type="button" class="symbaroum-hud-panel-toggle symbaroum-hud-rituals-toggle"
             data-action="toggle-rituals" data-panel="rituals"
@@ -563,6 +566,7 @@
         {{/if}}
       </div>
       {{/if}}
+      </div>
 
       {{#if rituals.open}}
         <section id="symbaroum-hud-rituals-panel" class="symbaroum-hud-abilities-panel symbaroum-hud-rituals-panel"
