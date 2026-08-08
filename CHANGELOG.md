@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.3
+
+- Keeps the abilities and traits buttons visible even when their lists are empty.
+- Allows traits, boons and burdens to be dropped directly on the traits button.
+- Opens the traits panel with the newly imported item selected.
+
 ## 0.1.2
 
 - Moves the experience bar above the complete action area.

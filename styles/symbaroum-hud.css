@@ -2590,6 +2590,15 @@ body:has(#symbaroum-hud .symbaroum-hud-ammo-recovery-slot) > #tenebre-ammo-hud-l
     var(--symbaroum-hud-green-ornament) center / cover;
 }
 
+#symbaroum-hud button.symbaroum-hud-traits-toggle[data-trait-drop-target="true"] {
+  border-color: #d1b957;
+  color: #fff0ad;
+  box-shadow:
+    inset 0 0 0 1px rgb(255 240 177 / 32%),
+    inset 0 0 10px rgb(0 0 0 / 70%),
+    0 0 10px rgb(238 155 58 / 62%);
+}
+
 #symbaroum-hud button.symbaroum-hud-panel-toggle:hover,
 #symbaroum-hud button.symbaroum-hud-panel-toggle:focus-visible,
 #symbaroum-hud button.symbaroum-hud-panel-toggle[data-open="true"] {

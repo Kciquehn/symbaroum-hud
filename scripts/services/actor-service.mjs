@@ -230,6 +230,32 @@ export class ActorService {
     return created?.[0] ?? null;
   }
 
+  static async importTraitLikeItem(actor, dropData) {
+    if (!this.#canAct(actor) || dropData?.type !== "Item") return;
+
+    const ItemClass = globalThis.Item?.implementation
+      ?? globalThis.CONFIG?.Item?.documentClass;
+    if (typeof ItemClass?.fromDropData !== "function") return;
+
+    const item = await ItemClass.fromDropData(dropData);
+    const canObserve = typeof item?.testUserPermission !== "function"
+      || item.testUserPermission(game.user, "OBSERVER");
+    if (item?.documentName !== "Item" || !canObserve || !isTraitLikeItem(item)) {
+      ui.notifications.warn(game.i18n.localize("SYMBAROUMHUD.Notifications.OnlyTraits"));
+      return;
+    }
+
+    if (actor.uuid && item.parent?.uuid === actor.uuid) return item;
+    if (typeof actor.createEmbeddedDocuments !== "function") return;
+
+    const source = item.toObject?.() ?? item;
+    const data = foundry.utils.deepClone(source);
+    delete data._id;
+
+    const created = await actor.createEmbeddedDocuments("Item", [data]);
+    return created?.[0] ?? null;
+  }
+
   static async payRerollCost(actor, cost) {
     if (!this.#canAct(actor) || actor.type !== "player" || !REROLL_COSTS.has(cost)) return;
 

@@ -24,6 +24,7 @@ O módulo usa as rolagens e os documentos nativos do sistema. Ele não altera o 
 - painel de Ritualista com grau, capacidade e progressão;
 - atalhos de documentos na hotbar, separados por ator para jogadores;
 - drag-and-drop entre inventário, recipientes, aljava, armas, rituais, poderes místicos e hotbar;
+- adição de traços, dádivas e fardos ao arrastá-los diretamente para o botão de traços;
 - indicação visual de armas sacadas;
 - interface em português do Brasil e inglês.
 

@@ -207,6 +207,7 @@
       "OnlyWeapons": "Drop only weapons here.",
       "OnlyRituals": "Drop only rituals here.",
       "OnlyMysticalPowers": "Drop only mystical powers here.",
+      "OnlyTraits": "Drop only traits, boons or burdens here.",
       "AbilityUnavailable": "This ability is not available for this character.",
       "NoAvailableAbilities": "No world abilities are available for this character.",
       "NotEnoughExperience": "This character does not have enough available XP to buy this ability.",

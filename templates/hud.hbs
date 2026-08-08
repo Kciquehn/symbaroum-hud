@@ -548,6 +548,7 @@
         {{#if traits.available}}
           <button type="button" class="symbaroum-hud-panel-toggle symbaroum-hud-traits-toggle"
             data-action="toggle-traits" data-panel="traits"
+            data-trait-drop="{{traits.canUse}}"
             data-open="{{traits.open}}" aria-expanded="{{traits.open}}"
             aria-controls="symbaroum-hud-traits-panel"
             data-tooltip="{{localize 'SYMBAROUMHUD.Sections.Traits'}}"

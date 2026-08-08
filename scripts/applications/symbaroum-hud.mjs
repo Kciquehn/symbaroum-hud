@@ -176,12 +176,14 @@ export class SymbaroumHud extends ApplicationV2 {
       { traits: true }
     );
     const rituals = await ritualContext(actor, this.#selectedRitualId);
+    const abilitiesAvailable = Boolean(actor);
+    const traitsAvailable = Boolean(actor);
     const knowledgeButtons = [
       indResources.actions?.maneuvers,
       rituals.available,
       mysticalPowers.available,
-      abilities.available,
-      traits.available
+      abilitiesAvailable,
+      traitsAvailable
     ].filter(Boolean).length;
 
     return {
@@ -217,7 +219,8 @@ export class SymbaroumHud extends ApplicationV2 {
       abilities: {
         canUse: canRollActor,
         ...abilities,
-        open: this.#abilitiesOpen && abilities.available
+        available: abilitiesAvailable,
+        open: this.#abilitiesOpen && abilitiesAvailable
       },
       mysticalPowers: {
         canUse: canRollActor,
@@ -232,7 +235,8 @@ export class SymbaroumHud extends ApplicationV2 {
       traits: {
         canUse: canRollActor,
         ...traits,
-        open: this.#traitsOpen && traits.available
+        available: traitsAvailable,
+        open: this.#traitsOpen && traitsAvailable
       },
       attacks: {
         canUse: canRollActor,
@@ -477,6 +481,28 @@ export class SymbaroumHud extends ApplicationV2 {
     }, { signal });
 
     root.addEventListener("dragover", (event) => {
+      const traitsElement = event.target.closest('[data-trait-drop="true"]');
+      if (
+        traitsElement
+        && root.contains(traitsElement)
+        && this.#canDropOnTraits(event.dataTransfer)
+      ) {
+        event.preventDefault();
+        event.stopPropagation();
+        if (event.dataTransfer) {
+          event.dataTransfer.dropEffect = this.#isCurrentStorageDrag(this.#storageDragData)
+            ? "move"
+            : "copy";
+        }
+        this.#clearStorageDropTargets(root);
+        this.#clearAttackDropTargets(root);
+        this.#clearRitualDropTargets(root);
+        this.#clearMysticalPowerDropTargets(root);
+        this.#clearTraitDropTargets(root);
+        traitsElement.dataset.traitDropTarget = "true";
+        return;
+      }
+
       const mysticalPowersElement = event.target.closest('[data-mystical-power-drop="true"]');
       if (
         mysticalPowersElement
@@ -493,6 +519,7 @@ export class SymbaroumHud extends ApplicationV2 {
         this.#clearStorageDropTargets(root);
         this.#clearAttackDropTargets(root);
         this.#clearRitualDropTargets(root);
+        this.#clearTraitDropTargets(root);
         this.#clearMysticalPowerDropTargets(root);
         mysticalPowersElement.dataset.mysticalPowerDropTarget = "true";
         return;
@@ -514,6 +541,7 @@ export class SymbaroumHud extends ApplicationV2 {
         this.#clearStorageDropTargets(root);
         this.#clearAttackDropTargets(root);
         this.#clearMysticalPowerDropTargets(root);
+        this.#clearTraitDropTargets(root);
         this.#clearRitualDropTargets(root);
         ritualsElement.dataset.ritualDropTarget = "true";
         return;
@@ -535,6 +563,7 @@ export class SymbaroumHud extends ApplicationV2 {
         this.#clearStorageDropTargets(root);
         this.#clearRitualDropTargets(root);
         this.#clearMysticalPowerDropTargets(root);
+        this.#clearTraitDropTargets(root);
         this.#clearAttackDropTargets(root);
         attacksElement.dataset.weaponDropTarget = "true";
         return;
@@ -623,6 +652,11 @@ export class SymbaroumHud extends ApplicationV2 {
     }, { signal });
 
     root.addEventListener("dragleave", (event) => {
+      const traitsElement = event.target.closest('[data-trait-drop="true"]');
+      if (traitsElement && !traitsElement.contains(event.relatedTarget)) {
+        delete traitsElement.dataset.traitDropTarget;
+      }
+
       const mysticalPowersElement = event.target.closest('[data-mystical-power-drop="true"]');
       if (mysticalPowersElement && !mysticalPowersElement.contains(event.relatedTarget)) {
         delete mysticalPowersElement.dataset.mysticalPowerDropTarget;
@@ -662,6 +696,52 @@ export class SymbaroumHud extends ApplicationV2 {
     }, { signal });
 
     root.addEventListener("drop", (event) => {
+      const traitsElement = event.target.closest('[data-trait-drop="true"]');
+      if (traitsElement && root.contains(traitsElement)) {
+        const dragData = this.#storageDragData
+          ?? this.#readStorageDragData(event.dataTransfer);
+        const dropData = this.#readDocumentDragData(event.dataTransfer);
+        if (
+          !(
+            this.#isCurrentStorageDrag(dragData)
+            && dragData.source === "inventory"
+          )
+          && !this.#isItemDropData(dropData)
+        ) {
+          return;
+        }
+
+        event.preventDefault();
+        event.stopPropagation();
+        const actor = this.#actor;
+        this.#storageDragData = null;
+        this.#clearStorageDropTargets(root);
+        this.#clearAttackDropTargets(root);
+        this.#clearRitualDropTargets(root);
+        this.#clearMysticalPowerDropTargets(root);
+        this.#clearTraitDropTargets(root);
+
+        const action = this.#isCurrentStorageDrag(dragData)
+          ? Promise.resolve(findActorItem(actor, dragData.itemId))
+          : ActorService.importTraitLikeItem(actor, dropData);
+
+        void action.then((item) => {
+          if (!isTraitLikeItem(item)) return;
+          this.#abilitiesOpen = false;
+          this.#attacksOpen = false;
+          this.#mysticalPowersOpen = false;
+          this.#ritualsOpen = false;
+          this.#storageOpen = false;
+          this.#selectedTraitId = item.id;
+          this.#traitsOpen = true;
+          return this.render();
+        }).catch((error) => {
+          console.error(`${MODULE_ID} | Failed to drop a trait on the HUD traits button.`, error);
+          ui.notifications.error(game.i18n.localize("SYMBAROUMHUD.Notifications.ActionFailed"));
+        });
+        return;
+      }
+
       const mysticalPowersElement = event.target.closest('[data-mystical-power-drop="true"]');
       if (mysticalPowersElement && root.contains(mysticalPowersElement)) {
         const dragData = this.#storageDragData
@@ -684,6 +764,7 @@ export class SymbaroumHud extends ApplicationV2 {
         this.#clearStorageDropTargets(root);
         this.#clearAttackDropTargets(root);
         this.#clearRitualDropTargets(root);
+        this.#clearTraitDropTargets(root);
         this.#clearMysticalPowerDropTargets(root);
 
         const action = this.#isCurrentStorageDrag(dragData)
@@ -730,6 +811,7 @@ export class SymbaroumHud extends ApplicationV2 {
         this.#clearStorageDropTargets(root);
         this.#clearAttackDropTargets(root);
         this.#clearMysticalPowerDropTargets(root);
+        this.#clearTraitDropTargets(root);
         this.#clearRitualDropTargets(root);
 
         const action = this.#isCurrentStorageDrag(dragData)
@@ -775,6 +857,7 @@ export class SymbaroumHud extends ApplicationV2 {
         this.#clearStorageDropTargets(root);
         this.#clearRitualDropTargets(root);
         this.#clearMysticalPowerDropTargets(root);
+        this.#clearTraitDropTargets(root);
         this.#clearAttackDropTargets(root);
 
         const action = this.#isCurrentStorageDrag(dragData)
@@ -943,6 +1026,7 @@ export class SymbaroumHud extends ApplicationV2 {
       this.#clearAttackDropTargets(root);
       this.#clearRitualDropTargets(root);
       this.#clearMysticalPowerDropTargets(root);
+      this.#clearTraitDropTargets(root);
     }, { signal });
 
     for (const button of root.querySelectorAll("[data-symba-delayed-tooltip]")) {
@@ -1085,6 +1169,20 @@ export class SymbaroumHud extends ApplicationV2 {
     return this.#isItemDropData(dropData);
   }
 
+  #canDropOnTraits(dataTransfer) {
+    if (!ActorService.canUpdate(this.#actor)) return false;
+    if (
+      this.#isCurrentStorageDrag(this.#storageDragData)
+      && this.#storageDragData.source === "inventory"
+    ) {
+      const item = findActorItem(this.#actor, this.#storageDragData.itemId);
+      return isTraitLikeItem(item);
+    }
+
+    const dropData = this.#readDocumentDragData(dataTransfer);
+    return this.#isItemDropData(dropData);
+  }
+
   #clearAttackDropTargets(root) {
     for (const element of root.querySelectorAll('[data-weapon-drop-target="true"]')) {
       delete element.dataset.weaponDropTarget;
@@ -1100,6 +1198,12 @@ export class SymbaroumHud extends ApplicationV2 {
   #clearMysticalPowerDropTargets(root) {
     for (const element of root.querySelectorAll('[data-mystical-power-drop-target="true"]')) {
       delete element.dataset.mysticalPowerDropTarget;
+    }
+  }
+
+  #clearTraitDropTargets(root) {
+    for (const element of root.querySelectorAll('[data-trait-drop-target="true"]')) {
+      delete element.dataset.traitDropTarget;
     }
   }
 

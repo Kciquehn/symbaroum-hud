@@ -65,6 +65,7 @@ function actor({ owner = true } = {}) {
   };
   return {
     id: "actor",
+    uuid: "Actor.actor",
     type: "player",
     system: {
       attributes: { strong: { total: 12 } },
@@ -333,6 +334,50 @@ test("buying a world ritual copies it as an embedded item", async () => {
       ]
     ]
   ]);
+});
+
+test("imports dropped traits, boons and burdens into the actor", async () => {
+  warnings.length = 0;
+  const owned = actor();
+  const droppedItems = new Map([
+    ["Item.trait", { name: "Trait", type: "trait", system: { isTrait: true } }],
+    ["Item.boon", { name: "Boon", type: "boon", system: { isBoon: true } }],
+    ["Item.burden", { name: "Burden", type: "burden", system: { isBurden: true } }],
+    ["Item.ability", { name: "Ability", type: "ability", system: { isPower: true } }]
+  ]);
+  const previousItem = globalThis.Item;
+  globalThis.Item = {
+    implementation: {
+      fromDropData: async ({ uuid }) => {
+        const source = droppedItems.get(uuid);
+        return source
+          ? {
+              ...source,
+              documentName: "Item",
+              parent: null,
+              testUserPermission: () => true,
+              toObject: () => ({ _id: uuid, ...structuredClone(source) })
+            }
+          : null;
+      }
+    }
+  };
+
+  try {
+    await ActorService.importTraitLikeItem(owned, { type: "Item", uuid: "Item.trait" });
+    await ActorService.importTraitLikeItem(owned, { type: "Item", uuid: "Item.boon" });
+    await ActorService.importTraitLikeItem(owned, { type: "Item", uuid: "Item.burden" });
+    await ActorService.importTraitLikeItem(owned, { type: "Item", uuid: "Item.ability" });
+  } finally {
+    if (previousItem === undefined) delete globalThis.Item;
+    else globalThis.Item = previousItem;
+  }
+
+  const importedTypes = owned.calls
+    .filter(([action]) => action === "create")
+    .map(([, , data]) => data[0].type);
+  assert.deepEqual(importedTypes, ["trait", "boon", "burden"]);
+  assert.equal(warnings.at(-1), "SYMBAROUMHUD.Notifications.OnlyTraits");
 });
 
 test("passive or unscripted powers cannot be used as HUD abilities", async () => {
