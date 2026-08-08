@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.5
+
+- Ativa por padrão o controle que oculta a lista de jogadores.
+
 ## 0.1.4
 
 - Adds an expand/collapse button to every maneuver with descriptive notes.

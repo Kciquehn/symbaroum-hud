@@ -50,7 +50,7 @@ export function registerSettings(onChange) {
     scope: "client",
     config: true,
     type: Boolean,
-    default: false,
+    default: true,
     onChange: (hidden) => {
       applyPlayerListVisibility(hidden);
     }

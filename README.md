@@ -76,7 +76,7 @@ As configurações são individuais por cliente:
 - **Ativar HUD:** mostra ou oculta toda a interface;
 - **Modo de seleção:** escolhe entre token controlado, combate ou personagem atribuído;
 - **Mostrar Ind Resources:** habilita os elementos da integração quando o módulo estiver ativo;
-- **Ocultar lista de jogadores:** libera espaço na lateral da tela enquanto o HUD estiver em uso.
+- **Ocultar lista de jogadores:** ativada por padrão, libera espaço na lateral da tela enquanto o HUD estiver em uso.
 
 O modo de visualização do inventário, em grade ou lista, também é lembrado individualmente.
 
