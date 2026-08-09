@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.14
+
+- Envia ao chat os avisos nativos de proximidade, limiar e corrupção máxima ao ganhar Corrupção temporária pelo HUD.
+- Não envia avisos de limiar ao reduzir Corrupção.
+
 ## 0.1.13
 
 - Adiciona manchas de sangue graduais sobre o retrato quando a Vitalidade chega à metade.

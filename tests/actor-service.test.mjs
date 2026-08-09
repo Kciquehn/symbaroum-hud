@@ -10,6 +10,11 @@ globalThis.game = {
   symbaroum: { config: { expCosts: { power: { novice: 10 } } } }
 };
 globalThis.foundry = {
+  applications: {
+    handlebars: {
+      renderTemplate: async (_path, data) => JSON.stringify(data)
+    }
+  },
   utils: {
     deepClone: (value) => structuredClone(value),
     escapeHTML: (value) => String(value),
@@ -24,7 +29,8 @@ globalThis.ui = {
   }
 };
 globalThis.ChatMessage = {
-  create: async (message) => chatMessages.push(message)
+  create: async (message) => chatMessages.push(message),
+  getWhisperRecipients: () => ["gm"]
 };
 
 const { ActorService } = await import("../scripts/services/actor-service.mjs");
@@ -68,6 +74,9 @@ function actor({ owner = true } = {}) {
   };
   return {
     id: "actor",
+    name: "Hero",
+    img: "hero.webp",
+    hasPlayerOwner: true,
     uuid: "Actor.actor",
     type: "player",
     system: {
@@ -86,6 +95,8 @@ function actor({ owner = true } = {}) {
         corruption: {
           temporary: 4,
           permanent: 1,
+          threshold: 6,
+          value: 5,
           max: 10
         }
       },
@@ -459,6 +470,56 @@ test("temporary corruption is clamped between zero and the remaining maximum", a
     ["update", { "system.health.corruption.temporary": 9 }],
     ["update", { "system.health.corruption.temporary": 0 }]
   ]);
+});
+
+test("temporary corruption gained through the HUD announces a crossed threshold", async () => {
+  chatMessages.length = 0;
+  const owned = actor();
+
+  await ActorService.adjust(owned, "system.health.corruption.temporary", 1);
+
+  assert.equal(chatMessages.length, 1);
+  const content = JSON.parse(chatMessages[0].content);
+  assert.equal(content.introText, "HeroCORRUPTION.CHAT_INTRO");
+  assert.equal(content.finalText, "HeroCORRUPTION.CHAT_THRESHOLD");
+  assert.equal(content.subImg, "icons/magic/acid/dissolve-arm-flesh.webp");
+});
+
+test("temporary corruption gained through the HUD warns one point before a threshold", async () => {
+  chatMessages.length = 0;
+  const owned = actor();
+  owned.system.health.corruption.temporary = 3;
+  owned.system.health.corruption.value = 4;
+
+  await ActorService.adjust(owned, "system.health.corruption.temporary", 1);
+
+  assert.equal(chatMessages.length, 1);
+  const content = JSON.parse(chatMessages[0].content);
+  assert.equal(content.finalText, "HeroCORRUPTION.CHAT_WARNING");
+  assert.equal(content.subImg, "icons/magic/air/wind-vortex-swirl-purple.webp");
+});
+
+test("temporary corruption gained through the HUD announces the corruption maximum", async () => {
+  chatMessages.length = 0;
+  const owned = actor();
+  owned.system.health.corruption.temporary = 8;
+  owned.system.health.corruption.value = 9;
+
+  await ActorService.adjust(owned, "system.health.corruption.temporary", 1);
+
+  assert.equal(chatMessages.length, 1);
+  const content = JSON.parse(chatMessages[0].content);
+  assert.equal(content.finalText, "HeroCORRUPTION.CHAT_MAX");
+  assert.equal(content.subImg, "icons/creatures/unholy/demon-horned-winged-laughing.webp");
+});
+
+test("reducing temporary corruption does not create a threshold message", async () => {
+  chatMessages.length = 0;
+  const owned = actor();
+
+  await ActorService.adjust(owned, "system.health.corruption.temporary", -1);
+
+  assert.equal(chatMessages.length, 0);
 });
 
 test("lists each accessible actor once for HUD cycling", () => {

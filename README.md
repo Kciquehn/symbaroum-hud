@@ -89,6 +89,7 @@ O modo de visualização do inventário, em grade ou lista, também é lembrado 
 - Clique na barra de Vitalidade para curar o personagem ou aplicar uma quantidade de dano.
 - Ao chegar a 50% de Vitalidade, o retrato começa a apresentar sangue; com 25% ou menos, o efeito se intensifica e o HUD passa a exibir rachaduras.
 - Clique na barra de Corrupção para aumentar ou reduzir a Corrupção temporária; a permanente é preservada.
+- Ao ganhar Corrupção pelo HUD, os avisos nativos de proximidade, limiar e corrupção máxima também são enviados ao chat.
 - Clique em um atributo, arma ou ação disponível para usar a operação nativa do Symbaroum.
 - Ao atacar com uma arma guardada, confirme o aviso para sacá-la pelo Ind Resources e continuar o ataque.
 - Clique no selo **Sacada** de uma arma para guardá-la sem realizar um ataque.

@@ -322,7 +322,81 @@ export class ActorService {
     const next = Math.clamp(value + delta, limits.min, limits.max);
     if (next === value) return;
 
-    return actor.update({ [path]: next });
+    const corruptionAlert = path === "system.health.corruption.temporary" && next > value
+      ? this.#corruptionAlert(actor, next - value)
+      : null;
+    const result = await actor.update({ [path]: next });
+    if (corruptionAlert) await this.#postCorruptionAlert(actor, corruptionAlert);
+    return result;
+  }
+
+  static #corruptionAlert(actor, gained) {
+    const corruption = actor.system?.health?.corruption ?? {};
+    const threshold = Number(corruption.threshold);
+    if (!Number.isFinite(threshold) || threshold <= 0) return null;
+
+    const derivedValue = Number(corruption.value);
+    const current = Number.isFinite(derivedValue)
+      ? derivedValue
+      : [corruption.temporary, corruption.longterm, corruption.permanent]
+          .reduce((total, value) => total + (Number(value) || 0), 0);
+    const maximum = Number(corruption.max);
+    const next = current + gained;
+
+    if (current < threshold) {
+      if (next >= threshold) {
+        return {
+          finalKey: "CORRUPTION.CHAT_THRESHOLD",
+          image: "icons/magic/acid/dissolve-arm-flesh.webp",
+          introKey: "CORRUPTION.CHAT_INTRO"
+        };
+      }
+      if (next === threshold - 1) return corruptionWarning();
+      return null;
+    }
+
+    if (Number.isFinite(maximum) && current < maximum) {
+      if (next >= maximum) {
+        return {
+          finalKey: "CORRUPTION.CHAT_MAX",
+          image: "icons/creatures/unholy/demon-horned-winged-laughing.webp",
+          introKey: "CORRUPTION.CHAT_INTRO"
+        };
+      }
+      if (next === maximum - 1) return corruptionWarning();
+    }
+
+    return null;
+  }
+
+  static async #postCorruptionAlert(actor, alert) {
+    const render = globalThis.foundry?.applications?.handlebars?.renderTemplate
+      ?? globalThis.renderTemplate;
+    if (typeof render !== "function") return;
+
+    const actorName = String(actor.name ?? "");
+    const content = await render("systems/symbaroum/template/chat/ability.hbs", {
+      targetData: false,
+      hasTarget: false,
+      introText: actorName + game.i18n.localize(alert.introKey),
+      introImg: actor.img,
+      targetText: "",
+      subText: "",
+      subImg: alert.image,
+      hasRoll: false,
+      rollString: "",
+      rollResult: "",
+      resultText: "",
+      finalText: actorName + game.i18n.localize(alert.finalKey),
+      haveCorruption: false,
+      corruptionText: ""
+    });
+    const chatData = { user: game.user.id, content };
+    if (!actor.hasPlayerOwner) {
+      const recipients = ChatMessage.getWhisperRecipients?.("GM") ?? [];
+      if (recipients.length > 0) chatData.whisper = recipients;
+    }
+    await ChatMessage.create(chatData);
   }
 
   static #limits(actor, path) {
@@ -360,6 +434,14 @@ function abilityIdentity(item) {
 
 function isRitualItem(item) {
   return item?.type === "ritual" || Boolean(item?.system?.isRitual);
+}
+
+function corruptionWarning() {
+  return {
+    finalKey: "CORRUPTION.CHAT_WARNING",
+    image: "icons/magic/air/wind-vortex-swirl-purple.webp",
+    introKey: "CORRUPTION.CHAT_WARNING"
+  };
 }
 
 function escapeHtml(value) {

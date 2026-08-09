@@ -63,6 +63,7 @@ assert.deepEqual(
 
 const template = fs.readFileSync(path.join(root, "templates", "hud.hbs"), "utf8");
 const application = fs.readFileSync(path.join(root, "scripts", "applications", "symbaroum-hud.mjs"), "utf8");
+const actorService = fs.readFileSync(path.join(root, "scripts", "services", "actor-service.mjs"), "utf8");
 const hooks = fs.readFileSync(path.join(root, "scripts", "hooks.mjs"), "utf8");
 const main = fs.readFileSync(path.join(root, "scripts", "main.mjs"), "utf8");
 const settings = fs.readFileSync(path.join(root, "scripts", "settings.mjs"), "utf8");
@@ -337,6 +338,7 @@ assert.match(application, /#openVitalityDialog\(actor\)/);
 assert.match(application, /#openCorruptionDialog\(actor\)/);
 assert.match(application, /ActorService\.adjust\([\s\S]*system\.health\.toughness\.value/);
 assert.match(application, /ActorService\.adjust\([\s\S]*system\.health\.corruption\.temporary/);
+assert.match(actorService, /CORRUPTION\.CHAT_THRESHOLD/);
 assert.match(application, /#openManeuverDialog\(actor\)/);
 assert.match(application, /IndResourcesIntegration\.maneuvers\(\)/);
 assert.match(application, /IndResourcesIntegration\.executeManeuver\(actor, maneuverId\)/);
