@@ -140,7 +140,8 @@
       "Sheathed": "Sheathed",
       "DrawPromptTitle": "Draw weapon",
       "DrawPrompt": "{weapon} is not drawn. Do you want to draw it and continue the attack?",
-      "DrawMovementReminder": "Remember: drawing a weapon costs a movement action."
+      "DrawMovementReminder": "Remember: drawing a weapon costs a movement action.",
+      "SheatheAction": "Sheathe weapon"
     },
     "Sections": {
       "Attributes": "Attributes",

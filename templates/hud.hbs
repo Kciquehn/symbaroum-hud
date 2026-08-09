@@ -269,13 +269,18 @@
                     <strong>{{name}}</strong>
                     <i class="fa-solid fa-dice-d20" aria-hidden="true"></i>
                   </span>
-                  {{#if readinessKnown}}
-                    <span class="symbaroum-hud-attack-readiness">
-                      <i class="fa-solid {{#if drawn}}fa-hand-fist{{else}}fa-hand{{/if}}" aria-hidden="true"></i>
-                      <span>{{readinessLabel}}</span>
-                    </span>
-                  {{/if}}
                 </button>
+                {{#if readinessKnown}}
+                  <button type="button" class="symbaroum-hud-attack-readiness"
+                    data-drawn="{{drawn}}" data-item-id="{{id}}"
+                    {{#if drawn}}data-action="sheathe-weapon"{{/if}}
+                    data-tooltip="{{#if drawn}}{{localize 'SYMBAROUMHUD.Attacks.SheatheAction'}}: {{name}}{{else}}{{readinessLabel}}{{/if}}"
+                    aria-label="{{#if drawn}}{{localize 'SYMBAROUMHUD.Attacks.SheatheAction'}}: {{name}}{{else}}{{readinessLabel}}{{/if}}"
+                    {{#if drawn}}{{#unless ../attacks.canUse}}disabled{{/unless}}{{else}}disabled{{/if}}>
+                    <i class="fa-solid {{#if drawn}}fa-hand-fist{{else}}fa-hand{{/if}}" aria-hidden="true"></i>
+                    <span>{{readinessLabel}}</span>
+                  </button>
+                {{/if}}
               </li>
             {{else}}
               <li class="symbaroum-hud-attacks-empty">

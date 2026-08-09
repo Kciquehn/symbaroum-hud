@@ -391,6 +391,22 @@ test("detects and draws a specific sheathed weapon through the public readiness 
   assert.deepEqual(drawnWeapons.at(-1), [shield.id, true]);
 });
 
+test("sheathes a specific drawn weapon through the public readiness API", async () => {
+  const sword = {
+    id: "sword",
+    name: "Espada",
+    type: "weapon",
+    system: { state: "active" }
+  };
+  const actor = {
+    id: "actor",
+    items: new Map([[sword.id, sword]])
+  };
+
+  assert.equal(await IndResourcesIntegration.sheatheWeapon(actor, sword.id), true);
+  assert.deepEqual(drawnWeapons.at(-1), [sword.id, false]);
+});
+
 test("delegates ammunition recovery to Ind Resources", async () => {
   assert.equal(
     await IndResourcesIntegration.recoverAmmo({ id: "actor", type: "player" }),

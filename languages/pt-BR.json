@@ -140,7 +140,8 @@
       "Sheathed": "Guardada",
       "DrawPromptTitle": "Sacar arma",
       "DrawPrompt": "{weapon} não está sacada. Deseja sacá-la e continuar o ataque?",
-      "DrawMovementReminder": "Lembre-se: sacar uma arma gasta uma ação de movimento."
+      "DrawMovementReminder": "Lembre-se: sacar uma arma gasta uma ação de movimento.",
+      "SheatheAction": "Guardar arma"
     },
     "Sections": {
       "Attributes": "Atributos",

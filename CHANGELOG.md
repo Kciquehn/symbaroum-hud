@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.10
+
+- Transforma o selo `Sacada` em um controle para guardar aquela arma pelo Ind Resources.
+- Mantém o restante do cartão reservado para rolar o ataque.
+
 ## 0.1.9
 
 - Mantém as barras de Vitalidade e Corrupção ocultas até o retrato receber foco ou o cursor do mouse.

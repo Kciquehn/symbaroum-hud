@@ -1604,6 +1604,14 @@ export class SymbaroumHud extends ApplicationV2 {
       if (action === "roll-weapon") {
         return this.#rollWeapon(actor, element.dataset.itemId);
       }
+      if (action === "sheathe-weapon") {
+        const sheathed = await IndResourcesIntegration.sheatheWeapon(
+          actor,
+          element.dataset.itemId
+        );
+        if (sheathed) return this.render();
+        return null;
+      }
       if (action === "roll-attribute") {
         return ActorService.rollAttribute(actor, element.dataset.attribute);
       }

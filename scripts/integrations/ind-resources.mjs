@@ -224,6 +224,15 @@ export class IndResourcesIntegration {
     return Boolean(await this.api.weaponReadiness.setDrawn(weapon, true));
   }
 
+  static async sheatheWeapon(actor, itemId) {
+    const state = this.weaponReadinessState(actor, itemId);
+    if (!state) return false;
+    if (!state.drawn) return true;
+
+    const weapon = actorItems(actor).find((item) => item?.id === itemId);
+    return Boolean(await this.api.weaponReadiness.setDrawn(weapon, false));
+  }
+
   static isRitualistAbility(item) {
     const checker = this.api?.ritualBrowser?.isRitualistAbility;
     if (typeof checker === "function") {

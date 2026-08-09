@@ -87,6 +87,7 @@ O modo de visualização do inventário, em grade ou lista, também é lembrado 
 - Passe o mouse sobre o retrato para revelar o nome e as setas de troca; clique na imagem para abrir a ficha do ator.
 - Clique em um atributo, arma ou ação disponível para usar a operação nativa do Symbaroum.
 - Ao atacar com uma arma guardada, confirme o aviso para sacá-la pelo Ind Resources e continuar o ataque.
+- Clique no selo **Sacada** de uma arma para guardá-la sem realizar um ataque.
 - Use os botões laterais para abrir inventário, ataques, habilidades, traços, poderes místicos e rituais.
 - Clique com o botão direito em um efeito ativo para abrir o menu de remoção.
 - Arraste documentos para a hotbar para criar atalhos sem precisar criar macros.
