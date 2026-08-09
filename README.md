@@ -17,7 +17,7 @@ O módulo usa as rolagens e os documentos nativos do sistema. Ele não altera o 
 - controles laterais distribuídos por toda a altura do HUD;
 - seleção pelo token controlado, combatente atual ou personagem atribuído;
 - troca rápida entre atores que o usuário pode acessar;
-- barras de Vitalidade e Corrupção sobre o retrato, além de Defesa, armadura, carga, dinheiro e experiência;
+- barras de Vitalidade e Corrupção reveladas ao passar o mouse sobre o retrato, além de Defesa, armadura, carga, dinheiro e experiência;
 - rolagem dos oito atributos, armas, armadura e teste de morte;
 - recuperação, descanso, custo de nova rolagem e efeitos ativos;
 - painéis de ataques, habilidades, traços, poderes místicos e rituais;

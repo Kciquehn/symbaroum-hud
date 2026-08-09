@@ -455,6 +455,8 @@ assert.match(stylesheet, /\.symbaroum-hud-actor-cycle/);
 assert.match(stylesheet, /button\.symbaroum-hud-actor-cycle \{[\s\S]*opacity: 0\.92;[\s\S]*pointer-events: auto;/);
 assert.match(stylesheet, /\.symbaroum-hud-character-name:hover/);
 assert.match(stylesheet, /\.symbaroum-hud-character-card:hover \.symbaroum-hud-character-name/);
+assert.match(stylesheet, /\.symbaroum-hud-character-card:hover \.symbaroum-hud-character-resources/);
+assert.match(stylesheet, /\.symbaroum-hud-character-card:focus-within \.symbaroum-hud-character-resources/);
 assert.match(stylesheet, /\.symbaroum-hud-character-resource-fill/);
 assert.match(stylesheet, /--symbaroum-hud-resource-percent/);
 assert.match(template, /role="progressbar"/);

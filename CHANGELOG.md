@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.9
+
+- Mantém as barras de Vitalidade e Corrupção ocultas até o retrato receber foco ou o cursor do mouse.
+
 ## 0.1.8
 
 - Alinha a coluna de controles laterais ao topo e ao rodapé do HUD.

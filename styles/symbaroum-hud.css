@@ -541,7 +541,21 @@
   gap: 2px;
   background: rgb(4 4 6 / 72%);
   font-size: var(--font-size-11, 0.6875rem);
+  opacity: 0;
+  visibility: hidden;
   pointer-events: none;
+  transform: translateY(4px);
+  transition:
+    opacity 140ms ease,
+    transform 140ms ease,
+    visibility 140ms ease;
+}
+
+#symbaroum-hud .symbaroum-hud-character-card:hover .symbaroum-hud-character-resources,
+#symbaroum-hud .symbaroum-hud-character-card:focus-within .symbaroum-hud-character-resources {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
 }
 
 #symbaroum-hud .symbaroum-hud-character-resource {
