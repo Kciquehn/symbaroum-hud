@@ -61,6 +61,31 @@ test("player list hiding is enabled by default", () => {
   }
 });
 
+test("HUD collapsing is a hidden client preference disabled by default", () => {
+  const originalGame = globalThis.game;
+  const registered = new Map();
+  globalThis.game = {
+    settings: {
+      register(moduleId, key, data) {
+        assert.equal(moduleId, MODULE_ID);
+        registered.set(key, data);
+      },
+      get: () => false
+    }
+  };
+
+  try {
+    registerSettings(() => {});
+    const setting = registered.get(SETTINGS.COLLAPSED);
+    assert.equal(setting.scope, "client");
+    assert.equal(setting.config, false);
+    assert.equal(setting.type, Boolean);
+    assert.equal(setting.default, false);
+  } finally {
+    globalThis.game = originalGame;
+  }
+});
+
 test("the separate weapon readiness button is disabled by default", () => {
   const originalGame = globalThis.game;
   const registered = new Map();

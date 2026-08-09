@@ -169,6 +169,7 @@ export class SymbaroumHud extends ApplicationV2 {
       showPlayerResources && canRollActor
     );
     const showWeaponReadinessButton = getSetting(SETTINGS.SHOW_WEAPON_READINESS_BUTTON);
+    const hudCollapsed = Boolean(getSetting(SETTINGS.COLLAPSED));
     const storageViewMode = getStorageViewMode();
     const abilities = await abilityContext(
       actor,
@@ -213,6 +214,8 @@ export class SymbaroumHud extends ApplicationV2 {
       },
       showEconomy: showPlayerResources,
       playersHidden: getSetting(SETTINGS.HIDE_PLAYERS),
+      hudCollapsed,
+      hudExpanded: !hudCollapsed,
       weaponDrawn: Boolean(indResources.drawnWeapons?.length),
       vitalityState: actor ? vitalityState(vitalityValue, vitalityMax) : "healthy",
       actions: {
@@ -1382,6 +1385,20 @@ export class SymbaroumHud extends ApplicationV2 {
           throw error;
         }
         return;
+      }
+
+      if (action === "toggle-hud-collapse") {
+        const collapsed = !Boolean(getSetting(SETTINGS.COLLAPSED));
+        await game.settings.set(MODULE_ID, SETTINGS.COLLAPSED, collapsed);
+        if (collapsed) {
+          this.#abilitiesOpen = false;
+          this.#attacksOpen = false;
+          this.#mysticalPowersOpen = false;
+          this.#ritualsOpen = false;
+          this.#storageOpen = false;
+          this.#traitsOpen = false;
+        }
+        return this.render();
       }
 
       const actor = this.#actor;

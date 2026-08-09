@@ -36,7 +36,9 @@
       "OpenShortcut": "Open",
       "RemoveShortcut": "Remove from hotbar",
       "HidePlayers": "Hide player list",
-      "ShowPlayers": "Show player list"
+      "ShowPlayers": "Show player list",
+      "CollapseHud": "Collapse HUD",
+      "ExpandHud": "Expand HUD"
     },
     "Resources": {
       "Toughness": "Toughness",

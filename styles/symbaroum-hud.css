@@ -706,8 +706,59 @@
   pointer-events: none;
 }
 
+#symbaroum-hud button.symbaroum-hud-collapse-toggle {
+  position: absolute;
+  right: -28px;
+  bottom: 0;
+  z-index: 12;
+  display: inline-flex;
+  width: 24px;
+  height: 55px;
+  min-width: 24px;
+  min-height: 55px;
+  margin: 0;
+  padding: 0;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #171613;
+  border-radius: 0;
+  color: #c8af52;
+  background: var(--symbaroum-hud-title) repeat;
+  box-shadow:
+    inset 0 0 0 1px rgb(198 177 117 / 24%),
+    inset 0 0 7px rgb(0 0 0 / 72%);
+  pointer-events: auto;
+}
+
+#symbaroum-hud button.symbaroum-hud-collapse-toggle:hover,
+#symbaroum-hud button.symbaroum-hud-collapse-toggle:focus-visible {
+  border-color: var(--symbaroum-hud-gold, #a48b02);
+  color: #f2d97a;
+  outline: none;
+  box-shadow:
+    inset 0 0 0 1px rgb(255 240 177 / 28%),
+    inset 0 0 7px rgb(0 0 0 / 72%),
+    0 0 6px rgb(164 139 2 / 58%);
+}
+
+#symbaroum-hud .symbaroum-hud-card-row[data-hud-collapsed="true"] {
+  gap: 0;
+}
+
+#symbaroum-hud .symbaroum-hud-card-row[data-hud-collapsed="true"] :is(
+  .symbaroum-hud-hotbar-controls,
+  .symbaroum-hud-main-column
+) {
+  display: none;
+}
+
+#symbaroum-hud:has(.symbaroum-hud-card-row[data-hud-collapsed="true"]) .symbaroum-hud-status-summary {
+  display: none;
+}
+
 #symbaroum-hud :is(
   .symbaroum-hud-hotbar-controls button,
+  button.symbaroum-hud-collapse-toggle,
   button.symbaroum-hud-attribute,
   .symbaroum-hud-info-entry,
   .symbaroum-hud-economy-entry,
@@ -723,6 +774,7 @@
 
 #symbaroum-hud :is(
   .symbaroum-hud-hotbar-controls button,
+  button.symbaroum-hud-collapse-toggle,
   button.symbaroum-hud-attribute,
   .symbaroum-hud-info-entry,
   .symbaroum-hud-economy-entry,
@@ -749,6 +801,7 @@
 
 #symbaroum-hud .symbaroum-hud-card-row[data-vitality-state="injured"] :is(
   .symbaroum-hud-hotbar-controls button,
+  button.symbaroum-hud-collapse-toggle,
   button.symbaroum-hud-attribute,
   .symbaroum-hud-info-entry,
   .symbaroum-hud-economy-entry,
@@ -763,6 +816,7 @@
 
 #symbaroum-hud .symbaroum-hud-card-row[data-vitality-state="wounded"] :is(
   .symbaroum-hud-hotbar-controls button,
+  button.symbaroum-hud-collapse-toggle,
   button.symbaroum-hud-attribute,
   .symbaroum-hud-info-entry,
   .symbaroum-hud-economy-entry,
@@ -777,6 +831,7 @@
 
 #symbaroum-hud .symbaroum-hud-card-row[data-vitality-state="critical"] :is(
   .symbaroum-hud-hotbar-controls button,
+  button.symbaroum-hud-collapse-toggle,
   button.symbaroum-hud-attribute,
   .symbaroum-hud-info-entry,
   .symbaroum-hud-economy-entry,

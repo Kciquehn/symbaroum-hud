@@ -14,6 +14,7 @@ O módulo usa as rolagens e os documentos nativos do sistema. Ele não altera o 
 ## Principais recursos
 
 - HUD persistente integrado à hotbar do Foundry;
+- botão lateral para recolher todo o HUD e manter somente o retrato do personagem;
 - controles laterais distribuídos por toda a altura do HUD;
 - seleção pelo token controlado, combatente atual ou personagem atribuído;
 - troca rápida entre atores que o usuário pode acessar;
@@ -88,6 +89,7 @@ O modo de visualização do inventário, em grade ou lista, também é lembrado 
 ## Uso rápido
 
 - Passe o mouse sobre o retrato para revelar o nome e as setas de troca; clique na imagem para abrir a ficha do ator.
+- Use a seta ao lado dos controles de travar e excluir da hotbar para recolher o HUD até o retrato ou expandi-lo novamente.
 - Clique na barra de Vitalidade para curar o personagem ou aplicar uma quantidade de dano.
 - No campo de Vitalidade, digite rapidamente `+3` para curar ou `-9` para sofrer dano e pressione `Enter`; os botões explícitos continuam disponíveis.
 - Quando o dano aplicado pelo HUD reduz a Vitalidade de um valor positivo para zero, a condição nativa **Morto** é aplicada e o acontecimento é enviado ao chat.

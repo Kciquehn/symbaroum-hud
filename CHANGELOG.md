@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.27
+
+- Adiciona uma seta ao lado dos controles direitos da hotbar para recolher ou expandir o HUD.
+- No modo recolhido, mantém somente o retrato e a própria seta de restauração.
+- Salva a preferência individualmente no navegador de cada usuário.
+
 ## 0.1.26
 
 - Alinha o quadro de Táticas ao visual preto e dourado dos atributos do HUD.

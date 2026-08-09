@@ -21,7 +21,7 @@
 {{/if}}
 
 <div class="symbaroum-hud-card-row" data-symba-weapon-drawn="{{weaponDrawn}}"
-  data-vitality-state="{{vitalityState}}">
+  data-vitality-state="{{vitalityState}}" data-hud-collapsed="{{hudCollapsed}}">
   <div class="symbaroum-hud-hotbar-controls">
     <div class="symbaroum-hud-character-actions" aria-label="{{localize 'SYMBAROUMHUD.Actions.CharacterActions'}}">
       <button type="button" class="symbaroum-hud-character-action"
@@ -1191,4 +1191,11 @@
       <div class="symbaroum-hud-hotbar" data-symba-hotbar></div>
     </div>
   </div>
+
+  <button type="button" class="symbaroum-hud-collapse-toggle" data-action="toggle-hud-collapse"
+    data-tooltip="{{#if hudCollapsed}}{{localize 'SYMBAROUMHUD.Actions.ExpandHud'}}{{else}}{{localize 'SYMBAROUMHUD.Actions.CollapseHud'}}{{/if}}"
+    aria-label="{{#if hudCollapsed}}{{localize 'SYMBAROUMHUD.Actions.ExpandHud'}}{{else}}{{localize 'SYMBAROUMHUD.Actions.CollapseHud'}}{{/if}}"
+    aria-expanded="{{hudExpanded}}">
+    <i class="fa-solid {{#if hudCollapsed}}fa-chevron-right{{else}}fa-chevron-left{{/if}}" aria-hidden="true"></i>
+  </button>
 </div>

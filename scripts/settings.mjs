@@ -66,6 +66,13 @@ export function registerSettings(onChange) {
     }
   });
 
+  game.settings.register(MODULE_ID, SETTINGS.COLLAPSED, {
+    scope: "client",
+    config: false,
+    type: Boolean,
+    default: false
+  });
+
   game.settings.register(MODULE_ID, SETTINGS.STORAGE_VIEW_MODE, {
     scope: "client",
     config: false,

@@ -36,7 +36,9 @@
       "OpenShortcut": "Abrir",
       "RemoveShortcut": "Remover da hotbar",
       "HidePlayers": "Ocultar lista de jogadores",
-      "ShowPlayers": "Mostrar lista de jogadores"
+      "ShowPlayers": "Mostrar lista de jogadores",
+      "CollapseHud": "Recolher HUD",
+      "ExpandHud": "Expandir HUD"
     },
     "Resources": {
       "Toughness": "Vitalidade",
