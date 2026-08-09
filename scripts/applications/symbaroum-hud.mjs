@@ -11,6 +11,7 @@ import {
   getStorageViewMode
 } from "../settings.mjs";
 import { ActorService, canUsePowerItem, isTraitLikeItem } from "../services/actor-service.mjs";
+import { defenseDisplayValue } from "../services/defense-service.mjs";
 import { ritualistProgress } from "../services/ritual-service.mjs";
 import {
   parseVitalityDelta,
@@ -284,7 +285,7 @@ export class SymbaroumHud extends ApplicationV2 {
           }
         : null,
       info: {
-        defense: defenseValue(actor),
+        defense: defenseDisplayValue(actor),
         armor: armorValue(actor),
         armorName: armorName(actor),
         experience: showPlayerResources ? experienceContext(actor) : null,
@@ -2139,14 +2140,6 @@ function number(value) {
 function resourcePercent(value, max) {
   if (max <= 0) return 0;
   return Math.min(100, Math.max(0, Math.round((value / max) * 1000) / 10));
-}
-
-function defenseValue(actor) {
-  const prepared = Number(actor?.system?.combat?.defense);
-  if (Number.isFinite(prepared)) return prepared;
-
-  const attribute = actor?.system?.defense?.attribute;
-  return number(actor?.system?.attributes?.[attribute]?.total);
 }
 
 function armorValue(actor) {

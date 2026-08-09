@@ -438,6 +438,7 @@ assert.match(application, /textEditor\.enrichHTML/);
 assert.match(application, /game\.user\?\.isGM && actor\?\.type === "monster"/);
 assert.match(application, /actor\.system\?\.bio\?\.tactics/);
 assert.match(application, /hasStatusSummary: Boolean\(tacticsHtml \|\| effects\.length\)/);
+assert.match(application, /defenseDisplayValue\(actor\)/);
 assert.match(application, /uuid: item\.uuid/);
 assert.match(application, /data-ability-draggable="true"/);
 assert.match(application, /data-weapon-draggable="true"/);

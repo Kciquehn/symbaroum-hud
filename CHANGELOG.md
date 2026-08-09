@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.24
+
+- Exibe a Defesa de criaturas como modificador assinado, seguindo o mesmo valor `defmod` da ficha nativa.
+- Considera automaticamente alterações preparadas pelo sistema, incluindo o efeito de Amoque, e calcula um valor compatível quando `defmod` não estiver disponível.
+
 ## 0.1.23
 
 - Exibe as Táticas das fichas de criatura na área acima do HUD para consulta rápida do mestre.
