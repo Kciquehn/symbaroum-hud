@@ -205,6 +205,7 @@ export class SymbaroumHud extends ApplicationV2 {
       weaponDrawn: Boolean(indResources.drawnWeapons?.length),
       actions: {
         attributes: canRollActor,
+        corruption: canRollActor,
         vitality: canRollActor,
         defense: canUseCharacterActions,
         deathTest: canUseCharacterActions,
@@ -1616,6 +1617,9 @@ export class SymbaroumHud extends ApplicationV2 {
       if (action === "modify-vitality") {
         return this.#openVitalityDialog(actor);
       }
+      if (action === "modify-corruption") {
+        return this.#openCorruptionDialog(actor);
+      }
       if (action === "roll-attribute") {
         return ActorService.rollAttribute(actor, element.dataset.attribute);
       }
@@ -1721,6 +1725,66 @@ export class SymbaroumHud extends ApplicationV2 {
           icon: '<i class="fa-solid fa-heart-crack" aria-hidden="true"></i>',
           label: game.i18n.localize("SYMBAROUMHUD.Vitality.Damage"),
           callback: (html) => change(html, -1)
+        },
+        cancel: {
+          label: game.i18n.localize("Cancel")
+        }
+      },
+      default: "cancel"
+    });
+    dialog.render(true);
+  }
+
+  #openCorruptionDialog(actor) {
+    if (!ActorService.canUpdate(actor)) {
+      ui.notifications.warn(game.i18n.localize("SYMBAROUMHUD.Notifications.NoPermission"));
+      return;
+    }
+
+    const corruption = actor.system?.health?.corruption ?? {};
+    const temporary = number(corruption.temporary);
+    const permanent = number(corruption.permanent);
+    const max = number(corruption.max);
+    const content = `
+      <form class="symbaroum-hud-corruption-dialog">
+        <p>${escapeHtml(game.i18n.localize("SYMBAROUMHUD.Corruption.Prompt"))}</p>
+        <div class="symbaroum-hud-corruption-current">
+          <i class="fa-solid fa-droplet" aria-hidden="true"></i>
+          <span>${escapeHtml(game.i18n.localize("SYMBAROUMHUD.Corruption.Current"))}</span>
+          <strong>${temporary}+${permanent}/${max}</strong>
+        </div>
+        <label>
+          <span>${escapeHtml(game.i18n.localize("SYMBAROUMHUD.Corruption.Amount"))}</span>
+          <input type="number" name="corruptionAmount" value="1" min="1" step="1" required autofocus>
+        </label>
+      </form>
+    `;
+    const change = async (html, direction) => {
+      const root = html?.[0] ?? html;
+      const value = Number(root?.querySelector?.("input[name='corruptionAmount']")?.value);
+      if (!Number.isFinite(value) || value <= 0) return null;
+      const amount = Math.max(1, Math.floor(value));
+      await ActorService.adjust(
+        actor,
+        "system.health.corruption.temporary",
+        direction * amount
+      );
+      return this.render();
+    };
+
+    const dialog = new Dialog({
+      title: game.i18n.localize("SYMBAROUMHUD.Corruption.Title"),
+      content,
+      buttons: {
+        reduce: {
+          icon: '<i class="fa-solid fa-minus" aria-hidden="true"></i>',
+          label: game.i18n.localize("SYMBAROUMHUD.Corruption.Reduce"),
+          callback: (html) => change(html, -1)
+        },
+        gain: {
+          icon: '<i class="fa-solid fa-droplet" aria-hidden="true"></i>',
+          label: game.i18n.localize("SYMBAROUMHUD.Corruption.Gain"),
+          callback: (html) => change(html, 1)
         },
         cancel: {
           label: game.i18n.localize("Cancel")

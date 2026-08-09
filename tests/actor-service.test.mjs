@@ -84,6 +84,7 @@ function actor({ owner = true } = {}) {
           max: 10
         },
         corruption: {
+          temporary: 4,
           permanent: 1,
           max: 10
         }
@@ -446,6 +447,17 @@ test("vitality adjustments are clamped between zero and the actor maximum", asyn
   assert.deepEqual(owned.calls, [
     ["update", { "system.health.toughness.value": 10 }],
     ["update", { "system.health.toughness.value": 0 }]
+  ]);
+});
+
+test("temporary corruption is clamped between zero and the remaining maximum", async () => {
+  const owned = actor();
+  await ActorService.adjust(owned, "system.health.corruption.temporary", 10);
+  await ActorService.adjust(owned, "system.health.corruption.temporary", -10);
+
+  assert.deepEqual(owned.calls, [
+    ["update", { "system.health.corruption.temporary": 9 }],
+    ["update", { "system.health.corruption.temporary": 0 }]
   ]);
 });
 

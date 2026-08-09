@@ -88,17 +88,18 @@
           <strong>{{actor.vitality.value}}</strong>/{{actor.vitality.max}}
         </span>
       </button>
-      <span class="symbaroum-hud-character-resource" data-resource="corruption"
-        role="progressbar" aria-valuemin="0" aria-valuemax="{{actor.corruption.max}}"
-        aria-valuenow="{{actor.corruption.total}}"
-        data-tooltip="{{localize 'SYMBAROUMHUD.Resources.Corruption'}}: {{actor.corruption.temporary}}+{{actor.corruption.permanent}}/{{actor.corruption.max}}"
-        style="--symbaroum-hud-resource-percent: {{actor.corruption.percent}}%;">
+      <button type="button" class="symbaroum-hud-character-resource" data-resource="corruption"
+        data-action="modify-corruption"
+        data-tooltip="{{localize 'SYMBAROUMHUD.Corruption.Manage'}}: {{actor.corruption.temporary}}+{{actor.corruption.permanent}}/{{actor.corruption.max}}"
+        aria-label="{{localize 'SYMBAROUMHUD.Corruption.Manage'}}: {{actor.corruption.temporary}}+{{actor.corruption.permanent}}/{{actor.corruption.max}}"
+        style="--symbaroum-hud-resource-percent: {{actor.corruption.percent}}%;"
+        {{#unless actions.corruption}}disabled{{/unless}}>
         <span class="symbaroum-hud-character-resource-fill" aria-hidden="true"></span>
         <span class="symbaroum-hud-character-resource-value">
           <i class="fa-solid fa-droplet" aria-hidden="true"></i>
           <strong>{{actor.corruption.temporary}}+{{actor.corruption.permanent}}</strong>/{{actor.corruption.max}}
         </span>
-      </span>
+      </button>
     </span>
   </div>
 

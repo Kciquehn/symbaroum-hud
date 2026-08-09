@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.12
+
+- Permite clicar na barra de Corrupção para aumentar ou reduzir a Corrupção temporária.
+- Preserva a Corrupção permanente e respeita o máximo restante do ator.
+
 ## 0.1.11
 
 - Permite clicar na barra de Vitalidade para curar ou aplicar dano.

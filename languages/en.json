@@ -152,6 +152,15 @@
       "Heal": "Heal",
       "Damage": "Take damage"
     },
+    "Corruption": {
+      "Title": "Change temporary Corruption",
+      "Manage": "Increase or reduce temporary Corruption",
+      "Prompt": "Enter an amount and choose whether the character should reduce or gain temporary Corruption. Permanent Corruption will not be changed.",
+      "Current": "Temporary + permanent",
+      "Amount": "Amount",
+      "Reduce": "Reduce",
+      "Gain": "Gain Corruption"
+    },
     "Sections": {
       "Attributes": "Attributes",
       "Attacks": "Attacks",
