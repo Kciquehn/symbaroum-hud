@@ -477,6 +477,7 @@ assert.match(stylesheet, /grayscale\(0\.9\)/);
 assert.match(stylesheet, /brightness\(1\.9\)/);
 assert.match(stylesheet, /drop-shadow\(0 0 1px rgb\(255 255 255 \/ 78%\)\)/);
 assert.match(stylesheet, /data-vitality-state="injured"/);
+assert.match(stylesheet, /data-vitality-state="injured"[^}]+opacity: 0\.24/s);
 assert.match(stylesheet, /data-vitality-state="wounded"/);
 assert.match(stylesheet, /data-vitality-state="critical"/);
 assert.doesNotMatch(stylesheet, /symbaroum-hud-card-row::after/);

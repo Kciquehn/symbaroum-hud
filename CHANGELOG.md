@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.22
+
+- Suaviza o sangue no retrato enquanto o personagem perdeu pouca Vitalidade e ainda está acima de 50%.
+- Mantém a progressão mais intensa do sangue nos estados muito ferido e crítico.
+
 ## 0.1.21
 
 - Deixa as rachaduras individuais mais brancas e contrastantes em todos os componentes do HUD.

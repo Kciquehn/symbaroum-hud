@@ -406,8 +406,8 @@
 }
 
 #symbaroum-hud .symbaroum-hud-card-row[data-vitality-state="injured"] .symbaroum-hud-character-card::after {
-  opacity: 0.58;
-  filter: saturate(1.15) contrast(1.06) drop-shadow(0 0 3px rgb(125 0 0 / 70%));
+  opacity: 0.24;
+  filter: saturate(0.9) contrast(0.98) drop-shadow(0 0 1px rgb(125 0 0 / 45%));
 }
 
 #symbaroum-hud .symbaroum-hud-card-row[data-vitality-state="wounded"] .symbaroum-hud-character-card::after {
