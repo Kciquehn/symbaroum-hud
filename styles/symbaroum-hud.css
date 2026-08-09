@@ -669,7 +669,11 @@
   content: "";
   background: url("../assets/overlays/button-cracks.png") center / 100% 100% no-repeat;
   opacity: 0;
-  filter: drop-shadow(0 1px 1px rgb(0 0 0 / 90%));
+  filter:
+    grayscale(0.9)
+    brightness(1.9)
+    contrast(1.2)
+    drop-shadow(0 0 1px rgb(255 255 255 / 78%));
   pointer-events: none;
   transition: opacity 350ms ease;
 }
@@ -685,7 +689,7 @@
   button.symbaroum-hud-ammo-recovery-slot,
   #hotbar #action-bar .slot
 )::after {
-  opacity: 0.2;
+  opacity: 0.38;
 }
 
 #symbaroum-hud .symbaroum-hud-card-row[data-vitality-state="wounded"] :is(
@@ -699,7 +703,7 @@
   button.symbaroum-hud-ammo-recovery-slot,
   #hotbar #action-bar .slot
 )::after {
-  opacity: 0.43;
+  opacity: 0.68;
 }
 
 #symbaroum-hud .symbaroum-hud-card-row[data-vitality-state="critical"] :is(
@@ -713,7 +717,7 @@
   button.symbaroum-hud-ammo-recovery-slot,
   #hotbar #action-bar .slot
 )::after {
-  opacity: 0.72;
+  opacity: 0.92;
 }
 
 #symbaroum-hud .symbaroum-hud-character-resource-fill {

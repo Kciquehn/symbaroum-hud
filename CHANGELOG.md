@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.21
+
+- Deixa as rachaduras individuais mais brancas e contrastantes em todos os componentes do HUD.
+- Aumenta a visibilidade progressiva das rachaduras nos estados ferido, muito ferido e crítico.
+
 ## 0.1.20
 
 - Aplica a condição nativa `dead` quando o dano pelo HUD reduz a Vitalidade de um valor positivo para zero.
