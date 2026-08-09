@@ -38,6 +38,7 @@ globalThis.ChatMessage = {
 globalThis.CONFIG = {
   statusEffects: [{ id: "dead", img: "dead.webp" }]
 };
+globalThis.canvas = { tokens: { controlled: [] } };
 
 const { ActorService } = await import("../scripts/services/actor-service.mjs");
 
@@ -127,6 +128,55 @@ function actor({ owner = true } = {}) {
     calls
   };
 }
+
+test("a controlled token overrides the configured selection mode for the GM", () => {
+  const controlled = actor();
+  controlled.id = "controlled";
+  controlled.uuid = "Actor.controlled";
+  const combat = actor();
+  combat.id = "combat";
+  combat.uuid = "Actor.combat";
+  const assigned = actor();
+  assigned.id = "assigned";
+  assigned.uuid = "Actor.assigned";
+  const originalUser = game.user;
+  const originalCombat = game.combat;
+  const originalControlled = canvas.tokens.controlled;
+
+  game.user = { ...originalUser, isGM: true, character: assigned };
+  game.combat = { combatant: { actor: combat } };
+  canvas.tokens.controlled = [{ actor: controlled }];
+
+  try {
+    assert.equal(ActorService.resolve("combat"), controlled);
+    assert.equal(ActorService.resolve("character"), controlled);
+  } finally {
+    game.user = originalUser;
+    game.combat = originalCombat;
+    canvas.tokens.controlled = originalControlled;
+  }
+});
+
+test("players continue to follow the configured selection mode", () => {
+  const controlled = actor();
+  const combat = actor();
+  combat.id = "combat";
+  const originalUser = game.user;
+  const originalCombat = game.combat;
+  const originalControlled = canvas.tokens.controlled;
+
+  game.user = { ...originalUser, isGM: false };
+  game.combat = { combatant: { actor: combat } };
+  canvas.tokens.controlled = [{ actor: controlled }];
+
+  try {
+    assert.equal(ActorService.resolve("combat"), combat);
+  } finally {
+    game.user = originalUser;
+    game.combat = originalCombat;
+    canvas.tokens.controlled = originalControlled;
+  }
+});
 
 test("owned actor actions delegate to the native Symbaroum methods", async () => {
   const owned = actor();

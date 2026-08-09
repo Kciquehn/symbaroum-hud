@@ -72,6 +72,8 @@ O modo padrão procura, nesta ordem:
 
 Essa preferência pode ser alterada nas configurações do módulo. As setas próximas ao retrato percorrem os atores acessíveis sem alterar a seleção de tokens.
 
+Para o mestre, um token controlado sempre assume imediatamente o HUD, mesmo quando o modo configurado é **turno de combate** ou **personagem atribuído**. Ao remover a seleção do token, o HUD volta ao modo escolhido.
+
 O HUD permite visualizar atores com permissão de **Observer**, mas ações, rolagens e alterações exigem permissão de **Owner**.
 
 ## Configurações

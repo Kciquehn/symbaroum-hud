@@ -32,12 +32,19 @@ export function canUsePowerItem(item) {
 
 export class ActorService {
   static resolve(mode) {
+    const controlledActors = (canvas?.tokens?.controlled ?? [])
+      .map((token) => token.actor);
+    if (game.user?.isGM) {
+      const controlledActor = controlledActors.find((actor) => this.isUsable(actor));
+      if (controlledActor) return controlledActor;
+    }
+
     const candidates = mode === SELECTION_MODES.COMBAT
       ? [game.combat?.combatant?.actor]
       : mode === SELECTION_MODES.CHARACTER
         ? [game.user?.character]
         : [
-            ...(canvas?.tokens?.controlled ?? []).map((token) => token.actor),
+            ...controlledActors,
             game.combat?.combatant?.actor,
             game.user?.character
           ];

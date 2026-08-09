@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.32
+
+- Dá prioridade imediata ao token controlado pelo mestre, independentemente do modo de seleção configurado.
+- Retorna automaticamente ao turno, personagem atribuído ou seleção automática quando o mestre soltar o token.
+- Mantém o comportamento original das configurações para jogadores.
+
 ## 0.1.31
 
 - Mantém o botão de expandir a apenas quatro pixels do retrato quando o HUD estiver recolhido.

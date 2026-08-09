@@ -361,6 +361,8 @@ assert.match(actorService, /CORRUPTION\.CHAT_THRESHOLD/);
 assert.match(actorService, /addCondition\?\.\("dead"\)/);
 assert.match(actorService, /CHAT\.DEAD/);
 assert.match(actorService, /COMBAT\.CHAT_DAMAGE_DYING/);
+assert.match(actorService, /game\.user\?\.isGM/);
+assert.match(actorService, /controlledActors\.find/);
 assert.match(application, /#openManeuverDialog\(actor\)/);
 assert.match(application, /IndResourcesIntegration\.maneuvers\(\)/);
 assert.match(application, /IndResourcesIntegration\.executeManeuver\(actor, maneuverId\)/);
