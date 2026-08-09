@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.25
+
+- Posiciona o quadro de Táticas no lugar original dos efeitos ativos, encostado ao HUD.
+- Move os ícones dos efeitos ativos para cima do quadro de Táticas.
+
 ## 0.1.24
 
 - Exibe a Defesa de criaturas como modificador assinado, seguindo o mesmo valor `defmod` da ficha nativa.

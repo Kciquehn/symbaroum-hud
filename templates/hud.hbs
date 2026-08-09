@@ -1,11 +1,5 @@
 {{#if hasStatusSummary}}
   <aside class="symbaroum-hud-status-summary">
-    {{#if tactics}}
-      <section class="symbaroum-hud-tactics" aria-label="{{localize 'BIO.TACTICS'}}">
-        <h2><i class="fa-solid fa-chess-knight" aria-hidden="true"></i>{{localize "BIO.TACTICS"}}</h2>
-        <div class="symbaroum-hud-tactics-content">{{{tactics.html}}}</div>
-      </section>
-    {{/if}}
     {{#if effects}}
       <div class="symbaroum-hud-effects" role="list"
         aria-label="{{localize 'SYMBAROUMHUD.Sections.Effects'}}">
@@ -16,6 +10,12 @@
           </span>
         {{/each}}
       </div>
+    {{/if}}
+    {{#if tactics}}
+      <section class="symbaroum-hud-tactics" aria-label="{{localize 'BIO.TACTICS'}}">
+        <h2><i class="fa-solid fa-chess-knight" aria-hidden="true"></i>{{localize "BIO.TACTICS"}}</h2>
+        <div class="symbaroum-hud-tactics-content">{{{tactics.html}}}</div>
+      </section>
     {{/if}}
   </aside>
 {{/if}}

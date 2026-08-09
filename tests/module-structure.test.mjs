@@ -101,6 +101,11 @@ assert.match(template, /data-effect-id="{{id}}"/);
 assert.match(template, /class="symbaroum-hud-status-summary"/);
 assert.match(template, /class="symbaroum-hud-tactics"/);
 assert.match(template, /\{\{\{tactics\.html\}\}\}/);
+assert.ok(
+  template.indexOf('class="symbaroum-hud-effects"')
+    < template.indexOf('class="symbaroum-hud-tactics"'),
+  "Active effects must appear above the creature tactics panel"
+);
 assert.match(template, /actor\.deathFailures/);
 assert.match(template, /actor\.vitality\.value/);
 assert.match(template, /data-action="modify-vitality"/);
