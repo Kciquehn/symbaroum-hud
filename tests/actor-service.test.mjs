@@ -5,7 +5,10 @@ const warnings = [];
 const chatMessages = [];
 globalThis.game = {
   user: { id: "user" },
-  i18n: { localize: (key) => key },
+  i18n: {
+    localize: (key) => key,
+    format: (key, data) => `${key}:${data.name}`
+  },
   settings: { get: () => "publicroll" },
   symbaroum: { config: { expCosts: { power: { novice: 10 } } } }
 };
@@ -31,6 +34,9 @@ globalThis.ui = {
 globalThis.ChatMessage = {
   create: async (message) => chatMessages.push(message),
   getWhisperRecipients: () => ["gm"]
+};
+globalThis.CONFIG = {
+  statusEffects: [{ id: "dead", img: "dead.webp" }]
 };
 
 const { ActorService } = await import("../scripts/services/actor-service.mjs");
@@ -459,6 +465,44 @@ test("vitality adjustments are clamped between zero and the actor maximum", asyn
     ["update", { "system.health.toughness.value": 10 }],
     ["update", { "system.health.toughness.value": 0 }]
   ]);
+});
+
+test("damage through the HUD applies the native dead condition and posts to chat at zero vitality", async () => {
+  warnings.length = 0;
+  chatMessages.length = 0;
+  const owned = actor();
+  owned.system.health.toughness.value = 3;
+  owned.addCondition = async (condition) => owned.calls.push(["condition", condition]);
+
+  await ActorService.adjust(owned, "system.health.toughness.value", -3);
+
+  assert.deepEqual(owned.calls, [
+    ["update", { "system.health.toughness.value": 0 }],
+    ["condition", "dead"]
+  ]);
+  assert.equal(warnings.at(-1), "EFFECT.StatusDead");
+  assert.equal(chatMessages.length, 1);
+  const content = JSON.parse(chatMessages[0].content);
+  assert.equal(content.introText, "CHAT.DEAD:Hero");
+  assert.equal(content.finalText, "HeroCOMBAT.CHAT_DAMAGE_DYING");
+  assert.equal(content.subImg, "dead.webp");
+});
+
+test("healing or adjusting an actor already at zero does not repeat the death message", async () => {
+  warnings.length = 0;
+  chatMessages.length = 0;
+  const owned = actor();
+  owned.system.health.toughness.value = 0;
+  owned.addCondition = async (condition) => owned.calls.push(["condition", condition]);
+
+  await ActorService.adjust(owned, "system.health.toughness.value", -3);
+  await ActorService.adjust(owned, "system.health.toughness.value", 3);
+
+  assert.deepEqual(owned.calls, [
+    ["update", { "system.health.toughness.value": 3 }]
+  ]);
+  assert.equal(chatMessages.length, 0);
+  assert.equal(warnings.length, 0);
 });
 
 test("temporary corruption is clamped between zero and the remaining maximum", async () => {

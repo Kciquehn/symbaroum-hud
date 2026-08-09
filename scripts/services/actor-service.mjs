@@ -325,9 +325,45 @@ export class ActorService {
     const corruptionAlert = path === "system.health.corruption.temporary" && next > value
       ? this.#corruptionAlert(actor, next - value)
       : null;
+    const defeated = path === "system.health.toughness.value" && value > 0 && next === 0;
     const result = await actor.update({ [path]: next });
     if (corruptionAlert) await this.#postCorruptionAlert(actor, corruptionAlert);
+    if (defeated) await this.#handleDefeat(actor);
     return result;
+  }
+
+  static async #handleDefeat(actor) {
+    await actor.addCondition?.("dead");
+    ui.notifications.warn(game.i18n.localize("EFFECT.StatusDead"));
+
+    const render = globalThis.foundry?.applications?.handlebars?.renderTemplate
+      ?? globalThis.renderTemplate;
+    if (typeof render !== "function") return;
+
+    const actorName = String(actor.name ?? "");
+    const deadEffect = globalThis.CONFIG?.statusEffects?.find?.((effect) => effect.id === "dead");
+    const content = await render("systems/symbaroum/template/chat/ability.hbs", {
+      targetData: false,
+      hasTarget: false,
+      introText: game.i18n.format("CHAT.DEAD", { name: actorName }),
+      introImg: actor.img,
+      targetText: "",
+      subText: "",
+      subImg: deadEffect?.img ?? "icons/svg/skull.svg",
+      hasRoll: false,
+      rollString: "",
+      rollResult: "",
+      resultText: "",
+      finalText: actorName + game.i18n.localize("COMBAT.CHAT_DAMAGE_DYING"),
+      haveCorruption: false,
+      corruptionText: ""
+    });
+    const chatData = { user: game.user.id, content };
+    if (!actor.hasPlayerOwner) {
+      const recipients = ChatMessage.getWhisperRecipients?.("GM") ?? [];
+      if (recipients.length > 0) chatData.whisper = recipients;
+    }
+    await ChatMessage.create(chatData);
   }
 
   static #corruptionAlert(actor, gained) {

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.20
+
+- Aplica a condição nativa `dead` quando o dano pelo HUD reduz a Vitalidade de um valor positivo para zero.
+- Exibe a notificação de Morto e envia ao chat as mensagens nativas de morte e ferimento fatal do Symbaroum.
+- Evita repetir a mensagem ao alterar um personagem que já estava com zero de Vitalidade.
+
 ## 0.1.19
 
 - Permite digitar alterações rápidas como `+3` ou `-9` no campo de Vitalidade e aplicá-las com Enter.
