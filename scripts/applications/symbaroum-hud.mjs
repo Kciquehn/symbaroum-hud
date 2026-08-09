@@ -205,6 +205,7 @@ export class SymbaroumHud extends ApplicationV2 {
       weaponDrawn: Boolean(indResources.drawnWeapons?.length),
       actions: {
         attributes: canRollActor,
+        vitality: canRollActor,
         defense: canUseCharacterActions,
         deathTest: canUseCharacterActions,
         recovery: canUseCharacterActions,
@@ -1612,6 +1613,9 @@ export class SymbaroumHud extends ApplicationV2 {
         if (sheathed) return this.render();
         return null;
       }
+      if (action === "modify-vitality") {
+        return this.#openVitalityDialog(actor);
+      }
       if (action === "roll-attribute") {
         return ActorService.rollAttribute(actor, element.dataset.attribute);
       }
@@ -1666,6 +1670,65 @@ export class SymbaroumHud extends ApplicationV2 {
     if (!drawn) return null;
     await this.render();
     return ActorService.rollWeapon(actor, itemId);
+  }
+
+  #openVitalityDialog(actor) {
+    if (!ActorService.canUpdate(actor)) {
+      ui.notifications.warn(game.i18n.localize("SYMBAROUMHUD.Notifications.NoPermission"));
+      return;
+    }
+
+    const vitality = actor.system?.health?.toughness ?? {};
+    const current = number(vitality.value);
+    const max = number(vitality.max);
+    const content = `
+      <form class="symbaroum-hud-vitality-dialog">
+        <p>${escapeHtml(game.i18n.localize("SYMBAROUMHUD.Vitality.Prompt"))}</p>
+        <div class="symbaroum-hud-vitality-current">
+          <i class="fa-solid fa-heart" aria-hidden="true"></i>
+          <span>${escapeHtml(game.i18n.localize("SYMBAROUMHUD.Vitality.Current"))}</span>
+          <strong>${current}/${max}</strong>
+        </div>
+        <label>
+          <span>${escapeHtml(game.i18n.localize("SYMBAROUMHUD.Vitality.Amount"))}</span>
+          <input type="number" name="vitalityAmount" value="1" min="1" step="1" required autofocus>
+        </label>
+      </form>
+    `;
+    const change = async (html, direction) => {
+      const root = html?.[0] ?? html;
+      const value = Number(root?.querySelector?.("input[name='vitalityAmount']")?.value);
+      if (!Number.isFinite(value) || value <= 0) return null;
+      const amount = Math.max(1, Math.floor(value));
+      await ActorService.adjust(
+        actor,
+        "system.health.toughness.value",
+        direction * amount
+      );
+      return this.render();
+    };
+
+    const dialog = new Dialog({
+      title: game.i18n.localize("SYMBAROUMHUD.Vitality.Title"),
+      content,
+      buttons: {
+        heal: {
+          icon: '<i class="fa-solid fa-heart-circle-plus" aria-hidden="true"></i>',
+          label: game.i18n.localize("SYMBAROUMHUD.Vitality.Heal"),
+          callback: (html) => change(html, 1)
+        },
+        damage: {
+          icon: '<i class="fa-solid fa-heart-crack" aria-hidden="true"></i>',
+          label: game.i18n.localize("SYMBAROUMHUD.Vitality.Damage"),
+          callback: (html) => change(html, -1)
+        },
+        cancel: {
+          label: game.i18n.localize("Cancel")
+        }
+      },
+      default: "cancel"
+    });
+    dialog.render(true);
   }
 
   #openAddAbilityDialog(actor) {

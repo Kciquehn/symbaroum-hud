@@ -85,6 +85,7 @@ O modo de visualização do inventário, em grade ou lista, também é lembrado 
 ## Uso rápido
 
 - Passe o mouse sobre o retrato para revelar o nome e as setas de troca; clique na imagem para abrir a ficha do ator.
+- Clique na barra de Vitalidade para curar o personagem ou aplicar uma quantidade de dano.
 - Clique em um atributo, arma ou ação disponível para usar a operação nativa do Symbaroum.
 - Ao atacar com uma arma guardada, confirme o aviso para sacá-la pelo Ind Resources e continuar o ataque.
 - Clique no selo **Sacada** de uma arma para guardá-la sem realizar um ataque.

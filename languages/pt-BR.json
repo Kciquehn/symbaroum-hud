@@ -143,6 +143,15 @@
       "DrawMovementReminder": "Lembre-se: sacar uma arma gasta uma ação de movimento.",
       "SheatheAction": "Guardar arma"
     },
+    "Vitality": {
+      "Title": "Alterar Vitalidade",
+      "Manage": "Curar ou aplicar dano",
+      "Prompt": "Informe a quantidade e escolha se o personagem deve recuperar Vitalidade ou sofrer dano.",
+      "Current": "Vitalidade atual",
+      "Amount": "Quantidade",
+      "Heal": "Curar",
+      "Damage": "Tomar dano"
+    },
     "Sections": {
       "Attributes": "Atributos",
       "Attacks": "Ataques",

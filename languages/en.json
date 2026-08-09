@@ -143,6 +143,15 @@
       "DrawMovementReminder": "Remember: drawing a weapon costs a movement action.",
       "SheatheAction": "Sheathe weapon"
     },
+    "Vitality": {
+      "Title": "Change Toughness",
+      "Manage": "Heal or take damage",
+      "Prompt": "Enter an amount and choose whether the character should recover Toughness or take damage.",
+      "Current": "Current Toughness",
+      "Amount": "Amount",
+      "Heal": "Heal",
+      "Damage": "Take damage"
+    },
     "Sections": {
       "Attributes": "Attributes",
       "Attacks": "Attacks",

@@ -12,9 +12,12 @@ globalThis.game = {
 globalThis.foundry = {
   utils: {
     deepClone: (value) => structuredClone(value),
-    escapeHTML: (value) => String(value)
+    escapeHTML: (value) => String(value),
+    getProperty: (object, property) => property.split(".")
+      .reduce((value, key) => value?.[key], object)
   }
 };
+Math.clamp ??= (value, min, max) => Math.min(max, Math.max(min, value));
 globalThis.ui = {
   notifications: {
     warn: (message) => warnings.push(message)
@@ -76,6 +79,10 @@ function actor({ owner = true } = {}) {
         artifactrr: 0
       },
       health: {
+        toughness: {
+          value: 6,
+          max: 10
+        },
         corruption: {
           permanent: 1,
           max: 10
@@ -429,6 +436,17 @@ test("reroll cost does not spend XP when none is available", async () => {
 
   assert.deepEqual(owned.calls, []);
   assert.equal(warnings.at(-1), "SYMBAROUMHUD.Notifications.NoAvailableExperience");
+});
+
+test("vitality adjustments are clamped between zero and the actor maximum", async () => {
+  const owned = actor();
+  await ActorService.adjust(owned, "system.health.toughness.value", 10);
+  await ActorService.adjust(owned, "system.health.toughness.value", -10);
+
+  assert.deepEqual(owned.calls, [
+    ["update", { "system.health.toughness.value": 10 }],
+    ["update", { "system.health.toughness.value": 0 }]
+  ]);
 });
 
 test("lists each accessible actor once for HUD cycling", () => {

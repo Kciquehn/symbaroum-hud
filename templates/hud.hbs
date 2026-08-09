@@ -76,17 +76,18 @@
       </span>
     {{/if}}
     <span class="symbaroum-hud-character-resources">
-      <span class="symbaroum-hud-character-resource" data-resource="vitality"
-        role="progressbar" aria-valuemin="0" aria-valuemax="{{actor.vitality.max}}"
-        aria-valuenow="{{actor.vitality.value}}"
-        data-tooltip="{{localize 'SYMBAROUMHUD.Resources.Toughness'}}: {{actor.vitality.value}}/{{actor.vitality.max}}"
-        style="--symbaroum-hud-resource-percent: {{actor.vitality.percent}}%;">
+      <button type="button" class="symbaroum-hud-character-resource" data-resource="vitality"
+        data-action="modify-vitality"
+        data-tooltip="{{localize 'SYMBAROUMHUD.Vitality.Manage'}}: {{actor.vitality.value}}/{{actor.vitality.max}}"
+        aria-label="{{localize 'SYMBAROUMHUD.Vitality.Manage'}}: {{actor.vitality.value}}/{{actor.vitality.max}}"
+        style="--symbaroum-hud-resource-percent: {{actor.vitality.percent}}%;"
+        {{#unless actions.vitality}}disabled{{/unless}}>
         <span class="symbaroum-hud-character-resource-fill" aria-hidden="true"></span>
         <span class="symbaroum-hud-character-resource-value">
           <i class="fa-solid fa-heart" aria-hidden="true"></i>
           <strong>{{actor.vitality.value}}</strong>/{{actor.vitality.max}}
         </span>
-      </span>
+      </button>
       <span class="symbaroum-hud-character-resource" data-resource="corruption"
         role="progressbar" aria-valuemin="0" aria-valuemax="{{actor.corruption.max}}"
         aria-valuenow="{{actor.corruption.total}}"

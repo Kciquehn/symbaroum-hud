@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.11
+
+- Permite clicar na barra de Vitalidade para curar ou aplicar dano.
+- Limita automaticamente o novo valor entre zero e a Vitalidade máxima do ator.
+
 ## 0.1.10
 
 - Transforma o selo `Sacada` em um controle para guardar aquela arma pelo Ind Resources.
