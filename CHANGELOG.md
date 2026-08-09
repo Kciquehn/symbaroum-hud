@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.18
+
+- Ativa a borda vermelha pulsante de perigo quando o personagem chega a 25% de Vitalidade ou menos.
+- Mantém o mesmo efeito para armas sacadas e evita duplicá-lo quando as duas condições estão ativas.
+
 ## 0.1.17
 
 - Adiciona uma configuração individual para mostrar o botão separado de sacar e guardar armas antes da hotbar.

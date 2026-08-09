@@ -16,3 +16,7 @@ export function vitalityState(value, max) {
   if (ratio < 1) return VITALITY_STATES.INJURED;
   return VITALITY_STATES.HEALTHY;
 }
+
+export function shouldShowDangerTint(weaponDrawn, state) {
+  return Boolean(weaponDrawn) || state === VITALITY_STATES.CRITICAL;
+}

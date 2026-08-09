@@ -12,7 +12,7 @@ import {
 } from "../settings.mjs";
 import { ActorService, canUsePowerItem, isTraitLikeItem } from "../services/actor-service.mjs";
 import { ritualistProgress } from "../services/ritual-service.mjs";
-import { vitalityState } from "../services/vitality-service.mjs";
+import { shouldShowDangerTint, vitalityState } from "../services/vitality-service.mjs";
 
 const ApplicationV2 = foundry.applications.api.ApplicationV2;
 const HOTBAR_CONTROL_ACTIONS = new Set(["mute", "menu"]);
@@ -1325,9 +1325,11 @@ export class SymbaroumHud extends ApplicationV2 {
   }
 
   #updateHostilityTint(root) {
-    const active = root
-      ?.querySelector("[data-symba-weapon-drawn]")
-      ?.dataset.symbaWeaponDrawn === "true";
+    const cardRow = root?.querySelector("[data-symba-weapon-drawn]");
+    const active = shouldShowDangerTint(
+      cardRow?.dataset.symbaWeaponDrawn === "true",
+      cardRow?.dataset.vitalityState
+    );
 
     if (!active) {
       this.#hostilityTint?.remove();

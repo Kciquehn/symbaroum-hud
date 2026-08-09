@@ -627,6 +627,7 @@ assert.match(application, /#manualActorKey/);
 assert.match(application, /#cycleActor/);
 assert.match(application, /#updateHostilityTint/);
 assert.match(application, /symbaroum-hud-hostility-tint/);
+assert.match(application, /shouldShowDangerTint/);
 assert.match(application, /new AbortController\(\)/);
 assert.match(application, /addEventListener\("click",[\s\S]*\{ signal \}/);
 assert.match(application, /game\.tooltip\.activate/);
