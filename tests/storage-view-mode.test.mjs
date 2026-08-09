@@ -61,6 +61,32 @@ test("player list hiding is enabled by default", () => {
   }
 });
 
+test("the separate weapon readiness button is disabled by default", () => {
+  const originalGame = globalThis.game;
+  const registered = new Map();
+  globalThis.game = {
+    settings: {
+      register(moduleId, key, data) {
+        assert.equal(moduleId, MODULE_ID);
+        registered.set(key, data);
+      },
+      get: () => false
+    }
+  };
+
+  try {
+    registerSettings(() => {});
+    const setting = registered.get(SETTINGS.SHOW_WEAPON_READINESS_BUTTON);
+    assert.equal(setting.scope, "client");
+    assert.equal(setting.config, true);
+    assert.equal(setting.type, Boolean);
+    assert.equal(setting.default, false);
+    assert.equal(typeof setting.onChange, "function");
+  } finally {
+    globalThis.game = originalGame;
+  }
+});
+
 test("storage view mode accepts list and safely falls back to grid", () => {
   const originalGame = globalThis.game;
   let storedMode = STORAGE_VIEW_MODES.LIST;

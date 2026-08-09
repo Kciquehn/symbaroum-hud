@@ -1014,7 +1014,7 @@ body:has(#symbaroum-hud .symbaroum-hud-character-card) #hotbar #hotbar-controls-
   pointer-events: none;
 }
 
-body:has(#symbaroum-hud .symbaroum-hud-readiness-slot) > #tenebre-weapon-readiness-floating {
+body:has(#symbaroum-hud) > #tenebre-weapon-readiness-floating {
   display: none !important;
 }
 

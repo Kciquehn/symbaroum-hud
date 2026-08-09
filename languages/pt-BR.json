@@ -195,6 +195,10 @@
         "Name": "Integração com Ind Resources",
         "Hint": "Mostra recursos e ações do Symbaroum Ind Resources quando ele estiver ativo."
       },
+      "ShowWeaponReadinessButton": {
+        "Name": "Mostrar botão separado para sacar armas",
+        "Hint": "Exibe antes dos slots da hotbar o botão do Ind Resources para sacar e guardar armas. O saque pelo painel de Ataques continua disponível quando esta opção está desativada."
+      },
       "HidePlayers": {
         "Name": "Ocultar lista de jogadores",
         "Hint": "Oculta no cliente atual o painel de jogadores e desempenho no canto inferior esquerdo."

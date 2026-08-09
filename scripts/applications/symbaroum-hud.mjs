@@ -163,6 +163,7 @@ export class SymbaroumHud extends ApplicationV2 {
     const canUseCharacterActions = Boolean(
       showPlayerResources && canRollActor
     );
+    const showWeaponReadinessButton = getSetting(SETTINGS.SHOW_WEAPON_READINESS_BUTTON);
     const storageViewMode = getStorageViewMode();
     const abilities = await abilityContext(
       actor,
@@ -221,9 +222,15 @@ export class SymbaroumHud extends ApplicationV2 {
         ammoRecovery: Boolean(canUseCharacterActions && indResources.ammoRecovery),
         rest: Boolean(canUseCharacterActions && indResources.actions?.rest),
         maneuvers: Boolean(canUseCharacterActions && indResources.actions?.maneuvers),
-        weaponReadiness: Boolean(canUseCharacterActions && indResources.readiness)
+        weaponReadiness: Boolean(
+          canUseCharacterActions
+          && showWeaponReadinessButton
+          && indResources.readiness
+        )
       },
-      readiness: canUseCharacterActions ? indResources.readiness : null,
+      readiness: canUseCharacterActions && showWeaponReadinessButton
+        ? indResources.readiness
+        : null,
       ammoRecovery: canUseCharacterActions ? indResources.ammoRecovery : null,
       attributes: attributeContext(actor),
       abilities: {

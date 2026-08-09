@@ -44,6 +44,16 @@ export function registerSettings(onChange) {
     onChange
   });
 
+  game.settings.register(MODULE_ID, SETTINGS.SHOW_WEAPON_READINESS_BUTTON, {
+    name: "SYMBAROUMHUD.Settings.ShowWeaponReadinessButton.Name",
+    hint: "SYMBAROUMHUD.Settings.ShowWeaponReadinessButton.Hint",
+    scope: "client",
+    config: true,
+    type: Boolean,
+    default: false,
+    onChange
+  });
+
   game.settings.register(MODULE_ID, SETTINGS.HIDE_PLAYERS, {
     name: "SYMBAROUMHUD.Settings.HidePlayers.Name",
     hint: "SYMBAROUMHUD.Settings.HidePlayers.Hint",

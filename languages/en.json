@@ -195,6 +195,10 @@
         "Name": "Ind Resources integration",
         "Hint": "Shows Symbaroum Ind Resources data and actions while it is active."
       },
+      "ShowWeaponReadinessButton": {
+        "Name": "Show separate weapon readiness button",
+        "Hint": "Displays the Ind Resources draw and sheathe button before the hotbar slots. Drawing weapons from the Attacks panel remains available while this option is disabled."
+      },
       "HidePlayers": {
         "Name": "Hide player list",
         "Hint": "Hides the player and performance panel in the lower-left corner for this client."

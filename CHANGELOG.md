@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.17
+
+- Adiciona uma configuração individual para mostrar o botão separado de sacar e guardar armas antes da hotbar.
+- Mantém esse botão desativado por padrão, sem afetar o saque diretamente pelo painel de Ataques.
+- Evita que o botão flutuante original do Ind Resources reapareça enquanto o Symbaroum HUD estiver ativo.
+
 ## 0.1.16
 
 - Torna as manchas de sangue mais fortes, vermelhas e chamativas desde o primeiro ponto de Vitalidade perdido.

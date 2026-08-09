@@ -6,6 +6,7 @@ export const SETTINGS = Object.freeze({
   ENABLED: "enabled",
   SELECTION_MODE: "selectionMode",
   SHOW_IND_RESOURCES: "showIndResources",
+  SHOW_WEAPON_READINESS_BUTTON: "showWeaponReadinessButton",
   HIDE_PLAYERS: "hidePlayers",
   STORAGE_VIEW_MODE: "storageViewMode"
 });

@@ -79,6 +79,7 @@ As configurações são individuais por cliente:
 - **Ativar HUD:** mostra ou oculta toda a interface;
 - **Modo de seleção:** escolhe entre token controlado, combate ou personagem atribuído;
 - **Mostrar Ind Resources:** habilita os elementos da integração quando o módulo estiver ativo;
+- **Mostrar botão separado para sacar armas:** desativada por padrão; quando ativada, adiciona antes dos slots da hotbar o controle geral de prontidão do Ind Resources;
 - **Ocultar lista de jogadores:** ativada por padrão, libera espaço na lateral da tela enquanto o HUD estiver em uso.
 
 O modo de visualização do inventário, em grade ou lista, também é lembrado individualmente.
@@ -92,6 +93,7 @@ O modo de visualização do inventário, em grade ou lista, também é lembrado 
 - Ao ganhar Corrupção pelo HUD, os avisos nativos de proximidade, limiar e corrupção máxima também são enviados ao chat.
 - Clique em um atributo, arma ou ação disponível para usar a operação nativa do Symbaroum.
 - Ao clicar em uma arma guardada, confirme o aviso para sacá-la pelo Ind Resources; clique novamente na arma já sacada para atacar.
+- O saque pelo painel de Ataques funciona mesmo com o botão separado de prontidão desativado nas configurações.
 - Clique no selo **Sacada** de uma arma para guardá-la sem realizar um ataque.
 - Use os botões laterais para abrir inventário, ataques, habilidades, traços, poderes místicos e rituais.
 - Clique com o botão direito em um efeito ativo para abrir o menu de remoção.
