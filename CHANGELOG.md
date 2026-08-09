@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.31
+
+- Mantém o botão de expandir a apenas quatro pixels do retrato quando o HUD estiver recolhido.
+- Posiciona o controle no fluxo do retrato para evitar afastamentos causados pela largura anterior da interface.
+
 ## 0.1.30
 
 - Evita que a seta de recolhimento seja duplicada quando o Foundry reconstruir a hotbar.

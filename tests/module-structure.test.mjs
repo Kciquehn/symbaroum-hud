@@ -528,6 +528,7 @@ assert.match(stylesheet, /\.symbaroum-hud-card-row \{[^}]+z-index: 4/s);
 assert.match(stylesheet, /button\.symbaroum-hud-collapse-toggle/);
 assert.match(stylesheet, /#hotbar > button\.symbaroum-hud-collapse-toggle/);
 assert.match(stylesheet, /data-hud-collapsed="true"/);
+assert.match(stylesheet, /data-hud-collapsed="true"[^}]+margin-left: 4px/s);
 assert.match(stylesheet, /\.symbaroum-hud-character-actions/);
 assert.match(stylesheet, /--symbaroum-hud-side-button-height: 27\.1667px/);
 assert.match(stylesheet, /\.symbaroum-hud-hotbar-controls \{[\s\S]*?height: 178px/);

@@ -755,6 +755,17 @@
   gap: 0;
 }
 
+#symbaroum-hud .symbaroum-hud-card-row[data-hud-collapsed="true"]
+  > button.symbaroum-hud-collapse-toggle {
+  position: static;
+  right: auto;
+  bottom: auto;
+  z-index: auto;
+  flex: 0 0 24px;
+  align-self: flex-end;
+  margin-left: 4px;
+}
+
 #symbaroum-hud .symbaroum-hud-card-row[data-hud-collapsed="true"] :is(
   .symbaroum-hud-hotbar-controls,
   .symbaroum-hud-main-column
