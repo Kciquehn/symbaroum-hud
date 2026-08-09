@@ -18,7 +18,7 @@ O módulo usa as rolagens e os documentos nativos do sistema. Ele não altera o 
 - seleção pelo token controlado, combatente atual ou personagem atribuído;
 - troca rápida entre atores que o usuário pode acessar;
 - barras de Vitalidade e Corrupção reveladas ao passar o mouse sobre o retrato, além de Defesa, armadura, carga, dinheiro e experiência;
-- efeitos imersivos graduais de sangue no retrato e rachaduras no HUD conforme a Vitalidade diminui;
+- efeitos imersivos graduais: qualquer dano deixa sangue evidente no retrato, enquanto rachaduras individuais surgem em cada botão e quadro do HUD;
 - rolagem dos oito atributos, armas, armadura e teste de morte;
 - recuperação, descanso, custo de nova rolagem e efeitos ativos;
 - painéis de ataques, habilidades, traços, poderes místicos e rituais;
@@ -87,7 +87,7 @@ O modo de visualização do inventário, em grade ou lista, também é lembrado 
 
 - Passe o mouse sobre o retrato para revelar o nome e as setas de troca; clique na imagem para abrir a ficha do ator.
 - Clique na barra de Vitalidade para curar o personagem ou aplicar uma quantidade de dano.
-- Ao chegar a 50% de Vitalidade, o retrato começa a apresentar sangue; com 25% ou menos, o efeito se intensifica e o HUD passa a exibir rachaduras.
+- Qualquer ponto de Vitalidade perdido já deixa sangue evidente no retrato e rachaduras discretas em cada componente; os efeitos ficam progressivamente mais fortes em 50% e 25% de Vitalidade.
 - Clique na barra de Corrupção para aumentar ou reduzir a Corrupção temporária; a permanente é preservada.
 - Ao ganhar Corrupção pelo HUD, os avisos nativos de proximidade, limiar e corrupção máxima também são enviados ao chat.
 - Clique em um atributo, arma ou ação disponível para usar a operação nativa do Symbaroum.

@@ -41,8 +41,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  #symbaroum-hud-hostility-tint,
-  #symbaroum-hud .symbaroum-hud-card-row[data-vitality-state="critical"]::after {
+  #symbaroum-hud-hostility-tint {
     animation: none;
   }
 }
@@ -406,13 +405,19 @@
     filter 400ms ease;
 }
 
+#symbaroum-hud .symbaroum-hud-card-row[data-vitality-state="injured"] .symbaroum-hud-character-card::after {
+  opacity: 0.58;
+  filter: saturate(1.15) contrast(1.06) drop-shadow(0 0 3px rgb(125 0 0 / 70%));
+}
+
 #symbaroum-hud .symbaroum-hud-card-row[data-vitality-state="wounded"] .symbaroum-hud-character-card::after {
-  opacity: 0.38;
+  opacity: 0.8;
+  filter: saturate(1.28) contrast(1.1) drop-shadow(0 0 4px rgb(145 0 0 / 82%));
 }
 
 #symbaroum-hud .symbaroum-hud-card-row[data-vitality-state="critical"] .symbaroum-hud-character-card::after {
-  opacity: 0.76;
-  filter: saturate(1.22) contrast(1.08);
+  opacity: 1;
+  filter: saturate(1.42) contrast(1.14) drop-shadow(0 0 6px rgb(170 0 0 / 92%));
 }
 
 #symbaroum-hud .symbaroum-hud-character-card:has(.symbaroum-hud-character-open:hover),
@@ -632,32 +637,83 @@
   pointer-events: none;
 }
 
-#symbaroum-hud .symbaroum-hud-card-row::after {
+#symbaroum-hud :is(
+  .symbaroum-hud-hotbar-controls button,
+  button.symbaroum-hud-attribute,
+  .symbaroum-hud-info-entry,
+  .symbaroum-hud-economy-entry,
+  button.symbaroum-hud-experience-panel,
+  button.symbaroum-hud-panel-toggle,
+  button.symbaroum-hud-readiness-slot,
+  button.symbaroum-hud-ammo-recovery-slot,
+  #hotbar #action-bar .slot
+) {
+  position: relative;
+  overflow: hidden;
+}
+
+#symbaroum-hud :is(
+  .symbaroum-hud-hotbar-controls button,
+  button.symbaroum-hud-attribute,
+  .symbaroum-hud-info-entry,
+  .symbaroum-hud-economy-entry,
+  button.symbaroum-hud-experience-panel,
+  button.symbaroum-hud-panel-toggle,
+  button.symbaroum-hud-readiness-slot,
+  button.symbaroum-hud-ammo-recovery-slot,
+  #hotbar #action-bar .slot
+)::after {
   position: absolute;
-  inset: -5px;
-  z-index: 20;
+  inset: 0;
+  z-index: 8;
   content: "";
-  background: url("../assets/overlays/critical-cracks.png") center / 100% 100% no-repeat;
+  background: url("../assets/overlays/button-cracks.png") center / 100% 100% no-repeat;
   opacity: 0;
-  filter: drop-shadow(0 1px 1px rgb(0 0 0 / 85%));
+  filter: drop-shadow(0 1px 1px rgb(0 0 0 / 90%));
   pointer-events: none;
-  transition: opacity 400ms ease;
+  transition: opacity 350ms ease;
 }
 
-#symbaroum-hud .symbaroum-hud-card-row[data-vitality-state="critical"]::after {
-  opacity: 0.5;
-  animation: symbaroum-hud-critical-damage 2.8s ease-in-out infinite;
+#symbaroum-hud .symbaroum-hud-card-row[data-vitality-state="injured"] :is(
+  .symbaroum-hud-hotbar-controls button,
+  button.symbaroum-hud-attribute,
+  .symbaroum-hud-info-entry,
+  .symbaroum-hud-economy-entry,
+  button.symbaroum-hud-experience-panel,
+  button.symbaroum-hud-panel-toggle,
+  button.symbaroum-hud-readiness-slot,
+  button.symbaroum-hud-ammo-recovery-slot,
+  #hotbar #action-bar .slot
+)::after {
+  opacity: 0.2;
 }
 
-@keyframes symbaroum-hud-critical-damage {
-  0%,
-  100% {
-    opacity: 0.42;
-  }
+#symbaroum-hud .symbaroum-hud-card-row[data-vitality-state="wounded"] :is(
+  .symbaroum-hud-hotbar-controls button,
+  button.symbaroum-hud-attribute,
+  .symbaroum-hud-info-entry,
+  .symbaroum-hud-economy-entry,
+  button.symbaroum-hud-experience-panel,
+  button.symbaroum-hud-panel-toggle,
+  button.symbaroum-hud-readiness-slot,
+  button.symbaroum-hud-ammo-recovery-slot,
+  #hotbar #action-bar .slot
+)::after {
+  opacity: 0.43;
+}
 
-  50% {
-    opacity: 0.58;
-  }
+#symbaroum-hud .symbaroum-hud-card-row[data-vitality-state="critical"] :is(
+  .symbaroum-hud-hotbar-controls button,
+  button.symbaroum-hud-attribute,
+  .symbaroum-hud-info-entry,
+  .symbaroum-hud-economy-entry,
+  button.symbaroum-hud-experience-panel,
+  button.symbaroum-hud-panel-toggle,
+  button.symbaroum-hud-readiness-slot,
+  button.symbaroum-hud-ammo-recovery-slot,
+  #hotbar #action-bar .slot
+)::after {
+  opacity: 0.72;
 }
 
 #symbaroum-hud .symbaroum-hud-character-resource-fill {

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.16
+
+- Torna as manchas de sangue mais fortes, vermelhas e chamativas desde o primeiro ponto de Vitalidade perdido.
+- Substitui a rachadura única sobre todo o HUD por rachaduras individuais em cada botão e quadro.
+- Intensifica progressivamente sangue e rachaduras quando a Vitalidade chega a 50% e 25%.
+
 ## 0.1.15
 
 - Impede que o HUD tente rolar um ataque imediatamente após sacar uma arma guardada.
