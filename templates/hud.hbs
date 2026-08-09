@@ -1,13 +1,23 @@
-{{#if effects}}
-  <div class="symbaroum-hud-effects" role="list"
-    aria-label="{{localize 'SYMBAROUMHUD.Sections.Effects'}}">
-    {{#each effects}}
-      <span class="symbaroum-hud-effect" role="listitem" data-effect-id="{{id}}"
-        data-tooltip="{{name}}">
-        <img src="{{img}}" alt="{{name}}">
-      </span>
-    {{/each}}
-  </div>
+{{#if hasStatusSummary}}
+  <aside class="symbaroum-hud-status-summary">
+    {{#if tactics}}
+      <section class="symbaroum-hud-tactics" aria-label="{{localize 'BIO.TACTICS'}}">
+        <h2><i class="fa-solid fa-chess-knight" aria-hidden="true"></i>{{localize "BIO.TACTICS"}}</h2>
+        <div class="symbaroum-hud-tactics-content">{{{tactics.html}}}</div>
+      </section>
+    {{/if}}
+    {{#if effects}}
+      <div class="symbaroum-hud-effects" role="list"
+        aria-label="{{localize 'SYMBAROUMHUD.Sections.Effects'}}">
+        {{#each effects}}
+          <span class="symbaroum-hud-effect" role="listitem" data-effect-id="{{id}}"
+            data-tooltip="{{name}}">
+            <img src="{{img}}" alt="{{name}}">
+          </span>
+        {{/each}}
+      </div>
+    {{/if}}
+  </aside>
 {{/if}}
 
 <div class="symbaroum-hud-card-row" data-symba-weapon-drawn="{{weaponDrawn}}"

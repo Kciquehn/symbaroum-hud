@@ -98,6 +98,9 @@ assert.match(template, /symbaroum-hud-death-failures/);
 assert.match(template, /class="symbaroum-hud-effects"/);
 assert.match(template, /#each effects/);
 assert.match(template, /data-effect-id="{{id}}"/);
+assert.match(template, /class="symbaroum-hud-status-summary"/);
+assert.match(template, /class="symbaroum-hud-tactics"/);
+assert.match(template, /\{\{\{tactics\.html\}\}\}/);
 assert.match(template, /actor\.deathFailures/);
 assert.match(template, /actor\.vitality\.value/);
 assert.match(template, /data-action="modify-vitality"/);
@@ -432,6 +435,9 @@ assert.match(application, /abilityDetailContext\(selectedItem, selectedAbilityTa
 assert.match(application, /selectedAbilityTab/);
 assert.match(application, /foundry\?\.applications\?\.ux\?\.TextEditor/);
 assert.match(application, /textEditor\.enrichHTML/);
+assert.match(application, /game\.user\?\.isGM && actor\?\.type === "monster"/);
+assert.match(application, /actor\.system\?\.bio\?\.tactics/);
+assert.match(application, /hasStatusSummary: Boolean\(tacticsHtml \|\| effects\.length\)/);
 assert.match(application, /uuid: item\.uuid/);
 assert.match(application, /data-ability-draggable="true"/);
 assert.match(application, /data-weapon-draggable="true"/);
@@ -668,6 +674,8 @@ function scriptFiles(directory) {
 assert.match(stylesheet, /\.symbaroum-hud-death-failures/);
 assert.match(stylesheet, /\.symbaroum-hud-effects/);
 assert.match(stylesheet, /\.symbaroum-hud-effect/);
+assert.match(stylesheet, /\.symbaroum-hud-status-summary/);
+assert.match(stylesheet, /\.symbaroum-hud-tactics-content/);
 assert.match(stylesheet, /\.symbaroum-hud-effect-context-menu/);
 assert.match(main, /registerHotbarShortcuts\(\)/);
 assert.match(settings, /scope: "client"[\s\S]*config: false[\s\S]*STORAGE_VIEW_MODES\.GRID/);

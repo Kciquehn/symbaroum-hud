@@ -21,6 +21,7 @@ O módulo usa as rolagens e os documentos nativos do sistema. Ele não altera o 
 - efeitos imersivos graduais: qualquer dano deixa sangue evidente no retrato, enquanto rachaduras individuais surgem em cada botão e quadro do HUD;
 - rolagem dos oito atributos, armas, armadura e teste de morte;
 - recuperação, descanso, custo de nova rolagem e efeitos ativos;
+- táticas das criaturas selecionadas pelo mestre exibidas junto aos efeitos para consulta rápida;
 - painéis de ataques, habilidades, traços, poderes místicos e rituais;
 - busca e adição de habilidades ou rituais existentes no mundo;
 - painel de Ritualista com grau, capacidade e progressão;
@@ -100,6 +101,7 @@ O modo de visualização do inventário, em grade ou lista, também é lembrado 
 - Clique no selo **Sacada** de uma arma para guardá-la sem realizar um ataque.
 - Use os botões laterais para abrir inventário, ataques, habilidades, traços, poderes místicos e rituais.
 - Clique com o botão direito em um efeito ativo para abrir o menu de remoção.
+- Ao selecionar uma criatura como mestre, consulte suas **Táticas** diretamente acima do HUD, sem abrir a ficha.
 - Arraste documentos para a hotbar para criar atalhos sem precisar criar macros.
 - Para jogadores, esses atalhos acompanham o ator exibido no HUD. O GM continua usando a hotbar normal do Foundry.
 

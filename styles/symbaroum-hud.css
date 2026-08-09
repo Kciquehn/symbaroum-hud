@@ -55,7 +55,7 @@
   pointer-events: none;
 }
 
-#symbaroum-hud .symbaroum-hud-effects {
+#symbaroum-hud .symbaroum-hud-status-summary {
   position: absolute;
   bottom: 184px;
   left: 30px;
@@ -63,9 +63,70 @@
   display: flex;
   width: max-content;
   max-width: 430px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 5px;
+  pointer-events: none;
+}
+
+#symbaroum-hud .symbaroum-hud-effects {
+  display: flex;
+  width: max-content;
+  max-width: 430px;
   flex-wrap: wrap;
   gap: 4px;
   pointer-events: auto;
+}
+
+#symbaroum-hud .symbaroum-hud-tactics {
+  box-sizing: border-box;
+  width: clamp(260px, 34vw, 430px);
+  overflow: hidden;
+  border: 1px solid rgb(115 91 55 / 92%);
+  border-radius: 4px;
+  color: #e9dfcc;
+  background: linear-gradient(135deg, rgb(26 24 20 / 96%), rgb(8 8 9 / 96%));
+  box-shadow:
+    inset 0 0 12px rgb(0 0 0 / 72%),
+    0 3px 9px rgb(0 0 0 / 72%);
+  pointer-events: auto;
+}
+
+#symbaroum-hud .symbaroum-hud-tactics > h2 {
+  display: flex;
+  min-height: 27px;
+  align-items: center;
+  gap: 7px;
+  margin: 0;
+  padding: 4px 8px;
+  border-bottom: 1px solid rgb(104 66 37 / 78%);
+  color: #ead7a2;
+  background: rgb(0 0 0 / 38%);
+  font-family: var(--font-primary, serif);
+  font-size: var(--font-size-14, 0.875rem);
+  letter-spacing: 0.025em;
+}
+
+#symbaroum-hud .symbaroum-hud-tactics > h2 i {
+  color: #d3a83f;
+}
+
+#symbaroum-hud .symbaroum-hud-tactics-content {
+  box-sizing: border-box;
+  max-height: min(180px, 30vh);
+  overflow-y: auto;
+  padding: 7px 9px 8px;
+  font-size: var(--font-size-13, 0.8125rem);
+  line-height: 1.4;
+  scrollbar-width: thin;
+}
+
+#symbaroum-hud .symbaroum-hud-tactics-content > :first-child {
+  margin-top: 0;
+}
+
+#symbaroum-hud .symbaroum-hud-tactics-content > :last-child {
+  margin-bottom: 0;
 }
 
 #symbaroum-hud .symbaroum-hud-effect {

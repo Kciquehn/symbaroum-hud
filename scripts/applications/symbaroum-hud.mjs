@@ -188,6 +188,10 @@ export class SymbaroumHud extends ApplicationV2 {
       { traits: true }
     );
     const rituals = await ritualContext(actor, this.#selectedRitualId);
+    const effects = activeEffectContext(actor);
+    const tacticsHtml = game.user?.isGM && actor?.type === "monster"
+      ? await enrichDescription(actor.system?.bio?.tactics, actor)
+      : "";
     const abilitiesAvailable = Boolean(actor);
     const traitsAvailable = Boolean(actor);
     const knowledgeButtons = [
@@ -267,7 +271,9 @@ export class SymbaroumHud extends ApplicationV2 {
         }),
         open: this.#attacksOpen
       },
-      effects: activeEffectContext(actor),
+      effects,
+      tactics: tacticsHtml ? { html: tacticsHtml } : null,
+      hasStatusSummary: Boolean(tacticsHtml || effects.length),
       storage: indResources.storage
         ? {
             ...indResources.storage,

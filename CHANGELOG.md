@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.23
+
+- Exibe as Táticas das fichas de criatura na área acima do HUD para consulta rápida do mestre.
+- Mantém os efeitos ativos visíveis junto do novo quadro e aceita o texto formatado da ficha.
+
 ## 0.1.22
 
 - Suaviza o sangue no retrato enquanto o personagem perdeu pouca Vitalidade e ainda está acima de 50%.
