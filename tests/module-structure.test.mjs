@@ -21,6 +21,8 @@ assert.ok(manifest.esmodules.includes("scripts/main.mjs"));
 assert.ok(fs.existsSync(path.join(root, "LICENSE")), "Missing LICENSE file");
 assert.ok(fs.existsSync(path.join(root, "CHANGELOG.md")), "Missing CHANGELOG.md file");
 assert.ok(fs.existsSync(path.join(root, "FOUNDRY-PACKAGE-DESCRIPTION.html")), "Missing Foundry package description HTML");
+assert.ok(fs.existsSync(path.join(root, "assets", "overlays", "low-health-blood.png")), "Missing low-health blood overlay");
+assert.ok(fs.existsSync(path.join(root, "assets", "overlays", "critical-cracks.png")), "Missing critical cracks overlay");
 assert.ok(fs.existsSync(path.join(root, ".github", "workflows", "release.yml")), "Missing GitHub release workflow");
 assert.ok(fs.existsSync(path.join(root, ".github", "workflows", "check.yml")), "Missing GitHub check workflow");
 assert.equal(packageJson.version, manifest.version, "package.json and module.json versions must match");
@@ -86,6 +88,7 @@ for (const file of scriptFiles(path.join(root, "scripts"))) {
 }
 assert.match(template, /class="symbaroum-hud-character-card"/);
 assert.match(template, /data-symba-weapon-drawn/);
+assert.match(template, /data-vitality-state="{{vitalityState}}"/);
 assert.match(template, /symbaroum-hud-character-name/);
 assert.match(template, /data-action="previous-actor"/);
 assert.match(template, /data-action="next-actor"/);
@@ -457,6 +460,10 @@ assert.match(stylesheet, /inset: auto auto 8px 8px/);
 assert.match(stylesheet, /#symbaroum-hud-hostility-tint/);
 assert.match(stylesheet, /symbaroum-hud-hostility-pulse/);
 assert.match(stylesheet, /prefers-reduced-motion/);
+assert.match(stylesheet, /assets\/overlays\/low-health-blood\.png/);
+assert.match(stylesheet, /assets\/overlays\/critical-cracks\.png/);
+assert.match(stylesheet, /data-vitality-state="wounded"/);
+assert.match(stylesheet, /data-vitality-state="critical"/);
 assert.match(stylesheet, /width: 150px/);
 assert.match(stylesheet, /object-fit: cover/);
 assert.match(stylesheet, /\.symbaroum-hud-actor-cycle/);

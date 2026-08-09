@@ -41,7 +41,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  #symbaroum-hud-hostility-tint {
+  #symbaroum-hud-hostility-tint,
+  #symbaroum-hud .symbaroum-hud-card-row[data-vitality-state="critical"]::after {
     animation: none;
   }
 }
@@ -318,6 +319,8 @@
 }
 
 #symbaroum-hud .symbaroum-hud-card-row {
+  position: relative;
+  isolation: isolate;
   display: flex;
   width: max-content;
   height: 178px;
@@ -390,6 +393,28 @@
   pointer-events: auto;
 }
 
+#symbaroum-hud .symbaroum-hud-character-card::after {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  content: "";
+  background: url("../assets/overlays/low-health-blood.png") center / cover no-repeat;
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 400ms ease,
+    filter 400ms ease;
+}
+
+#symbaroum-hud .symbaroum-hud-card-row[data-vitality-state="wounded"] .symbaroum-hud-character-card::after {
+  opacity: 0.38;
+}
+
+#symbaroum-hud .symbaroum-hud-card-row[data-vitality-state="critical"] .symbaroum-hud-character-card::after {
+  opacity: 0.76;
+  filter: saturate(1.22) contrast(1.08);
+}
+
 #symbaroum-hud .symbaroum-hud-character-card:has(.symbaroum-hud-character-open:hover),
 #symbaroum-hud .symbaroum-hud-character-card:has(.symbaroum-hud-character-open:focus-visible) {
   border-color: var(--color-warm-1, #ee9b3a);
@@ -428,7 +453,7 @@
   position: absolute;
   right: 0;
   left: 0;
-  z-index: 1;
+  z-index: 3;
   color: var(--color-light-1, #f7f3e8);
   background: rgb(8 8 10 / 48%);
   font-family: var(--font-primary);
@@ -605,6 +630,34 @@
   opacity: 1;
   cursor: default;
   pointer-events: none;
+}
+
+#symbaroum-hud .symbaroum-hud-card-row::after {
+  position: absolute;
+  inset: -5px;
+  z-index: 20;
+  content: "";
+  background: url("../assets/overlays/critical-cracks.png") center / 100% 100% no-repeat;
+  opacity: 0;
+  filter: drop-shadow(0 1px 1px rgb(0 0 0 / 85%));
+  pointer-events: none;
+  transition: opacity 400ms ease;
+}
+
+#symbaroum-hud .symbaroum-hud-card-row[data-vitality-state="critical"]::after {
+  opacity: 0.5;
+  animation: symbaroum-hud-critical-damage 2.8s ease-in-out infinite;
+}
+
+@keyframes symbaroum-hud-critical-damage {
+  0%,
+  100% {
+    opacity: 0.42;
+  }
+
+  50% {
+    opacity: 0.58;
+  }
 }
 
 #symbaroum-hud .symbaroum-hud-character-resource-fill {

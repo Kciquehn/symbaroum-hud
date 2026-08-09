@@ -12,6 +12,7 @@ import {
 } from "../settings.mjs";
 import { ActorService, canUsePowerItem, isTraitLikeItem } from "../services/actor-service.mjs";
 import { ritualistProgress } from "../services/ritual-service.mjs";
+import { vitalityState } from "../services/vitality-service.mjs";
 
 const ApplicationV2 = foundry.applications.api.ApplicationV2;
 const HOTBAR_CONTROL_ACTIONS = new Set(["mute", "menu"]);
@@ -203,6 +204,7 @@ export class SymbaroumHud extends ApplicationV2 {
       showEconomy: showPlayerResources,
       playersHidden: getSetting(SETTINGS.HIDE_PLAYERS),
       weaponDrawn: Boolean(indResources.drawnWeapons?.length),
+      vitalityState: actor ? vitalityState(vitalityValue, vitalityMax) : "healthy",
       actions: {
         attributes: canRollActor,
         corruption: canRollActor,

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.13
+
+- Adiciona manchas de sangue graduais sobre o retrato quando a Vitalidade chega à metade.
+- Intensifica o sangue e adiciona rachaduras animadas ao HUD quando a Vitalidade chega a 25% ou menos.
+- Respeita a preferência do sistema por movimento reduzido.
+
 ## 0.1.12
 
 - Permite clicar na barra de Corrupção para aumentar ou reduzir a Corrupção temporária.
