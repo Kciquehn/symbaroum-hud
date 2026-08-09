@@ -139,7 +139,7 @@
       "Empty": "Este personagem não possui armas.",
       "Sheathed": "Guardada",
       "DrawPromptTitle": "Sacar arma",
-      "DrawPrompt": "{weapon} não está sacada. Deseja sacá-la e continuar o ataque?",
+      "DrawPrompt": "{weapon} não está sacada. Deseja sacá-la? Depois, clique novamente na arma para atacar.",
       "DrawMovementReminder": "Lembre-se: sacar uma arma gasta uma ação de movimento.",
       "SheatheAction": "Guardar arma"
     },

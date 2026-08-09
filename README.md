@@ -91,7 +91,7 @@ O modo de visualização do inventário, em grade ou lista, também é lembrado 
 - Clique na barra de Corrupção para aumentar ou reduzir a Corrupção temporária; a permanente é preservada.
 - Ao ganhar Corrupção pelo HUD, os avisos nativos de proximidade, limiar e corrupção máxima também são enviados ao chat.
 - Clique em um atributo, arma ou ação disponível para usar a operação nativa do Symbaroum.
-- Ao atacar com uma arma guardada, confirme o aviso para sacá-la pelo Ind Resources e continuar o ataque.
+- Ao clicar em uma arma guardada, confirme o aviso para sacá-la pelo Ind Resources; clique novamente na arma já sacada para atacar.
 - Clique no selo **Sacada** de uma arma para guardá-la sem realizar um ataque.
 - Use os botões laterais para abrir inventário, ataques, habilidades, traços, poderes místicos e rituais.
 - Clique com o botão direito em um efeito ativo para abrir o menu de remoção.

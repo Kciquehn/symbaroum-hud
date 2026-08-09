@@ -1674,8 +1674,7 @@ export class SymbaroumHud extends ApplicationV2 {
 
     const drawn = await IndResourcesIntegration.drawWeapon(actor, itemId);
     if (!drawn) return null;
-    await this.render();
-    return ActorService.rollWeapon(actor, itemId);
+    return this.render();
   }
 
   #openVitalityDialog(actor) {

@@ -139,7 +139,7 @@
       "Empty": "This character has no weapons.",
       "Sheathed": "Sheathed",
       "DrawPromptTitle": "Draw weapon",
-      "DrawPrompt": "{weapon} is not drawn. Do you want to draw it and continue the attack?",
+      "DrawPrompt": "{weapon} is not drawn. Do you want to draw it? Then click the weapon again to attack.",
       "DrawMovementReminder": "Remember: drawing a weapon costs a movement action.",
       "SheatheAction": "Sheathe weapon"
     },

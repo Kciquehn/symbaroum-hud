@@ -437,6 +437,8 @@ assert.match(application, /ActorService\.rollWeapon/);
 assert.match(application, /#rollWeapon\(actor, element\.dataset\.itemId\)/);
 assert.match(application, /IndResourcesIntegration\.weaponReadinessState\(actor, itemId\)/);
 assert.match(application, /IndResourcesIntegration\.drawWeapon\(actor, itemId\)/);
+assert.match(application, /const drawn = await IndResourcesIntegration\.drawWeapon\(actor, itemId\);[\s\S]*if \(!drawn\) return null;[\s\S]*return this\.render\(\);/);
+assert.doesNotMatch(application, /await this\.render\(\);\s*return ActorService\.rollWeapon\(actor, itemId\)/);
 assert.match(application, /IndResourcesIntegration\.sheatheWeapon/);
 assert.match(application, /SYMBAROUMHUD\.Attacks\.DrawMovementReminder/);
 assert.match(stylesheet, /\.symbaroum-hud-draw-weapon-warning/);

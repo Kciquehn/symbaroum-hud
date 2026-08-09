@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.15
+
+- Impede que o HUD tente rolar um ataque imediatamente após sacar uma arma guardada.
+- Exige um segundo clique na arma já sacada para atacar, evitando o pedido prematuro de seleção de alvo.
+
 ## 0.1.14
 
 - Envia ao chat os avisos nativos de proximidade, limiar e corrupção máxima ao ganhar Corrupção temporária pelo HUD.
