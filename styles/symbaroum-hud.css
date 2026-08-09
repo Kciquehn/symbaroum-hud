@@ -742,6 +742,15 @@
     0 0 6px rgb(164 139 2 / 58%);
 }
 
+#symbaroum-hud #hotbar > button.symbaroum-hud-collapse-toggle {
+  position: static;
+  right: auto;
+  bottom: auto;
+  z-index: auto;
+  flex: 0 0 24px;
+  align-self: stretch;
+}
+
 #symbaroum-hud .symbaroum-hud-card-row[data-hud-collapsed="true"] {
   gap: 0;
 }

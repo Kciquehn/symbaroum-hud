@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.29
+
+- Move a seta de recolhimento para o espaço entre o slot `0` e os controles de página, travar e excluir da hotbar.
+- Encaixa o botão diretamente na estrutura nativa da hotbar para manter o posicionamento em diferentes resoluções.
+
 ## 0.1.28
 
 - Corrige a ordem das camadas para que todos os painéis abertos do HUD apareçam à frente das Táticas e dos efeitos ativos.

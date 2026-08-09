@@ -1318,6 +1318,17 @@ export class SymbaroumHud extends ApplicationV2 {
     }
 
     slot.appendChild(hotbar);
+    const collapsed = root.querySelector('[data-hud-collapsed="true"]');
+    const collapseToggle = root.querySelector(".symbaroum-hud-collapse-toggle");
+    const rightControls = hotbar.querySelector("#hotbar-controls-right");
+    if (!collapsed && collapseToggle && rightControls) {
+      rightControls.before(collapseToggle);
+    }
+    collapseToggle?.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      void this.#onAction(collapseToggle, event);
+    });
     refreshHotbarShortcuts(hotbar);
   }
 
