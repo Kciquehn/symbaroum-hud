@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.30
+
+- Evita que a seta de recolhimento seja duplicada quando o Foundry reconstruir a hotbar.
+- Remove controles antigos antes de encaixar a nova seta funcional entre os slots e os controles direitos.
+
 ## 0.1.29
 
 - Move a seta de recolhimento para o espaço entre o slot `0` e os controles de página, travar e excluir da hotbar.

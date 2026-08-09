@@ -336,6 +336,8 @@ assert.match(application, /#dockHotbar\(content, hotbar\)/);
 assert.match(application, /refreshHotbarShortcuts\(hotbar\)/);
 assert.match(application, /rightControls\.before\(collapseToggle\)/);
 assert.match(application, /collapseToggle\?\.addEventListener\("click"/);
+assert.match(application, /hotbar\.querySelectorAll\("\.symbaroum-hud-collapse-toggle"\)/);
+assert.match(application, /staleToggle\.remove\(\)/);
 assert.match(application, /detachedHotbar \?\? document\.getElementById/);
 assert.match(application, /#restoreHotbar\(\)/);
 assert.match(application, /IndResourcesIntegration\.context/);

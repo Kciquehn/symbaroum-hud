@@ -1318,8 +1318,13 @@ export class SymbaroumHud extends ApplicationV2 {
     }
 
     slot.appendChild(hotbar);
+    for (const staleToggle of hotbar.querySelectorAll(".symbaroum-hud-collapse-toggle")) {
+      staleToggle.remove();
+    }
     const collapsed = root.querySelector('[data-hud-collapsed="true"]');
-    const collapseToggle = root.querySelector(".symbaroum-hud-collapse-toggle");
+    const collapseToggle = root.querySelector(
+      ".symbaroum-hud-card-row > .symbaroum-hud-collapse-toggle"
+    );
     const rightControls = hotbar.querySelector("#hotbar-controls-right");
     if (!collapsed && collapseToggle && rightControls) {
       rightControls.before(collapseToggle);
