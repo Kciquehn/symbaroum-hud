@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.26
+
+- Alinha o quadro de Táticas ao visual preto e dourado dos atributos do HUD.
+- Exibe o texto das Táticas em um campo claro com o mesmo papel, borda e sombra interna dos valores numéricos.
+
 ## 0.1.25
 
 - Posiciona o quadro de Táticas no lugar original dos efeitos ativos, encostado ao HUD.

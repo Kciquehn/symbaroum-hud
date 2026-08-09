@@ -682,6 +682,8 @@ assert.match(stylesheet, /\.symbaroum-hud-effects/);
 assert.match(stylesheet, /\.symbaroum-hud-effect/);
 assert.match(stylesheet, /\.symbaroum-hud-status-summary/);
 assert.match(stylesheet, /\.symbaroum-hud-tactics-content/);
+assert.match(stylesheet, /\.symbaroum-hud-tactics \{[^}]+var\(--symbaroum-hud-title\) repeat/s);
+assert.match(stylesheet, /\.symbaroum-hud-tactics-content \{[^}]+var\(--symbaroum-hud-paper\) repeat/s);
 assert.match(stylesheet, /\.symbaroum-hud-effect-context-menu/);
 assert.match(main, /registerHotbarShortcuts\(\)/);
 assert.match(settings, /scope: "client"[\s\S]*config: false[\s\S]*STORAGE_VIEW_MODES\.GRID/);

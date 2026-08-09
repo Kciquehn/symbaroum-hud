@@ -82,13 +82,14 @@
   box-sizing: border-box;
   width: clamp(260px, 34vw, 430px);
   overflow: hidden;
-  border: 1px solid rgb(115 91 55 / 92%);
-  border-radius: 4px;
-  color: #e9dfcc;
-  background: linear-gradient(135deg, rgb(26 24 20 / 96%), rgb(8 8 9 / 96%));
+  border: 1px solid #171613;
+  border-radius: 0;
+  color: #f8f3e8;
+  background: var(--symbaroum-hud-title) repeat;
   box-shadow:
-    inset 0 0 12px rgb(0 0 0 / 72%),
-    0 3px 9px rgb(0 0 0 / 72%);
+    inset 0 0 0 1px rgb(198 177 117 / 34%),
+    inset 0 0 8px rgb(0 0 0 / 72%),
+    0 1px 4px rgb(0 0 0 / 62%);
   pointer-events: auto;
 }
 
@@ -99,26 +100,33 @@
   gap: 7px;
   margin: 0;
   padding: 4px 8px;
-  border-bottom: 1px solid rgb(104 66 37 / 78%);
-  color: #ead7a2;
-  background: rgb(0 0 0 / 38%);
+  border-bottom: 1px solid rgb(226 211 166 / 28%);
+  color: #f8f3e8;
+  background: var(--symbaroum-hud-title) repeat;
   font-family: var(--font-primary, serif);
   font-size: var(--font-size-14, 0.875rem);
   letter-spacing: 0.025em;
 }
 
 #symbaroum-hud .symbaroum-hud-tactics > h2 i {
-  color: #d3a83f;
+  color: #c8af52;
 }
 
 #symbaroum-hud .symbaroum-hud-tactics-content {
   box-sizing: border-box;
+  width: calc(100% - 10px);
   max-height: min(180px, 30vh);
+  margin: 5px;
   overflow-y: auto;
-  padding: 7px 9px 8px;
+  padding: 6px 8px;
+  border: 1px solid #4b463e;
+  color: var(--symbaroum-hud-ink);
+  background: var(--symbaroum-hud-paper) repeat;
+  box-shadow: inset 0 0 4px rgb(0 0 0 / 38%);
   font-size: var(--font-size-13, 0.8125rem);
   line-height: 1.4;
   scrollbar-width: thin;
+  text-shadow: none;
 }
 
 #symbaroum-hud .symbaroum-hud-tactics-content > :first-child {
