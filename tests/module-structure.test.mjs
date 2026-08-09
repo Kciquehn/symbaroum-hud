@@ -520,6 +520,7 @@ assert.match(stylesheet, /#hotbar\.faded-ui[\s\S]*opacity: 1/);
 assert.match(stylesheet, /#hotbar #action-bar \.slot/);
 assert.match(stylesheet, /width: 586px/);
 assert.match(stylesheet, /\.symbaroum-hud-main-column/);
+assert.match(stylesheet, /\.symbaroum-hud-card-row \{[^}]+z-index: 4/s);
 assert.match(stylesheet, /button\.symbaroum-hud-collapse-toggle/);
 assert.match(stylesheet, /data-hud-collapsed="true"/);
 assert.match(stylesheet, /\.symbaroum-hud-character-actions/);

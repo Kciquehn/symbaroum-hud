@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.28
+
+- Corrige a ordem das camadas para que todos os painéis abertos do HUD apareçam à frente das Táticas e dos efeitos ativos.
+
 ## 0.1.27
 
 - Adiciona uma seta ao lado dos controles direitos da hotbar para recolher ou expandir o HUD.

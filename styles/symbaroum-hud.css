@@ -388,6 +388,7 @@
 
 #symbaroum-hud .symbaroum-hud-card-row {
   position: relative;
+  z-index: 4;
   isolation: isolate;
   display: flex;
   width: max-content;

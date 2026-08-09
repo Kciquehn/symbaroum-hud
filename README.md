@@ -102,6 +102,7 @@ O modo de visualização do inventário, em grade ou lista, também é lembrado 
 - O saque pelo painel de Ataques funciona mesmo com o botão separado de prontidão desativado nas configurações.
 - Clique no selo **Sacada** de uma arma para guardá-la sem realizar um ataque.
 - Use os botões laterais para abrir inventário, ataques, habilidades, traços, poderes místicos e rituais.
+- Painéis abertos permanecem sempre à frente das Táticas e dos efeitos ativos da criatura.
 - Clique com o botão direito em um efeito ativo para abrir o menu de remoção.
 - Ao selecionar uma criatura como mestre, consulte suas **Táticas** diretamente acima do HUD, em um quadro com o mesmo estilo dos atributos e os efeitos ativos organizados acima dele.
 - Para criaturas, a Defesa mostra o modificador nativo do NPC, incluindo alterações preparadas por habilidades e condições como **Amoque**.
