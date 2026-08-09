@@ -12,7 +12,11 @@ import {
 } from "../settings.mjs";
 import { ActorService, canUsePowerItem, isTraitLikeItem } from "../services/actor-service.mjs";
 import { ritualistProgress } from "../services/ritual-service.mjs";
-import { shouldShowDangerTint, vitalityState } from "../services/vitality-service.mjs";
+import {
+  parseVitalityDelta,
+  shouldShowDangerTint,
+  vitalityState
+} from "../services/vitality-service.mjs";
 
 const ApplicationV2 = foundry.applications.api.ApplicationV2;
 const HOTBAR_CONTROL_ACTIONS = new Set(["mute", "menu"]);
@@ -1705,21 +1709,23 @@ export class SymbaroumHud extends ApplicationV2 {
         </div>
         <label>
           <span>${escapeHtml(game.i18n.localize("SYMBAROUMHUD.Vitality.Amount"))}</span>
-          <input type="number" name="vitalityAmount" value="1" min="1" step="1" required autofocus>
+          <input type="text" name="vitalityAmount" value="" inputmode="numeric"
+            pattern="[+-]?[0-9]+" placeholder="+3 / -9" required autofocus>
         </label>
       </form>
     `;
-    const change = async (html, direction) => {
+    const change = async (html, direction = null) => {
       const root = html?.[0] ?? html;
-      const value = Number(root?.querySelector?.("input[name='vitalityAmount']")?.value);
-      if (!Number.isFinite(value) || value <= 0) return null;
-      const amount = Math.max(1, Math.floor(value));
+      const value = root?.querySelector?.("input[name='vitalityAmount']")?.value;
+      const delta = parseVitalityDelta(value, direction);
+      if (delta === null) return false;
       await ActorService.adjust(
         actor,
         "system.health.toughness.value",
-        direction * amount
+        delta
       );
-      return this.render();
+      await this.render();
+      return true;
     };
 
     const dialog = new Dialog({
@@ -1739,6 +1745,16 @@ export class SymbaroumHud extends ApplicationV2 {
         cancel: {
           label: game.i18n.localize("Cancel")
         }
+      },
+      render: (html) => {
+        const root = html?.[0] ?? html;
+        const input = root?.querySelector?.("input[name='vitalityAmount']");
+        input?.addEventListener("keydown", async (event) => {
+          if (event.key !== "Enter") return;
+          event.preventDefault();
+          event.stopPropagation();
+          if (await change(html)) await dialog.close();
+        });
       },
       default: "cancel"
     });

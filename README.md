@@ -88,6 +88,7 @@ O modo de visualização do inventário, em grade ou lista, também é lembrado 
 
 - Passe o mouse sobre o retrato para revelar o nome e as setas de troca; clique na imagem para abrir a ficha do ator.
 - Clique na barra de Vitalidade para curar o personagem ou aplicar uma quantidade de dano.
+- No campo de Vitalidade, digite rapidamente `+3` para curar ou `-9` para sofrer dano e pressione `Enter`; os botões explícitos continuam disponíveis.
 - Qualquer ponto de Vitalidade perdido já deixa sangue evidente no retrato e rachaduras discretas em cada componente; os efeitos ficam progressivamente mais fortes em 50% e 25% de Vitalidade.
 - Com 25% de Vitalidade ou menos, a borda vermelha pulsante de perigo também aparece na tela, mesmo que nenhuma arma esteja sacada.
 - Clique na barra de Corrupção para aumentar ou reduzir a Corrupção temporária; a permanente é preservada.

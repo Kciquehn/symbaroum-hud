@@ -20,3 +20,14 @@ export function vitalityState(value, max) {
 export function shouldShowDangerTint(weaponDrawn, state) {
   return Boolean(weaponDrawn) || state === VITALITY_STATES.CRITICAL;
 }
+
+export function parseVitalityDelta(value, direction = null) {
+  const text = String(value ?? "").trim();
+  if (!/^[+-]?\d+$/.test(text)) return null;
+
+  const parsed = Number(text);
+  if (!Number.isSafeInteger(parsed) || parsed === 0) return null;
+  const magnitude = Math.abs(parsed);
+  if (direction === 1 || direction === -1) return direction * magnitude;
+  return parsed;
+}

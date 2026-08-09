@@ -146,7 +146,7 @@
     "Vitality": {
       "Title": "Change Toughness",
       "Manage": "Heal or take damage",
-      "Prompt": "Enter an amount and choose whether the character should recover Toughness or take damage.",
+      "Prompt": "Type +3 to heal or -9 to take damage and press Enter. You can also enter the amount and use the buttons below.",
       "Current": "Current Toughness",
       "Amount": "Amount",
       "Heal": "Heal",

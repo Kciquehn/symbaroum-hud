@@ -146,7 +146,7 @@
     "Vitality": {
       "Title": "Alterar Vitalidade",
       "Manage": "Curar ou aplicar dano",
-      "Prompt": "Informe a quantidade e escolha se o personagem deve recuperar Vitalidade ou sofrer dano.",
+      "Prompt": "Digite +3 para curar ou -9 para sofrer dano e pressione Enter. Você também pode informar a quantidade e usar os botões abaixo.",
       "Current": "Vitalidade atual",
       "Amount": "Quantidade",
       "Heal": "Curar",

@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  parseVitalityDelta,
   shouldShowDangerTint,
   VITALITY_STATES,
   vitalityState
@@ -34,4 +35,18 @@ test("shows the screen danger tint for a drawn weapon or critical vitality", () 
   assert.equal(shouldShowDangerTint(false, VITALITY_STATES.CRITICAL), true);
   assert.equal(shouldShowDangerTint(true, VITALITY_STATES.CRITICAL), true);
   assert.equal(shouldShowDangerTint(false, VITALITY_STATES.WOUNDED), false);
+});
+
+test("parses signed quick vitality changes", () => {
+  assert.equal(parseVitalityDelta("+3"), 3);
+  assert.equal(parseVitalityDelta("-9"), -9);
+  assert.equal(parseVitalityDelta(" 4 "), 4);
+  assert.equal(parseVitalityDelta("0"), null);
+  assert.equal(parseVitalityDelta("3.5"), null);
+  assert.equal(parseVitalityDelta("damage 3"), null);
+});
+
+test("explicit vitality buttons always use their own direction", () => {
+  assert.equal(parseVitalityDelta("-3", 1), 3);
+  assert.equal(parseVitalityDelta("+9", -1), -9);
 });

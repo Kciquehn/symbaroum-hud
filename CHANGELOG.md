@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.19
+
+- Permite digitar alterações rápidas como `+3` ou `-9` no campo de Vitalidade e aplicá-las com Enter.
+- Mantém os botões Curar e Tomar dano com direção explícita, independentemente do sinal digitado.
+
 ## 0.1.18
 
 - Ativa a borda vermelha pulsante de perigo quando o personagem chega a 25% de Vitalidade ou menos.
