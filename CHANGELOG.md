@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.36
+
+- Corrige o arraste de poderes místicos do HUD para a hotbar do jogador.
+- Permite iniciar o arraste pela entrada lateral, pelo ícone ou pelo nome do poder selecionado.
+- Usa diretamente o UUID preparado pelo painel para preservar o vínculo com o item do personagem.
+
 ## 0.1.35
 
 - Oculta o pão de viagem do HUD quando o mestre seleciona um NPC.

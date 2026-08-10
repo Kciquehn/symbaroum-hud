@@ -819,8 +819,16 @@
               aria-label="{{localize 'SYMBAROUMHUD.MysticalPowers.Detail'}}">
               {{#if mysticalPowers.selected}}
                 <header class="symbaroum-hud-ability-detail-header">
-                  <img src="{{mysticalPowers.selected.img}}" alt="">
-                  <div class="symbaroum-hud-ability-detail-title">
+                  <img src="{{mysticalPowers.selected.img}}" alt=""
+                    data-ability-draggable="{{mysticalPowers.canUse}}"
+                    data-item-id="{{mysticalPowers.selected.id}}"
+                    data-item-uuid="{{mysticalPowers.selected.uuid}}"
+                    {{#if mysticalPowers.canUse}}draggable="true"{{/if}}>
+                  <div class="symbaroum-hud-ability-detail-title"
+                    data-ability-draggable="{{mysticalPowers.canUse}}"
+                    data-item-id="{{mysticalPowers.selected.id}}"
+                    data-item-uuid="{{mysticalPowers.selected.uuid}}"
+                    {{#if mysticalPowers.canUse}}draggable="true"{{/if}}>
                     <strong>{{mysticalPowers.selected.name}}</strong>
                     {{#if mysticalPowers.selected.reference}}
                       <span>{{localize "SYMBAROUMHUD.Abilities.Reference"}}: {{mysticalPowers.selected.reference}}</span>

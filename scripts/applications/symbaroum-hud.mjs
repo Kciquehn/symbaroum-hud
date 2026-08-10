@@ -453,14 +453,15 @@ export class SymbaroumHud extends ApplicationV2 {
 
       const actor = this.#actor;
       const item = findActorItem(actor, abilityElement.dataset.itemId);
-      if (!ActorService.canUpdate(actor) || !item?.uuid) {
+      const uuid = abilityElement.dataset.itemUuid || item?.uuid;
+      if (!ActorService.canUpdate(actor) || !uuid) {
         event.preventDefault();
         return;
       }
 
       const serializedDocument = JSON.stringify({
         type: "Item",
-        uuid: item.uuid
+        uuid
       });
       event.dataTransfer.effectAllowed = "copy";
       event.dataTransfer.setData("text/plain", serializedDocument);

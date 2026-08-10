@@ -2246,6 +2246,20 @@ body:has(#symbaroum-hud .symbaroum-hud-ammo-recovery-slot) > #tenebre-ammo-hud-l
   cursor: grabbing;
 }
 
+#symbaroum-hud .symbaroum-hud-ability-detail-header > :is(
+  img,
+  .symbaroum-hud-ability-detail-title
+)[data-ability-draggable="true"] {
+  cursor: grab;
+}
+
+#symbaroum-hud .symbaroum-hud-ability-detail-header > :is(
+  img,
+  .symbaroum-hud-ability-detail-title
+)[data-ability-draggable="true"]:active {
+  cursor: grabbing;
+}
+
 #symbaroum-hud button.symbaroum-hud-ability-add {
   display: inline-flex;
   width: calc(100% - 12px);
