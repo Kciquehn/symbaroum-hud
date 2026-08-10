@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.33
+
+- Adiciona uma animação curta de deslize e transparência ao recolher e expandir o HUD.
+- Mantém o retrato estável durante o recolhimento e revela os controles a partir da esquerda na expansão.
+- Respeita a preferência de movimento reduzido do sistema operacional.
+
 ## 0.1.32
 
 - Dá prioridade imediata ao token controlado pelo mestre, independentemente do modo de seleção configurado.

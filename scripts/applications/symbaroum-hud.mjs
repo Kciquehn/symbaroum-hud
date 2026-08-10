@@ -65,6 +65,8 @@ export class SymbaroumHud extends ApplicationV2 {
   #abilitiesOpen = false;
   #actor = null;
   #attacksOpen = false;
+  #collapseAnimationRunning = false;
+  #collapseTransition = null;
   #effectMenuAbortController = null;
   #effectMenuElement = null;
   #hostilityTint = null;
@@ -216,6 +218,7 @@ export class SymbaroumHud extends ApplicationV2 {
       playersHidden: getSetting(SETTINGS.HIDE_PLAYERS),
       hudCollapsed,
       hudExpanded: !hudCollapsed,
+      hudTransition: this.#collapseTransition ?? "",
       weaponDrawn: Boolean(indResources.drawnWeapons?.length),
       vitalityState: actor ? vitalityState(vitalityValue, vitalityMax) : "healthy",
       actions: {
@@ -356,6 +359,8 @@ export class SymbaroumHud extends ApplicationV2 {
     this.#actor = null;
     this.#abilitiesOpen = false;
     this.#attacksOpen = false;
+    this.#collapseAnimationRunning = false;
+    this.#collapseTransition = null;
     this.#manualActorKey = null;
     this.#mysticalPowersOpen = false;
     this.#resolvedActorKey = null;
@@ -1374,6 +1379,27 @@ export class SymbaroumHud extends ApplicationV2 {
     document.body.appendChild(this.#hostilityTint);
   }
 
+  async #animateHudCollapse() {
+    if (globalThis.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches) return;
+    const root = this.element;
+    const targets = [
+      root?.querySelector?.(".symbaroum-hud-status-summary"),
+      root?.querySelector?.(".symbaroum-hud-hotbar-controls"),
+      root?.querySelector?.(".symbaroum-hud-main-column")
+    ].filter((element) => typeof element?.animate === "function");
+    if (!targets.length) return;
+
+    const animations = targets.map((element) => element.animate([
+      { opacity: 1, transform: "translateX(0) scaleX(1)" },
+      { opacity: 0, transform: "translateX(-18px) scaleX(0.97)" }
+    ], {
+      duration: 180,
+      easing: "cubic-bezier(0.4, 0, 1, 1)",
+      fill: "forwards"
+    }));
+    await Promise.all(animations.map((animation) => animation.finished.catch(() => undefined)));
+  }
+
   async #onAction(element, event) {
     const action = element.dataset.action;
     try {
@@ -1404,17 +1430,26 @@ export class SymbaroumHud extends ApplicationV2 {
       }
 
       if (action === "toggle-hud-collapse") {
+        if (this.#collapseAnimationRunning) return;
         const collapsed = !Boolean(getSetting(SETTINGS.COLLAPSED));
-        await game.settings.set(MODULE_ID, SETTINGS.COLLAPSED, collapsed);
-        if (collapsed) {
-          this.#abilitiesOpen = false;
-          this.#attacksOpen = false;
-          this.#mysticalPowersOpen = false;
-          this.#ritualsOpen = false;
-          this.#storageOpen = false;
-          this.#traitsOpen = false;
+        this.#collapseAnimationRunning = true;
+        this.#collapseTransition = collapsed ? "collapse" : "expand";
+        try {
+          await game.settings.set(MODULE_ID, SETTINGS.COLLAPSED, collapsed);
+          if (collapsed) {
+            await this.#animateHudCollapse();
+            this.#abilitiesOpen = false;
+            this.#attacksOpen = false;
+            this.#mysticalPowersOpen = false;
+            this.#ritualsOpen = false;
+            this.#storageOpen = false;
+            this.#traitsOpen = false;
+          }
+          return await this.render();
+        } finally {
+          this.#collapseTransition = null;
+          this.#collapseAnimationRunning = false;
         }
-        return this.render();
       }
 
       const actor = this.#actor;

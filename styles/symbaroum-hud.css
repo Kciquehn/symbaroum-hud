@@ -777,6 +777,61 @@
   display: none;
 }
 
+@keyframes symbaroum-hud-expand-reveal {
+  from {
+    opacity: 0;
+    transform: translateX(-18px) scaleX(0.97);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0) scaleX(1);
+  }
+}
+
+@keyframes symbaroum-hud-compact-settle {
+  from {
+    opacity: 0.35;
+    transform: translateX(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+#symbaroum-hud .symbaroum-hud-card-row[data-hud-transition="expand"] :is(
+  .symbaroum-hud-hotbar-controls,
+  .symbaroum-hud-main-column
+) {
+  transform-origin: left bottom;
+  animation: symbaroum-hud-expand-reveal 220ms cubic-bezier(0, 0, 0.2, 1) both;
+}
+
+#symbaroum-hud .symbaroum-hud-card-row[data-hud-transition="expand"]
+  .symbaroum-hud-main-column {
+  animation-delay: 25ms;
+}
+
+#symbaroum-hud .symbaroum-hud-card-row[data-hud-transition="collapse"] :is(
+  .symbaroum-hud-character-card,
+  button.symbaroum-hud-collapse-toggle
+) {
+  animation: symbaroum-hud-compact-settle 160ms cubic-bezier(0, 0, 0.2, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #symbaroum-hud [data-hud-transition] :is(
+    .symbaroum-hud-hotbar-controls,
+    .symbaroum-hud-main-column,
+    .symbaroum-hud-character-card,
+    button.symbaroum-hud-collapse-toggle
+  ) {
+    animation: none;
+  }
+}
+
 #symbaroum-hud :is(
   .symbaroum-hud-hotbar-controls button,
   button.symbaroum-hud-collapse-toggle,
