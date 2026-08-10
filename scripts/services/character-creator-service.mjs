@@ -19,12 +19,18 @@ import {
   coreRace,
   coreRaceTrait
 } from "../data/core-races.mjs";
+import {
+  ABILITY_DISTRIBUTION_MODES,
+  abilitySelectionLimits,
+  isValidAbilitySelection
+} from "../data/character-creation-abilities.mjs";
 
 const MODE_FLAG = "characterCreationMode";
 const STATE_FLAG = "characterCreatorState";
 const OCCUPATION_STEP_COMPLETE = "occupation-complete";
 const ATTRIBUTES_STEP_COMPLETE = "attributes-complete";
 const RACE_STEP_COMPLETE = "race-complete";
+const ABILITIES_STEP_COMPLETE = "abilities-complete";
 const ATTRIBUTE_DISTRIBUTION_MODES = Object.freeze({
   TYPICAL: "typical",
   POINT_BUY: "point-buy"
@@ -67,17 +73,22 @@ export function shouldOfferCharacterCreator(actor, user = game.user) {
 }
 
 export function isOccupationStepComplete(actor) {
-  return [OCCUPATION_STEP_COMPLETE, ATTRIBUTES_STEP_COMPLETE, RACE_STEP_COMPLETE]
+  return [OCCUPATION_STEP_COMPLETE, ATTRIBUTES_STEP_COMPLETE, RACE_STEP_COMPLETE, ABILITIES_STEP_COMPLETE]
     .includes(actor?.getFlag?.(MODULE_ID, STATE_FLAG)?.step);
 }
 
 export function isAttributesStepComplete(actor) {
-  return [ATTRIBUTES_STEP_COMPLETE, RACE_STEP_COMPLETE]
+  return [ATTRIBUTES_STEP_COMPLETE, RACE_STEP_COMPLETE, ABILITIES_STEP_COMPLETE]
     .includes(actor?.getFlag?.(MODULE_ID, STATE_FLAG)?.step);
 }
 
 export function isRaceStepComplete(actor) {
-  return actor?.getFlag?.(MODULE_ID, STATE_FLAG)?.step === RACE_STEP_COMPLETE;
+  return [RACE_STEP_COMPLETE, ABILITIES_STEP_COMPLETE]
+    .includes(actor?.getFlag?.(MODULE_ID, STATE_FLAG)?.step);
+}
+
+export function isAbilitiesStepComplete(actor) {
+  return actor?.getFlag?.(MODULE_ID, STATE_FLAG)?.step === ABILITIES_STEP_COMPLETE;
 }
 
 export function registerCharacterCreatorHooks() {
@@ -101,6 +112,9 @@ export class CharacterCreatorService {
     }
     if (mode === CHARACTER_CREATION_MODES.CREATOR && !isRaceStepComplete(actor)) {
       return this.openRaceStep(actor);
+    }
+    if (mode === CHARACTER_CREATION_MODES.CREATOR && !isAbilitiesStepComplete(actor)) {
+      return this.openAbilitiesStep(actor);
     }
     if (!mode) return this.offer(actor);
     return null;
@@ -147,7 +161,10 @@ export class CharacterCreatorService {
         const occupation = await this.#showOccupationBook(DialogV2, actor);
         if (occupation) {
           const attributes = await this.#showAttributesBook(DialogV2, actor);
-          if (attributes) await this.#showRaceBook(DialogV2, actor);
+          if (attributes) {
+            const race = await this.#showRaceBook(DialogV2, actor);
+            if (race) await this.#showAbilitiesBook(DialogV2, actor);
+          }
         }
       }
       return choice;
@@ -177,7 +194,9 @@ export class CharacterCreatorService {
       if (!occupation) return occupation;
       const attributes = await this.#showAttributesBook(DialogV2, actor);
       if (!attributes) return attributes;
-      return await this.#showRaceBook(DialogV2, actor);
+      const race = await this.#showRaceBook(DialogV2, actor);
+      if (!race) return race;
+      return await this.#showAbilitiesBook(DialogV2, actor);
     } catch (error) {
       return handleCreatorError(error);
     } finally {
@@ -203,7 +222,8 @@ export class CharacterCreatorService {
     try {
       const attributes = await this.#showAttributesBook(DialogV2, actor);
       if (!attributes) return attributes;
-      await this.#showRaceBook(DialogV2, actor);
+      const race = await this.#showRaceBook(DialogV2, actor);
+      if (race) await this.#showAbilitiesBook(DialogV2, actor);
       return attributes;
     } catch (error) {
       return handleCreatorError(error);
@@ -227,7 +247,33 @@ export class CharacterCreatorService {
     if (!DialogV2) return null;
     pendingActors.add(key);
     try {
-      return await this.#showRaceBook(DialogV2, actor);
+      const race = await this.#showRaceBook(DialogV2, actor);
+      if (!race) return race;
+      await this.#showAbilitiesBook(DialogV2, actor);
+      return race;
+    } catch (error) {
+      return handleCreatorError(error);
+    } finally {
+      pendingActors.delete(key);
+    }
+  }
+
+  static async openAbilitiesStep(actor) {
+    const key = actorKey(actor);
+    if (
+      !key
+      || pendingActors.has(key)
+      || !canOwn(actor, game.user)
+      || actor.getFlag?.(MODULE_ID, MODE_FLAG) !== CHARACTER_CREATION_MODES.CREATOR
+      || !isRaceStepComplete(actor)
+      || isAbilitiesStepComplete(actor)
+    ) return null;
+
+    const DialogV2 = dialogClass();
+    if (!DialogV2) return null;
+    pendingActors.add(key);
+    try {
+      return await this.#showAbilitiesBook(DialogV2, actor);
     } catch (error) {
       return handleCreatorError(error);
     } finally {
@@ -429,6 +475,84 @@ export class CharacterCreatorService {
       }
     });
   }
+
+  static async #showAbilitiesBook(DialogV2, actor) {
+    const abilities = availableCreationAbilities(actor);
+    const racialCost = racialAbilityCost(actor);
+    return DialogV2.wait({
+      classes: [
+        "symbaroum-hud-character-creator-dialog",
+        "symbaroum-hud-occupation-book-dialog",
+        "symbaroum-hud-abilities-book-dialog"
+      ],
+      window: { title: game.i18n.localize("SYMBAROUMHUD.CharacterCreator.Abilities.Title") },
+      position: { width: 920, height: 600 },
+      content: await abilitiesBookContent(actor, abilities, racialCost),
+      buttons: [
+        {
+          action: "choose-abilities",
+          icon: "fa-solid fa-hand-sparkles",
+          label: game.i18n.localize("SYMBAROUMHUD.CharacterCreator.Abilities.Choose"),
+          default: true,
+          callback: async (_event, button) => {
+            const mode = formValue(button.form, "abilityDistributionMode");
+            const selections = parseAbilitySelections(formValue(button.form, "abilitySelections"));
+            if (!isValidAbilitySelection(selections, mode, racialCost)) {
+              ui.notifications?.warn(game.i18n.localize("SYMBAROUMHUD.CharacterCreator.Abilities.Invalid"));
+              return null;
+            }
+            const available = new Map(availableCreationAbilities(actor).map((item) => [item.id, item]));
+            if (selections.some((selection) => !available.has(selection.id))) {
+              ui.notifications?.warn(game.i18n.localize("SYMBAROUMHUD.CharacterCreator.Abilities.Unavailable"));
+              return null;
+            }
+            const documents = selections.map((selection) => creationAbilityData(
+              available.get(selection.id), selection.rank
+            ));
+            const created = await actor.createEmbeddedDocuments("Item", documents);
+            const freeExperience = selections.reduce((total, selection) => total
+              + creationAbilityExperienceCost(available.get(selection.id), selection.rank), 0);
+            if (freeExperience > 0) {
+              await actor.update({
+                "system.bonus.experience.value": Number(actor.system?.bonus?.experience?.value ?? 0)
+                  + freeExperience
+              });
+            }
+            const previous = actor.getFlag?.(MODULE_ID, STATE_FLAG) ?? {};
+            const saved = selections.map((selection) => ({
+              ...selection,
+              name: available.get(selection.id).name
+            }));
+            await actor.setFlag(MODULE_ID, STATE_FLAG, {
+              ...previous,
+              version: 1,
+              step: ABILITIES_STEP_COMPLETE,
+              abilityDistribution: mode,
+              abilities: saved
+            });
+            Hooks.callAll(`${MODULE_ID}.characterCreatorStepCompleted`, actor, {
+              step: "abilities", mode, abilities: saved, created
+            });
+            return saved;
+          }
+        },
+        {
+          action: "continue-later",
+          icon: "fa-solid fa-bookmark",
+          label: game.i18n.localize("SYMBAROUMHUD.CharacterCreator.Abilities.ContinueLater"),
+          callback: () => null
+        }
+      ],
+      close: () => null,
+      rejectClose: false,
+      render: (_event, dialog) => {
+        bindAbilitiesBook(dialog.element, racialCost);
+        globalThis.setTimeout(() => {
+          if (dialog.element?.isConnected) dialog.bringToFront?.();
+        }, 0);
+      }
+    });
+  }
 }
 
 function occupationBookContent(actor) {
@@ -624,6 +748,231 @@ function bindRaceBook(element) {
   });
   for (const control of element.querySelectorAll('input[type="radio"], input[type="checkbox"]')) control.addEventListener("change", refresh);
   refresh();
+}
+
+function availableCreationAbilities(actor) {
+  const known = new Set(actorItems(actor)
+    .filter((item) => item.type === "ability")
+    .map(abilityIdentity));
+  const unique = new Map();
+  for (const item of Array.from(game.items?.values?.() ?? game.items ?? [])) {
+    if (item?.type !== "ability") continue;
+    if (item.testUserPermission && !item.testUserPermission(game.user, "OBSERVER")) continue;
+    const identity = abilityIdentity(item);
+    if (!identity || known.has(identity) || unique.has(identity)) continue;
+    unique.set(identity, item);
+  }
+  return [...unique.values()].sort((left, right) => left.name.localeCompare(
+    right.name, game.i18n?.lang ?? "pt-BR", { sensitivity: "base" }
+  ));
+}
+
+function abilityIdentity(item) {
+  return normalizeName(item?.system?.reference || item?.name);
+}
+
+function racialAbilityCost(actor) {
+  const state = actor?.getFlag?.(MODULE_ID, STATE_FLAG) ?? {};
+  return Math.min(2, Math.max(0, Array.isArray(state.abilityCostTraits) ? state.abilityCostTraits.length : 0));
+}
+
+async function abilitiesBookContent(actor, abilities, racialCost) {
+  const firstId = abilities[0]?.id ?? "";
+  const state = actor?.getFlag?.(MODULE_ID, STATE_FLAG) ?? {};
+  const racialTraits = (state.abilityCostTraits ?? [])
+    .map((id) => coreRaceTrait(id))
+    .filter(Boolean)
+    .map((trait) => game.i18n.localize(trait.name));
+  const index = abilities.map((ability) => `
+    <button type="button" class="symbaroum-hud-ability-index-entry"
+      data-creation-ability-id="${escapeHtml(ability.id)}"
+      data-search="${escapeHtml(normalizeName(`${ability.name} ${ability.system?.reference ?? ""}`))}"
+      data-active="${ability.id === firstId}" aria-pressed="${ability.id === firstId}">
+      <img src="${escapeHtml(ability.img || "icons/svg/book.svg")}" alt="">
+      <span>${escapeHtml(ability.name)}</span>
+      <strong data-ability-entry-rank></strong>
+    </button>`).join("");
+  const pages = (await Promise.all(abilities.map(async (ability) => {
+    const system = ability.system ?? {};
+    const general = await enrichCreatorDescription(system.description, ability);
+    const levels = await Promise.all(["novice", "adept", "master"].map(async (rank) => ({
+      rank,
+      action: system[rank]?.action ?? "",
+      description: await enrichCreatorDescription(system[rank]?.description, ability)
+    })));
+    return `
+      <article class="symbaroum-hud-ability-page" data-creation-ability-page="${escapeHtml(ability.id)}"
+        ${ability.id === firstId ? "" : "hidden"}>
+        <header class="symbaroum-hud-ability-heading">
+          <img src="${escapeHtml(ability.img || "icons/svg/book.svg")}" alt="">
+          <div><h2>${escapeHtml(ability.name)}</h2>
+          ${system.reference ? `<small>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.Reference")}: ${escapeHtml(system.reference)}</small>` : ""}</div>
+        </header>
+        <section class="symbaroum-hud-ability-general">
+          <h3>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.GeneralDescription")}</h3>
+          <div>${general}</div>
+        </section>
+        <div class="symbaroum-hud-ability-levels">
+          ${levels.map(({ rank, action, description }) => `
+            <section class="symbaroum-hud-ability-level" data-rank="${rank}">
+              <header><h3>${localizeEscaped(`SYMBAROUMHUD.CharacterCreator.Abilities.${rank[0].toUpperCase()}${rank.slice(1)}`)}</h3>
+                ${rank === "master" ? "" : `<button type="button" data-select-ability="${escapeHtml(ability.id)}" data-rank="${rank}">
+                  <i class="fa-regular fa-circle" aria-hidden="true"></i>
+                  <span>${localizeEscaped(rank === "novice" ? "SYMBAROUMHUD.CharacterCreator.Abilities.SelectNovice" : "SYMBAROUMHUD.CharacterCreator.Abilities.SelectAdept")}</span>
+                </button>`}
+              </header>
+              ${action ? `<strong>${escapeHtml(action)}</strong>` : ""}
+              <div>${description}</div>
+            </section>`).join("")}
+        </div>
+      </article>`;
+  }))).join("");
+  const limits = abilitySelectionLimits(ABILITY_DISTRIBUTION_MODES.FIVE_NOVICE, racialCost);
+  return `
+    <div class="symbaroum-hud-abilities-book">
+      <input type="hidden" name="abilityDistributionMode" value="${ABILITY_DISTRIBUTION_MODES.FIVE_NOVICE}">
+      <input type="hidden" name="abilitySelections" value="[]">
+      <header class="symbaroum-hud-creator-step-guide">
+        <div class="symbaroum-hud-creator-step-number"><strong>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Guide.AbilitiesProgress")}</strong></div>
+        <div><h2>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Guide.StepFourTitle")}</h2>
+        <p>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Guide.StepFourText")}</p></div>
+      </header>
+      <nav class="symbaroum-hud-ability-mode-tabs" aria-label="${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.DistributionMethod")}">
+        <button type="button" data-ability-mode="five-novice" data-active="true" aria-pressed="true"><i class="fa-solid fa-hand-fist"></i>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.FiveNovice")}</button>
+        <button type="button" data-ability-mode="mixed" data-active="false" aria-pressed="false"><i class="fa-solid fa-crown"></i>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.Mixed")}</button>
+      </nav>
+      <div class="symbaroum-hud-ability-workspace">
+        <aside class="symbaroum-hud-ability-index">
+          <label><i class="fa-solid fa-magnifying-glass"></i><input type="search" data-ability-search placeholder="${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.SearchPlaceholder")}"></label>
+          <div class="symbaroum-hud-ability-slots">
+            <span data-ability-slot="novice"><b>0</b>/${limits.novice} ${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.Novice")}</span>
+            <span data-ability-slot="adept" hidden><b>0</b>/0 ${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.Adept")}</span>
+          </div>
+          ${racialCost ? `<p class="symbaroum-hud-ability-racial-cost"><i class="fa-solid fa-feather"></i>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.RacialCost")}<strong>${escapeHtml(racialTraits.join(", "))}</strong></p>` : ""}
+          <nav>${index || `<p class="symbaroum-hud-ability-empty">${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.Empty")}</p>`}</nav>
+        </aside>
+        <main class="symbaroum-hud-ability-reading-page">${pages || `<p class="symbaroum-hud-ability-empty">${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.Empty")}</p>`}</main>
+      </div>
+    </div>`;
+}
+
+function bindAbilitiesBook(element, racialCost) {
+  const modeInput = element.querySelector('input[name="abilityDistributionMode"]');
+  const selectionsInput = element.querySelector('input[name="abilitySelections"]');
+  const entries = [...element.querySelectorAll("[data-creation-ability-id]")];
+  const pages = [...element.querySelectorAll("[data-creation-ability-page]")];
+  const selections = new Map();
+  const openPage = (id) => {
+    for (const entry of entries) {
+      const active = entry.dataset.creationAbilityId === id;
+      entry.dataset.active = String(active);
+      entry.setAttribute("aria-pressed", String(active));
+    }
+    for (const page of pages) page.hidden = page.dataset.creationAbilityPage !== id;
+  };
+  const refresh = () => {
+    const mode = modeInput.value;
+    const limits = abilitySelectionLimits(mode, racialCost);
+    const counts = { novice: 0, adept: 0 };
+    for (const rank of selections.values()) counts[rank]++;
+    selectionsInput.value = JSON.stringify([...selections].map(([id, rank]) => ({ id, rank })));
+    for (const rank of ["novice", "adept"]) {
+      const slot = element.querySelector(`[data-ability-slot="${rank}"]`);
+      if (!slot) continue;
+      slot.hidden = rank === "adept" && limits.adept === 0;
+      slot.querySelector("b").textContent = String(counts[rank]);
+      slot.childNodes[1].textContent = `/${limits[rank]} `;
+      slot.dataset.complete = String(counts[rank] === limits[rank]);
+    }
+    for (const entry of entries) {
+      const rank = selections.get(entry.dataset.creationAbilityId) ?? "";
+      entry.dataset.selected = String(Boolean(rank));
+      entry.querySelector("[data-ability-entry-rank]").textContent = rank
+        ? game.i18n.localize(`SYMBAROUMHUD.CharacterCreator.Abilities.${rank[0].toUpperCase()}${rank.slice(1)}`) : "";
+    }
+    for (const button of element.querySelectorAll("[data-select-ability]")) {
+      const rank = selections.get(button.dataset.selectAbility);
+      const active = rank === button.dataset.rank;
+      button.dataset.selected = String(active);
+      button.hidden = button.dataset.rank === "adept" && limits.adept === 0;
+      button.querySelector("i").className = active ? "fa-solid fa-circle-check" : "fa-regular fa-circle";
+    }
+    const confirm = element.querySelector('[data-action="choose-abilities"]');
+    if (confirm) confirm.disabled = !isValidAbilitySelection(
+      [...selections].map(([id, rank]) => ({ id, rank })), mode, racialCost
+    );
+  };
+  for (const entry of entries) entry.addEventListener("click", () => openPage(entry.dataset.creationAbilityId));
+  for (const tab of element.querySelectorAll("[data-ability-mode]")) tab.addEventListener("click", () => {
+    modeInput.value = tab.dataset.abilityMode;
+    selections.clear();
+    for (const candidate of element.querySelectorAll("[data-ability-mode]")) {
+      const active = candidate === tab;
+      candidate.dataset.active = String(active);
+      candidate.setAttribute("aria-pressed", String(active));
+    }
+    refresh();
+  });
+  for (const button of element.querySelectorAll("[data-select-ability]")) button.addEventListener("click", () => {
+    const { selectAbility: id, rank } = button.dataset;
+    if (selections.get(id) === rank) selections.delete(id);
+    else {
+      const limits = abilitySelectionLimits(modeInput.value, racialCost);
+      const occupied = [...selections].filter(([otherId, otherRank]) => otherId !== id && otherRank === rank).length;
+      if (occupied >= limits[rank]) {
+        ui.notifications?.warn(game.i18n.localize("SYMBAROUMHUD.CharacterCreator.Abilities.SlotFull"));
+        return;
+      }
+      selections.set(id, rank);
+    }
+    refresh();
+  });
+  const search = element.querySelector("[data-ability-search]");
+  search?.addEventListener("input", () => {
+    const query = normalizeName(search.value);
+    for (const entry of entries) entry.hidden = Boolean(query && !entry.dataset.search.includes(query));
+    const active = entries.find((entry) => entry.dataset.active === "true" && !entry.hidden);
+    if (!active) openPage(entries.find((entry) => !entry.hidden)?.dataset.creationAbilityId ?? "");
+  });
+  refresh();
+}
+
+function parseAbilitySelections(value) {
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed.map(({ id, rank }) => ({ id: String(id), rank: String(rank) })) : [];
+  } catch {
+    return [];
+  }
+}
+
+function creationAbilityData(source, rank) {
+  const clone = globalThis.foundry?.utils?.deepClone ?? ((value) => structuredClone(value));
+  const data = clone(source.toObject ? source.toObject() : source);
+  delete data._id;
+  data.system ??= {};
+  for (const level of ["novice", "adept", "master"]) data.system[level] ??= {};
+  data.system.novice.isActive = true;
+  data.system.adept.isActive = rank === "adept";
+  data.system.master.isActive = false;
+  return data;
+}
+
+function creationAbilityExperienceCost(source, rank) {
+  const costs = game.symbaroum?.config?.expCosts?.power ?? {};
+  if (Array.isArray(costs.nocost) && costs.nocost.includes(source?.system?.reference)) return 0;
+  const novice = Number(costs.novice) || 10;
+  const adept = Number(costs.adept) || 20;
+  return novice + (rank === "adept" ? adept : 0);
+}
+
+async function enrichCreatorDescription(value, relativeTo) {
+  const description = String(value ?? "").trim();
+  if (!description) return `<em>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.NoDescription")}</em>`;
+  const editor = globalThis.foundry?.applications?.ux?.TextEditor?.implementation
+    ?? globalThis.foundry?.applications?.ux?.TextEditor
+    ?? globalThis.TextEditor;
+  return editor?.enrichHTML ? editor.enrichHTML(description, { async: true, relativeTo }) : escapeHtml(description);
 }
 
 async function addRaceTrait(actor, trait) {

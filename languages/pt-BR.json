@@ -20,7 +20,10 @@
         "StepTwoText": "Os oito Atributos formam a espinha dorsal do personagem. Escolha uma distribuição típica para usar cada valor uma vez ou use a compra de pontos para construir a combinação desejada.",
         "RaceProgress": "Passo 3 de 10",
         "StepThreeTitle": "Escolha a Raça",
-        "StepThreeText": "A raça descreve a origem e a natureza do personagem. Ela concede traços obrigatórios ou uma escolha cultural; alguns traços especiais também podem ser escolhidos, mas ocupam uma das escolhas de Habilidade da próxima etapa."
+        "StepThreeText": "A raça descreve a origem e a natureza do personagem. Ela concede traços obrigatórios ou uma escolha cultural; alguns traços especiais também podem ser escolhidos, mas ocupam uma das escolhas de Habilidade da próxima etapa.",
+        "AbilitiesProgress": "Passo 4 de 10",
+        "StepFourTitle": "Escolha as Habilidades",
+        "StepFourText": "Habilidades representam o treinamento e os talentos especiais do personagem. Escolha cinco Habilidades no nível Novato ou duas no nível Novato e uma no nível Adepto. Traços raciais opcionais já escolhidos ocupam vagas de Novato."
       },
       "Archetypes": {
         "Warrior": {
@@ -116,6 +119,28 @@
           "survivalInstinct": { "Name": "Instinto de Sobrevivência", "Description": "Um instinto racial aguçado ajuda o personagem a evitar golpes e sobreviver a ameaças." },
           "robust": { "Name": "Robusto", "Description": "O personagem possui tamanho, força e resistência física muito acima do comum." }
         }
+      },
+      "Abilities": {
+        "Title": "Criador de Fichas — Escolha as Habilidades",
+        "Choose": "Confirmar Habilidades",
+        "ContinueLater": "Continuar depois",
+        "DistributionMethod": "Distribuição das Habilidades",
+        "FiveNovice": "Cinco Novatas",
+        "Mixed": "Duas Novatas + uma Adepta",
+        "Novice": "Novata",
+        "Adept": "Adepta",
+        "Master": "Mestre",
+        "SearchPlaceholder": "Pesquisar Habilidades…",
+        "Empty": "Nenhuma Habilidade disponível no mundo.",
+        "Reference": "Referência",
+        "GeneralDescription": "Descrição",
+        "NoDescription": "Sem descrição disponível.",
+        "SelectNovice": "Escolher como Novata",
+        "SelectAdept": "Escolher como Adepta",
+        "RacialCost": "Vaga de Novato já ocupada por traço racial:",
+        "Invalid": "Preencha todas as vagas de Habilidade antes de continuar.",
+        "Unavailable": "Uma das Habilidades escolhidas não está mais disponível.",
+        "SlotFull": "Todas as vagas deste nível já estão preenchidas."
       },
       "Occupations": {
         "berserker": { "Name": "Amoque", "Quote": "Mantenha distância! Eu não gostaria de te machucar.", "Summary": "Espíritos de fúria seguem você e o preenchem com uma ferocidade descontrolada em batalha. Fora do combate, sua disposição paciente e pensativa cria um contraste que o torna estimado e temido.", "Attributes": "Vigoroso 13+, Rápido 11+", "Races": "Bárbaro ou ogro", "Abilities": "Amoque, Força da Empunhadura Dupla, Punho de Ferro, Recuperação" },

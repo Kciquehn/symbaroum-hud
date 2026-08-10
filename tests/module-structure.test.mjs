@@ -21,6 +21,7 @@ assert.ok(manifest.esmodules.includes("scripts/main.mjs"));
 assert.ok(fs.existsSync(path.join(root, "scripts", "services", "character-creator-service.mjs")), "Missing character creator service");
 assert.ok(fs.existsSync(path.join(root, "scripts", "data", "core-occupations.mjs")), "Missing core occupations data");
 assert.ok(fs.existsSync(path.join(root, "scripts", "data", "core-attributes.mjs")), "Missing core attributes data");
+assert.ok(fs.existsSync(path.join(root, "scripts", "data", "character-creation-abilities.mjs")), "Missing character creation Abilities data");
 assert.ok(fs.existsSync(path.join(root, "LICENSE")), "Missing LICENSE file");
 assert.ok(fs.existsSync(path.join(root, "CHANGELOG.md")), "Missing CHANGELOG.md file");
 assert.ok(fs.existsSync(path.join(root, "FOUNDRY-PACKAGE-DESCRIPTION.html")), "Missing Foundry package description HTML");

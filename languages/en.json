@@ -20,7 +20,10 @@
         "StepTwoText": "The eight Attributes form the backbone of the character. Choose a typical distribution to use each value once or use point buy to build the combination you want.",
         "RaceProgress": "Step 3 of 10",
         "StepThreeTitle": "Choose a Race",
-        "StepThreeText": "Race describes the character's origin and nature. It grants mandatory traits or a cultural choice; some special traits may also be selected, but use one Ability choice in the next step."
+        "StepThreeText": "Race describes the character's origin and nature. It grants mandatory traits or a cultural choice; some special traits may also be selected, but use one Ability choice in the next step.",
+        "AbilitiesProgress": "Step 4 of 10",
+        "StepFourTitle": "Choose Abilities",
+        "StepFourText": "Abilities represent the character's training and special talents. Choose five Abilities at Novice level, or two at Novice and one at Adept. Optional racial traits already chosen occupy Novice slots."
       },
       "Archetypes": {
         "Warrior": {
@@ -116,6 +119,28 @@
           "survivalInstinct": { "Name": "Survival Instinct", "Description": "A sharp racial instinct helps the character avoid blows and survive threats." },
           "robust": { "Name": "Robust", "Description": "The character has size, strength and physical endurance far beyond the ordinary." }
         }
+      },
+      "Abilities": {
+        "Title": "Character Creator — Choose Abilities",
+        "Choose": "Confirm Abilities",
+        "ContinueLater": "Continue later",
+        "DistributionMethod": "Ability distribution",
+        "FiveNovice": "Five Novice",
+        "Mixed": "Two Novice + one Adept",
+        "Novice": "Novice",
+        "Adept": "Adept",
+        "Master": "Master",
+        "SearchPlaceholder": "Search Abilities…",
+        "Empty": "No Abilities are available in the world.",
+        "Reference": "Reference",
+        "GeneralDescription": "Description",
+        "NoDescription": "No description is available.",
+        "SelectNovice": "Choose as Novice",
+        "SelectAdept": "Choose as Adept",
+        "RacialCost": "A Novice slot is already occupied by a racial trait:",
+        "Invalid": "Fill every Ability slot before continuing.",
+        "Unavailable": "One of the selected Abilities is no longer available.",
+        "SlotFull": "Every slot at this level is already filled."
       },
       "Occupations": {
         "berserker": { "Name": "Berserker", "Quote": "Keep your distance! I would not want to hurt you.", "Summary": "Spirits of rage follow you and fill you with uncontrolled ferocity in battle. Outside combat, your patient and thoughtful disposition makes the contrast both admired and feared.", "Attributes": "Strong 13+, Quick 11+", "Races": "Barbarian or ogre", "Abilities": "Berserker, Two-handed Force, Iron Fist, Recovery" },

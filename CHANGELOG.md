@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.49
+
+- Adiciona o quarto passo do Criador de Fichas: seleção de Habilidades disponíveis no mundo.
+- Oferece as duas distribuições oficiais: **Cinco Novatas** ou **Duas Novatas + uma Adepta**.
+- Mostra índice pesquisável, ícones, referências, descrição geral e os textos completos dos níveis Novato, Adepto e Mestre.
+- Desconta automaticamente as vagas ocupadas por Metamorfo, Instinto de Sobrevivência ou Robusto escolhidos na etapa racial.
+- Copia os documentos nativos para a ficha com os níveis corretos e concede o abatimento de experiência inicial, evitando XP disponível negativo.
+- Mantém a confirmação bloqueada até que todas as vagas da distribuição escolhida estejam preenchidas.
+
 ## 0.1.48
 
 - Remove completamente do Criador de Fichas as classificações não oficiais das raças.

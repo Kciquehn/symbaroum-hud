@@ -1050,6 +1050,179 @@
 .symbaroum-hud-race-trait-card strong { display: block; color: #58231c; font-family: "Symbaroum HUD Primitive", "Philosopher", serif; font-size: 0.75rem; }
 .symbaroum-hud-race-trait-card small { display: block; margin-top: 2px; color: #55483a; font-size: 0.59rem; line-height: 1.26; }
 
+.symbaroum-hud-abilities-book {
+  display: grid;
+  height: min(500px, calc(100vh - 125px));
+  min-height: 0;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  color: #271b14;
+  background: #130d0a;
+  box-shadow: inset 0 0 28px rgb(0 0 0 / 76%);
+}
+
+.symbaroum-hud-ability-mode-tabs {
+  display: flex;
+  min-height: 39px;
+  padding: 4px 12px;
+  justify-content: center;
+  gap: 6px;
+  border-block: 1px solid #6d3928;
+  background: linear-gradient(#17120f, #090807);
+}
+
+.symbaroum-hud-ability-mode-tabs button {
+  width: auto;
+  min-width: 205px;
+  margin: 0;
+  padding: 5px 12px;
+  border: 1px solid rgb(181 151 65 / 34%);
+  border-radius: 0;
+  color: #d8cba8;
+  background: rgb(0 0 0 / 26%);
+  box-shadow: none;
+  font-family: "Symbaroum HUD Primitive", "Philosopher", serif;
+  font-size: 0.77rem;
+}
+
+.symbaroum-hud-ability-mode-tabs button i { margin-right: 6px; color: #a98c3f; }
+.symbaroum-hud-ability-mode-tabs button:hover,
+.symbaroum-hud-ability-mode-tabs button:focus-visible,
+.symbaroum-hud-ability-mode-tabs button[data-active="true"] {
+  border-color: #c6a84c;
+  color: #fff0c4;
+  background: linear-gradient(#6d2b20, #361814);
+  outline: none;
+}
+
+.symbaroum-hud-ability-workspace {
+  display: grid;
+  min-height: 0;
+  grid-template-columns: 240px minmax(0, 1fr);
+}
+
+.symbaroum-hud-ability-index {
+  display: flex;
+  min-height: 0;
+  padding: 8px;
+  flex-direction: column;
+  gap: 7px;
+  overflow: hidden;
+  border-right: 2px solid #6b4b25;
+  color: #eadcb9;
+  background:
+    linear-gradient(90deg, rgb(0 0 0 / 45%), transparent 24%, rgb(0 0 0 / 58%)),
+    linear-gradient(rgb(27 23 19 / 91%), rgb(8 15 13 / 97%)),
+    url("/systems/symbaroum/asset/image/background/title.webp") center / cover;
+}
+
+.symbaroum-hud-ability-index > label {
+  display: grid;
+  height: 30px;
+  grid-template-columns: 25px minmax(0, 1fr);
+  align-items: center;
+  border: 1px solid #6f5d39;
+  background: rgb(0 0 0 / 40%);
+}
+
+.symbaroum-hud-ability-index > label i { color: #a98c3f; text-align: center; }
+.symbaroum-hud-ability-index input[type="search"] {
+  width: 100%;
+  height: 28px;
+  margin: 0;
+  border: 0;
+  color: #f3e6c5;
+  background: transparent;
+  box-shadow: none;
+  font-size: 0.7rem;
+}
+
+.symbaroum-hud-ability-slots { display: flex; gap: 5px; }
+.symbaroum-hud-ability-slots span {
+  flex: 1;
+  padding: 4px 5px;
+  border: 1px solid rgb(201 168 73 / 34%);
+  color: #d7c9a5;
+  background: rgb(0 0 0 / 34%);
+  text-align: center;
+  font-size: 0.63rem;
+}
+.symbaroum-hud-ability-slots span[data-complete="true"] { border-color: #71834c; color: #e8f0bf; }
+.symbaroum-hud-ability-slots b { color: #fff1b8; font-size: 0.75rem; }
+
+.symbaroum-hud-ability-racial-cost {
+  margin: 0;
+  padding: 5px 6px;
+  border-left: 2px solid #8e6d2d;
+  color: #bfb08c;
+  background: rgb(83 43 26 / 33%);
+  font-size: 0.57rem;
+  line-height: 1.25;
+}
+.symbaroum-hud-ability-racial-cost i { margin-right: 5px; color: #b79a48; }
+.symbaroum-hud-ability-racial-cost strong { display: block; margin: 2px 0 0 17px; color: #f0dfb6; }
+.symbaroum-hud-ability-index > nav { display: grid; min-height: 0; gap: 4px; overflow-y: auto; }
+
+button.symbaroum-hud-ability-index-entry {
+  display: grid;
+  min-height: 39px;
+  margin: 0;
+  padding: 4px 6px;
+  grid-template-columns: 29px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid rgb(201 168 73 / 18%);
+  border-radius: 0;
+  color: #d9ccaa;
+  background: rgb(0 0 0 / 23%);
+  box-shadow: none;
+  text-align: left;
+}
+button.symbaroum-hud-ability-index-entry[hidden] { display: none; }
+.symbaroum-hud-ability-index-entry img { width: 29px; height: 29px; border: 1px solid #5f4f2c; object-fit: cover; }
+.symbaroum-hud-ability-index-entry > span { overflow: hidden; font-family: "Symbaroum HUD Primitive", "Philosopher", serif; font-size: 0.72rem; text-overflow: ellipsis; white-space: nowrap; }
+.symbaroum-hud-ability-index-entry strong { color: #aeca75; font-size: 0.52rem; text-transform: uppercase; }
+button.symbaroum-hud-ability-index-entry:hover,
+button.symbaroum-hud-ability-index-entry:focus-visible,
+button.symbaroum-hud-ability-index-entry[data-active="true"] {
+  border-color: #b79a48;
+  color: #fff1c9;
+  background: linear-gradient(90deg, rgb(116 40 28 / 76%), rgb(47 26 20 / 42%));
+  outline: none;
+}
+button.symbaroum-hud-ability-index-entry[data-selected="true"] { box-shadow: inset 3px 0 #70834c; }
+
+.symbaroum-hud-ability-reading-page {
+  min-width: 0;
+  min-height: 0;
+  padding: 10px 22px 16px;
+  overflow-y: auto;
+  background:
+    linear-gradient(90deg, rgb(74 48 25 / 23%), transparent 8%, transparent 95%, rgb(88 50 23 / 15%)),
+    linear-gradient(rgb(249 243 224 / 97%), rgb(231 220 192 / 98%)),
+    url("/systems/symbaroum/asset/image/foreground.webp") center / cover;
+  box-shadow: inset 14px 0 18px rgb(79 52 28 / 18%);
+}
+.symbaroum-hud-ability-page[hidden] { display: none; }
+.symbaroum-hud-ability-page { display: grid; gap: 9px; }
+.symbaroum-hud-ability-heading { display: grid; grid-template-columns: 58px minmax(0, 1fr); align-items: center; gap: 11px; border-bottom: 2px solid #7b3126; padding-bottom: 7px; }
+.symbaroum-hud-ability-heading img { width: 58px; height: 58px; border: 2px solid #8a6b27; background: #080807; object-fit: cover; }
+.symbaroum-hud-ability-heading h2 { margin: 0; color: #351a15; font-family: "Symbaroum HUD Primitive", "Philosopher", serif; font-size: 1.55rem; }
+.symbaroum-hud-ability-heading small { color: #71604c; font-size: 0.59rem; }
+.symbaroum-hud-ability-general h3,
+.symbaroum-hud-ability-level h3 { margin: 0; color: #6f291f; font-family: "Symbaroum HUD Primitive", "Philosopher", serif; font-size: 0.9rem; }
+.symbaroum-hud-ability-general > div { margin-top: 3px; color: #493d31; font-family: var(--font-serif, serif); font-size: 0.7rem; line-height: 1.38; }
+.symbaroum-hud-ability-general p,
+.symbaroum-hud-ability-level p { margin: 0 0 4px; }
+.symbaroum-hud-ability-levels { display: grid; gap: 6px; }
+.symbaroum-hud-ability-level { padding: 7px 9px; border: 1px solid rgb(112 73 35 / 35%); border-left: 3px solid #7a3025; background: rgb(255 250 230 / 43%); }
+.symbaroum-hud-ability-level > header { display: flex; min-height: 25px; align-items: center; justify-content: space-between; gap: 10px; border-bottom: 1px solid rgb(123 52 39 / 26%); }
+.symbaroum-hud-ability-level > header button { width: auto; min-height: 22px; margin: 0; padding: 2px 7px; border: 1px solid #846d35; border-radius: 0; color: #52251e; background: #eee2bd; box-shadow: none; font-size: 0.58rem; }
+.symbaroum-hud-ability-level > header button:hover,
+.symbaroum-hud-ability-level > header button[data-selected="true"] { border-color: #536a3e; color: #fff9d9; background: #52663f; }
+.symbaroum-hud-ability-level > strong { display: block; margin-top: 4px; color: #755d26; font-size: 0.57rem; text-transform: uppercase; }
+.symbaroum-hud-ability-level > div { margin-top: 4px; color: #4c4034; font-size: 0.66rem; line-height: 1.34; }
+.symbaroum-hud-ability-empty { margin: auto; color: #756650; font-style: italic; text-align: center; }
+
 @media (max-width: 800px) {
   .symbaroum-hud-occupation-book {
     grid-template-columns: 210px minmax(0, 1fr);

@@ -8,6 +8,7 @@ const dialogConfigs = [];
 globalThis.game = {
   user: { id: "user" },
   items: [],
+  symbaroum: { config: { expCosts: { power: { novice: 10, adept: 20, nocost: [] } } } },
   i18n: {
     localize: (key) => key,
     format: (key, data) => `${key}:${data.traits}`
@@ -51,6 +52,7 @@ const {
   CHARACTER_CREATION_MODES,
   CharacterCreatorService,
   isBlankPlayerActor,
+  isAbilitiesStepComplete,
   isAttributesStepComplete,
   isOccupationStepComplete,
   isRaceStepComplete,
@@ -67,6 +69,33 @@ const {
   isValidTypicalDistribution
 } = await import("../scripts/data/core-attributes.mjs");
 const { CORE_RACES, CORE_RACE_TRAITS } = await import("../scripts/data/core-races.mjs");
+const {
+  ABILITY_DISTRIBUTION_MODES,
+  abilitySelectionLimits,
+  isValidAbilitySelection
+} = await import("../scripts/data/character-creation-abilities.mjs");
+
+function worldAbility(id, name = `Ability ${id}`) {
+  const data = {
+    _id: id,
+    id,
+    name,
+    type: "ability",
+    img: `icons/${id}.webp`,
+    system: {
+      reference: id,
+      description: `General ${id}`,
+      novice: { isActive: false, action: "Active", description: `Novice ${id}` },
+      adept: { isActive: false, action: "Active", description: `Adept ${id}` },
+      master: { isActive: false, action: "Active", description: `Master ${id}` }
+    }
+  };
+  return {
+    ...data,
+    testUserPermission: () => true,
+    toObject: () => structuredClone(data)
+  };
+}
 
 function actor(overrides = {}) {
   const flags = new Map();
@@ -345,4 +374,107 @@ test("goblin adds mandatory burdens and records its optional trait as an Ability
   assert.equal(blank.items[2].system.novice.isActive, true);
   assert.deepEqual(blank.flag("characterCreatorState").raceTraits, ["shortLived", "pariah", "survivalInstinct"]);
   assert.deepEqual(blank.flag("characterCreatorState").abilityCostTraits, ["survivalInstinct"]);
+});
+
+test("validates both official Ability distributions and discounts optional racial traits", () => {
+  assert.deepEqual(abilitySelectionLimits(ABILITY_DISTRIBUTION_MODES.FIVE_NOVICE, 1), {
+    novice: 4, adept: 0, occupied: 1
+  });
+  assert.deepEqual(abilitySelectionLimits(ABILITY_DISTRIBUTION_MODES.MIXED, 1), {
+    novice: 1, adept: 1, occupied: 1
+  });
+  assert.equal(isValidAbilitySelection([
+    { id: "a", rank: "novice" }, { id: "b", rank: "novice" },
+    { id: "c", rank: "novice" }, { id: "d", rank: "novice" }
+  ], ABILITY_DISTRIBUTION_MODES.FIVE_NOVICE, 1), true);
+  assert.equal(isValidAbilitySelection([
+    { id: "a", rank: "novice" }, { id: "b", rank: "novice" }
+  ], ABILITY_DISTRIBUTION_MODES.FIVE_NOVICE, 1), false);
+  assert.equal(isValidAbilitySelection([
+    { id: "a", rank: "novice" }, { id: "a", rank: "adept" }
+  ], ABILITY_DISTRIBUTION_MODES.MIXED), false);
+});
+
+test("the fourth creator step provides search, full Ability reading and both distributions", async () => {
+  const blank = actor({ id: "abilities", uuid: "Actor.abilities" });
+  await blank.setFlag("symbaroum-hud", "characterCreationMode", "creator");
+  await blank.setFlag("symbaroum-hud", "characterCreatorState", {
+    version: 1, step: "race-complete", race: "ambrian"
+  });
+  const previous = game.items;
+  game.items = [worldAbility("a", "Acrobatics"), worldAbility("b", "Alchemy")];
+  dialogChoices.push("close");
+  try {
+    await CharacterCreatorService.openAbilitiesStep(blank);
+  } finally {
+    game.items = previous;
+  }
+  const content = dialogConfigs.at(-1).content;
+  assert.match(content, /AbilitiesProgress/);
+  assert.match(content, /data-ability-mode="five-novice"/);
+  assert.match(content, /data-ability-mode="mixed"/);
+  assert.match(content, /data-ability-search/);
+  assert.equal((content.match(/data-creation-ability-id=/g) ?? []).length, 2);
+  assert.equal((content.match(/data-creation-ability-page=/g) ?? []).length, 2);
+  assert.match(content, /Novice a/);
+  assert.match(content, /Adept a/);
+  assert.match(content, /Master a/);
+});
+
+test("saving five Novice choices creates native Abilities without spending XP", async () => {
+  const blank = actor({ id: "five-abilities", uuid: "Actor.five-abilities" });
+  await blank.setFlag("symbaroum-hud", "characterCreationMode", "creator");
+  await blank.setFlag("symbaroum-hud", "characterCreatorState", {
+    version: 1, step: "race-complete", race: "goblin", abilityCostTraits: ["survivalInstinct"]
+  });
+  const abilities = ["a", "b", "c", "d"].map((id) => worldAbility(id));
+  const previous = game.items;
+  game.items = abilities;
+  dialogChoices.push({
+    action: "choose-abilities",
+    form: {
+      abilityDistributionMode: "five-novice",
+      abilitySelections: JSON.stringify(abilities.map(({ id }) => ({ id, rank: "novice" })))
+    }
+  });
+  try {
+    await CharacterCreatorService.openAbilitiesStep(blank);
+  } finally {
+    game.items = previous;
+  }
+  assert.equal(blank.items.length, 4);
+  assert.equal(blank.items.every((item) => item.system.novice.isActive), true);
+  assert.equal(blank.items.every((item) => !item.system.adept.isActive && !item.system.master.isActive), true);
+  assert.deepEqual(blank.updates.at(-1), { "system.bonus.experience.value": 40 });
+  assert.equal(isAbilitiesStepComplete(blank), true);
+  assert.equal(blank.flag("characterCreatorState").abilityDistribution, "five-novice");
+});
+
+test("saving the mixed distribution activates its Adept Ability at both required levels", async () => {
+  const blank = actor({ id: "mixed-abilities", uuid: "Actor.mixed-abilities" });
+  await blank.setFlag("symbaroum-hud", "characterCreationMode", "creator");
+  await blank.setFlag("symbaroum-hud", "characterCreatorState", { version: 1, step: "race-complete" });
+  const abilities = [worldAbility("a"), worldAbility("b"), worldAbility("c")];
+  const previous = game.items;
+  game.items = abilities;
+  dialogChoices.push({
+    action: "choose-abilities",
+    form: {
+      abilityDistributionMode: "mixed",
+      abilitySelections: JSON.stringify([
+        { id: "a", rank: "novice" }, { id: "b", rank: "novice" }, { id: "c", rank: "adept" }
+      ])
+    }
+  });
+  try {
+    await CharacterCreatorService.openAbilitiesStep(blank);
+  } finally {
+    game.items = previous;
+  }
+  const adept = blank.items.find((item) => item.id === "c" || item._id === "c" || item.name === "Ability c");
+  assert.equal(adept.system.novice.isActive, true);
+  assert.equal(adept.system.adept.isActive, true);
+  assert.equal(adept.system.master.isActive, false);
+  assert.deepEqual(blank.updates.at(-1), { "system.bonus.experience.value": 50 });
+  assert.equal(isAbilitiesStepComplete(blank), true);
 });
