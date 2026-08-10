@@ -14,6 +14,7 @@ O módulo usa as rolagens e os documentos nativos do sistema. Ele não altera o 
 ## Principais recursos
 
 - HUD persistente integrado à hotbar do Foundry;
+- convite inicial para usar o protótipo do Criador de Fichas ou preencher manualmente uma ficha nova;
 - botão lateral para recolher todo o HUD e manter somente o retrato do personagem;
 - controles laterais distribuídos por toda a altura do HUD;
 - seleção pelo token controlado, combatente atual ou personagem atribuído;
@@ -90,6 +91,7 @@ O modo de visualização do inventário, em grade ou lista, também é lembrado 
 
 ## Uso rápido
 
+- Ao abrir uma ficha de jogador totalmente nova, escolha **Usar o Criador de Fichas** para ativar o protótipo guiado ou **Preencher manualmente** para seguir com a ficha normal. A decisão fica salva na própria ficha.
 - Passe o mouse sobre o retrato para revelar o nome e as setas de troca; clique na imagem para abrir a ficha do ator.
 - Use a seta entre o slot `0` e os controles de página, travar e excluir da hotbar para recolher o HUD até o retrato ou expandi-lo novamente, com uma transição curta de deslize e transparência.
 - Clique na barra de Vitalidade para curar o personagem ou aplicar uma quantidade de dano.

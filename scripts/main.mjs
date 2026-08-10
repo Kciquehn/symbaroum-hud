@@ -7,6 +7,7 @@ import {
   registerHotbarShortcuts
 } from "./integrations/hotbar-shortcuts.mjs";
 import { ContextService } from "./services/context-service.mjs";
+import { registerCharacterCreatorHooks } from "./services/character-creator-service.mjs";
 import { HotbarShortcutService } from "./services/hotbar-shortcut-service.mjs";
 
 let hud = null;
@@ -22,6 +23,7 @@ Hooks.once("setup", () => {
   hud = new SymbaroumHud();
   HotbarShortcutService.setActorResolver(() => hud?.actor ?? null);
   registerHotbarShortcuts();
+  registerCharacterCreatorHooks();
   registerRefreshHooks(hud);
 
   const module = game.modules.get(MODULE_ID);

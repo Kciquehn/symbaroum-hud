@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.37
+
+- Adiciona o primeiro protótipo do Criador de Fichas para personagens jogadores.
+- Oferece as opções de usar o criador guiado ou preencher manualmente ao abrir uma ficha totalmente nova.
+- Salva a decisão na própria ficha e não exibe o convite para fichas já preenchidas, criaturas ou usuários sem permissão de proprietário.
+- Abre uma introdução do protótipo ao escolher o criador; as etapas guiadas de raça, atributos e habilidades serão adicionadas nas próximas versões.
+
 ## 0.1.36
 
 - Corrige o arraste de poderes místicos do HUD para a hotbar do jogador.

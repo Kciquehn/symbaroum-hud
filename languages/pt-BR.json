@@ -3,6 +3,17 @@
     "Title": "Symbaroum HUD",
     "Empty": "Selecione um token de personagem ou criatura.",
     "None": "Nenhum item disponível.",
+    "CharacterCreator": {
+      "Title": "Nova ficha de personagem",
+      "Heading": "Como deseja criar este personagem?",
+      "Description": "Você pode preencher a ficha livremente ou seguir o Criador de Fichas, que guiará cada etapa da criação segundo as regras de Symbaroum.",
+      "DecisionHint": "Fechar esta janela sem escolher fará a pergunta aparecer novamente na próxima abertura.",
+      "UseCreator": "Usar o Criador de Fichas",
+      "FillManually": "Preencher manualmente",
+      "PrototypeTitle": "Criador de Fichas — Protótipo",
+      "PrototypeText": "O Criador de Fichas foi ativado para este personagem. No próximo teste, esta tela iniciará a escolha de raça e preencherá a ficha conforme cada decisão.",
+      "Understood": "Entendi"
+    },
     "ActorTypes": {
       "player": "Personagem",
       "monster": "Criatura"

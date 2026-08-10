@@ -3,6 +3,17 @@
     "Title": "Symbaroum HUD",
     "Empty": "Select a character or creature token.",
     "None": "No items available.",
+    "CharacterCreator": {
+      "Title": "New character sheet",
+      "Heading": "How would you like to create this character?",
+      "Description": "You can fill in the sheet freely or use the Character Creator, which will guide each creation step according to the Symbaroum rules.",
+      "DecisionHint": "Closing this window without choosing will show the question again the next time the sheet opens.",
+      "UseCreator": "Use Character Creator",
+      "FillManually": "Fill in manually",
+      "PrototypeTitle": "Character Creator — Prototype",
+      "PrototypeText": "The Character Creator has been enabled for this character. In the next test, this screen will begin ancestry selection and fill in the sheet as each choice is made.",
+      "Understood": "Got it"
+    },
     "ActorTypes": {
       "player": "Character",
       "monster": "Creature"
