@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.45
+
+- Remove o rótulo **Regras do Livro Básico** das abas Distribuição típica e Compra de pontos.
+- Faz a Distribuição típica começar sem valores atribuídos, permitindo acompanhar claramente o preenchimento dos oito Atributos.
+- Risca com aparência de lápis cada número utilizado na lista lateral.
+- Remove dos outros campos os valores já distribuídos, impedindo repetições acidentais.
+- Trata separadamente os dois valores `10`: o segundo continua disponível até também ser utilizado.
+- Mantém a confirmação bloqueada até que todos os valores oficiais tenham sido distribuídos corretamente.
+
 ## 0.1.44
 
 - Remove o texto auxiliar abaixo do título **Ocupações**, deixando o índice do Criador de Fichas mais limpo e compacto.

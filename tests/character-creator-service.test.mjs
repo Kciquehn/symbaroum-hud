@@ -62,6 +62,7 @@ const { CORE_OCCUPATIONS, OCCUPATION_ARCHETYPES } = await import(
 const {
   CORE_ATTRIBUTES,
   TYPICAL_ATTRIBUTE_VALUES,
+  availableTypicalValues,
   isValidPointBuyDistribution,
   isValidTypicalDistribution
 } = await import("../scripts/data/core-attributes.mjs");
@@ -236,6 +237,8 @@ test("the second creator step offers typical distribution and point buy", async 
   assert.equal((content.match(/data-attribute-card=/g) ?? []).length, 8);
   assert.equal((content.match(/data-typical-attribute=/g) ?? []).length, 8);
   assert.equal((content.match(/data-adjust-attribute=/g) ?? []).length, 16);
+  assert.doesNotMatch(content, /Attributes\.RulesLabel/);
+  assert.equal((content.match(/data-typical-value=/g) ?? []).length, 8);
 });
 
 test("validates the two official Attribute distribution methods", () => {
@@ -245,6 +248,12 @@ test("validates the two official Attribute distribution methods", () => {
   assert.equal(isValidPointBuyDistribution([10, 10, 10, 10, 10, 10, 10, 10]), true);
   assert.equal(isValidPointBuyDistribution([15, 15, 10, 10, 10, 10, 5, 5]), false);
   assert.equal(isValidPointBuyDistribution([5, 7, 9, 10, 10, 11, 13, 15]), true);
+});
+
+test("typical distribution only offers values not assigned to another Attribute", () => {
+  assert.deepEqual(availableTypicalValues([15, 13, "", "", "", "", "", ""], 2), [5, 7, 9, 10, 11]);
+  assert.deepEqual(availableTypicalValues([10, "", "", "", "", "", "", ""], 1), [5, 7, 9, 10, 11, 13, 15]);
+  assert.deepEqual(availableTypicalValues([10, 10, "", "", "", "", "", ""], 2), [5, 7, 9, 11, 13, 15]);
 });
 
 test("saving point-buy Attributes writes the native Symbaroum fields", async () => {

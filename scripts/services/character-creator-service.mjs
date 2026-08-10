@@ -10,6 +10,7 @@ import {
   ATTRIBUTE_POINT_TOTAL,
   CORE_ATTRIBUTES,
   TYPICAL_ATTRIBUTE_VALUES,
+  availableTypicalValues,
   isValidPointBuyDistribution,
   isValidTypicalDistribution
 } from "../data/core-attributes.mjs";
@@ -27,16 +28,6 @@ const RACE_STEP_COMPLETE = "race-complete";
 const ATTRIBUTE_DISTRIBUTION_MODES = Object.freeze({
   TYPICAL: "typical",
   POINT_BUY: "point-buy"
-});
-const DEFAULT_TYPICAL_DISTRIBUTION = Object.freeze({
-  accurate: 10,
-  cunning: 13,
-  discreet: 5,
-  persuasive: 7,
-  quick: 11,
-  resolute: 15,
-  strong: 10,
-  vigilant: 9
 });
 const BIOGRAPHY_FIELDS = Object.freeze([
   "race",
@@ -678,9 +669,8 @@ function fallbackTraitData(trait) {
 function attributesBookContent(actor) {
   const typicalValues = typicalDistribution(actor);
   const pointValues = pointBuyDistribution(actor);
-  const typicalOptions = TYPICAL_ATTRIBUTE_VALUES.map((value) =>
-    `<option value="${value}">${value}</option>`
-  ).join("");
+  const typicalOptions = [...new Set(TYPICAL_ATTRIBUTE_VALUES)]
+    .map((value) => `<option value="${value}">${value}</option>`).join("");
   const cards = CORE_ATTRIBUTES.map((attribute, index) => `
     <article class="symbaroum-hud-attribute-choice" data-attribute-card="${attribute.id}">
       <header>
@@ -692,7 +682,8 @@ function attributesBookContent(actor) {
           </label>
           <select id="symbaroum-hud-typical-${attribute.id}"
             name="typical-${attribute.id}" data-typical-attribute="${attribute.id}"
-            data-previous-value="${typicalValues[index]}">
+            data-initial-value="${typicalValues[index]}">
+            <option value="">—</option>
             ${typicalOptions}
           </select>
         </div>
@@ -737,16 +728,17 @@ function attributesBookContent(actor) {
       <div class="symbaroum-hud-attribute-workspace">
         <aside class="symbaroum-hud-attribute-rules">
           <div data-attribute-rules="typical">
-            <span>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Attributes.RulesLabel")}</span>
             <h2>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Attributes.Typical")}</h2>
             <p>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Attributes.TypicalRules")}</p>
             <div class="symbaroum-hud-attribute-value-sequence" aria-label="${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Attributes.TypicalValues")}">
-              ${TYPICAL_ATTRIBUTE_VALUES.map((value) => `<strong>${value}</strong>`).join("")}
+              ${TYPICAL_ATTRIBUTE_VALUES.map((value, index) => {
+                const occurrence = TYPICAL_ATTRIBUTE_VALUES.slice(0, index).filter((entry) => entry === value).length;
+                return `<strong data-typical-value="${value}" data-value-occurrence="${occurrence}" data-used="false">${value}</strong>`;
+              }).join("")}
             </div>
             <small>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Attributes.TypicalHint")}</small>
           </div>
           <div data-attribute-rules="point-buy" hidden>
-            <span>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Attributes.RulesLabel")}</span>
             <h2>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Attributes.PointBuy")}</h2>
             <p>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Attributes.PointBuyRules")}</p>
             <div class="symbaroum-hud-attribute-points">
@@ -788,11 +780,8 @@ function bindAttributesBook(element) {
   const pointInputs = Array.from(element.querySelectorAll('input[name^="points-"]'));
 
   for (const select of typicalSelects) {
-    const attribute = select.dataset.typicalAttribute;
-    const value = typicalDistributionValue(element, attribute);
-    select.value = String(value);
-    select.dataset.previousValue = String(value);
-    select.addEventListener("change", () => swapTypicalAttributeValue(select, typicalSelects));
+    select.value = select.dataset.initialValue ?? "";
+    select.addEventListener("change", () => refreshTypicalDistribution(element, typicalSelects, pointInputs));
   }
 
   const setMode = (mode) => {
@@ -805,6 +794,7 @@ function bindAttributesBook(element) {
     }
     for (const panel of rulePanels) panel.hidden = panel.dataset.attributeRules !== mode;
     for (const control of modeControls) control.hidden = control.dataset.modeControl !== mode;
+    refreshTypicalDistribution(element, typicalSelects, pointInputs);
     updatePointBuyStatus(element, pointInputs);
   };
 
@@ -834,19 +824,28 @@ function bindAttributesBook(element) {
   setMode(ATTRIBUTE_DISTRIBUTION_MODES.TYPICAL);
 }
 
-function swapTypicalAttributeValue(select, selects) {
-  const previous = Number(select.dataset.previousValue);
-  const next = Number(select.value);
-  if (next === previous) return;
-  const counterpart = selects.find((candidate) =>
-    candidate !== select && Number(candidate.value) === next
-  );
-  if (!counterpart) {
-    select.value = String(previous);
-    return;
+function refreshTypicalDistribution(element, selects, pointInputs) {
+  const values = selects.map((select) => select.value);
+  for (const [index, select] of selects.entries()) {
+    const current = select.value;
+    const blank = new Option("—", "");
+    const options = availableTypicalValues(values, index).map((value) => new Option(String(value), String(value)));
+    select.replaceChildren(blank, ...options);
+    select.value = current;
   }
-  counterpart.value = String(previous);
-  for (const candidate of selects) candidate.dataset.previousValue = candidate.value;
+
+  const used = new Map();
+  for (const rawValue of values) {
+    if (rawValue === "") continue;
+    const value = Number(rawValue);
+    used.set(value, (used.get(value) ?? 0) + 1);
+  }
+  for (const token of element.querySelectorAll("[data-typical-value]")) {
+    const value = Number(token.dataset.typicalValue);
+    const occurrence = Number(token.dataset.valueOccurrence);
+    token.dataset.used = String((used.get(value) ?? 0) > occurrence);
+  }
+  updatePointBuyStatus(element, pointInputs);
 }
 
 function updatePointBuyStatus(element, pointInputs) {
@@ -855,6 +854,7 @@ function updatePointBuyStatus(element, pointInputs) {
   const counter = element.querySelector("[data-points-remaining]");
   const status = element.querySelector("[data-points-status]");
   const mode = element.querySelector('input[name="attributeDistributionMode"]')?.value;
+  const typicalValues = Array.from(element.querySelectorAll("[data-typical-attribute]"), (select) => select.value);
   const confirm = element.querySelector('[data-action="choose-attributes"]');
   if (counter) counter.textContent = String(remaining);
   if (status) {
@@ -863,7 +863,9 @@ function updatePointBuyStatus(element, pointInputs) {
     status.dataset.complete = String(ready);
   }
   if (confirm) {
-    confirm.disabled = mode === ATTRIBUTE_DISTRIBUTION_MODES.POINT_BUY && remaining !== 0;
+    confirm.disabled = mode === ATTRIBUTE_DISTRIBUTION_MODES.TYPICAL
+      ? !isValidTypicalDistribution(typicalValues)
+      : remaining !== 0;
   }
 }
 
@@ -872,12 +874,7 @@ function typicalDistribution(actor) {
     Number(actor?.system?.attributes?.[attribute.id]?.value)
   );
   if (isValidTypicalDistribution(current)) return current;
-  return CORE_ATTRIBUTES.map((attribute) => DEFAULT_TYPICAL_DISTRIBUTION[attribute.id]);
-}
-
-function typicalDistributionValue(element, attributeId) {
-  const input = element.querySelector(`select[name="typical-${attributeId}"]`);
-  return Number(input?.dataset.previousValue ?? DEFAULT_TYPICAL_DISTRIBUTION[attributeId]);
+  return CORE_ATTRIBUTES.map(() => "");
 }
 
 function pointBuyDistribution(actor) {

@@ -20,6 +20,18 @@ export function isValidTypicalDistribution(values) {
     && normalized.every((value, index) => value === TYPICAL_ATTRIBUTE_VALUES[index]);
 }
 
+export function availableTypicalValues(values, attributeIndex) {
+  const selections = Array.from(values ?? []);
+  const remaining = [...TYPICAL_ATTRIBUTE_VALUES];
+  for (const [index, rawValue] of selections.entries()) {
+    if (index === attributeIndex || rawValue === "" || rawValue == null) continue;
+    const value = Number(rawValue);
+    const poolIndex = remaining.indexOf(value);
+    if (poolIndex >= 0) remaining.splice(poolIndex, 1);
+  }
+  return [...new Set(remaining)];
+}
+
 export function isValidPointBuyDistribution(values) {
   const normalized = normalizedValues(values);
   return normalized.length === CORE_ATTRIBUTES.length
