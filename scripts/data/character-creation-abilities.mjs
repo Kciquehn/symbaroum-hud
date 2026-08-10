@@ -35,8 +35,11 @@ export function abilitySelectionLimits(mode, racialAbilityCost = 0) {
 export function isValidAbilitySelection(selections, mode, racialAbilityCost = 0, options = {}) {
   if (!Object.values(ABILITY_DISTRIBUTION_MODES).includes(mode)) return false;
   const normalized = Array.from(selections ?? []);
-  const ids = normalized.map((entry) => entry?.id).filter(Boolean);
-  if (ids.length !== normalized.length || new Set(ids).size !== ids.length) return false;
+  const identities = normalized.map((entry) => {
+    if (!entry?.id) return "";
+    return entry.choiceId ? `${entry.id}:${entry.choiceId}` : entry.id;
+  });
+  if (identities.some((identity) => !identity) || new Set(identities).size !== identities.length) return false;
   if (mode === ABILITY_DISTRIBUTION_MODES.EXPERIENCE) {
     if (normalized.some((entry) => !["novice", "adept", "master"].includes(entry?.rank))) return false;
     const budget = Number(options.experienceBudget);

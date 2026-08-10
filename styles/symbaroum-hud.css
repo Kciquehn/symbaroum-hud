@@ -1256,6 +1256,90 @@ button.symbaroum-hud-ability-index-entry[data-selected="true"] { box-shadow: ins
 .symbaroum-hud-ability-level > div { margin-top: 4px; color: #4c4034; font-size: 0.66rem; line-height: 1.34; }
 .symbaroum-hud-ability-empty { margin: auto; color: #756650; font-style: italic; text-align: center; }
 
+.symbaroum-hud-ability-special-picker {
+  display: grid;
+  gap: 7px;
+  padding: 8px;
+  border: 1px solid rgb(112 73 35 / 42%);
+  border-left: 3px solid #7a3025;
+  background: rgb(255 250 230 / 42%);
+}
+.symbaroum-hud-ability-special-picker > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border-bottom: 1px solid rgb(123 52 39 / 28%);
+  padding-bottom: 5px;
+}
+.symbaroum-hud-ability-special-picker > header h3 { margin: 0; color: #6f291f; font-family: "Symbaroum HUD Primitive", "Philosopher", serif; font-size: 0.88rem; }
+.symbaroum-hud-ability-special-picker > header p { margin: 2px 0 0; color: #5d4c3d; font-size: 0.61rem; }
+.symbaroum-hud-ability-special-picker > header > strong {
+  min-width: 43px;
+  padding: 4px 6px;
+  border: 1px solid #8a6b27;
+  color: #fff0bd;
+  background: #1a120d;
+  text-align: center;
+  font-size: 0.68rem;
+}
+.symbaroum-hud-ability-special-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+.symbaroum-hud-ability-special-card { min-width: 0; border: 1px solid rgb(103 74 39 / 45%); background: rgb(237 226 194 / 58%); }
+.symbaroum-hud-ability-special-card > header { display: grid; min-height: 42px; padding: 4px; grid-template-columns: 36px minmax(0, 1fr); align-items: center; gap: 6px; }
+.symbaroum-hud-ability-special-card > header img { width: 36px; height: 36px; border: 1px solid #795e28; background: #0a0908; object-fit: cover; }
+.symbaroum-hud-ability-special-card h4 { margin: 0; color: #4d211b; font-family: "Symbaroum HUD Primitive", "Philosopher", serif; font-size: 0.72rem; }
+.symbaroum-hud-ability-special-card small { display: block; overflow: hidden; color: #756451; font-size: 0.5rem; text-overflow: ellipsis; white-space: nowrap; }
+.symbaroum-hud-ability-special-ranks { display: grid; padding: 0 4px 4px; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 3px; }
+.symbaroum-hud-ability-special-ranks button {
+  display: flex;
+  min-height: 23px;
+  margin: 0;
+  padding: 2px 4px;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  border: 1px solid #846d35;
+  border-radius: 0;
+  color: #52251e;
+  background: #eee2bd;
+  box-shadow: none;
+  font-size: 0.52rem;
+}
+.symbaroum-hud-ability-special-ranks button small { display: inline; color: inherit; font-size: 0.44rem; }
+.symbaroum-hud-ability-special-ranks button:hover,
+.symbaroum-hud-ability-special-ranks button[data-selected="true"] { border-color: #536a3e; color: #fff9d9; background: #52663f; }
+.symbaroum-hud-ability-special-card details { border-top: 1px solid rgb(103 74 39 / 27%); color: #4c4034; font-size: 0.59rem; }
+.symbaroum-hud-ability-special-card summary { padding: 4px 6px; color: #6b2b22; cursor: pointer; font-weight: 700; }
+.symbaroum-hud-ability-special-card details > div,
+.symbaroum-hud-ability-special-card details > section { margin: 0 6px 6px; line-height: 1.3; }
+.symbaroum-hud-ability-special-card details p { margin: 0 0 4px; }
+.symbaroum-hud-ability-special-level { padding-top: 4px; border-top: 1px solid rgb(103 74 39 / 24%); }
+.symbaroum-hud-ability-special-level h5 { margin: 0; color: #6f291f; font-family: "Symbaroum HUD Primitive", "Philosopher", serif; font-size: 0.62rem; }
+.symbaroum-hud-ability-special-level > strong { display: block; color: #755d26; font-size: 0.49rem; text-transform: uppercase; }
+.symbaroum-hud-ritual-choice-card > button {
+  display: grid;
+  width: 100%;
+  min-height: 43px;
+  margin: 0;
+  padding: 4px;
+  grid-template-columns: 36px minmax(0, 1fr) 18px;
+  align-items: center;
+  gap: 6px;
+  border: 0;
+  border-radius: 0;
+  color: #4d211b;
+  background: transparent;
+  box-shadow: none;
+  text-align: left;
+}
+.symbaroum-hud-ritual-choice-card > button img { width: 36px; height: 36px; border: 1px solid #795e28; background: #0a0908; object-fit: cover; }
+.symbaroum-hud-ritual-choice-card > button strong { display: block; font-family: "Symbaroum HUD Primitive", "Philosopher", serif; font-size: 0.69rem; }
+.symbaroum-hud-ritual-choice-card > button > i { color: #765d28; text-align: center; }
+.symbaroum-hud-ritual-choice-card > button[data-selected="true"] { color: #40532f; background: rgb(180 193 132 / 38%); }
+.symbaroum-hud-ritual-choice-card > button[data-selected="true"] > i { color: #52663f; }
+.symbaroum-hud-ritual-choice-card > button:disabled { cursor: not-allowed; filter: grayscale(0.55); opacity: 0.52; }
+.symbaroum-hud-ability-special-empty { margin: 0; padding: 12px; color: #756650; font-style: italic; text-align: center; }
+
 @media (max-width: 800px) {
   .symbaroum-hud-occupation-book {
     grid-template-columns: 210px minmax(0, 1fr);

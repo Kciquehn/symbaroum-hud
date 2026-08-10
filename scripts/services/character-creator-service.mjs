@@ -480,6 +480,8 @@ export class CharacterCreatorService {
 
   static async #showAbilitiesBook(DialogV2, actor) {
     const abilities = availableCreationAbilities(actor);
+    const mysticalPowers = availableCreationMysticalPowers(actor);
+    const rituals = availableCreationRituals(actor);
     const racialCost = racialAbilityCost(actor);
     return DialogV2.wait({
       classes: [
@@ -489,7 +491,7 @@ export class CharacterCreatorService {
       ],
       window: { title: game.i18n.localize("SYMBAROUMHUD.CharacterCreator.Abilities.Title") },
       position: { width: 920, height: 600 },
-      content: await abilitiesBookContent(actor, abilities, racialCost),
+      content: await abilitiesBookContent(actor, abilities, racialCost, mysticalPowers, rituals),
       buttons: [
         {
           action: "choose-abilities",
@@ -506,19 +508,37 @@ export class CharacterCreatorService {
               return null;
             }
             const available = new Map(availableCreationAbilities(actor).map((item) => [item.id, item]));
+            const availablePowers = new Map(availableCreationMysticalPowers(actor).map((item) => [item.id, item]));
+            const availableRituals = new Map(availableCreationRituals(actor).map((item) => [item.id, item]));
             if (selections.some((selection) => !available.has(selection.id))) {
               ui.notifications?.warn(game.i18n.localize("SYMBAROUMHUD.CharacterCreator.Abilities.Unavailable"));
               return null;
             }
-            const documents = selections.map((selection) => creationAbilityData(
-              available.get(selection.id), selection.rank
-            ));
+            if (!areCreationAbilityChoicesValid(selections, available, availablePowers, availableRituals)) {
+              ui.notifications?.warn(game.i18n.localize("SYMBAROUMHUD.CharacterCreator.Abilities.InvalidSpecialChoice"));
+              return null;
+            }
+            const documents = selections.flatMap((selection) => {
+              const ability = available.get(selection.id);
+              if (selection.kind === "mysticalPower") {
+                return [creationAbilityData(availablePowers.get(selection.choiceId), selection.rank)];
+              }
+              const created = [creationAbilityData(ability, selection.rank)];
+              if (selection.kind === "ritualist") {
+                created.push(...selection.ritualIds.map((id) => creationRitualData(availableRituals.get(id))));
+              }
+              return created;
+            });
             const created = documents.length
               ? await actor.createEmbeddedDocuments("Item", documents)
               : [];
             const purchasedWithExperience = mode === ABILITY_DISTRIBUTION_MODES.EXPERIENCE;
-            const freeExperience = purchasedWithExperience ? 0 : selections.reduce((total, selection) => total
-              + creationAbilityExperienceCost(available.get(selection.id), selection.rank), 0);
+            const freeExperience = purchasedWithExperience ? 0 : selections.reduce((total, selection) => {
+              const source = selection.kind === "mysticalPower"
+                ? availablePowers.get(selection.choiceId)
+                : available.get(selection.id);
+              return total + creationAbilityExperienceCost(source, selection.rank);
+            }, 0);
             const freeRaceExperience = racialFreeExperienceValue(actor);
             const existingBonus = Number(actor.system?.bonus?.experience?.value ?? 0);
             if (purchasedWithExperience) {
@@ -533,10 +553,20 @@ export class CharacterCreatorService {
               });
             }
             const previous = actor.getFlag?.(MODULE_ID, STATE_FLAG) ?? {};
-            const saved = selections.map((selection) => ({
-              ...selection,
-              name: available.get(selection.id).name
-            }));
+            const saved = selections.map((selection) => {
+              const ability = available.get(selection.id);
+              const chosen = selection.kind === "mysticalPower"
+                ? availablePowers.get(selection.choiceId)
+                : ability;
+              return {
+                ...selection,
+                name: chosen.name,
+                ...(selection.kind === "mysticalPower" ? { abilityName: ability.name } : {}),
+                ...(selection.kind === "ritualist"
+                  ? { ritualNames: selection.ritualIds.map((id) => availableRituals.get(id).name) }
+                  : {})
+              };
+            });
             await actor.setFlag(MODULE_ID, STATE_FLAG, {
               ...previous,
               version: 1,
@@ -769,13 +799,31 @@ function bindRaceBook(element) {
 }
 
 function availableCreationAbilities(actor) {
-  const observerLevel = globalThis.CONST?.DOCUMENT_OWNERSHIP_LEVELS?.OBSERVER ?? "OBSERVER";
   const known = new Set(actorItems(actor)
     .filter((item) => item.type === "ability")
     .map(abilityIdentity));
+  return availableCreationWorldItems(known, (item) => item?.type === "ability");
+}
+
+function availableCreationMysticalPowers(actor) {
+  const known = new Set(actorItems(actor)
+    .filter(isMysticalPowerDocument)
+    .map(abilityIdentity));
+  return availableCreationWorldItems(known, isMysticalPowerDocument);
+}
+
+function availableCreationRituals(actor) {
+  const known = new Set(actorItems(actor)
+    .filter(isRitualDocument)
+    .map(abilityIdentity));
+  return availableCreationWorldItems(known, isRitualDocument);
+}
+
+function availableCreationWorldItems(known, predicate) {
+  const observerLevel = globalThis.CONST?.DOCUMENT_OWNERSHIP_LEVELS?.OBSERVER ?? "OBSERVER";
   const unique = new Map();
   for (const item of Array.from(game.items?.values?.() ?? game.items ?? [])) {
-    if (item?.type !== "ability") continue;
+    if (!predicate(item)) continue;
     if (item.testUserPermission && !item.testUserPermission(game.user, observerLevel)) continue;
     const identity = abilityIdentity(item);
     if (!identity || known.has(identity) || unique.has(identity)) continue;
@@ -784,6 +832,36 @@ function availableCreationAbilities(actor) {
   return [...unique.values()].sort((left, right) => left.name.localeCompare(
     right.name, game.i18n?.lang ?? "pt-BR", { sensitivity: "base" }
   ));
+}
+
+function isMysticalPowerDocument(item) {
+  return item?.type === "mysticalPower"
+    || item?.type === "mystical-power"
+    || Boolean(item?.system?.isMysticalPower);
+}
+
+function isRitualDocument(item) {
+  return item?.type === "ritual" || Boolean(item?.system?.isRitual);
+}
+
+function isMysticalPowerAbility(item) {
+  const reference = normalizeName(item?.system?.reference);
+  const name = normalizeName(item?.name);
+  return ["mysticalpower", "mysticpower", "podermistico"].includes(reference)
+    || ["podermistico", "mysticalpower"].includes(name);
+}
+
+function isRitualistAbility(item) {
+  const reference = normalizeName(item?.system?.reference);
+  const name = normalizeName(item?.name);
+  return reference === "ritualist" || ["ritualista", "ritualist"].includes(name);
+}
+
+function ritualCapacity(rank) {
+  if (rank === "novice") return 1;
+  if (rank === "adept") return 3;
+  if (rank === "master") return 6;
+  return 0;
 }
 
 function abilityIdentity(item) {
@@ -809,7 +887,7 @@ function racialFreeExperienceValue(actor) {
   }, 0);
 }
 
-async function abilitiesBookContent(actor, abilities, racialCost) {
+async function abilitiesBookContent(actor, abilities, racialCost, mysticalPowers, rituals) {
   const firstId = abilities[0]?.id ?? "";
   const costs = abilityExperienceCosts();
   const state = actor?.getFlag?.(MODULE_ID, STATE_FLAG) ?? {};
@@ -828,12 +906,20 @@ async function abilitiesBookContent(actor, abilities, racialCost) {
     </button>`).join("");
   const pages = (await Promise.all(abilities.map(async (ability) => {
     const system = ability.system ?? {};
+    const mysticalPowerAbility = isMysticalPowerAbility(ability);
+    const ritualistAbility = isRitualistAbility(ability);
     const general = await enrichCreatorDescription(system.description, ability);
     const levels = await Promise.all(["novice", "adept", "master"].map(async (rank) => ({
       rank,
       action: system[rank]?.action ?? "",
       description: await enrichCreatorDescription(system[rank]?.description, ability)
     })));
+    const mysticalPowerChoices = mysticalPowerAbility
+      ? await mysticalPowerChoiceContent(ability, mysticalPowers, costs)
+      : "";
+    const ritualChoices = ritualistAbility
+      ? await ritualChoiceContent(ability, rituals)
+      : "";
     return `
       <article class="symbaroum-hud-ability-page" data-creation-ability-page="${escapeHtml(ability.id)}"
         ${ability.id === firstId ? "" : "hidden"}>
@@ -846,11 +932,12 @@ async function abilitiesBookContent(actor, abilities, racialCost) {
           <h3>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.GeneralDescription")}</h3>
           <div>${general}</div>
         </section>
-        <div class="symbaroum-hud-ability-levels">
+        ${mysticalPowerAbility ? mysticalPowerChoices : `<div class="symbaroum-hud-ability-levels">
           ${levels.map(({ rank, action, description }) => `
             <section class="symbaroum-hud-ability-level" data-rank="${rank}">
               <header><h3>${localizeEscaped(`SYMBAROUMHUD.CharacterCreator.Abilities.${rank[0].toUpperCase()}${rank.slice(1)}`)}</h3>
-                <button type="button" data-select-ability="${escapeHtml(ability.id)}" data-rank="${rank}">
+                <button type="button" data-select-ability="${escapeHtml(ability.id)}" data-rank="${rank}"
+                  ${ritualistAbility ? 'data-choice-type="ritualist"' : ""}>
                   <i class="fa-regular fa-circle" aria-hidden="true"></i>
                   <span>${localizeEscaped(`SYMBAROUMHUD.CharacterCreator.Abilities.Select${rank[0].toUpperCase()}${rank.slice(1)}`)}</span>
                   <small>${abilityRankCost(rank, costs)} XP</small>
@@ -859,7 +946,8 @@ async function abilitiesBookContent(actor, abilities, racialCost) {
               ${action ? `<strong>${escapeHtml(action)}</strong>` : ""}
               <div>${description}</div>
             </section>`).join("")}
-        </div>
+        </div>`}
+        ${ritualChoices}
       </article>`;
   }))).join("");
   const limits = abilitySelectionLimits(ABILITY_DISTRIBUTION_MODES.FIVE_NOVICE, racialCost);
@@ -900,6 +988,82 @@ async function abilitiesBookContent(actor, abilities, racialCost) {
     </div>`;
 }
 
+async function mysticalPowerChoiceContent(ability, mysticalPowers, costs) {
+  if (!mysticalPowers.length) {
+    return `<p class="symbaroum-hud-ability-special-empty">${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.NoMysticalPowers")}</p>`;
+  }
+  const cards = await Promise.all(mysticalPowers.map(async (power) => {
+    const description = await enrichCreatorDescription(power.system?.description, power);
+    const levels = await Promise.all(["novice", "adept", "master"].map(async (rank) => ({
+      rank,
+      action: power.system?.[rank]?.action ?? "",
+      description: await enrichCreatorDescription(power.system?.[rank]?.description, power)
+    })));
+    return `
+      <article class="symbaroum-hud-ability-special-card" data-mystical-power-choice="${escapeHtml(power.id)}">
+        <header>
+          <img src="${escapeHtml(power.img || "icons/svg/daze.svg")}" alt="">
+          <div><h4>${escapeHtml(power.name)}</h4>
+          ${power.system?.reference ? `<small>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.Reference")}: ${escapeHtml(power.system.reference)}</small>` : ""}</div>
+        </header>
+        <div class="symbaroum-hud-ability-special-ranks">
+          ${["novice", "adept", "master"].map((rank) => `
+            <button type="button" data-select-ability="${escapeHtml(ability.id)}"
+              data-choice-type="mysticalPower" data-choice-id="${escapeHtml(power.id)}" data-rank="${rank}">
+              <i class="fa-regular fa-circle" aria-hidden="true"></i>
+              <span>${localizeEscaped(`SYMBAROUMHUD.CharacterCreator.Abilities.${rank[0].toUpperCase()}${rank.slice(1)}`)}</span>
+              <small>${abilityRankCost(rank, costs)} XP</small>
+            </button>`).join("")}
+        </div>
+        <details><summary>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.ReadMysticalPower")}</summary>
+          <div class="symbaroum-hud-ability-special-description">${description}</div>
+          ${levels.map(({ rank, action, description: levelDescription }) => `
+            <section class="symbaroum-hud-ability-special-level">
+              <h5>${localizeEscaped(`SYMBAROUMHUD.CharacterCreator.Abilities.${rank[0].toUpperCase()}${rank.slice(1)}`)}</h5>
+              ${action ? `<strong>${escapeHtml(action)}</strong>` : ""}
+              <div>${levelDescription}</div>
+            </section>`).join("")}
+        </details>
+      </article>`;
+  }));
+  return `
+    <section class="symbaroum-hud-ability-special-picker symbaroum-hud-mystical-power-picker">
+      <header><div><h3>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.ChooseMysticalPower")}</h3>
+        <p>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.MysticalPowerChoiceIntro")}</p></div></header>
+      <div class="symbaroum-hud-ability-special-list">${cards.join("")}</div>
+    </section>`;
+}
+
+async function ritualChoiceContent(ability, rituals) {
+  const cards = await Promise.all(rituals.map(async (ritual) => {
+    const description = await enrichCreatorDescription(ritual.system?.description, ritual);
+    return `
+      <article class="symbaroum-hud-ability-special-card symbaroum-hud-ritual-choice-card"
+        data-ritual-choice="${escapeHtml(ritual.id)}">
+        <button type="button" data-select-ritual="${escapeHtml(ritual.id)}"
+          data-ritualist-ability="${escapeHtml(ability.id)}" aria-pressed="false" disabled>
+          <img src="${escapeHtml(ritual.img || "icons/svg/book.svg")}" alt="">
+          <span><strong>${escapeHtml(ritual.name)}</strong>
+          ${ritual.system?.reference ? `<small>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.Reference")}: ${escapeHtml(ritual.system.reference)}</small>` : ""}</span>
+          <i class="fa-regular fa-square" aria-hidden="true"></i>
+        </button>
+        <details><summary>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.ReadRitual")}</summary>
+          <div>${description}</div>
+        </details>
+      </article>`;
+  }));
+  return `
+    <section class="symbaroum-hud-ability-special-picker symbaroum-hud-ritual-picker"
+      data-ritual-picker="${escapeHtml(ability.id)}">
+      <header><div><h3>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.ChooseRituals")}</h3>
+        <p>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.RitualChoiceIntro")}</p></div>
+        <strong><b data-ritual-count>0</b>/<b data-ritual-required>0</b></strong></header>
+      ${cards.length
+        ? `<div class="symbaroum-hud-ability-special-list">${cards.join("")}</div>`
+        : `<p class="symbaroum-hud-ability-special-empty">${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.NoRituals")}</p>`}
+    </section>`;
+}
+
 function bindAbilitiesBook(element, racialCost) {
   const modeInput = element.querySelector('input[name="abilityDistributionMode"]');
   const selectionsInput = element.querySelector('input[name="abilitySelections"]');
@@ -908,6 +1072,8 @@ function bindAbilitiesBook(element, racialCost) {
   const entries = [...element.querySelectorAll("[data-creation-ability-id]")];
   const pages = [...element.querySelectorAll("[data-creation-ability-page]")];
   const selections = new Map();
+  const selectionKey = (id, choiceId = "") => choiceId ? `${id}:${choiceId}` : id;
+  const selectionValues = (source = selections) => [...source.values()];
   const openPage = (id) => {
     for (const entry of entries) {
       const active = entry.dataset.creationAbilityId === id;
@@ -920,13 +1086,12 @@ function bindAbilitiesBook(element, racialCost) {
     const mode = modeInput.value;
     const limits = abilitySelectionLimits(mode, racialCost);
     const counts = { novice: 0, adept: 0, master: 0 };
-    for (const rank of selections.values()) counts[rank]++;
-    selectionsInput.value = JSON.stringify([...selections].map(([id, rank]) => ({ id, rank })));
+    const values = selectionValues();
+    for (const selection of values) counts[selection.rank]++;
+    selectionsInput.value = JSON.stringify(values);
     const experienceMode = mode === ABILITY_DISTRIBUTION_MODES.EXPERIENCE;
     const budget = Math.max(0, Number(experienceInput?.value) || 0);
-    const spent = abilitySelectionCost(
-      [...selections].map(([id, rank]) => ({ id, rank })), costs
-    ) + racialCost * abilityRankCost("novice", costs);
+    const spent = abilitySelectionCost(values, costs) + racialCost * abilityRankCost("novice", costs);
     const experiencePanel = element.querySelector("[data-ability-experience-panel]");
     const slotsPanel = element.querySelector(".symbaroum-hud-ability-slots");
     if (experiencePanel) experiencePanel.hidden = !experienceMode;
@@ -947,23 +1112,47 @@ function bindAbilitiesBook(element, racialCost) {
       slot.dataset.complete = String(counts[rank] === limits[rank]);
     }
     for (const entry of entries) {
-      const rank = selections.get(entry.dataset.creationAbilityId) ?? "";
-      entry.dataset.selected = String(Boolean(rank));
-      entry.querySelector("[data-ability-entry-rank]").textContent = rank
-        ? game.i18n.localize(`SYMBAROUMHUD.CharacterCreator.Abilities.${rank[0].toUpperCase()}${rank.slice(1)}`) : "";
+      const selected = values.filter((selection) => selection.id === entry.dataset.creationAbilityId);
+      entry.dataset.selected = String(selected.length > 0);
+      entry.querySelector("[data-ability-entry-rank]").textContent = selected.length > 1
+        ? (game.i18n.format?.("SYMBAROUMHUD.CharacterCreator.Abilities.SelectedCount", { count: selected.length }) ?? String(selected.length))
+        : selected.length
+          ? game.i18n.localize(`SYMBAROUMHUD.CharacterCreator.Abilities.${selected[0].rank[0].toUpperCase()}${selected[0].rank.slice(1)}`)
+          : "";
     }
     for (const button of element.querySelectorAll("[data-select-ability]")) {
-      const rank = selections.get(button.dataset.selectAbility);
-      const active = rank === button.dataset.rank;
+      const key = selectionKey(button.dataset.selectAbility, button.dataset.choiceId);
+      const active = selections.get(key)?.rank === button.dataset.rank;
       button.dataset.selected = String(active);
       button.hidden = experienceMode
         ? false
         : button.dataset.rank === "master" || (button.dataset.rank === "adept" && limits.adept === 0);
       button.querySelector("i").className = active ? "fa-solid fa-circle-check" : "fa-regular fa-circle";
     }
+    for (const picker of element.querySelectorAll("[data-ritual-picker]")) {
+      const selection = selections.get(picker.dataset.ritualPicker);
+      const required = selection?.kind === "ritualist" ? ritualCapacity(selection.rank) : 0;
+      const chosen = new Set(selection?.ritualIds ?? []);
+      picker.querySelector("[data-ritual-count]").textContent = String(chosen.size);
+      picker.querySelector("[data-ritual-required]").textContent = String(required);
+      for (const button of picker.querySelectorAll("[data-select-ritual]")) {
+        const active = chosen.has(button.dataset.selectRitual);
+        button.dataset.selected = String(active);
+        button.setAttribute("aria-pressed", String(active));
+        button.disabled = !selection || (!active && chosen.size >= required);
+        button.querySelector("i").className = active ? "fa-solid fa-square-check" : "fa-regular fa-square";
+      }
+    }
+    const specialChoicesComplete = values.every((selection) => {
+      if (selection.kind === "mysticalPower") return Boolean(selection.choiceId);
+      if (selection.kind === "ritualist") {
+        return new Set(selection.ritualIds ?? []).size === ritualCapacity(selection.rank);
+      }
+      return true;
+    });
     const confirm = element.querySelector('[data-action="choose-abilities"]');
-    if (confirm) confirm.disabled = !isValidAbilitySelection(
-      [...selections].map(([id, rank]) => ({ id, rank })), mode, racialCost,
+    if (confirm) confirm.disabled = !specialChoicesComplete || !isValidAbilitySelection(
+      values, mode, racialCost,
       { experienceBudget: budget, costs }
     );
   };
@@ -979,30 +1168,60 @@ function bindAbilitiesBook(element, racialCost) {
     refresh();
   });
   for (const button of element.querySelectorAll("[data-select-ability]")) button.addEventListener("click", () => {
-    const { selectAbility: id, rank } = button.dataset;
-    if (selections.get(id) === rank) selections.delete(id);
+    const { selectAbility: id, rank, choiceId = "", choiceType = "" } = button.dataset;
+    const key = selectionKey(id, choiceId);
+    const current = selections.get(key);
+    if (current?.rank === rank) selections.delete(key);
     else {
+      const candidate = {
+        id,
+        rank,
+        ...(choiceType ? { kind: choiceType } : {}),
+        ...(choiceId ? { choiceId } : {}),
+        ...(choiceType === "ritualist"
+          ? { ritualIds: Array.from(current?.ritualIds ?? []).slice(0, ritualCapacity(rank)) }
+          : {})
+      };
       if (modeInput.value === ABILITY_DISTRIBUTION_MODES.EXPERIENCE) {
         const candidates = new Map(selections);
-        candidates.set(id, rank);
+        candidates.set(key, candidate);
         const budget = Math.max(0, Number(experienceInput?.value) || 0);
-        const spent = abilitySelectionCost(
-          [...candidates].map(([candidateId, candidateRank]) => ({ id: candidateId, rank: candidateRank })), costs
-        ) + racialCost * abilityRankCost("novice", costs);
+        const spent = abilitySelectionCost(selectionValues(candidates), costs)
+          + racialCost * abilityRankCost("novice", costs);
         if (spent > budget) {
           ui.notifications?.warn(game.i18n.localize("SYMBAROUMHUD.CharacterCreator.Abilities.NotEnoughExperience"));
           return;
         }
       } else {
         const limits = abilitySelectionLimits(modeInput.value, racialCost);
-        const occupied = [...selections].filter(([otherId, otherRank]) => otherId !== id && otherRank === rank).length;
+        const occupied = selectionValues().filter((selection) => (
+          selectionKey(selection.id, selection.choiceId) !== key && selection.rank === rank
+        )).length;
         if (occupied >= limits[rank]) {
           ui.notifications?.warn(game.i18n.localize("SYMBAROUMHUD.CharacterCreator.Abilities.SlotFull"));
           return;
         }
       }
-      selections.set(id, rank);
+      selections.set(key, candidate);
     }
+    refresh();
+  });
+  for (const button of element.querySelectorAll("[data-select-ritual]")) button.addEventListener("click", () => {
+    const key = button.dataset.ritualistAbility;
+    const selection = selections.get(key);
+    if (!selection || selection.kind !== "ritualist") {
+      ui.notifications?.warn(game.i18n.localize("SYMBAROUMHUD.CharacterCreator.Abilities.SelectRitualistRankFirst"));
+      return;
+    }
+    const ritualIds = new Set(selection.ritualIds ?? []);
+    const ritualId = button.dataset.selectRitual;
+    if (ritualIds.has(ritualId)) ritualIds.delete(ritualId);
+    else if (ritualIds.size < ritualCapacity(selection.rank)) ritualIds.add(ritualId);
+    else {
+      ui.notifications?.warn(game.i18n.localize("SYMBAROUMHUD.CharacterCreator.Abilities.RitualCapacityFull"));
+      return;
+    }
+    selections.set(key, { ...selection, ritualIds: [...ritualIds] });
     refresh();
   });
   const search = element.querySelector("[data-ability-search]");
@@ -1019,10 +1238,39 @@ function bindAbilitiesBook(element, racialCost) {
 function parseAbilitySelections(value) {
   try {
     const parsed = JSON.parse(value);
-    return Array.isArray(parsed) ? parsed.map(({ id, rank }) => ({ id: String(id), rank: String(rank) })) : [];
+    if (!Array.isArray(parsed)) return [];
+    return parsed.map((entry) => ({
+      id: String(entry?.id ?? ""),
+      rank: String(entry?.rank ?? ""),
+      ...(entry?.kind ? { kind: String(entry.kind) } : {}),
+      ...(entry?.choiceId ? { choiceId: String(entry.choiceId) } : {}),
+      ...(Array.isArray(entry?.ritualIds)
+        ? { ritualIds: [...new Set(entry.ritualIds.map((id) => String(id)).filter(Boolean))] }
+        : {})
+    }));
   } catch {
     return [];
   }
+}
+
+function areCreationAbilityChoicesValid(selections, abilities, mysticalPowers, rituals) {
+  return selections.every((selection) => {
+    const ability = abilities.get(selection.id);
+    if (!ability) return false;
+    if (isMysticalPowerAbility(ability)) {
+      return selection.kind === "mysticalPower"
+        && Boolean(selection.choiceId)
+        && mysticalPowers.has(selection.choiceId);
+    }
+    if (isRitualistAbility(ability)) {
+      const ritualIds = Array.from(selection.ritualIds ?? []);
+      return selection.kind === "ritualist"
+        && ritualIds.length === ritualCapacity(selection.rank)
+        && new Set(ritualIds).size === ritualIds.length
+        && ritualIds.every((id) => rituals.has(id));
+    }
+    return !selection.kind && !selection.choiceId && !selection.ritualIds;
+  });
 }
 
 function creationAbilityData(source, rank) {
@@ -1034,6 +1282,13 @@ function creationAbilityData(source, rank) {
   data.system.novice.isActive = true;
   data.system.adept.isActive = rank === "adept" || rank === "master";
   data.system.master.isActive = rank === "master";
+  return data;
+}
+
+function creationRitualData(source) {
+  const clone = globalThis.foundry?.utils?.deepClone ?? ((value) => structuredClone(value));
+  const data = clone(source.toObject ? source.toObject() : source);
+  delete data._id;
   return data;
 }
 

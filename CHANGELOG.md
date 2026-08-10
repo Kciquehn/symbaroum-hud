@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.52
+
+- Integra **Poder Místico** à etapa de Habilidades do Criador de Fichas, listando todos os poderes do mundo compartilhados com o jogador como **Observer** ou superior.
+- Permite comprar vários poderes místicos, escolher individualmente o nível Novato, Adepto ou Mestre e ler a descrição completa de cada poder antes da escolha.
+- Faz cada poder escolhido ocupar uma compra própria e copia diretamente o documento nativo para a ficha, sem duplicar a Habilidade genérica **Poder Místico**.
+- Integra **Ritualista** à mesma etapa e mostra todos os rituais acessíveis no mundo.
+- Exige e adiciona automaticamente 1 ritual no nível Novato, 3 no Adepto ou 6 no Mestre, conforme a progressão oficial da Habilidade.
+- Adiciona seletores compactos e temáticos, contadores, bloqueio de capacidade e validação das escolhas especiais antes da confirmação.
+
 ## 0.1.51
 
 - Adiciona uma seta branca discreta ao cabeçalho das Táticas de NPCs.

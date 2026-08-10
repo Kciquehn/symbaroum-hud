@@ -147,7 +147,19 @@
         "Invalid": "Preencha todas as vagas de Habilidade antes de continuar.",
         "Unavailable": "Uma das Habilidades escolhidas não está mais disponível.",
         "SlotFull": "Todas as vagas deste nível já estão preenchidas.",
-        "NotEnoughExperience": "Não há XP suficiente para comprar esta Habilidade neste nível."
+        "NotEnoughExperience": "Não há XP suficiente para comprar esta Habilidade neste nível.",
+        "ChooseMysticalPower": "Escolha o Poder Místico",
+        "MysticalPowerChoiceIntro": "Cada poder conta como uma Habilidade. Escolha o poder e o nível que deseja aprender; você pode comprar mais de um poder.",
+        "ReadMysticalPower": "Ler descrição do poder",
+        "NoMysticalPowers": "Nenhum Poder Místico acessível está disponível no mundo.",
+        "ChooseRituals": "Escolha os Rituais",
+        "RitualChoiceIntro": "Ritualista concede 1 ritual como Novato, 3 como Adepto e 6 como Mestre. Os rituais escolhidos serão adicionados à ficha.",
+        "ReadRitual": "Ler descrição do ritual",
+        "NoRituals": "Nenhum Ritual acessível está disponível no mundo.",
+        "SelectedCount": "{count} escolhidos",
+        "SelectRitualistRankFirst": "Escolha primeiro o nível de Ritualista.",
+        "RitualCapacityFull": "Todas as vagas de Ritual deste nível já estão preenchidas.",
+        "InvalidSpecialChoice": "Escolha todos os Poderes Místicos ou Rituais exigidos antes de continuar."
       },
       "Occupations": {
         "berserker": { "Name": "Amoque", "Quote": "Mantenha distância! Eu não gostaria de te machucar.", "Summary": "Espíritos de fúria seguem você e o preenchem com uma ferocidade descontrolada em batalha. Fora do combate, sua disposição paciente e pensativa cria um contraste que o torna estimado e temido.", "Attributes": "Vigoroso 13+, Rápido 11+", "Races": "Bárbaro ou ogro", "Abilities": "Amoque, Força da Empunhadura Dupla, Punho de Ferro, Recuperação" },

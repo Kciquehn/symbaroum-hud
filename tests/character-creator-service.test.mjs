@@ -100,6 +100,25 @@ function worldAbility(id, name = `Ability ${id}`, permission = () => true) {
   };
 }
 
+function worldMysticalPower(id, name = `Power ${id}`, permission = () => true) {
+  const source = worldAbility(id, name, permission);
+  const data = source.toObject();
+  data.type = "mysticalPower";
+  return { ...data, testUserPermission: permission, toObject: () => structuredClone(data) };
+}
+
+function worldRitual(id, name = `Ritual ${id}`, permission = () => true) {
+  const data = {
+    _id: id,
+    id,
+    name,
+    type: "ritual",
+    img: `icons/${id}.webp`,
+    system: { reference: id, description: `Ritual description ${id}` }
+  };
+  return { ...data, testUserPermission: permission, toObject: () => structuredClone(data) };
+}
+
 function actor(overrides = {}) {
   const flags = new Map();
   const updates = [];
@@ -459,6 +478,57 @@ test("the Ability list includes world documents shared with the player as Observ
   assert.deepEqual(permissionLevels, [2]);
 });
 
+test("Poder Místico and Ritualista list every accessible world choice as Observer", async () => {
+  const blank = actor({ id: "special-choices", uuid: "Actor.special-choices" });
+  await blank.setFlag("symbaroum-hud", "characterCreationMode", "creator");
+  await blank.setFlag("symbaroum-hud", "characterCreatorState", { version: 1, step: "race-complete" });
+  const mysticalAbility = worldAbility("mystical-ability", "Poder Místico");
+  mysticalAbility.system.reference = "mysticalpower";
+  const ritualist = worldAbility("ritualist-ability", "Ritualista");
+  ritualist.system.reference = "ritualist";
+  const permissionLevels = [];
+  const previous = game.items;
+  game.items = [
+    mysticalAbility,
+    ritualist,
+    worldMysticalPower("power-visible", "Cascata de Enxofre", (_user, level) => {
+      permissionLevels.push(["power", level]);
+      return level === 2;
+    }),
+    worldMysticalPower("power-hidden", "Poder Oculto", () => false),
+    worldRitual("ritual-visible", "Interrogatório Telepático", (_user, level) => {
+      permissionLevels.push(["ritual", level]);
+      return level === 2;
+    }),
+    worldRitual("ritual-hidden", "Ritual Oculto", () => false)
+  ];
+  dialogChoices.push("close");
+  try {
+    await CharacterCreatorService.openAbilitiesStep(blank);
+  } finally {
+    game.items = previous;
+  }
+  const content = dialogConfigs.at(-1).content;
+  assert.match(content, /Cascata de Enxofre/);
+  assert.match(content, /Interrogatório Telepático/);
+  assert.match(content, /data-choice-type="mysticalPower"/);
+  assert.match(content, /data-select-ritual="ritual-visible"/);
+  assert.doesNotMatch(content, /Poder Oculto/);
+  assert.doesNotMatch(content, /Ritual Oculto/);
+  assert.deepEqual(permissionLevels, [["power", 2], ["ritual", 2]]);
+});
+
+test("different mystical powers can occupy separate Ability selections", () => {
+  assert.equal(isValidAbilitySelection([
+    { id: "mystical-ability", rank: "novice", choiceId: "power-a" },
+    { id: "mystical-ability", rank: "novice", choiceId: "power-b" }
+  ], ABILITY_DISTRIBUTION_MODES.EXPERIENCE, 0, { experienceBudget: 20 }), true);
+  assert.equal(isValidAbilitySelection([
+    { id: "mystical-ability", rank: "novice", choiceId: "power-a" },
+    { id: "mystical-ability", rank: "adept", choiceId: "power-a" }
+  ], ABILITY_DISTRIBUTION_MODES.EXPERIENCE, 0, { experienceBudget: 40 }), false);
+});
+
 test("saving five Novice choices creates native Abilities without spending XP", async () => {
   const blank = actor({ id: "five-abilities", uuid: "Actor.five-abilities" });
   await blank.setFlag("symbaroum-hud", "characterCreationMode", "creator");
@@ -550,4 +620,70 @@ test("XP purchase is the primary mode and records spent and remaining experience
   assert.equal(blank.flag("characterCreatorState").abilityDistribution, "experience");
   assert.equal(blank.flag("characterCreatorState").abilityExperienceBudget, 80);
   assert.equal(blank.flag("characterCreatorState").abilityExperienceSpent, 70);
+});
+
+test("buying mystical powers creates the chosen native powers without duplicating the generic Ability", async () => {
+  const blank = actor({ id: "mystical-powers", uuid: "Actor.mystical-powers" });
+  await blank.setFlag("symbaroum-hud", "characterCreationMode", "creator");
+  await blank.setFlag("symbaroum-hud", "characterCreatorState", { version: 1, step: "race-complete" });
+  const mysticalAbility = worldAbility("mystical-ability", "Poder Místico");
+  mysticalAbility.system.reference = "mysticalpower";
+  const previous = game.items;
+  game.items = [mysticalAbility, worldMysticalPower("power-a"), worldMysticalPower("power-b")];
+  dialogChoices.push({
+    action: "choose-abilities",
+    form: {
+      abilityDistributionMode: "experience",
+      abilityExperienceBudget: 40,
+      abilitySelections: JSON.stringify([
+        { id: "mystical-ability", rank: "novice", kind: "mysticalPower", choiceId: "power-a" },
+        { id: "mystical-ability", rank: "adept", kind: "mysticalPower", choiceId: "power-b" }
+      ])
+    }
+  });
+  try {
+    await CharacterCreatorService.openAbilitiesStep(blank);
+  } finally {
+    game.items = previous;
+  }
+  assert.deepEqual(blank.items.map((item) => item.type), ["mysticalPower", "mysticalPower"]);
+  assert.equal(blank.items.some((item) => item.name === "Poder Místico"), false);
+  assert.equal(blank.items[0].system.novice.isActive, true);
+  assert.equal(blank.items[0].system.adept.isActive, false);
+  assert.equal(blank.items[1].system.adept.isActive, true);
+  assert.equal(blank.flag("characterCreatorState").abilityExperienceSpent, 40);
+});
+
+test("Ritualista automatically adds the number of selected rituals allowed by its rank", async () => {
+  const blank = actor({ id: "ritualist", uuid: "Actor.ritualist" });
+  await blank.setFlag("symbaroum-hud", "characterCreationMode", "creator");
+  await blank.setFlag("symbaroum-hud", "characterCreatorState", { version: 1, step: "race-complete" });
+  const ritualist = worldAbility("ritualist-ability", "Ritualista");
+  ritualist.system.reference = "ritualist";
+  const previous = game.items;
+  game.items = [ritualist, worldRitual("ritual-a"), worldRitual("ritual-b"), worldRitual("ritual-c")];
+  dialogChoices.push({
+    action: "choose-abilities",
+    form: {
+      abilityDistributionMode: "experience",
+      abilityExperienceBudget: 30,
+      abilitySelections: JSON.stringify([{
+        id: "ritualist-ability",
+        rank: "adept",
+        kind: "ritualist",
+        ritualIds: ["ritual-a", "ritual-b", "ritual-c"]
+      }])
+    }
+  });
+  try {
+    await CharacterCreatorService.openAbilitiesStep(blank);
+  } finally {
+    game.items = previous;
+  }
+  assert.deepEqual(blank.items.map((item) => item.type), ["ability", "ritual", "ritual", "ritual"]);
+  assert.equal(blank.items[0].system.novice.isActive, true);
+  assert.equal(blank.items[0].system.adept.isActive, true);
+  assert.deepEqual(blank.flag("characterCreatorState").abilities[0].ritualNames, [
+    "Ritual ritual-a", "Ritual ritual-b", "Ritual ritual-c"
+  ]);
 });

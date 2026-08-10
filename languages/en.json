@@ -147,7 +147,19 @@
         "Invalid": "Fill every Ability slot before continuing.",
         "Unavailable": "One of the selected Abilities is no longer available.",
         "SlotFull": "Every slot at this level is already filled.",
-        "NotEnoughExperience": "There is not enough XP to purchase this Ability at this level."
+        "NotEnoughExperience": "There is not enough XP to purchase this Ability at this level.",
+        "ChooseMysticalPower": "Choose the Mystical Power",
+        "MysticalPowerChoiceIntro": "Each power counts as one Ability. Choose the power and rank to learn; you may purchase more than one power.",
+        "ReadMysticalPower": "Read power description",
+        "NoMysticalPowers": "No accessible Mystical Power is available in the world.",
+        "ChooseRituals": "Choose Rituals",
+        "RitualChoiceIntro": "Ritualist grants 1 ritual at Novice, 3 at Adept and 6 at Master. The selected rituals will be added to the sheet.",
+        "ReadRitual": "Read ritual description",
+        "NoRituals": "No accessible Ritual is available in the world.",
+        "SelectedCount": "{count} selected",
+        "SelectRitualistRankFirst": "Choose the Ritualist rank first.",
+        "RitualCapacityFull": "Every Ritual slot at this rank is already filled.",
+        "InvalidSpecialChoice": "Choose every required Mystical Power or Ritual before continuing."
       },
       "Occupations": {
         "berserker": { "Name": "Berserker", "Quote": "Keep your distance! I would not want to hurt you.", "Summary": "Spirits of rage follow you and fill you with uncontrolled ferocity in battle. Outside combat, your patient and thoughtful disposition makes the contrast both admired and feared.", "Attributes": "Strong 13+, Quick 11+", "Races": "Barbarian or ogre", "Abilities": "Berserker, Two-handed Force, Iron Fist, Recovery" },
