@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.48
+
+- Remove completamente do Criador de Fichas as classificações não oficiais das raças.
+- Deixa o índice lateral de Raças somente com o ícone e o nome de cada opção.
+
 ## 0.1.47
 
 - Simplifica o cabeçalho da página de cada raça, mantendo somente o ícone e o nome.

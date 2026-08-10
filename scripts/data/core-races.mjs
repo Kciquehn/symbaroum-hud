@@ -26,7 +26,6 @@ const race = (id, icon, required, choice = [], optional = []) => Object.freeze({
   choice: Object.freeze(choice),
   optional: Object.freeze(optional),
   name: `SYMBAROUMHUD.CharacterCreator.Race.Entries.${id}.Name`,
-  family: `SYMBAROUMHUD.CharacterCreator.Race.Entries.${id}.Family`,
   summary: `SYMBAROUMHUD.CharacterCreator.Race.Entries.${id}.Summary`
 });
 

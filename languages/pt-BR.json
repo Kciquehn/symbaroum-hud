@@ -99,11 +99,11 @@
         "ChoiceRequired": "Escolha um dos traços oferecidos por esta raça.",
         "RequiredAdded": "Traços obrigatórios adicionados à ficha: {traits}.",
         "Entries": {
-          "ambrian": { "Name": "Ambriano", "Family": "Humano", "Summary": "Herdeiros do reino ao sul dos Titãs, os ambrianos chegaram a Davokar com organização, ambição e fortes diferenças sociais. Seus contatos ou privilégios refletem a posição que ocupam na nova pátria." },
-          "barbarian": { "Name": "Bárbaro", "Family": "Humano", "Summary": "Os clãs bárbaros conhecem Davokar e suas fronteiras há gerações. Sua sobrevivência depende tanto dos laços com outras pessoas quanto da experiência prática nos ermos." },
-          "changeling": { "Name": "Cambiante", "Family": "Povo élfico", "Summary": "Deixados entre humanos ainda crianças, os cambiantes vivem entre duas naturezas. Têm vida longa e alguns desenvolvem a capacidade de alterar o próprio corpo." },
-          "goblin": { "Name": "Goblin", "Family": "Povo de vida breve", "Summary": "Goblins vivem intensamente durante suas poucas décadas e ocupam posições marginalizadas. Muitos desenvolvem um instinto extraordinário para escapar de perigos." },
-          "ogre": { "Name": "Ogro", "Family": "Errante solitário", "Summary": "Ogres despertam adultos e sem memória nas profundezas de Davokar. São longevos, vistos como párias e alguns possuem uma constituição especialmente robusta." }
+          "ambrian": { "Name": "Ambriano", "Summary": "Herdeiros do reino ao sul dos Titãs, os ambrianos chegaram a Davokar com organização, ambição e fortes diferenças sociais. Seus contatos ou privilégios refletem a posição que ocupam na nova pátria." },
+          "barbarian": { "Name": "Bárbaro", "Summary": "Os clãs bárbaros conhecem Davokar e suas fronteiras há gerações. Sua sobrevivência depende tanto dos laços com outras pessoas quanto da experiência prática nos ermos." },
+          "changeling": { "Name": "Cambiante", "Summary": "Deixados entre humanos ainda crianças, os cambiantes vivem entre duas naturezas. Têm vida longa e alguns desenvolvem a capacidade de alterar o próprio corpo." },
+          "goblin": { "Name": "Goblin", "Summary": "Goblins vivem intensamente durante suas poucas décadas e ocupam posições marginalizadas. Muitos desenvolvem um instinto extraordinário para escapar de perigos." },
+          "ogre": { "Name": "Ogro", "Summary": "Ogres despertam adultos e sem memória nas profundezas de Davokar. São longevos, vistos como párias e alguns possuem uma constituição especialmente robusta." }
         },
         "Traits": {
           "contacts": { "Name": "Contatos", "Description": "O personagem possui uma rede de conhecidos ligada a uma região ou grupo social." },

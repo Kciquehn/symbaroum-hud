@@ -311,7 +311,7 @@ test("the third creator step presents all core races and their trait rules", asy
   assert.equal(Object.keys(CORE_RACE_TRAITS).length, 9);
   assert.match(content, /RaceProgress/);
   assert.doesNotMatch(content, /Guide\.Title/);
-  assert.equal((content.match(/\.Family/g) ?? []).length, 5);
+  assert.doesNotMatch(content, /\.Family/);
   assert.equal((content.match(/data-race-id=/g) ?? []).length, 5);
   assert.match(content, /name="race-choice-ambrian"/);
   assert.match(content, /name="race-optional-goblin-survivalInstinct"/);

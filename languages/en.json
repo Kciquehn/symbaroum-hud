@@ -99,11 +99,11 @@
         "ChoiceRequired": "Choose one of the traits offered by this race.",
         "RequiredAdded": "Mandatory traits added to the sheet: {traits}.",
         "Entries": {
-          "ambrian": { "Name": "Ambrian", "Family": "Human", "Summary": "Heirs to the realm south of the Titans, Ambrians came to Davokar with organization, ambition and strong social divisions. Their contacts or privileges reflect their place in the new homeland." },
-          "barbarian": { "Name": "Barbarian", "Family": "Human", "Summary": "The barbarian clans have known Davokar and its borders for generations. Their survival relies on both personal bonds and practical wilderness experience." },
-          "changeling": { "Name": "Changeling", "Family": "Elven folk", "Summary": "Left among humans as children, changelings live between two natures. They are long-lived and some develop the power to alter their own body." },
-          "goblin": { "Name": "Goblin", "Family": "Short-lived folk", "Summary": "Goblins live intensely through their few decades and occupy marginalized positions. Many develop an extraordinary instinct for escaping danger." },
-          "ogre": { "Name": "Ogre", "Family": "Solitary wanderer", "Summary": "Ogres awaken as adults without memories in Davokar's depths. They are long-lived, treated as pariahs, and some possess a particularly robust build." }
+          "ambrian": { "Name": "Ambrian", "Summary": "Heirs to the realm south of the Titans, Ambrians came to Davokar with organization, ambition and strong social divisions. Their contacts or privileges reflect their place in the new homeland." },
+          "barbarian": { "Name": "Barbarian", "Summary": "The barbarian clans have known Davokar and its borders for generations. Their survival relies on both personal bonds and practical wilderness experience." },
+          "changeling": { "Name": "Changeling", "Summary": "Left among humans as children, changelings live between two natures. They are long-lived and some develop the power to alter their own body." },
+          "goblin": { "Name": "Goblin", "Summary": "Goblins live intensely through their few decades and occupy marginalized positions. Many develop an extraordinary instinct for escaping danger." },
+          "ogre": { "Name": "Ogre", "Summary": "Ogres awaken as adults without memories in Davokar's depths. They are long-lived, treated as pariahs, and some possess a particularly robust build." }
         },
         "Traits": {
           "contacts": { "Name": "Contacts", "Description": "The character has a network of acquaintances tied to a region or social group." },

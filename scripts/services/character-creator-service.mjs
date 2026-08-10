@@ -547,7 +547,6 @@ function raceBookContent(actor) {
       aria-pressed="${race.id === selectedId}">
       <i class="fa-solid ${race.icon}" aria-hidden="true"></i>
       <span>${localizeEscaped(race.name)}</span>
-      <small>${localizeEscaped(race.family)}</small>
     </button>
   `).join("");
 
