@@ -974,16 +974,8 @@
   gap: 10px;
 }
 
-.symbaroum-hud-race-heading span {
-  color: #8f3325;
-  font-size: 0.59rem;
-  font-weight: 700;
-  letter-spacing: 0.13em;
-  text-transform: uppercase;
-}
-
 .symbaroum-hud-race-heading h2 {
-  margin: 1px 0 0;
+  margin: 0;
   color: #351a15;
   font-family: "Symbaroum HUD Primitive", "Philosopher", serif;
   font-size: 1.5rem;

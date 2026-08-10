@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.47
+
+- Simplifica o cabeçalho da página de cada raça, mantendo somente o ícone e o nome.
+- Remove da área principal classificações redundantes como **Humano**, **Povo élfico** e **Povo de vida breve**.
+
 ## 0.1.46
 
 - Faz a Compra de Pontos iniciar todos os oito Atributos no valor mínimo `5`.

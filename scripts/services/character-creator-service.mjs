@@ -560,7 +560,7 @@ function raceBookContent(actor) {
         ${race.id === selectedId ? "" : "hidden"}>
         <div class="symbaroum-hud-race-heading">
           <div class="symbaroum-hud-occupation-page-icon" aria-hidden="true"><i class="fa-solid ${race.icon}"></i></div>
-          <div><span>${localizeEscaped(race.family)}</span><h2>${localizeEscaped(race.name)}</h2></div>
+          <h2>${localizeEscaped(race.name)}</h2>
         </div>
         <p class="symbaroum-hud-race-summary">${localizeEscaped(race.summary)}</p>
         ${required ? `<section class="symbaroum-hud-race-trait-section"><header><h3>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Race.RequiredTraits")}</h3><span>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Race.Automatic")}</span></header><p>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Race.RequiredHint")}</p><div>${required}</div></section>` : ""}
