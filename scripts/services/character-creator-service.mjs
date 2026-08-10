@@ -4,10 +4,34 @@ import {
   OCCUPATION_ARCHETYPES,
   coreOccupation
 } from "../data/core-occupations.mjs";
+import {
+  ATTRIBUTE_MAX,
+  ATTRIBUTE_MIN,
+  ATTRIBUTE_POINT_TOTAL,
+  CORE_ATTRIBUTES,
+  TYPICAL_ATTRIBUTE_VALUES,
+  isValidPointBuyDistribution,
+  isValidTypicalDistribution
+} from "../data/core-attributes.mjs";
 
 const MODE_FLAG = "characterCreationMode";
 const STATE_FLAG = "characterCreatorState";
 const OCCUPATION_STEP_COMPLETE = "occupation-complete";
+const ATTRIBUTES_STEP_COMPLETE = "attributes-complete";
+const ATTRIBUTE_DISTRIBUTION_MODES = Object.freeze({
+  TYPICAL: "typical",
+  POINT_BUY: "point-buy"
+});
+const DEFAULT_TYPICAL_DISTRIBUTION = Object.freeze({
+  accurate: 10,
+  cunning: 13,
+  discreet: 5,
+  persuasive: 7,
+  quick: 11,
+  resolute: 15,
+  strong: 10,
+  vigilant: 9
+});
 const BIOGRAPHY_FIELDS = Object.freeze([
   "race",
   "occupation",
@@ -46,7 +70,12 @@ export function shouldOfferCharacterCreator(actor, user = game.user) {
 }
 
 export function isOccupationStepComplete(actor) {
-  return actor?.getFlag?.(MODULE_ID, STATE_FLAG)?.step === OCCUPATION_STEP_COMPLETE;
+  return [OCCUPATION_STEP_COMPLETE, ATTRIBUTES_STEP_COMPLETE]
+    .includes(actor?.getFlag?.(MODULE_ID, STATE_FLAG)?.step);
+}
+
+export function isAttributesStepComplete(actor) {
+  return actor?.getFlag?.(MODULE_ID, STATE_FLAG)?.step === ATTRIBUTES_STEP_COMPLETE;
 }
 
 export function registerCharacterCreatorHooks() {
@@ -64,6 +93,9 @@ export class CharacterCreatorService {
     const mode = actor.getFlag?.(MODULE_ID, MODE_FLAG);
     if (mode === CHARACTER_CREATION_MODES.CREATOR && !isOccupationStepComplete(actor)) {
       return this.openOccupationStep(actor);
+    }
+    if (mode === CHARACTER_CREATION_MODES.CREATOR && !isAttributesStepComplete(actor)) {
+      return this.openAttributesStep(actor);
     }
     if (!mode) return this.offer(actor);
     return null;
@@ -107,7 +139,8 @@ export class CharacterCreatorService {
       await actor.setFlag(MODULE_ID, MODE_FLAG, choice);
       if (choice === CHARACTER_CREATION_MODES.CREATOR) {
         Hooks.callAll(`${MODULE_ID}.characterCreatorRequested`, actor);
-        await this.#showOccupationBook(DialogV2, actor);
+        const occupation = await this.#showOccupationBook(DialogV2, actor);
+        if (occupation) await this.#showAttributesBook(DialogV2, actor);
       }
       return choice;
     } catch (error) {
@@ -132,7 +165,33 @@ export class CharacterCreatorService {
 
     pendingActors.add(key);
     try {
-      return await this.#showOccupationBook(DialogV2, actor);
+      const occupation = await this.#showOccupationBook(DialogV2, actor);
+      if (!occupation) return occupation;
+      return await this.#showAttributesBook(DialogV2, actor);
+    } catch (error) {
+      return handleCreatorError(error);
+    } finally {
+      pendingActors.delete(key);
+    }
+  }
+
+  static async openAttributesStep(actor) {
+    const key = actorKey(actor);
+    if (
+      !key
+      || pendingActors.has(key)
+      || !canOwn(actor, game.user)
+      || actor.getFlag?.(MODULE_ID, MODE_FLAG) !== CHARACTER_CREATION_MODES.CREATOR
+      || !isOccupationStepComplete(actor)
+      || isAttributesStepComplete(actor)
+    ) return null;
+
+    const DialogV2 = dialogClass();
+    if (!DialogV2) return null;
+
+    pendingActors.add(key);
+    try {
+      return await this.#showAttributesBook(DialogV2, actor);
     } catch (error) {
       return handleCreatorError(error);
     } finally {
@@ -188,6 +247,79 @@ export class CharacterCreatorService {
       rejectClose: false,
       render: (_event, dialog) => {
         bindOccupationBook(dialog.element);
+        globalThis.setTimeout(() => {
+          if (dialog.element?.isConnected) dialog.bringToFront?.();
+        }, 0);
+      }
+    });
+  }
+
+  static async #showAttributesBook(DialogV2, actor) {
+    return DialogV2.wait({
+      classes: [
+        "symbaroum-hud-character-creator-dialog",
+        "symbaroum-hud-occupation-book-dialog",
+        "symbaroum-hud-attributes-book-dialog"
+      ],
+      window: {
+        title: game.i18n.localize("SYMBAROUMHUD.CharacterCreator.Attributes.Title")
+      },
+      position: { width: 860, height: 550 },
+      content: attributesBookContent(actor),
+      buttons: [
+        {
+          action: "choose-attributes",
+          icon: "fa-solid fa-dice-d20",
+          label: game.i18n.localize("SYMBAROUMHUD.CharacterCreator.Attributes.Choose"),
+          default: true,
+          callback: async (_event, button) => {
+            const mode = formValue(button.form, "attributeDistributionMode");
+            const values = attributeValuesFromForm(button.form, mode);
+            const valid = mode === ATTRIBUTE_DISTRIBUTION_MODES.TYPICAL
+              ? isValidTypicalDistribution(values)
+              : isValidPointBuyDistribution(values);
+            if (!valid) {
+              ui.notifications?.warn(
+                game.i18n.localize("SYMBAROUMHUD.CharacterCreator.Attributes.Invalid")
+              );
+              return null;
+            }
+
+            const update = Object.fromEntries(CORE_ATTRIBUTES.map((attribute, index) => [
+              `system.attributes.${attribute.id}.value`,
+              values[index]
+            ]));
+            await actor.update(update);
+            const previous = actor.getFlag?.(MODULE_ID, STATE_FLAG) ?? {};
+            await actor.setFlag(MODULE_ID, STATE_FLAG, {
+              ...previous,
+              version: 1,
+              step: ATTRIBUTES_STEP_COMPLETE,
+              attributeDistribution: mode,
+              attributes: Object.fromEntries(CORE_ATTRIBUTES.map((attribute, index) => [
+                attribute.id,
+                values[index]
+              ]))
+            });
+            Hooks.callAll(`${MODULE_ID}.characterCreatorStepCompleted`, actor, {
+              step: "attributes",
+              mode,
+              attributes: values
+            });
+            return values;
+          }
+        },
+        {
+          action: "continue-later",
+          icon: "fa-solid fa-bookmark",
+          label: game.i18n.localize("SYMBAROUMHUD.CharacterCreator.Attributes.ContinueLater"),
+          callback: () => null
+        }
+      ],
+      close: () => null,
+      rejectClose: false,
+      render: (_event, dialog) => {
+        bindAttributesBook(dialog.element);
         globalThis.setTimeout(() => {
           if (dialog.element?.isConnected) dialog.bringToFront?.();
         }, 0);
@@ -304,6 +436,231 @@ function bindOccupationBook(element) {
       for (const page of pages) page.hidden = page.dataset.occupationPage !== id;
     });
   }
+}
+
+function attributesBookContent(actor) {
+  const typicalValues = typicalDistribution(actor);
+  const pointValues = pointBuyDistribution(actor);
+  const typicalOptions = TYPICAL_ATTRIBUTE_VALUES.map((value) =>
+    `<option value="${value}">${value}</option>`
+  ).join("");
+  const cards = CORE_ATTRIBUTES.map((attribute, index) => `
+    <article class="symbaroum-hud-attribute-choice" data-attribute-card="${attribute.id}">
+      <header>
+        <i class="fa-solid ${attribute.icon}" aria-hidden="true"></i>
+        <h3>${localizeEscaped(attribute.name)}</h3>
+        <div class="symbaroum-hud-attribute-typical-control" data-mode-control="typical">
+          <label class="sr-only" for="symbaroum-hud-typical-${attribute.id}">
+            ${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Attributes.Value")}
+          </label>
+          <select id="symbaroum-hud-typical-${attribute.id}"
+            name="typical-${attribute.id}" data-typical-attribute="${attribute.id}"
+            data-previous-value="${typicalValues[index]}">
+            ${typicalOptions}
+          </select>
+        </div>
+        <div class="symbaroum-hud-attribute-point-control" data-mode-control="point-buy" hidden>
+          <button type="button" data-adjust-attribute="${attribute.id}" data-delta="-1"
+            aria-label="${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Attributes.Decrease")}">−</button>
+          <input type="number" name="points-${attribute.id}" value="${pointValues[index]}"
+            min="${ATTRIBUTE_MIN}" max="${ATTRIBUTE_MAX}" readonly
+            aria-label="${localizeEscaped(attribute.name)}">
+          <button type="button" data-adjust-attribute="${attribute.id}" data-delta="1"
+            aria-label="${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Attributes.Increase")}">+</button>
+        </div>
+      </header>
+      <p>${localizeEscaped(attribute.description)}</p>
+    </article>
+  `).join("");
+
+  return `
+    <div class="symbaroum-hud-attributes-book">
+      <input type="hidden" name="attributeDistributionMode"
+        value="${ATTRIBUTE_DISTRIBUTION_MODES.TYPICAL}">
+      <header class="symbaroum-hud-creator-step-guide">
+        <div class="symbaroum-hud-creator-step-number">
+          <small>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Guide.Title")}</small>
+          <strong>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Guide.AttributesProgress")}</strong>
+        </div>
+        <div>
+          <h2>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Guide.StepTwoTitle")}</h2>
+          <p>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Guide.StepTwoText")}</p>
+        </div>
+      </header>
+      <nav class="symbaroum-hud-attribute-mode-tabs"
+        aria-label="${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Attributes.DistributionMethod")}">
+        <button type="button" data-attribute-mode="typical" data-active="true" aria-pressed="true">
+          <i class="fa-solid fa-shuffle" aria-hidden="true"></i>
+          ${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Attributes.Typical")}
+        </button>
+        <button type="button" data-attribute-mode="point-buy" data-active="false" aria-pressed="false">
+          <i class="fa-solid fa-scale-balanced" aria-hidden="true"></i>
+          ${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Attributes.PointBuy")}
+        </button>
+      </nav>
+      <div class="symbaroum-hud-attribute-workspace">
+        <aside class="symbaroum-hud-attribute-rules">
+          <div data-attribute-rules="typical">
+            <span>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Attributes.RulesLabel")}</span>
+            <h2>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Attributes.Typical")}</h2>
+            <p>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Attributes.TypicalRules")}</p>
+            <div class="symbaroum-hud-attribute-value-sequence" aria-label="${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Attributes.TypicalValues")}">
+              ${TYPICAL_ATTRIBUTE_VALUES.map((value) => `<strong>${value}</strong>`).join("")}
+            </div>
+            <small>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Attributes.TypicalHint")}</small>
+          </div>
+          <div data-attribute-rules="point-buy" hidden>
+            <span>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Attributes.RulesLabel")}</span>
+            <h2>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Attributes.PointBuy")}</h2>
+            <p>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Attributes.PointBuyRules")}</p>
+            <div class="symbaroum-hud-attribute-points">
+              <small>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Attributes.Remaining")}</small>
+              <strong data-points-remaining>0</strong>
+              <span data-points-status
+                data-ready="${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Attributes.Ready")}"
+                data-pending="${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Attributes.SpendAll")}">
+                ${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Attributes.Ready")}
+              </span>
+            </div>
+            <small>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Attributes.PointBuyHint")}</small>
+          </div>
+        </aside>
+        <main class="symbaroum-hud-attribute-reading-page">
+          <header class="symbaroum-hud-occupation-character-name">
+            <i class="fa-solid fa-dice-d20" aria-hidden="true"></i>
+            <span>${escapeHtml(actor.name)}</span>
+          </header>
+          <div class="symbaroum-hud-attribute-introduction">
+            <h2>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Attributes.Heading")}</h2>
+            <p>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Attributes.Introduction")}</p>
+          </div>
+          <section class="symbaroum-hud-attribute-choice-grid">
+            ${cards}
+          </section>
+        </main>
+      </div>
+    </div>
+  `;
+}
+
+function bindAttributesBook(element) {
+  const modeInput = element.querySelector('input[name="attributeDistributionMode"]');
+  const tabs = Array.from(element.querySelectorAll("[data-attribute-mode]"));
+  const rulePanels = Array.from(element.querySelectorAll("[data-attribute-rules]"));
+  const modeControls = Array.from(element.querySelectorAll("[data-mode-control]"));
+  const typicalSelects = Array.from(element.querySelectorAll("[data-typical-attribute]"));
+  const pointInputs = Array.from(element.querySelectorAll('input[name^="points-"]'));
+
+  for (const select of typicalSelects) {
+    const attribute = select.dataset.typicalAttribute;
+    const value = typicalDistributionValue(element, attribute);
+    select.value = String(value);
+    select.dataset.previousValue = String(value);
+    select.addEventListener("change", () => swapTypicalAttributeValue(select, typicalSelects));
+  }
+
+  const setMode = (mode) => {
+    if (!Object.values(ATTRIBUTE_DISTRIBUTION_MODES).includes(mode)) return;
+    modeInput.value = mode;
+    for (const tab of tabs) {
+      const active = tab.dataset.attributeMode === mode;
+      tab.dataset.active = String(active);
+      tab.setAttribute("aria-pressed", String(active));
+    }
+    for (const panel of rulePanels) panel.hidden = panel.dataset.attributeRules !== mode;
+    for (const control of modeControls) control.hidden = control.dataset.modeControl !== mode;
+    updatePointBuyStatus(element, pointInputs);
+  };
+
+  for (const tab of tabs) {
+    tab.addEventListener("click", () => setMode(tab.dataset.attributeMode));
+  }
+  for (const button of element.querySelectorAll("[data-adjust-attribute]")) {
+    button.addEventListener("click", () => {
+      const input = element.querySelector(`input[name="points-${button.dataset.adjustAttribute}"]`);
+      if (!input) return;
+      const current = Number(input.value);
+      const delta = Number(button.dataset.delta);
+      const next = current + delta;
+      const remaining = ATTRIBUTE_POINT_TOTAL
+        - pointInputs.reduce((total, candidate) => total + Number(candidate.value), 0);
+      if (next < ATTRIBUTE_MIN || next > ATTRIBUTE_MAX) return;
+      if (delta > 0 && remaining <= 0) return;
+      if (
+        next === ATTRIBUTE_MAX
+        && pointInputs.some((candidate) => candidate !== input && Number(candidate.value) === ATTRIBUTE_MAX)
+      ) return;
+      input.value = String(next);
+      updatePointBuyStatus(element, pointInputs);
+    });
+  }
+
+  setMode(ATTRIBUTE_DISTRIBUTION_MODES.TYPICAL);
+}
+
+function swapTypicalAttributeValue(select, selects) {
+  const previous = Number(select.dataset.previousValue);
+  const next = Number(select.value);
+  if (next === previous) return;
+  const counterpart = selects.find((candidate) =>
+    candidate !== select && Number(candidate.value) === next
+  );
+  if (!counterpart) {
+    select.value = String(previous);
+    return;
+  }
+  counterpart.value = String(previous);
+  for (const candidate of selects) candidate.dataset.previousValue = candidate.value;
+}
+
+function updatePointBuyStatus(element, pointInputs) {
+  const remaining = ATTRIBUTE_POINT_TOTAL
+    - pointInputs.reduce((total, input) => total + Number(input.value), 0);
+  const counter = element.querySelector("[data-points-remaining]");
+  const status = element.querySelector("[data-points-status]");
+  const mode = element.querySelector('input[name="attributeDistributionMode"]')?.value;
+  const confirm = element.querySelector('[data-action="choose-attributes"]');
+  if (counter) counter.textContent = String(remaining);
+  if (status) {
+    const ready = remaining === 0;
+    status.textContent = ready ? status.dataset.ready : status.dataset.pending;
+    status.dataset.complete = String(ready);
+  }
+  if (confirm) {
+    confirm.disabled = mode === ATTRIBUTE_DISTRIBUTION_MODES.POINT_BUY && remaining !== 0;
+  }
+}
+
+function typicalDistribution(actor) {
+  const current = CORE_ATTRIBUTES.map((attribute) =>
+    Number(actor?.system?.attributes?.[attribute.id]?.value)
+  );
+  if (isValidTypicalDistribution(current)) return current;
+  return CORE_ATTRIBUTES.map((attribute) => DEFAULT_TYPICAL_DISTRIBUTION[attribute.id]);
+}
+
+function typicalDistributionValue(element, attributeId) {
+  const input = element.querySelector(`select[name="typical-${attributeId}"]`);
+  return Number(input?.dataset.previousValue ?? DEFAULT_TYPICAL_DISTRIBUTION[attributeId]);
+}
+
+function pointBuyDistribution(actor) {
+  const current = CORE_ATTRIBUTES.map((attribute) =>
+    Number(actor?.system?.attributes?.[attribute.id]?.value)
+  );
+  if (isValidPointBuyDistribution(current)) return current;
+  return CORE_ATTRIBUTES.map(() => 10);
+}
+
+function attributeValuesFromForm(form, mode) {
+  const prefix = mode === ATTRIBUTE_DISTRIBUTION_MODES.TYPICAL ? "typical" : "points";
+  return CORE_ATTRIBUTES.map((attribute) => Number(formValue(form, `${prefix}-${attribute.id}`)));
+}
+
+function formValue(form, name) {
+  return form?.elements?.namedItem?.(name)?.value
+    ?? form?.elements?.[name]?.value
+    ?? "";
 }
 
 function characterCreatorChoiceContent() {

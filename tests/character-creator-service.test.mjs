@@ -21,10 +21,17 @@ globalThis.foundry = {
         wait: async (config) => {
           dialogConfigs.push(config);
           const choice = dialogChoices.shift() ?? "close";
+          if (choice === "close") return null;
           if (typeof choice !== "object") return choice;
           const button = config.buttons.find((entry) => entry.action === choice.action);
+          const values = choice.form ?? { occupation: choice.occupation };
+          const elements = Object.fromEntries(Object.entries(values).map(([name, value]) => [
+            name,
+            { value }
+          ]));
+          elements.namedItem = (name) => elements[name] ?? null;
           return button.callback({}, {
-            form: { elements: { occupation: { value: choice.occupation } } }
+            form: { elements }
           });
         }
       }
@@ -37,12 +44,19 @@ const {
   CHARACTER_CREATION_MODES,
   CharacterCreatorService,
   isBlankPlayerActor,
+  isAttributesStepComplete,
   isOccupationStepComplete,
   shouldOfferCharacterCreator
 } = await import("../scripts/services/character-creator-service.mjs");
 const { CORE_OCCUPATIONS, OCCUPATION_ARCHETYPES } = await import(
   "../scripts/data/core-occupations.mjs"
 );
+const {
+  CORE_ATTRIBUTES,
+  TYPICAL_ATTRIBUTE_VALUES,
+  isValidPointBuyDistribution,
+  isValidTypicalDistribution
+} = await import("../scripts/data/core-attributes.mjs");
 
 function actor(overrides = {}) {
   const flags = new Map();
@@ -54,7 +68,10 @@ function actor(overrides = {}) {
     type: "player",
     items: [],
     system: {
-      attributes: { accurate: { value: 10 } },
+      attributes: Object.fromEntries([
+        "accurate", "cunning", "discreet", "persuasive",
+        "quick", "resolute", "strong", "vigilant"
+      ].map((id) => [id, { value: 10 }])),
       bio: {
         race: "",
         occupation: "",
@@ -162,9 +179,12 @@ test("the first creator step explains the process and exposes a detailed occupat
 test("choosing an occupation writes it to the sheet and completes the first step", async () => {
   const blank = actor({ id: "occupation", uuid: "Actor.occupation" });
   await blank.setFlag("symbaroum-hud", "characterCreationMode", "creator");
-  dialogChoices.push({ action: "choose-occupation", occupation: "wizard" });
+  dialogChoices.push(
+    { action: "choose-occupation", occupation: "wizard" },
+    "close"
+  );
 
-  assert.equal(await CharacterCreatorService.openOccupationStep(blank), "wizard");
+  assert.equal(await CharacterCreatorService.openOccupationStep(blank), null);
   assert.deepEqual(blank.updates, [{
     "system.bio.occupation": "SYMBAROUMHUD.CharacterCreator.Occupations.wizard.Name"
   }]);
@@ -174,5 +194,76 @@ test("choosing an occupation writes it to the sheet and completes the first step
     step: "occupation-complete",
     archetype: "mystic",
     occupation: "wizard"
+  });
+  assert.match(dialogConfigs.at(-1).content, /symbaroum-hud-attributes-book/);
+});
+
+test("the second creator step offers typical distribution and point buy", async () => {
+  const blank = actor({ id: "attributes", uuid: "Actor.attributes" });
+  await blank.setFlag("symbaroum-hud", "characterCreationMode", "creator");
+  await blank.setFlag("symbaroum-hud", "characterCreatorState", {
+    version: 1,
+    step: "occupation-complete",
+    archetype: "mystic",
+    occupation: "wizard"
+  });
+  dialogChoices.push("close");
+
+  await CharacterCreatorService.openAttributesStep(blank);
+  const content = dialogConfigs.at(-1).content;
+  assert.match(content, /AttributesProgress/);
+  assert.match(content, /data-attribute-mode="typical"/);
+  assert.match(content, /data-attribute-mode="point-buy"/);
+  assert.equal((content.match(/data-attribute-card=/g) ?? []).length, 8);
+  assert.equal((content.match(/data-typical-attribute=/g) ?? []).length, 8);
+  assert.equal((content.match(/data-adjust-attribute=/g) ?? []).length, 16);
+});
+
+test("validates the two official Attribute distribution methods", () => {
+  assert.equal(CORE_ATTRIBUTES.length, 8);
+  assert.equal(isValidTypicalDistribution(TYPICAL_ATTRIBUTE_VALUES), true);
+  assert.equal(isValidTypicalDistribution([5, 7, 9, 10, 10, 11, 14, 14]), false);
+  assert.equal(isValidPointBuyDistribution([10, 10, 10, 10, 10, 10, 10, 10]), true);
+  assert.equal(isValidPointBuyDistribution([15, 15, 10, 10, 10, 10, 5, 5]), false);
+  assert.equal(isValidPointBuyDistribution([5, 7, 9, 10, 10, 11, 13, 15]), true);
+});
+
+test("saving point-buy Attributes writes the native Symbaroum fields", async () => {
+  const blank = actor({ id: "save-attributes", uuid: "Actor.save-attributes" });
+  await blank.setFlag("symbaroum-hud", "characterCreationMode", "creator");
+  await blank.setFlag("symbaroum-hud", "characterCreatorState", {
+    version: 1,
+    step: "occupation-complete",
+    archetype: "warrior",
+    occupation: "knight"
+  });
+  const distribution = [10, 13, 5, 7, 11, 15, 10, 9];
+  dialogChoices.push({
+    action: "choose-attributes",
+    form: {
+      attributeDistributionMode: "point-buy",
+      ...Object.fromEntries(CORE_ATTRIBUTES.map((attribute, index) => [
+        `points-${attribute.id}`,
+        distribution[index]
+      ]))
+    }
+  });
+
+  assert.deepEqual(await CharacterCreatorService.openAttributesStep(blank), distribution);
+  assert.deepEqual(blank.updates, [Object.fromEntries(CORE_ATTRIBUTES.map((attribute, index) => [
+    `system.attributes.${attribute.id}.value`,
+    distribution[index]
+  ]))]);
+  assert.equal(isAttributesStepComplete(blank), true);
+  assert.deepEqual(blank.flag("characterCreatorState"), {
+    version: 1,
+    step: "attributes-complete",
+    archetype: "warrior",
+    occupation: "knight",
+    attributeDistribution: "point-buy",
+    attributes: Object.fromEntries(CORE_ATTRIBUTES.map((attribute, index) => [
+      attribute.id,
+      distribution[index]
+    ]))
   });
 });

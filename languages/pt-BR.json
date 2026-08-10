@@ -14,7 +14,10 @@
         "Title": "Como criar um personagem",
         "Progress": "Passo 1 de 10",
         "StepOneTitle": "Selecione uma ocupação",
-        "StepOneText": "Comece escolhendo um arquétipo e uma das ocupações sugeridas. Arquétipos e ocupações são pontos de partida: ajudam a dar vida ao personagem e oferecem uma forma rápida de entrar no jogo, mas não limitam as escolhas das próximas etapas."
+        "StepOneText": "Comece escolhendo um arquétipo e uma das ocupações sugeridas. Arquétipos e ocupações são pontos de partida: ajudam a dar vida ao personagem e oferecem uma forma rápida de entrar no jogo, mas não limitam as escolhas das próximas etapas.",
+        "AttributesProgress": "Passo 2 de 10",
+        "StepTwoTitle": "Distribua os Atributos",
+        "StepTwoText": "Os oito Atributos formam a espinha dorsal do personagem. Escolha uma distribuição típica para trocar os valores prontos de lugar ou use a compra de pontos para construir a combinação desejada."
       },
       "Archetypes": {
         "Warrior": {
@@ -43,6 +46,39 @@
         "Choose": "Escolher esta ocupação",
         "ContinueLater": "Continuar depois",
         "SelectionHint": "A ocupação orienta seu conceito, mas não limita as escolhas futuras do personagem."
+      },
+      "Attributes": {
+        "Title": "Criador de Fichas — Distribua os Atributos",
+        "Heading": "Os Atributos",
+        "Introduction": "Sempre que uma ação tiver importância dramática, o personagem realiza um Teste de Sucesso. Quanto maior o valor do Atributo utilizado, maiores são suas chances de sucesso.",
+        "DistributionMethod": "Método de distribuição dos Atributos",
+        "Typical": "Distribuição típica",
+        "PointBuy": "Compra de pontos",
+        "RulesLabel": "Regras do Livro Básico",
+        "TypicalRules": "Distribua os valores 5, 7, 9, 10, 10, 11, 13 e 15 entre os oito Atributos. Apenas um valor pode ser 15; nenhum pode ser maior que 15 ou menor que 5.",
+        "TypicalValues": "Valores da distribuição típica",
+        "TypicalHint": "Escolha um novo número em qualquer Atributo. O criador trocará automaticamente sua posição com o valor selecionado.",
+        "PointBuyRules": "Distribua exatamente 80 pontos entre os oito Atributos. Cada valor deve ficar entre 5 e 15, e apenas um Atributo pode alcançar 15.",
+        "PointBuyHint": "Reduza um Atributo para liberar pontos e use o botão + para investi-los em outro. A distribuição só termina quando o contador voltar a zero.",
+        "Remaining": "Pontos restantes",
+        "Ready": "Distribuição completa",
+        "SpendAll": "Ainda há pontos para distribuir",
+        "Value": "Valor do Atributo",
+        "Increase": "Aumentar Atributo",
+        "Decrease": "Reduzir Atributo",
+        "Choose": "Confirmar Atributos",
+        "ContinueLater": "Continuar depois",
+        "Invalid": "A distribuição não atende às regras de criação de Atributos.",
+        "Entries": {
+          "accurate": { "Name": "Preciso", "Description": "Representa coordenação motora, precisão e assertividade. É usado para atingir alvos com golpes, arremessos e armas à distância, normalmente contra Rápido." },
+          "cunning": { "Name": "Astuto", "Description": "Representa perspicácia, conhecimento, senso comum e instrução. É usado para recordar fatos, resolver problemas lógicos e realizar pesquisas." },
+          "discreet": { "Name": "Discreto", "Description": "Representa aptidão para agir em silêncio e sem ser notado. É usado para esconder-se, seguir alguém, contrabandear ou furtar, geralmente contra Vigilante." },
+          "persuasive": { "Name": "Persuasivo", "Description": "Representa a capacidade de influenciar outras pessoas por palavras, voz, aparência e linguagem corporal, normalmente contra Resoluto." },
+          "quick": { "Name": "Rápido", "Description": "Representa reflexos, equilíbrio, agilidade e velocidade. Define a iniciativa e ajuda em saltos, esquivas e manobras acrobáticas." },
+          "resolute": { "Name": "Resoluto", "Description": "Representa resistência à pressão social, controle mental e Corrupção, além de estar ligado ao uso de poderes místicos. Um valor baixo é arriscado." },
+          "strong": { "Name": "Vigoroso", "Description": "Representa força física, capacidade de suportar dor e resistência a venenos e doenças. Também determina a base da Vitalidade do personagem." },
+          "vigilant": { "Name": "Vigilante", "Description": "Representa prontidão, sentidos aguçados e capacidade de perceber detalhes nos arredores, frequentemente em oposição ao Discreto de um inimigo." }
+        }
       },
       "Occupations": {
         "berserker": { "Name": "Amoque", "Quote": "Mantenha distância! Eu não gostaria de te machucar.", "Summary": "Espíritos de fúria seguem você e o preenchem com uma ferocidade descontrolada em batalha. Fora do combate, sua disposição paciente e pensativa cria um contraste que o torna estimado e temido.", "Attributes": "Vigoroso 13+, Rápido 11+", "Races": "Bárbaro ou ogro", "Abilities": "Amoque, Força da Empunhadura Dupla, Punho de Ferro, Recuperação" },

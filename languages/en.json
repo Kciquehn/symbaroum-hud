@@ -14,7 +14,10 @@
         "Title": "How to create a character",
         "Progress": "Step 1 of 10",
         "StepOneTitle": "Select an occupation",
-        "StepOneText": "Start by choosing an archetype and one of its suggested occupations. Archetypes and occupations are starting points: they bring the character to life and provide a quick way into the game, but do not restrict choices in later steps."
+        "StepOneText": "Start by choosing an archetype and one of its suggested occupations. Archetypes and occupations are starting points: they bring the character to life and provide a quick way into the game, but do not restrict choices in later steps.",
+        "AttributesProgress": "Step 2 of 10",
+        "StepTwoTitle": "Distribute the Attributes",
+        "StepTwoText": "The eight Attributes form the backbone of the character. Choose a typical distribution to rearrange the prepared values or use point buy to build the combination you want."
       },
       "Archetypes": {
         "Warrior": {
@@ -43,6 +46,39 @@
         "Choose": "Choose this occupation",
         "ContinueLater": "Continue later",
         "SelectionHint": "Your occupation guides your concept but does not restrict the character's future choices."
+      },
+      "Attributes": {
+        "Title": "Character Creator — Distribute Attributes",
+        "Heading": "The Attributes",
+        "Introduction": "Whenever an action has dramatic importance, the character makes a Success Test. The higher the relevant Attribute, the greater the chance of success.",
+        "DistributionMethod": "Attribute distribution method",
+        "Typical": "Typical distribution",
+        "PointBuy": "Point buy",
+        "RulesLabel": "Core Rulebook rules",
+        "TypicalRules": "Distribute the values 5, 7, 9, 10, 10, 11, 13, and 15 among the eight Attributes. Only one value may be 15; none may be higher than 15 or lower than 5.",
+        "TypicalValues": "Typical distribution values",
+        "TypicalHint": "Choose a new number for any Attribute. The creator automatically swaps its position with the selected value.",
+        "PointBuyRules": "Distribute exactly 80 points among the eight Attributes. Each value must remain between 5 and 15, and only one Attribute may reach 15.",
+        "PointBuyHint": "Lower an Attribute to release points, then use + to invest them elsewhere. The distribution is complete only when the counter returns to zero.",
+        "Remaining": "Points remaining",
+        "Ready": "Distribution complete",
+        "SpendAll": "Points still need to be distributed",
+        "Value": "Attribute value",
+        "Increase": "Increase Attribute",
+        "Decrease": "Decrease Attribute",
+        "Choose": "Confirm Attributes",
+        "ContinueLater": "Continue later",
+        "Invalid": "The distribution does not meet the Attribute creation rules.",
+        "Entries": {
+          "accurate": { "Name": "Accurate", "Description": "Represents coordination, precision, and assertiveness. It is used to hit targets with blows, thrown objects, and ranged weapons, usually opposed by Quick." },
+          "cunning": { "Name": "Cunning", "Description": "Represents wit, knowledge, common sense, and education. It is used to recall facts, solve logical problems, and perform research." },
+          "discreet": { "Name": "Discreet", "Description": "Represents the ability to act quietly and unseen. It is used to hide, follow someone, smuggle, or steal, and is usually opposed by Vigilant." },
+          "persuasive": { "Name": "Persuasive", "Description": "Represents the ability to influence others through words, voice, appearance, and body language, usually opposed by Resolute." },
+          "quick": { "Name": "Quick", "Description": "Represents reflexes, balance, agility, and speed. It determines initiative and helps with jumps, dodges, and acrobatic maneuvers." },
+          "resolute": { "Name": "Resolute", "Description": "Represents resistance to social pressure, mental control, and Corruption, and is tied to the use of mystical powers. A low value is risky." },
+          "strong": { "Name": "Strong", "Description": "Represents physical strength, the ability to endure pain, and resistance to poison and disease. It also determines the character's base Toughness." },
+          "vigilant": { "Name": "Vigilant", "Description": "Represents alertness, keen senses, and the ability to notice details in the surroundings, often opposed by an enemy's Discreet." }
+        }
       },
       "Occupations": {
         "berserker": { "Name": "Berserker", "Quote": "Keep your distance! I would not want to hurt you.", "Summary": "Spirits of rage follow you and fill you with uncontrolled ferocity in battle. Outside combat, your patient and thoughtful disposition makes the contrast both admired and feared.", "Attributes": "Strong 13+, Quick 11+", "Races": "Barbarian or ogre", "Abilities": "Berserker, Two-handed Force, Iron Fist, Recovery" },

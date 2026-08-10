@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.1.41
+
+- Adiciona o segundo passo do Criador de Fichas: distribuição dos oito Atributos.
+- Oferece no topo as abas **Distribuição típica** e **Compra de pontos**, preservando o visual compacto de livro de Symbaroum.
+- Na distribuição típica, permite reorganizar `5, 7, 9, 10, 10, 11, 13 e 15` por troca automática entre os Atributos.
+- Na compra de pontos, inicia com 80 pontos distribuídos, exibe o saldo em tempo real e oferece controles para reduzir e aumentar cada valor.
+- Aplica os limites oficiais de 5 a 15, permite apenas um Atributo em 15 e impede a confirmação enquanto ainda houver pontos livres.
+- Apresenta descrições resumidas dos oito Atributos com base no Livro Básico e grava a escolha diretamente nos campos nativos da ficha.
+- Abre automaticamente a etapa de Atributos após a escolha da ocupação e permite retomá-la com **Continuar depois**.
+
 ## 0.1.40
 
 - Reduz o Criador de Fichas de 1080 × 700 para 860 × 550, liberando mais espaço da mesa durante a criação.

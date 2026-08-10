@@ -527,6 +527,326 @@
   text-align: center;
 }
 
+.symbaroum-hud-attributes-book {
+  display: grid;
+  height: min(460px, calc(100vh - 125px));
+  min-height: 0;
+  max-height: calc(100vh - 125px);
+  grid-template-rows: auto 34px minmax(0, 1fr);
+  color: #261d16;
+  background: #160f0c;
+  box-shadow: inset 0 0 28px rgb(0 0 0 / 72%);
+}
+
+.symbaroum-hud-attribute-mode-tabs {
+  display: grid;
+  padding: 0 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px;
+  border-bottom: 1px solid #6b4b25;
+  background: #120f0c;
+}
+
+.symbaroum-hud-attribute-mode-tabs button {
+  min-height: 30px;
+  margin: 3px 0 0;
+  border: 1px solid transparent;
+  border-bottom: 0;
+  border-radius: 0;
+  color: #b9aa86;
+  background: rgb(31 26 20 / 76%);
+  box-shadow: none;
+  font-family: "Symbaroum HUD Primitive", "Philosopher", serif;
+  font-size: 0.83rem;
+}
+
+.symbaroum-hud-attribute-mode-tabs button:hover,
+.symbaroum-hud-attribute-mode-tabs button:focus-visible,
+.symbaroum-hud-attribute-mode-tabs button[data-active="true"] {
+  border-color: #8f6f2b;
+  color: #fff0c4;
+  background: linear-gradient(#632b20, #301713);
+  outline: none;
+}
+
+.symbaroum-hud-attribute-mode-tabs button i {
+  margin-right: 5px;
+  color: #d6b54f;
+}
+
+.symbaroum-hud-attribute-workspace {
+  display: grid;
+  min-height: 0;
+  grid-template-columns: 205px minmax(0, 1fr);
+}
+
+.symbaroum-hud-attribute-rules {
+  min-height: 0;
+  padding: 13px 12px;
+  overflow-y: auto;
+  border-right: 2px solid #6b4b25;
+  color: #e8dcb9;
+  background:
+    linear-gradient(90deg, rgb(0 0 0 / 38%), transparent 18%, rgb(0 0 0 / 52%)),
+    linear-gradient(rgb(30 26 21 / 88%), rgb(8 17 14 / 96%)),
+    url("/systems/symbaroum/asset/image/background/title.webp") center / cover;
+  box-shadow: inset -12px 0 20px rgb(0 0 0 / 48%);
+}
+
+.symbaroum-hud-attribute-rules > div {
+  display: grid;
+  gap: 8px;
+}
+
+.symbaroum-hud-attribute-rules > div[hidden] {
+  display: none;
+}
+
+.symbaroum-hud-attribute-rules span:first-child {
+  color: #c9a849;
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.symbaroum-hud-attribute-rules h2 {
+  margin: -3px 0 0;
+  color: #f4e8c7;
+  font-family: "Symbaroum HUD Primitive", "Philosopher", serif;
+  font-size: 1.22rem;
+}
+
+.symbaroum-hud-attribute-rules p {
+  margin: 0;
+  color: #d7c9a7;
+  font-family: var(--font-serif, serif);
+  font-size: 0.7rem;
+  line-height: 1.42;
+}
+
+.symbaroum-hud-attribute-rules small {
+  padding-top: 7px;
+  border-top: 1px solid rgb(201 168 73 / 28%);
+  color: rgb(232 220 185 / 72%);
+  font-size: 0.64rem;
+  font-style: italic;
+  line-height: 1.35;
+}
+
+.symbaroum-hud-attribute-value-sequence {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+}
+
+.symbaroum-hud-attribute-value-sequence strong {
+  display: grid;
+  min-height: 25px;
+  place-items: center;
+  border: 1px solid rgb(201 168 73 / 45%);
+  color: #fff0bd;
+  background: rgb(0 0 0 / 34%);
+  font-family: "Symbaroum HUD Primitive", "Philosopher", serif;
+}
+
+.symbaroum-hud-attribute-points {
+  display: grid;
+  padding: 9px;
+  justify-items: center;
+  gap: 1px;
+  border: 1px solid #8f6f2b;
+  background: rgb(0 0 0 / 38%);
+}
+
+.symbaroum-hud-attribute-points small {
+  padding: 0;
+  border: 0;
+  color: #c9a849;
+  font-style: normal;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.symbaroum-hud-attribute-points strong {
+  color: #fff2c7;
+  font-family: "Symbaroum HUD Primitive", "Philosopher", serif;
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.symbaroum-hud-attribute-points [data-points-status] {
+  color: #cfb35e;
+  font-size: 0.62rem;
+}
+
+.symbaroum-hud-attribute-points [data-points-status][data-complete="false"] {
+  color: #db8673;
+}
+
+.symbaroum-hud-attribute-reading-page {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  padding: 8px 18px 11px 22px;
+  overflow-y: auto;
+  background:
+    linear-gradient(90deg, rgb(74 48 25 / 25%), transparent 8%, transparent 95%, rgb(88 50 23 / 16%)),
+    linear-gradient(rgb(249 243 224 / 97%), rgb(231 220 192 / 98%)),
+    url("/systems/symbaroum/asset/image/foreground.webp") center / cover;
+  box-shadow: inset 14px 0 18px rgb(79 52 28 / 18%);
+}
+
+.symbaroum-hud-attribute-reading-page::before,
+.symbaroum-hud-attribute-reading-page::after {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  content: "";
+  pointer-events: none;
+}
+
+.symbaroum-hud-attribute-reading-page::before {
+  top: 9px;
+  left: 10px;
+  border-top: 2px solid #8f3325;
+  border-left: 2px solid #8f3325;
+}
+
+.symbaroum-hud-attribute-reading-page::after {
+  right: 10px;
+  bottom: 9px;
+  border-right: 2px solid #8f3325;
+  border-bottom: 2px solid #8f3325;
+}
+
+.symbaroum-hud-attribute-introduction {
+  display: grid;
+  margin: 6px 2px 7px;
+  grid-template-columns: 120px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+}
+
+.symbaroum-hud-attribute-introduction h2 {
+  margin: 0;
+  color: #421c16;
+  font-family: "Symbaroum HUD Primitive", "Philosopher", serif;
+  font-size: 1.35rem;
+}
+
+.symbaroum-hud-attribute-introduction p {
+  margin: 0;
+  color: #554639;
+  font-family: var(--font-serif, serif);
+  font-size: 0.67rem;
+  line-height: 1.32;
+}
+
+.symbaroum-hud-attribute-choice-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 5px;
+}
+
+.symbaroum-hud-attribute-choice {
+  display: grid;
+  min-width: 0;
+  padding: 5px 7px 6px;
+  gap: 4px;
+  border: 1px solid rgb(112 73 35 / 34%);
+  border-left: 3px solid #7a3025;
+  background: rgb(255 250 230 / 44%);
+}
+
+.symbaroum-hud-attribute-choice header {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: 19px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 5px;
+}
+
+.symbaroum-hud-attribute-choice header > i {
+  color: #8f6f2b;
+  text-align: center;
+}
+
+.symbaroum-hud-attribute-choice h3 {
+  margin: 0;
+  color: #5d211a;
+  font-family: "Symbaroum HUD Primitive", "Philosopher", serif;
+  font-size: 0.87rem;
+}
+
+.symbaroum-hud-attribute-choice p {
+  margin: 0;
+  color: #493d31;
+  font-family: var(--font-serif, serif);
+  font-size: 0.61rem;
+  line-height: 1.27;
+}
+
+.symbaroum-hud-attribute-typical-control select {
+  width: 44px;
+  height: 25px;
+  padding: 0 3px;
+  border: 1px solid #8c6b31;
+  border-radius: 0;
+  color: #2d2118;
+  background: #eee5cf;
+  font-family: "Symbaroum HUD Primitive", "Philosopher", serif;
+  font-weight: 700;
+  text-align: center;
+}
+
+.symbaroum-hud-attribute-point-control {
+  display: grid;
+  grid-template-columns: 24px 32px 24px;
+  gap: 2px;
+}
+
+.symbaroum-hud-attribute-point-control[hidden],
+.symbaroum-hud-attribute-typical-control[hidden] {
+  display: none;
+}
+
+.symbaroum-hud-attribute-point-control button,
+.symbaroum-hud-attribute-point-control input {
+  width: 100%;
+  height: 25px;
+  min-height: 25px;
+  margin: 0;
+  padding: 0;
+  border: 1px solid #8c6b31;
+  border-radius: 0;
+  color: #f7e9bd;
+  background: #241713;
+  box-shadow: none;
+  font-size: 0.75rem;
+  text-align: center;
+}
+
+.symbaroum-hud-attribute-point-control input {
+  color: #2d2118;
+  background: #eee5cf;
+  font-family: "Symbaroum HUD Primitive", "Philosopher", serif;
+  font-weight: 700;
+  appearance: textfield;
+}
+
+.symbaroum-hud-attribute-point-control input::-webkit-inner-spin-button,
+.symbaroum-hud-attribute-point-control input::-webkit-outer-spin-button {
+  appearance: none;
+}
+
+.symbaroum-hud-attribute-point-control button:hover,
+.symbaroum-hud-attribute-point-control button:focus-visible {
+  border-color: #c9a849;
+  color: #fff4cc;
+  background: #61271d;
+}
+
 @media (max-width: 800px) {
   .symbaroum-hud-occupation-book {
     grid-template-columns: 210px minmax(0, 1fr);
@@ -543,6 +863,14 @@
   .symbaroum-hud-creator-step-guide {
     grid-template-columns: 95px minmax(0, 1fr);
     padding-inline: 10px;
+  }
+
+  .symbaroum-hud-attribute-workspace {
+    grid-template-columns: 190px minmax(0, 1fr);
+  }
+
+  .symbaroum-hud-attribute-reading-page {
+    padding-inline: 19px 15px;
   }
 }
 
