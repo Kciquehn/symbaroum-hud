@@ -149,7 +149,7 @@ export class CharacterCreatorService {
       window: {
         title: game.i18n.localize("SYMBAROUMHUD.CharacterCreator.Occupation.Title")
       },
-      position: { width: 940, height: 650 },
+      position: { width: 1080, height: 700 },
       content: occupationBookContent(actor),
       buttons: [
         {
@@ -193,23 +193,18 @@ export class CharacterCreatorService {
 
 function occupationBookContent(actor) {
   const selectedId = CORE_OCCUPATIONS[0].id;
-  const index = OCCUPATION_ARCHETYPES.map((archetype) => {
+  const options = OCCUPATION_ARCHETYPES.map((archetype) => {
     const items = CORE_OCCUPATIONS
       .filter((occupation) => occupation.archetype === archetype.id)
       .map((occupation) => `
-        <button type="button" class="symbaroum-hud-occupation-index-entry"
-          data-occupation-id="${occupation.id}"
-          data-active="${occupation.id === selectedId}"
-          aria-pressed="${occupation.id === selectedId}">
-          <i class="fa-solid ${occupation.icon}" aria-hidden="true"></i>
-          <span>${localizeEscaped(occupation.name)}</span>
-        </button>
+        <option value="${occupation.id}" ${occupation.id === selectedId ? "selected" : ""}>
+          ${localizeEscaped(occupation.name)}
+        </option>
       `).join("");
     return `
-      <section class="symbaroum-hud-occupation-index-group">
-        <h3>${localizeEscaped(archetype.label)}</h3>
+      <optgroup label="${localizeEscaped(archetype.label)}">
         ${items}
-      </section>
+      </optgroup>
     `;
   }).join("");
 
@@ -219,29 +214,53 @@ function occupationBookContent(actor) {
       <article class="symbaroum-hud-occupation-page"
         data-occupation-page="${occupation.id}"
         ${occupation.id === selectedId ? "" : "hidden"}>
-        <div class="symbaroum-hud-occupation-page-icon" aria-hidden="true">
-          <i class="fa-solid ${occupation.icon}"></i>
+        <section class="symbaroum-hud-archetype-introduction">
+          <span>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Occupation.ArchetypeLabel")}</span>
+          <h2>${localizeEscaped(archetype.label)}</h2>
+          <p>${localizeEscaped(archetype.summary)}</p>
+        </section>
+        <div class="symbaroum-hud-occupation-heading">
+          <div class="symbaroum-hud-occupation-page-icon" aria-hidden="true">
+            <i class="fa-solid ${occupation.icon}"></i>
+          </div>
+          <div>
+            <span class="symbaroum-hud-occupation-archetype">${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Occupation.OccupationLabel")}</span>
+            <h2>${localizeEscaped(occupation.name)}</h2>
+          </div>
         </div>
-        <span class="symbaroum-hud-occupation-archetype">${localizeEscaped(archetype.label)}</span>
-        <h2>${localizeEscaped(occupation.name)}</h2>
         <div class="symbaroum-hud-occupation-ornament" aria-hidden="true"><span></span><i></i><span></span></div>
+        <blockquote>${localizeEscaped(occupation.quote)}</blockquote>
         <p class="symbaroum-hud-occupation-summary">${localizeEscaped(occupation.summary)}</p>
-        <h3>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Occupation.AtTheTable")}</h3>
-        <p>${localizeEscaped(occupation.playstyle)}</p>
+        <dl class="symbaroum-hud-occupation-details">
+          <div><dt>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Occupation.ImportantAttributes")}</dt><dd>${localizeEscaped(occupation.attributes)}</dd></div>
+          <div><dt>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Occupation.SuggestedRaces")}</dt><dd>${localizeEscaped(occupation.races)}</dd></div>
+          <div><dt>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Occupation.AppropriateAbilities")}</dt><dd>${localizeEscaped(occupation.abilities)}</dd></div>
+        </dl>
       </article>
     `;
   }).join("");
 
   return `
     <div class="symbaroum-hud-occupation-book">
-      <input type="hidden" name="occupation" value="${selectedId}">
+      <header class="symbaroum-hud-creator-step-guide">
+        <div class="symbaroum-hud-creator-step-number">
+          <small>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Guide.Title")}</small>
+          <strong>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Guide.Progress")}</strong>
+        </div>
+        <div>
+          <h2>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Guide.StepOneTitle")}</h2>
+          <p>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Guide.StepOneText")}</p>
+        </div>
+      </header>
       <aside class="symbaroum-hud-occupation-index">
         <header>
-          <small>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Occupation.Step")}</small>
           <h2>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Occupation.Index")}</h2>
           <p>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Occupation.IndexHint")}</p>
         </header>
-        <div class="symbaroum-hud-occupation-index-list">${index}</div>
+        <label for="symbaroum-hud-occupation-select">${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Occupation.SelectLabel")}</label>
+        <select id="symbaroum-hud-occupation-select" name="occupation" size="15">
+          ${options}
+        </select>
       </aside>
       <main class="symbaroum-hud-occupation-reading-page">
         <header class="symbaroum-hud-occupation-character-name">
@@ -256,22 +275,13 @@ function occupationBookContent(actor) {
 }
 
 function bindOccupationBook(element) {
-  const input = element.querySelector('input[name="occupation"]');
-  const entries = Array.from(element.querySelectorAll("[data-occupation-id]"));
+  const input = element.querySelector('select[name="occupation"]');
   const pages = Array.from(element.querySelectorAll("[data-occupation-page]"));
-  for (const entry of entries) {
-    entry.addEventListener("click", () => {
-      const id = entry.dataset.occupationId;
-      if (!coreOccupation(id)) return;
-      input.value = id;
-      for (const candidate of entries) {
-        const active = candidate.dataset.occupationId === id;
-        candidate.dataset.active = String(active);
-        candidate.setAttribute("aria-pressed", String(active));
-      }
-      for (const page of pages) page.hidden = page.dataset.occupationPage !== id;
-    });
-  }
+  input?.addEventListener("change", () => {
+    const id = input.value;
+    if (!coreOccupation(id)) return;
+    for (const page of pages) page.hidden = page.dataset.occupationPage !== id;
+  });
 }
 
 function characterCreatorChoiceContent() {

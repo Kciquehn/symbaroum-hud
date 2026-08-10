@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.39
+
+- Reorganiza o primeiro passo do Criador de Fichas conforme a sequência apresentada no Livro Básico.
+- Exibe uma introdução guiada com o progresso da criação antes da escolha da ocupação.
+- Substitui o índice anterior por uma lista visível das 15 ocupações, agrupadas entre Guerreiro, Místico e Ladino.
+- Apresenta à direita uma página completa para cada escolha, com explicação do arquétipo, citação, descrição, Atributos importantes, Raças sugeridas e Habilidades apropriadas.
+- Ajusta os nomes em português para as ocupações do Livro Básico, incluindo Amoque e Bandido.
+
 ## 0.1.38
 
 - Implementa a primeira etapa real do Criador de Fichas: escolha de ocupação.

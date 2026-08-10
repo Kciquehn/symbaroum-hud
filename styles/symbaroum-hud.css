@@ -127,11 +127,70 @@
 
 .symbaroum-hud-occupation-book {
   display: grid;
-  min-height: 530px;
+  height: min(620px, calc(100vh - 150px));
+  min-height: 560px;
+  max-height: calc(100vh - 150px);
   grid-template-columns: minmax(300px, 39%) minmax(0, 61%);
+  grid-template-rows: auto minmax(0, 1fr);
   color: #261d16;
   background: #160f0c;
   box-shadow: inset 0 0 28px rgb(0 0 0 / 72%);
+}
+
+.symbaroum-hud-creator-step-guide {
+  display: grid;
+  padding: 16px 24px;
+  grid-column: 1 / -1;
+  grid-template-columns: 155px minmax(0, 1fr);
+  align-items: center;
+  gap: 22px;
+  border-bottom: 2px solid #6b4b25;
+  color: #302118;
+  background:
+    linear-gradient(rgb(248 241 221 / 97%), rgb(228 215 184 / 97%)),
+    url("/systems/symbaroum/asset/image/foreground.webp") center / cover;
+  box-shadow: inset 0 -10px 18px rgb(74 48 25 / 12%);
+}
+
+.symbaroum-hud-creator-step-number {
+  display: grid;
+  min-height: 66px;
+  padding-right: 22px;
+  align-content: center;
+  border-right: 1px solid rgb(113 54 37 / 44%);
+  text-align: center;
+}
+
+.symbaroum-hud-creator-step-number small {
+  color: #76522e;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.symbaroum-hud-creator-step-number strong,
+.symbaroum-hud-creator-step-guide h2 {
+  color: #5d211a;
+  font-family: "Symbaroum HUD Primitive", "Philosopher", serif;
+}
+
+.symbaroum-hud-creator-step-number strong {
+  margin-top: 3px;
+  font-size: 1rem;
+}
+
+.symbaroum-hud-creator-step-guide h2 {
+  margin: 0 0 5px;
+  font-size: 1.35rem;
+}
+
+.symbaroum-hud-creator-step-guide p {
+  max-width: 790px;
+  margin: 0;
+  color: #4f4235;
+  font-family: var(--font-serif, serif);
+  font-size: 0.84rem;
+  line-height: 1.45;
 }
 
 .symbaroum-hud-occupation-index {
@@ -140,7 +199,7 @@
   padding: 22px 23px 18px 20px;
   flex-direction: column;
   gap: 14px;
-  overflow: hidden;
+  overflow: auto;
   border-right: 2px solid #6b4b25;
   color: #eadcb9;
   background:
@@ -175,6 +234,47 @@
   color: rgb(234 220 185 / 72%);
   font-size: 0.76rem;
   line-height: 1.35;
+}
+
+.symbaroum-hud-occupation-index > label {
+  color: #c9a849;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.symbaroum-hud-occupation-index select[name="occupation"] {
+  width: 100%;
+  min-height: 0;
+  flex: 1;
+  margin: 0;
+  padding: 4px;
+  border: 1px solid #705d34;
+  border-radius: 0;
+  color: #eadcb9;
+  background: rgb(3 7 6 / 76%);
+  box-shadow: inset 0 0 12px rgb(0 0 0 / 75%);
+  font-family: var(--font-primary, sans-serif);
+  scrollbar-color: #8f6f2b rgb(0 0 0 / 28%);
+}
+
+.symbaroum-hud-occupation-index select[name="occupation"] optgroup {
+  color: #d9b853;
+  background: #171713;
+  font-family: "Symbaroum HUD Primitive", "Philosopher", serif;
+}
+
+.symbaroum-hud-occupation-index select[name="occupation"] option {
+  padding: 6px 9px;
+  color: #eadcb9;
+  background: #0c1210;
+  font-family: var(--font-primary, sans-serif);
+}
+
+.symbaroum-hud-occupation-index select[name="occupation"] option:checked {
+  color: #fff3c7;
+  background: #6b281e linear-gradient(90deg, #6b281e, #331d18);
 }
 
 .symbaroum-hud-occupation-index-list {
@@ -243,7 +343,8 @@
   min-width: 0;
   padding: 18px 42px 22px 48px;
   flex-direction: column;
-  overflow: hidden;
+  min-height: 0;
+  overflow-y: auto;
   background:
     linear-gradient(90deg, rgb(74 48 25 / 26%), transparent 8%, transparent 94%, rgb(88 50 23 / 18%)),
     linear-gradient(rgb(249 243 224 / 96%), rgb(231 220 192 / 97%)),
@@ -288,10 +389,10 @@
 
 .symbaroum-hud-occupation-page {
   display: grid;
-  padding: 24px 13px 8px;
-  justify-items: center;
-  gap: 10px;
-  text-align: center;
+  padding: 18px 13px 12px;
+  justify-items: stretch;
+  gap: 11px;
+  text-align: left;
 }
 
 .symbaroum-hud-occupation-page[hidden] {
@@ -308,6 +409,39 @@
   background: #17120f;
   box-shadow: inset 0 0 13px rgb(0 0 0 / 82%), 0 2px 5px rgb(58 34 18 / 26%);
   font-size: 1.55rem;
+}
+
+.symbaroum-hud-archetype-introduction {
+  padding: 11px 14px;
+  border: 1px solid rgb(128 83 42 / 38%);
+  border-left: 3px solid #8f3325;
+  background: rgb(105 75 39 / 8%);
+}
+
+.symbaroum-hud-archetype-introduction > span {
+  color: #8f3325;
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.symbaroum-hud-archetype-introduction h2 {
+  margin: 3px 0 5px;
+  font-size: 1.25rem;
+}
+
+.symbaroum-hud-archetype-introduction p {
+  max-width: none;
+  font-size: 0.79rem;
+  line-height: 1.45;
+}
+
+.symbaroum-hud-occupation-heading {
+  display: grid;
+  grid-template-columns: 58px minmax(0, 1fr);
+  align-items: center;
+  gap: 13px;
 }
 
 .symbaroum-hud-occupation-archetype {
@@ -333,7 +467,7 @@
 }
 
 .symbaroum-hud-occupation-page p {
-  max-width: 500px;
+  max-width: none;
   margin: 0;
   font-family: var(--font-serif, serif);
   font-size: 0.88rem;
@@ -341,7 +475,48 @@
 }
 
 .symbaroum-hud-occupation-page .symbaroum-hud-occupation-summary {
-  font-size: 0.94rem;
+  font-size: 0.88rem;
+  text-align: justify;
+}
+
+.symbaroum-hud-occupation-page blockquote {
+  margin: 0;
+  padding: 5px 13px;
+  border-left: 2px solid #a14b38;
+  color: #694436;
+  font-family: var(--font-serif, serif);
+  font-size: 0.82rem;
+  font-style: italic;
+}
+
+.symbaroum-hud-occupation-details {
+  display: grid;
+  margin: 2px 0 0;
+  gap: 6px;
+}
+
+.symbaroum-hud-occupation-details > div {
+  display: grid;
+  padding: 7px 10px;
+  grid-template-columns: minmax(145px, 34%) minmax(0, 1fr);
+  gap: 12px;
+  border: 1px solid rgb(126 80 38 / 27%);
+  background: rgb(255 250 230 / 42%);
+}
+
+.symbaroum-hud-occupation-details dt {
+  color: #722b22;
+  font-size: 0.71rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.symbaroum-hud-occupation-details dd {
+  margin: 0;
+  color: #3f3328;
+  font-size: 0.79rem;
+  line-height: 1.35;
 }
 
 .symbaroum-hud-occupation-ornament {
@@ -389,6 +564,11 @@
 
   .symbaroum-hud-occupation-reading-page {
     padding-inline: 34px 28px;
+  }
+
+  .symbaroum-hud-creator-step-guide {
+    grid-template-columns: 115px minmax(0, 1fr);
+    padding-inline: 14px;
   }
 }
 

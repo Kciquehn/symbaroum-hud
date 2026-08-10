@@ -129,11 +129,33 @@ test("the core occupation book contains all fifteen occupations in three archety
     "rogue"
   ]);
   for (const archetype of OCCUPATION_ARCHETYPES) {
+    assert.match(archetype.label, /\.Name$/);
+    assert.match(archetype.summary, /\.Summary$/);
     assert.equal(
       CORE_OCCUPATIONS.filter((entry) => entry.archetype === archetype.id).length,
       5
     );
   }
+  for (const occupation of CORE_OCCUPATIONS) {
+    assert.match(occupation.quote, /\.Quote$/);
+    assert.match(occupation.attributes, /\.Attributes$/);
+    assert.match(occupation.races, /\.Races$/);
+    assert.match(occupation.abilities, /\.Abilities$/);
+  }
+});
+
+test("the first creator step explains the process and exposes a detailed occupation selector", async () => {
+  const blank = actor({ id: "guided", uuid: "Actor.guided" });
+  await blank.setFlag("symbaroum-hud", "characterCreationMode", "creator");
+  dialogChoices.push("close");
+
+  await CharacterCreatorService.openOccupationStep(blank);
+  const content = dialogConfigs.at(-1).content;
+  assert.match(content, /symbaroum-hud-creator-step-guide/);
+  assert.match(content, /Guide\.Progress/);
+  assert.match(content, /select[^>]+name="occupation"[^>]+size="15"/);
+  assert.match(content, /symbaroum-hud-archetype-introduction/);
+  assert.match(content, /symbaroum-hud-occupation-details/);
 });
 
 test("choosing an occupation writes it to the sheet and completes the first step", async () => {

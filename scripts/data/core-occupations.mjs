@@ -1,7 +1,7 @@
 export const OCCUPATION_ARCHETYPES = Object.freeze([
-  { id: "warrior", label: "SYMBAROUMHUD.CharacterCreator.Archetypes.Warrior" },
-  { id: "mystic", label: "SYMBAROUMHUD.CharacterCreator.Archetypes.Mystic" },
-  { id: "rogue", label: "SYMBAROUMHUD.CharacterCreator.Archetypes.Rogue" }
+  archetype("warrior", "Warrior"),
+  archetype("mystic", "Mystic"),
+  archetype("rogue", "Rogue")
 ]);
 
 export const CORE_OCCUPATIONS = Object.freeze([
@@ -33,7 +33,19 @@ function occupation(id, archetype, icon) {
     archetype,
     icon,
     name: `${prefix}.Name`,
+    quote: `${prefix}.Quote`,
     summary: `${prefix}.Summary`,
-    playstyle: `${prefix}.Playstyle`
+    attributes: `${prefix}.Attributes`,
+    races: `${prefix}.Races`,
+    abilities: `${prefix}.Abilities`
+  });
+}
+
+function archetype(id, key) {
+  const prefix = `SYMBAROUMHUD.CharacterCreator.Archetypes.${key}`;
+  return Object.freeze({
+    id,
+    label: `${prefix}.Name`,
+    summary: `${prefix}.Summary`
   });
 }

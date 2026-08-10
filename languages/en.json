@@ -10,37 +10,56 @@
       "DecisionHint": "Closing this window without choosing will show the question again the next time the sheet opens.",
       "UseCreator": "Use Character Creator",
       "FillManually": "Fill in manually",
+      "Guide": {
+        "Title": "How to create a character",
+        "Progress": "Step 1 of 10",
+        "StepOneTitle": "Select an occupation",
+        "StepOneText": "Start by choosing an archetype and one of its suggested occupations. Archetypes and occupations are starting points: they bring the character to life and provide a quick way into the game, but do not restrict choices in later steps."
+      },
       "Archetypes": {
-        "Warrior": "Warrior",
-        "Mystic": "Mystic",
-        "Rogue": "Rogue"
+        "Warrior": {
+          "Name": "Warrior",
+          "Summary": "Warriors excel on the battlefield, commonly using heavy weapons and armor. They may serve as shock troops, protectors, or leaders who command and support their companions."
+        },
+        "Mystic": {
+          "Name": "Mystic",
+          "Summary": "Mystics reach supernatural sources through scholarship, faith, pacts with nature, or contact with Corruption. Their powers can devastate enemies, protect allies, and solve problems through magic and rituals."
+        },
+        "Rogue": {
+          "Name": "Rogue",
+          "Summary": "Rogues prevail through agility, cunning, and versatility. They may fight at range or in close combat and are particularly capable when facing practical, social, stealthy, or exploratory challenges."
+        }
       },
       "Occupation": {
         "Title": "Character Creator — Choose Your Occupation",
-        "Step": "Chapter I",
         "Index": "Occupations",
-        "IndexHint": "Choose a name from the index to learn about its place in the world and style of adventure.",
-        "AtTheTable": "At the table",
+        "IndexHint": "Click an option to open its complete page on the right.",
+        "SelectLabel": "Archetype and occupation",
+        "ArchetypeLabel": "About the archetype",
+        "OccupationLabel": "Occupation",
+        "ImportantAttributes": "Important attributes",
+        "SuggestedRaces": "Suggested races",
+        "AppropriateAbilities": "Appropriate abilities",
         "Choose": "Choose this occupation",
         "ContinueLater": "Continue later",
         "SelectionHint": "Your occupation guides your concept but does not restrict the character's future choices."
       },
       "Occupations": {
-        "berserker": { "Name": "Berserker", "Summary": "A combatant who turns fury and endurance into weapons. They stride into danger without hesitation and trust their strength to remain standing.", "Playstyle": "Ideal for players who want to meet enemies up close, endure punishment, and make a strong physical impact." },
-        "duelist": { "Name": "Duelist", "Summary": "A specialist in precision, mobility, and command of the blade. They prevail through technique and by choosing the right moment to attack or defend.", "Playstyle": "Suited to players who favor agility, finesse, and careful combat decisions." },
-        "captain": { "Name": "Captain", "Summary": "A leader accustomed to turning individuals into a coordinated force. Their presence inspires allies and restores order when everything threatens to collapse.", "Playstyle": "Supports leadership, social interaction, and tactical assistance for the whole group." },
-        "sellsword": { "Name": "Sellsword", "Summary": "A pragmatic veteran who trades steel and experience for payment. They survived by changing tactics whenever the job demanded it.", "Playstyle": "A versatile choice for martial competence without strict vows or traditions." },
-        "knight": { "Name": "Knight", "Summary": "A disciplined, armored warrior driven by duty, honor, or loyalty. They often stand between danger and their companions.", "Playstyle": "Well suited to defense, protecting allies, and making a strong impression in and out of battle." },
-        "witch": { "Name": "Witch", "Summary": "A mystic tied to clan traditions, spirits, and the wild rhythms of Davokar. Their power grows from pacts, memory, and respect for the living world.", "Playstyle": "Combines magic, spiritual perception, and a strong bond with nature and barbarian culture." },
-        "sorcerer": { "Name": "Sorcerer", "Summary": "An occultist who faces forbidden powers and Corruption in ways few would dare. The path offers strength but demands constant vigilance.", "Playstyle": "For players interested in dark magic, risk, and difficult choices involving Corruption." },
-        "theurg": { "Name": "Theurg", "Summary": "A mystical servant of Prios who channels faith, light, and religious authority. They may protect the living, confront darkness, and represent the Church.", "Playstyle": "Blends sacred powers, group support, and ties to Ambrian faith and institutions." },
-        "wizard": { "Name": "Wizard", "Summary": "A scholar trained by the Ordo Magica to understand and control the supernatural through method, discipline, and research.", "Playstyle": "Favors knowledge, preparation, and an academic approach to powers and mysteries." },
-        "selfTaughtMystic": { "Name": "Self-taught Mystic", "Summary": "An independent practitioner taught by intuition, fragments of lore, or unusual encounters. Their freedom comes with suspicion and danger.", "Playstyle": "Offers broad conceptual freedom with less protection from the risks of mystical practice." },
-        "charlatan": { "Name": "Charlatan", "Summary": "A master of stories, disguises, and half-truths. They open doors by learning what others want to hear — and when it is time to disappear.", "Playstyle": "Excels in social scenes, infiltration, bluffing, and creative solutions that avoid direct conflict." },
-        "witchhunter": { "Name": "Witchhunter", "Summary": "A relentless investigator of cults, abominations, and corrupt practices. They combine knowledge of the enemy with the resolve to pursue it to the end.", "Playstyle": "Works well in investigation, tracking, and confrontations with supernatural threats." },
-        "thug": { "Name": "Thug", "Summary": "A street survivor versed in intimidation, ambushes, and unceremonious violence. They do what is needed when manners stop working.", "Playstyle": "Combines strength, opportunism, and contacts in urban or marginal environments." },
-        "treasureHunter": { "Name": "Treasure-hunter", "Summary": "An explorer drawn to ruins, artifacts, and buried secrets. Every discovery in Davokar may bring fortune — or something far worse.", "Playstyle": "Excellent for exploration, knowledge of ruins, traps, and the search for artifacts." },
-        "ranger": { "Name": "Ranger", "Summary": "A scout used to dangerous trails, long watches, and untamed lands. They find paths where others see only forest and darkness.", "Playstyle": "Favors survival, tracking, reconnaissance, and ranged combat." }
+        "berserker": { "Name": "Berserker", "Quote": "Keep your distance! I would not want to hurt you.", "Summary": "Spirits of rage follow you and fill you with uncontrolled ferocity in battle. Outside combat, your patient and thoughtful disposition makes the contrast both admired and feared.", "Attributes": "Strong 13+, Quick 11+", "Races": "Barbarian or ogre", "Abilities": "Berserker, Two-handed Force, Iron Fist, Recovery" },
+        "duelist": { "Name": "Duelist", "Quote": "Please avoid bleeding on me when I run you through.", "Summary": "Honor and glory mean everything to a warrior, especially when a name can be defended with style. You live by a code, and the fact that you remain alive speaks highly of your talent.", "Attributes": "Accurate 13+, Quick or Discreet 11+", "Races": "Ambrian or changeling", "Abilities": "Acrobatics, Twin Attack, Feint, Man-at-arms" },
+        "captain": { "Name": "Captain", "Quote": "Everything will be fine — just follow my commands!", "Summary": "You are a born leader who built a military career on that gift. Swordplay keeps you alive, but your real strength lies in bringing out the best in allies, guiding them, and keeping them safe.", "Attributes": "Persuasive 13+", "Races": "Human, usually Ambrian", "Abilities": "Shield Fighter, Dominate, Man-at-arms, Leader" },
+        "sellsword": { "Name": "Sellsword", "Quote": "My sword and my life, in exchange for your gold.", "Summary": "Fighting has been your way of life — for money. After serving many masters, you learned that skill and the instinct to recognize which battles can be won are the keys to survival.", "Attributes": "Strong 13+", "Races": "Human", "Abilities": "Shield Fighter, Man-at-arms, Polearm Mastery, Iron Fist" },
+        "knight": { "Name": "Knight", "Quote": "You may take my life, but not my honor.", "Summary": "You fight to break enemy lines and keep your own firm. Heavily protected on the outside and driven by duty within, you battle for your lord, your allies, and your own glory.", "Attributes": "Strong 13+, Quick 11+", "Races": "Ambrian", "Abilities": "Two-handed Force, Bodyguard, Man-at-arms, Iron Fist" },
+        "witch": { "Name": "Witch", "Quote": "Your will is inferior to Nature's. Accept it! Or die.", "Summary": "The wilds are your home and your calling is to balance your needs with nature's. You bargain with spirits, understand the flows of the land, and draw power from the cycle of life and death.", "Attributes": "Resolute 13+, Accurate 11+", "Races": "Barbarian or changeling", "Abilities": "Witchcraft, Natural Warrior, Mystical Power, Ritualist" },
+        "sorcerer": { "Name": "Sorcerer", "Quote": "There is another way, an easier way…", "Summary": "Driven by desperation or hunger for power, you follow the path of sorcery. Corruption closes in quickly, as do witchhunters, forcing you to choose between seeking greater power or pursuing redemption.", "Attributes": "Resolute 13+, Discreet or Cunning 11+", "Races": "Human", "Abilities": "Alchemy, Sorcery, Mystical Power, Ritualist" },
+        "theurg": { "Name": "Theurg", "Quote": "Prios sees you, heretic!", "Summary": "You are a priest gifted with mystical powers and unwavering faith in the Lawgiver. From that foundation flows extraordinary power to protect life and confront darkness.", "Attributes": "Resolute 13+, Cunning or Vigilant 11+", "Races": "Ambrian", "Abilities": "Medic, Mystical Power, Ritualist, Theurgy" },
+        "wizard": { "Name": "Wizard", "Quote": "Remarkable, this must be taken back for further study!", "Summary": "You were instructed in the secrets of the Ordo Magica. To you, mystical powers are extensions of the world's fundamental laws, carefully studied and applied to grand effect.", "Attributes": "Resolute 13+, Cunning 11+", "Races": "Ambrian", "Abilities": "Loremaster, Wizardry, Mystical Power, Ritualist" },
+        "selfTaughtMystic": { "Name": "Self-taught Mystic", "Quote": "They said I did not take my powers seriously; I will show them how wrong they are.", "Summary": "You learned alone, were excluded from the traditions, or rejected their narrow views. Freedom has a price: Corruption is always near and witchhunters and Black Cloaks consider you fair game.", "Attributes": "Resolute 11+, Vigilant 13+", "Races": "Ambrian or changeling", "Abilities": "Mystical Power (any two), Ritualist, Witchsight" },
+        "charlatan": { "Name": "Charlatan", "Quote": "Two drops a day and you will never be sick again!", "Summary": "You chose the social arena as your battlefield. A quick tongue is your sharpest weapon and trustworthy eyes your finest shield; if both fail, light weapons and stealthy movement remain.", "Attributes": "Quick 13+, Discreet 11+", "Races": "Changeling or human, usually Ambrian", "Abilities": "Acrobatics, Backstab, Twin Attack, Feint" },
+        "witchhunter": { "Name": "Witchhunter", "Quote": "I would rather put down an innocent than let a blight beast walk over them.", "Summary": "You devoted your life to fighting blight beasts. You wield steel, fire, and perhaps rituals taken from defeated foes, accepting even the risk of Corruption to battle evil with fanatical fervor.", "Attributes": "Resolute 13+, Cunning or Accurate 11+", "Races": "Human", "Abilities": "Marksman, Steadfast, Ritualist, Beast Lore" },
+        "thug": { "Name": "Thug", "Quote": "Your money or your blood — the choice is yours!", "Summary": "You grew up where gangs teach how to profit from others' work beneath the watch's nose. You may act alone or serve nobles as an enforcer protected by your master's influence.", "Attributes": "Quick 13+, Cunning 11+", "Races": "Goblin, human, or ogre", "Abilities": "Acrobatics, Twin Attack, Strangler, Poisoner" },
+        "treasureHunter": { "Name": "Treasure-hunter", "Quote": "This altar… I wonder if it can be pushed aside…", "Summary": "The depths of Davokar hide the treasures that sustain you. You dream of ruins and sunken temples and have developed a broad set of skills to survive the forest's dangers.", "Attributes": "Cunning 13+, Quick 11+", "Races": "Goblin, human, or ogre", "Abilities": "Acrobatics, Alchemy, Steel Throw, Tactician" },
+        "ranger": { "Name": "Ranger", "Quote": "Anything alive can be tracked. And brought down…", "Summary": "Deep forests and mountain valleys are your home, where you hunt for food, hides, or the safety of travelers. You know how to stay beyond an enemy's reach while your arrows find their mark.", "Attributes": "Vigilant 13+, Discreet 11+", "Races": "Barbarian or changeling", "Abilities": "Acrobatics, Marksman, Beast Lore, Sixth Sense" }
       }
     },
     "ActorTypes": {

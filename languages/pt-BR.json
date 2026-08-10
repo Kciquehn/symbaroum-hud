@@ -10,37 +10,56 @@
       "DecisionHint": "Fechar esta janela sem escolher fará a pergunta aparecer novamente na próxima abertura.",
       "UseCreator": "Usar o Criador de Fichas",
       "FillManually": "Preencher manualmente",
+      "Guide": {
+        "Title": "Como criar um personagem",
+        "Progress": "Passo 1 de 10",
+        "StepOneTitle": "Selecione uma ocupação",
+        "StepOneText": "Comece escolhendo um arquétipo e uma das ocupações sugeridas. Arquétipos e ocupações são pontos de partida: ajudam a dar vida ao personagem e oferecem uma forma rápida de entrar no jogo, mas não limitam as escolhas das próximas etapas."
+      },
       "Archetypes": {
-        "Warrior": "Guerreiro",
-        "Mystic": "Místico",
-        "Rogue": "Ladino"
+        "Warrior": {
+          "Name": "Guerreiro",
+          "Summary": "Guerreiros se destacam no campo de batalha, geralmente com armas e armaduras pesadas. Podem atuar como tropas de choque, protetores ou líderes capazes de comandar e auxiliar seus companheiros."
+        },
+        "Mystic": {
+          "Name": "Místico",
+          "Summary": "Místicos alcançam fontes sobrenaturais por estudo, fé, pactos com a natureza ou contato com a Corrupção. Seus poderes podem devastar inimigos, proteger aliados e solucionar problemas através de magia e rituais."
+        },
+        "Rogue": {
+          "Name": "Ladino",
+          "Summary": "Ladinos vencem por agilidade, perspicácia e versatilidade. Podem lutar à distância ou corpo a corpo e são especialmente capazes diante de desafios práticos, sociais, furtivos ou de exploração."
+        }
       },
       "Occupation": {
         "Title": "Criador de Fichas — Escolha sua ocupação",
-        "Step": "Capítulo I",
         "Index": "Ocupações",
-        "IndexHint": "Escolha um nome no índice para conhecer seu lugar no mundo e seu estilo de aventura.",
-        "AtTheTable": "Durante o jogo",
+        "IndexHint": "Clique em uma opção para abrir a página completa à direita.",
+        "SelectLabel": "Arquétipo e ocupação",
+        "ArchetypeLabel": "Sobre o arquétipo",
+        "OccupationLabel": "Ocupação",
+        "ImportantAttributes": "Atributos importantes",
+        "SuggestedRaces": "Raças sugeridas",
+        "AppropriateAbilities": "Habilidades apropriadas",
         "Choose": "Escolher esta ocupação",
         "ContinueLater": "Continuar depois",
         "SelectionHint": "A ocupação orienta seu conceito, mas não limita as escolhas futuras do personagem."
       },
       "Occupations": {
-        "berserker": { "Name": "Berserker", "Summary": "Um combatente que transforma fúria e resistência em armas. Entra no perigo sem hesitar e confia na própria força para permanecer de pé.", "Playstyle": "Ideal para quem deseja enfrentar inimigos de perto, suportar golpes e causar grande impacto físico." },
-        "duelist": { "Name": "Duelista", "Summary": "Especialista em precisão, mobilidade e domínio da lâmina. Vence pela técnica, escolhendo o momento certo para atacar e se defender.", "Playstyle": "Combina com jogadores que preferem agilidade, finesse e decisões cuidadosas em combate." },
-        "captain": { "Name": "Capitão", "Summary": "Um líder acostumado a transformar indivíduos em uma força coordenada. Sua presença inspira aliados e impõe ordem quando tudo ameaça ruir.", "Playstyle": "Favorece liderança, interação social e apoio tático ao restante do grupo." },
-        "sellsword": { "Name": "Mercenário", "Summary": "Veterano pragmático que oferece aço e experiência em troca de pagamento. Aprendeu a sobreviver mudando de estratégia conforme o trabalho exige.", "Playstyle": "Uma escolha versátil para quem quer competência marcial sem juramentos ou tradições rígidas." },
-        "knight": { "Name": "Cavaleiro", "Summary": "Guerreiro disciplinado, protegido por armadura e movido por dever, honra ou lealdade. Costuma ocupar a linha entre o perigo e seus companheiros.", "Playstyle": "Indicado para defesa, proteção de aliados e presença marcante dentro e fora da batalha." },
-        "witch": { "Name": "Bruxa", "Summary": "Mística ligada às antigas tradições dos clãs, aos espíritos e aos ritmos selvagens de Davokar. Seu poder nasce de pactos, memória e respeito pelo mundo vivo.", "Playstyle": "Une magia, percepção espiritual e forte conexão com a natureza e a cultura bárbara." },
-        "sorcerer": { "Name": "Feiticeiro", "Summary": "Ocultista que encara poderes proibidos e a Corrupção de forma que poucos ousariam. Seu caminho oferece força, mas cobra vigilância constante.", "Playstyle": "Para quem deseja explorar magia sombria, risco e escolhas difíceis ligadas à Corrupção." },
-        "theurg": { "Name": "Teurgo", "Summary": "Servo místico de Prios que canaliza fé, luz e autoridade religiosa. Pode proteger os vivos, enfrentar a escuridão e representar a Igreja no mundo.", "Playstyle": "Mistura poderes sagrados, suporte ao grupo e relações com a fé e as instituições ambrianas." },
-        "wizard": { "Name": "Mago", "Summary": "Estudioso treinado pela Ordo Magica, dedicado a compreender e controlar o sobrenatural por meio de método, disciplina e pesquisa.", "Playstyle": "Favorece conhecimento, preparação e uma abordagem acadêmica para poderes e mistérios." },
-        "selfTaughtMystic": { "Name": "Místico Autodidata", "Summary": "Praticante independente que aprendeu por intuição, fragmentos de saber ou encontros incomuns. Sua liberdade vem acompanhada de suspeita e perigo.", "Playstyle": "Oferece grande liberdade conceitual, com menos proteção contra os riscos da prática mística." },
-        "charlatan": { "Name": "Charlatão", "Summary": "Mestre de histórias, disfarces e meias-verdades. Abre portas ao descobrir o que os outros desejam ouvir — e quando é hora de desaparecer.", "Playstyle": "Brilha em cenas sociais, infiltração, blefes e soluções criativas que evitam confronto direto." },
-        "witchhunter": { "Name": "Caçador de Bruxas", "Summary": "Investigador obstinado de cultos, abominações e práticas corruptas. Combina conhecimento do inimigo com a determinação de persegui-lo até o fim.", "Playstyle": "Funciona bem em investigação, rastreamento e confrontos contra ameaças sobrenaturais." },
-        "thug": { "Name": "Brutamontes", "Summary": "Sobrevivente das ruas que conhece intimidação, emboscadas e violência sem cerimônia. Faz o necessário quando boas maneiras deixam de funcionar.", "Playstyle": "Mistura força, oportunismo e contatos com ambientes urbanos ou marginais." },
-        "treasureHunter": { "Name": "Caçador de Tesouros", "Summary": "Explorador atraído por ruínas, artefatos e segredos enterrados. Sabe que cada descoberta em Davokar pode trazer fortuna — ou algo muito pior.", "Playstyle": "Excelente para exploração, conhecimento de ruínas, armadilhas e busca por artefatos." },
-        "ranger": { "Name": "Patrulheiro", "Summary": "Batedor habituado a trilhas perigosas, longas vigílias e territórios selvagens. Encontra caminhos onde outros enxergam apenas mata e escuridão.", "Playstyle": "Favorece sobrevivência, rastreamento, reconhecimento e combate à distância." }
+        "berserker": { "Name": "Amoque", "Quote": "Mantenha distância! Eu não gostaria de te machucar.", "Summary": "Espíritos de fúria seguem você e o preenchem com uma ferocidade descontrolada em batalha. Fora do combate, sua disposição paciente e pensativa cria um contraste que o torna estimado e temido.", "Attributes": "Vigoroso 13+, Rápido 11+", "Races": "Bárbaro ou ogro", "Abilities": "Amoque, Força da Empunhadura Dupla, Punho de Ferro, Recuperação" },
+        "duelist": { "Name": "Duelista", "Quote": "Por favor, evite sangrar em mim quando eu te atravessar.", "Summary": "Honra e glória são tudo para um guerreiro, ainda mais quando ele pode defender seu nome com estilo. Você vive guiado por um código, e o fato de ainda estar vivo demonstra o seu talento.", "Attributes": "Preciso 13+, Rápido ou Discreto 11+", "Races": "Ambriano ou cambiante", "Abilities": "Acrobacias, Ataque Gêmeo, Finta, Homem-de-Armas" },
+        "captain": { "Name": "Capitão", "Quote": "Vai dar tudo certo — basta seguir meus comandos!", "Summary": "Você é um líder nato que construiu sua carreira militar sobre essa qualidade. O manejo da espada o mantém vivo, mas sua verdadeira força está em trazer o melhor dos aliados, guiá-los e protegê-los.", "Attributes": "Persuasivo 13+", "Races": "Humano, normalmente ambriano", "Abilities": "Combatente de Escudo, Dominação, Homem-de-Armas, Líder" },
+        "sellsword": { "Name": "Mercenário", "Quote": "Minha espada e minha vida, em troca do seu ouro.", "Summary": "Lutar tem sido seu estilo de vida — por dinheiro. Depois de servir a diferentes mestres, você aprendeu que habilidade e instinto para reconhecer quais batalhas podem ser vencidas são as chaves da sobrevivência.", "Attributes": "Vigoroso 13+", "Races": "Humano", "Abilities": "Combatente de Escudo, Homem-de-Armas, Maestria em Armas de Haste, Punho de Ferro" },
+        "knight": { "Name": "Cavaleiro", "Quote": "Você pode tirar minha vida, mas não minha honra.", "Summary": "Você luta para romper as linhas inimigas e manter as suas firmes. Fortemente protegido por fora e movido por um profundo senso de dever, combate por seu senhor, seus aliados e sua própria glória.", "Attributes": "Vigoroso 13+, Rápido 11+", "Races": "Ambriano", "Abilities": "Força da Empunhadura Dupla, Guarda-Costas, Homem-de-Armas, Punho de Ferro" },
+        "witch": { "Name": "Bruxa", "Quote": "Sua vontade é inferior à da Natureza. Aceite! Ou morra.", "Summary": "Seu lar são os ermos e seu chamado é equilibrar suas necessidades com as da natureza. Você negocia com espíritos, entende os fluxos da terra e deriva seus poderes do ciclo da vida e da morte.", "Attributes": "Resoluto 13+, Preciso 11+", "Races": "Bárbaro ou cambiante", "Abilities": "Bruxaria, Guerreiro Natural, Poder Místico, Ritualista" },
+        "sorcerer": { "Name": "Feiticeiro", "Quote": "Há outro caminho, um caminho mais fácil…", "Summary": "Guiado pelo desespero ou pela cobiça por poder, você segue o caminho da feitiçaria. A Corrupção se aproxima rapidamente, assim como os caçadores de bruxas, obrigando-o a decidir entre buscar ainda mais poder ou procurar redenção.", "Attributes": "Resoluto 13+, Discreto ou Astuto 11+", "Races": "Humano", "Abilities": "Alquimia, Feitiçaria, Poder Místico, Ritualista" },
+        "theurg": { "Name": "Teurgo", "Quote": "Prios vos enxerga, herege!", "Summary": "Você é um sacerdote dotado de poderes místicos e fé inabalável no Provedor das Leis. Dessa fundação flui um poder extraordinário para proteger a vida e enfrentar a escuridão.", "Attributes": "Resoluto 13+, Astuto ou Vigilante 11+", "Races": "Ambriano", "Abilities": "Médico, Poder Místico, Ritualista, Teurgia" },
+        "wizard": { "Name": "Mago", "Quote": "Notável, isto deve ser levado de volta para pesquisar melhor!", "Summary": "Você foi instruído nos segredos da magia da Ordo Magica. Para você, poderes místicos são extensões das leis fundamentais do mundo, estudadas cuidadosamente e aplicadas com efeitos grandiosos.", "Attributes": "Resoluto 13+, Astuto 11+", "Races": "Ambriano", "Abilities": "Mestre do Saber, Magismo, Poder Místico, Ritualista" },
+        "selfTaughtMystic": { "Name": "Místico Autodidata", "Quote": "Eles disseram que não levei meus poderes a sério; vou mostrar o quão errados estão.", "Summary": "Você aprendeu sozinho, foi excluído das tradições ou rejeitou suas visões estreitas. Sua liberdade cobra um preço: a Corrupção está sempre próxima e você é alvo de caçadores de bruxas e Mantos Negros.", "Attributes": "Resoluto 11+, Vigilante 13+", "Races": "Ambriano ou cambiante", "Abilities": "Poder Místico (quaisquer dois), Ritualista, Visão de Bruxa" },
+        "charlatan": { "Name": "Charlatão", "Quote": "Duas gotas por dia e você nunca ficará doente de novo!", "Summary": "Você escolheu a arena social como campo de batalha. Sua língua rápida é a arma mais afiada e seus olhos confiáveis são o melhor escudo; se ambos falharem, ainda restam armas leves e movimentos furtivos.", "Attributes": "Rápido 13+, Discreto 11+", "Races": "Cambiante ou humano, normalmente ambriano", "Abilities": "Acrobacias, Ataque Furtivo, Ataque Gêmeo, Finta" },
+        "witchhunter": { "Name": "Caçador de Bruxas", "Quote": "Prefiro colocar um inocente no chão do que ter uma besta maculada andando sobre ele.", "Summary": "Você dedicou sua vida à luta contra bestas maculadas. Empunha aço, fogo e talvez rituais tomados de inimigos derrotados, aceitando até o risco de Corrupção para combater o mal com fervor fanático.", "Attributes": "Resoluto 13+, Astuto ou Preciso 11+", "Races": "Humano", "Abilities": "Atirador, Inabalável, Ritualista, Saber de Bestas" },
+        "thug": { "Name": "Bandido", "Quote": "Seu dinheiro ou seu sangue — a escolha é sua!", "Summary": "Você cresceu onde gangues ensinam a lucrar com o trabalho alheio sob o nariz da guarda. Pode agir por conta própria ou servir a nobres como rufião e executor protegido pela influência de seus senhores.", "Attributes": "Rápido 13+, Astuto 11+", "Races": "Goblin, humano ou ogro", "Abilities": "Acrobacias, Ataque Gêmeo, Estrangulador, Veneficista" },
+        "treasureHunter": { "Name": "Caçador de Tesouros", "Quote": "Este altar… me pergunto se é possível empurrá-lo de lado…", "Summary": "As profundezas da Davokar escondem os tesouros que sustentam sua vida. Você sonha com ruínas e templos submersos e desenvolveu um conjunto de perícias para sobreviver aos perigos da floresta.", "Attributes": "Astuto 13+, Rápido 11+", "Races": "Goblin, humano ou ogro", "Abilities": "Acrobacias, Alquimia, Arremessar Aço, Tático" },
+        "ranger": { "Name": "Patrulheiro", "Quote": "Qualquer coisa viva pode ser rastreada. E derrubada…", "Summary": "Seu lar são florestas profundas e vales montanhosos, onde caça por alimento, peles ou proteção dos viajantes. Você sabe permanecer fora do alcance dos inimigos enquanto suas flechas encontram o alvo.", "Attributes": "Vigilante 13+, Discreto 11+", "Races": "Bárbaro ou cambiante", "Abilities": "Acrobacias, Atirador, Saber de Bestas, Sexto Sentido" }
       }
     },
     "ActorTypes": {
