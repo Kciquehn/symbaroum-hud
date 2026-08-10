@@ -668,7 +668,7 @@ function fallbackTraitData(trait) {
 
 function attributesBookContent(actor) {
   const typicalValues = typicalDistribution(actor);
-  const pointValues = pointBuyDistribution(actor);
+  const pointValues = pointBuyDistribution();
   const typicalOptions = [...new Set(TYPICAL_ATTRIBUTE_VALUES)]
     .map((value) => `<option value="${value}">${value}</option>`).join("");
   const cards = CORE_ATTRIBUTES.map((attribute, index) => `
@@ -877,12 +877,8 @@ function typicalDistribution(actor) {
   return CORE_ATTRIBUTES.map(() => "");
 }
 
-function pointBuyDistribution(actor) {
-  const current = CORE_ATTRIBUTES.map((attribute) =>
-    Number(actor?.system?.attributes?.[attribute.id]?.value)
-  );
-  if (isValidPointBuyDistribution(current)) return current;
-  return CORE_ATTRIBUTES.map(() => 10);
+function pointBuyDistribution() {
+  return CORE_ATTRIBUTES.map(() => ATTRIBUTE_MIN);
 }
 
 function attributeValuesFromForm(form, mode) {

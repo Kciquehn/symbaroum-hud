@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.46
+
+- Faz a Compra de Pontos iniciar todos os oito Atributos no valor mínimo `5`.
+- Exibe inicialmente `40` pontos restantes, que devem ser distribuídos até completar o total oficial de 80 pontos.
+
 ## 0.1.45
 
 - Remove o rótulo **Regras do Livro Básico** das abas Distribuição típica e Compra de pontos.

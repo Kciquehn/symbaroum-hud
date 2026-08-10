@@ -237,6 +237,7 @@ test("the second creator step offers typical distribution and point buy", async 
   assert.equal((content.match(/data-attribute-card=/g) ?? []).length, 8);
   assert.equal((content.match(/data-typical-attribute=/g) ?? []).length, 8);
   assert.equal((content.match(/data-adjust-attribute=/g) ?? []).length, 16);
+  assert.equal((content.match(/name="points-[^"]+" value="5"/g) ?? []).length, 8);
   assert.doesNotMatch(content, /Attributes\.RulesLabel/);
   assert.equal((content.match(/data-typical-value=/g) ?? []).length, 8);
 });
