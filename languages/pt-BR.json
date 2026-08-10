@@ -23,7 +23,7 @@
         "StepThreeText": "A raça descreve a origem e a natureza do personagem. Ela concede traços obrigatórios ou uma escolha cultural; alguns traços especiais também podem ser escolhidos, mas ocupam uma das escolhas de Habilidade da próxima etapa.",
         "AbilitiesProgress": "Passo 4 de 10",
         "StepFourTitle": "Escolha as Habilidades",
-        "StepFourText": "Habilidades representam o treinamento e os talentos especiais do personagem. Escolha cinco Habilidades no nível Novato ou duas no nível Novato e uma no nível Adepto. Traços raciais opcionais já escolhidos ocupam vagas de Novato."
+        "StepFourText": "Habilidades representam o treinamento e os talentos especiais do personagem. Compre livremente com Experiência ou use uma das distribuições iniciais. Traços raciais opcionais já escolhidos também contam no custo ou ocupam vagas de Novato."
       },
       "Archetypes": {
         "Warrior": {
@@ -125,6 +125,11 @@
         "Choose": "Confirmar Habilidades",
         "ContinueLater": "Continuar depois",
         "DistributionMethod": "Distribuição das Habilidades",
+        "ExperiencePurchase": "Compra com XP",
+        "ExperienceAvailable": "XP do personagem",
+        "ExperienceSpent": "Gasto:",
+        "ExperienceRemaining": "Restante:",
+        "ExperienceCosts": "Novata 10 XP · Adepta 30 XP · Mestre 60 XP",
         "FiveNovice": "Cinco Novatas",
         "Mixed": "Duas Novatas + uma Adepta",
         "Novice": "Novata",
@@ -137,10 +142,12 @@
         "NoDescription": "Sem descrição disponível.",
         "SelectNovice": "Escolher como Novata",
         "SelectAdept": "Escolher como Adepta",
+        "SelectMaster": "Escolher como Mestre",
         "RacialCost": "Vaga de Novato já ocupada por traço racial:",
         "Invalid": "Preencha todas as vagas de Habilidade antes de continuar.",
         "Unavailable": "Uma das Habilidades escolhidas não está mais disponível.",
-        "SlotFull": "Todas as vagas deste nível já estão preenchidas."
+        "SlotFull": "Todas as vagas deste nível já estão preenchidas.",
+        "NotEnoughExperience": "Não há XP suficiente para comprar esta Habilidade neste nível."
       },
       "Occupations": {
         "berserker": { "Name": "Amoque", "Quote": "Mantenha distância! Eu não gostaria de te machucar.", "Summary": "Espíritos de fúria seguem você e o preenchem com uma ferocidade descontrolada em batalha. Fora do combate, sua disposição paciente e pensativa cria um contraste que o torna estimado e temido.", "Attributes": "Vigoroso 13+, Rápido 11+", "Races": "Bárbaro ou ogro", "Abilities": "Amoque, Força da Empunhadura Dupla, Punho de Ferro, Recuperação" },

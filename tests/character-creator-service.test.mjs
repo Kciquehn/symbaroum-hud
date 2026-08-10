@@ -15,6 +15,7 @@ globalThis.game = {
   }
 };
 globalThis.ui = { notifications: { error: () => undefined, warn: () => undefined, info: () => undefined } };
+globalThis.CONST = { DOCUMENT_OWNERSHIP_LEVELS: { OBSERVER: 2 } };
 globalThis.Hooks = {
   on: () => undefined,
   callAll: (...args) => hookCalls.push(args)
@@ -71,11 +72,13 @@ const {
 const { CORE_RACES, CORE_RACE_TRAITS } = await import("../scripts/data/core-races.mjs");
 const {
   ABILITY_DISTRIBUTION_MODES,
+  abilityRankCost,
+  abilitySelectionCost,
   abilitySelectionLimits,
   isValidAbilitySelection
 } = await import("../scripts/data/character-creation-abilities.mjs");
 
-function worldAbility(id, name = `Ability ${id}`) {
+function worldAbility(id, name = `Ability ${id}`, permission = () => true) {
   const data = {
     _id: id,
     id,
@@ -92,7 +95,7 @@ function worldAbility(id, name = `Ability ${id}`) {
   };
   return {
     ...data,
-    testUserPermission: () => true,
+    testUserPermission: permission,
     toObject: () => structuredClone(data)
   };
 }
@@ -393,6 +396,16 @@ test("validates both official Ability distributions and discounts optional racia
   assert.equal(isValidAbilitySelection([
     { id: "a", rank: "novice" }, { id: "a", rank: "adept" }
   ], ABILITY_DISTRIBUTION_MODES.MIXED), false);
+  assert.equal(abilityRankCost("novice"), 10);
+  assert.equal(abilityRankCost("adept"), 30);
+  assert.equal(abilityRankCost("master"), 60);
+  assert.equal(abilitySelectionCost([{ id: "a", rank: "master" }, { id: "b", rank: "novice" }]), 70);
+  assert.equal(isValidAbilitySelection([
+    { id: "a", rank: "master" }, { id: "b", rank: "novice" }
+  ], ABILITY_DISTRIBUTION_MODES.EXPERIENCE, 1, { experienceBudget: 80 }), true);
+  assert.equal(isValidAbilitySelection([
+    { id: "a", rank: "master" }, { id: "b", rank: "novice" }
+  ], ABILITY_DISTRIBUTION_MODES.EXPERIENCE, 1, { experienceBudget: 79 }), false);
 });
 
 test("the fourth creator step provides search, full Ability reading and both distributions", async () => {
@@ -411,6 +424,8 @@ test("the fourth creator step provides search, full Ability reading and both dis
   }
   const content = dialogConfigs.at(-1).content;
   assert.match(content, /AbilitiesProgress/);
+  assert.match(content, /data-ability-mode="experience" data-active="true"/);
+  assert.match(content, /name="abilityExperienceBudget" value="50"/);
   assert.match(content, /data-ability-mode="five-novice"/);
   assert.match(content, /data-ability-mode="mixed"/);
   assert.match(content, /data-ability-search/);
@@ -419,6 +434,29 @@ test("the fourth creator step provides search, full Ability reading and both dis
   assert.match(content, /Novice a/);
   assert.match(content, /Adept a/);
   assert.match(content, /Master a/);
+  assert.match(content, /data-rank="master"/);
+});
+
+test("the Ability list includes world documents shared with the player as Observer", async () => {
+  const blank = actor({ id: "observer-abilities", uuid: "Actor.observer-abilities" });
+  await blank.setFlag("symbaroum-hud", "characterCreationMode", "creator");
+  await blank.setFlag("symbaroum-hud", "characterCreatorState", { version: 1, step: "race-complete" });
+  const permissionLevels = [];
+  const previous = game.items;
+  game.items = [
+    worldAbility("observer", "Observer Ability", (_user, level) => { permissionLevels.push(level); return level === 2; }),
+    worldAbility("hidden", "Hidden Ability", () => false)
+  ];
+  dialogChoices.push("close");
+  try {
+    await CharacterCreatorService.openAbilitiesStep(blank);
+  } finally {
+    game.items = previous;
+  }
+  const content = dialogConfigs.at(-1).content;
+  assert.match(content, /Observer Ability/);
+  assert.doesNotMatch(content, /Hidden Ability/);
+  assert.deepEqual(permissionLevels, [2]);
 });
 
 test("saving five Novice choices creates native Abilities without spending XP", async () => {
@@ -445,7 +483,7 @@ test("saving five Novice choices creates native Abilities without spending XP", 
   assert.equal(blank.items.length, 4);
   assert.equal(blank.items.every((item) => item.system.novice.isActive), true);
   assert.equal(blank.items.every((item) => !item.system.adept.isActive && !item.system.master.isActive), true);
-  assert.deepEqual(blank.updates.at(-1), { "system.bonus.experience.value": 40 });
+  assert.deepEqual(blank.updates.at(-1), { "system.bonus.experience.value": 50 });
   assert.equal(isAbilitiesStepComplete(blank), true);
   assert.equal(blank.flag("characterCreatorState").abilityDistribution, "five-novice");
 });
@@ -477,4 +515,39 @@ test("saving the mixed distribution activates its Adept Ability at both required
   assert.equal(adept.system.master.isActive, false);
   assert.deepEqual(blank.updates.at(-1), { "system.bonus.experience.value": 50 });
   assert.equal(isAbilitiesStepComplete(blank), true);
+});
+
+test("XP purchase is the primary mode and records spent and remaining experience", async () => {
+  const blank = actor({ id: "xp-abilities", uuid: "Actor.xp-abilities" });
+  await blank.setFlag("symbaroum-hud", "characterCreationMode", "creator");
+  await blank.setFlag("symbaroum-hud", "characterCreatorState", { version: 1, step: "race-complete" });
+  const abilities = [worldAbility("a"), worldAbility("b")];
+  const previous = game.items;
+  game.items = abilities;
+  dialogChoices.push({
+    action: "choose-abilities",
+    form: {
+      abilityDistributionMode: "experience",
+      abilityExperienceBudget: 80,
+      abilitySelections: JSON.stringify([
+        { id: "a", rank: "novice" }, { id: "b", rank: "master" }
+      ])
+    }
+  });
+  try {
+    await CharacterCreatorService.openAbilitiesStep(blank);
+  } finally {
+    game.items = previous;
+  }
+  const master = blank.items.find((item) => item.name === "Ability b");
+  assert.equal(master.system.novice.isActive, true);
+  assert.equal(master.system.adept.isActive, true);
+  assert.equal(master.system.master.isActive, true);
+  assert.deepEqual(blank.updates.at(-1), {
+    "system.experience.total": 80,
+    "system.bonus.experience.value": 0
+  });
+  assert.equal(blank.flag("characterCreatorState").abilityDistribution, "experience");
+  assert.equal(blank.flag("characterCreatorState").abilityExperienceBudget, 80);
+  assert.equal(blank.flag("characterCreatorState").abilityExperienceSpent, 70);
 });

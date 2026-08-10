@@ -1137,6 +1137,38 @@
 }
 
 .symbaroum-hud-ability-slots { display: flex; gap: 5px; }
+.symbaroum-hud-ability-experience {
+  display: grid;
+  padding: 6px;
+  gap: 5px;
+  border: 1px solid rgb(201 168 73 / 34%);
+  background: rgb(0 0 0 / 34%);
+}
+.symbaroum-hud-ability-experience[hidden] { display: none; }
+.symbaroum-hud-ability-experience > label {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 62px;
+  align-items: center;
+  gap: 6px;
+  color: #dfd1ae;
+  font-family: "Symbaroum HUD Primitive", "Philosopher", serif;
+  font-size: 0.68rem;
+}
+.symbaroum-hud-ability-experience input {
+  width: 62px;
+  height: 25px;
+  margin: 0;
+  border: 1px solid #8f7538;
+  border-radius: 0;
+  color: #fff1be;
+  background: #130e0b;
+  text-align: center;
+  font-weight: 700;
+}
+.symbaroum-hud-ability-experience > div { display: flex; justify-content: space-between; color: #bfb08c; font-size: 0.58rem; }
+.symbaroum-hud-ability-experience b { color: #e9d58f; }
+.symbaroum-hud-ability-experience [data-insufficient="true"] { color: #ef8d78; }
+.symbaroum-hud-ability-experience > small { color: #8f8065; font-size: 0.52rem; text-align: center; }
 .symbaroum-hud-ability-slots span {
   flex: 1;
   padding: 4px 5px;
@@ -1217,6 +1249,7 @@ button.symbaroum-hud-ability-index-entry[data-selected="true"] { box-shadow: ins
 .symbaroum-hud-ability-level { padding: 7px 9px; border: 1px solid rgb(112 73 35 / 35%); border-left: 3px solid #7a3025; background: rgb(255 250 230 / 43%); }
 .symbaroum-hud-ability-level > header { display: flex; min-height: 25px; align-items: center; justify-content: space-between; gap: 10px; border-bottom: 1px solid rgb(123 52 39 / 26%); }
 .symbaroum-hud-ability-level > header button { width: auto; min-height: 22px; margin: 0; padding: 2px 7px; border: 1px solid #846d35; border-radius: 0; color: #52251e; background: #eee2bd; box-shadow: none; font-size: 0.58rem; }
+.symbaroum-hud-ability-level > header button small { margin-left: 4px; color: inherit; font-size: 0.5rem; opacity: 0.76; }
 .symbaroum-hud-ability-level > header button:hover,
 .symbaroum-hud-ability-level > header button[data-selected="true"] { border-color: #536a3e; color: #fff9d9; background: #52663f; }
 .symbaroum-hud-ability-level > strong { display: block; margin-top: 4px; color: #755d26; font-size: 0.57rem; text-transform: uppercase; }

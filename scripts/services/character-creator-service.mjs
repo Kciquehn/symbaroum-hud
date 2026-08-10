@@ -21,6 +21,8 @@ import {
 } from "../data/core-races.mjs";
 import {
   ABILITY_DISTRIBUTION_MODES,
+  abilityRankCost,
+  abilitySelectionCost,
   abilitySelectionLimits,
   isValidAbilitySelection
 } from "../data/character-creation-abilities.mjs";
@@ -496,8 +498,10 @@ export class CharacterCreatorService {
           default: true,
           callback: async (_event, button) => {
             const mode = formValue(button.form, "abilityDistributionMode");
+            const experienceBudget = Number(formValue(button.form, "abilityExperienceBudget"));
             const selections = parseAbilitySelections(formValue(button.form, "abilitySelections"));
-            if (!isValidAbilitySelection(selections, mode, racialCost)) {
+            const costs = abilityExperienceCosts();
+            if (!isValidAbilitySelection(selections, mode, racialCost, { experienceBudget, costs })) {
               ui.notifications?.warn(game.i18n.localize("SYMBAROUMHUD.CharacterCreator.Abilities.Invalid"));
               return null;
             }
@@ -509,13 +513,23 @@ export class CharacterCreatorService {
             const documents = selections.map((selection) => creationAbilityData(
               available.get(selection.id), selection.rank
             ));
-            const created = await actor.createEmbeddedDocuments("Item", documents);
-            const freeExperience = selections.reduce((total, selection) => total
+            const created = documents.length
+              ? await actor.createEmbeddedDocuments("Item", documents)
+              : [];
+            const purchasedWithExperience = mode === ABILITY_DISTRIBUTION_MODES.EXPERIENCE;
+            const freeExperience = purchasedWithExperience ? 0 : selections.reduce((total, selection) => total
               + creationAbilityExperienceCost(available.get(selection.id), selection.rank), 0);
-            if (freeExperience > 0) {
+            const freeRaceExperience = racialFreeExperienceValue(actor);
+            const existingBonus = Number(actor.system?.bonus?.experience?.value ?? 0);
+            if (purchasedWithExperience) {
               await actor.update({
-                "system.bonus.experience.value": Number(actor.system?.bonus?.experience?.value ?? 0)
-                  + freeExperience
+                "system.experience.total": experienceBudget,
+                "system.bonus.experience.value": existingBonus + freeRaceExperience
+              });
+            } else if (freeExperience > 0) {
+              await actor.update({
+                "system.bonus.experience.value": existingBonus + freeRaceExperience + freeExperience
+                  + racialCost * abilityRankCost("novice", costs)
               });
             }
             const previous = actor.getFlag?.(MODULE_ID, STATE_FLAG) ?? {};
@@ -528,6 +542,10 @@ export class CharacterCreatorService {
               version: 1,
               step: ABILITIES_STEP_COMPLETE,
               abilityDistribution: mode,
+              abilityExperienceBudget: purchasedWithExperience ? experienceBudget : null,
+              abilityExperienceSpent: purchasedWithExperience
+                ? abilitySelectionCost(selections, costs) + racialCost * abilityRankCost("novice", costs)
+                : null,
               abilities: saved
             });
             Hooks.callAll(`${MODULE_ID}.characterCreatorStepCompleted`, actor, {
@@ -751,13 +769,14 @@ function bindRaceBook(element) {
 }
 
 function availableCreationAbilities(actor) {
+  const observerLevel = globalThis.CONST?.DOCUMENT_OWNERSHIP_LEVELS?.OBSERVER ?? "OBSERVER";
   const known = new Set(actorItems(actor)
     .filter((item) => item.type === "ability")
     .map(abilityIdentity));
   const unique = new Map();
   for (const item of Array.from(game.items?.values?.() ?? game.items ?? [])) {
     if (item?.type !== "ability") continue;
-    if (item.testUserPermission && !item.testUserPermission(game.user, "OBSERVER")) continue;
+    if (item.testUserPermission && !item.testUserPermission(game.user, observerLevel)) continue;
     const identity = abilityIdentity(item);
     if (!identity || known.has(identity) || unique.has(identity)) continue;
     unique.set(identity, item);
@@ -776,8 +795,23 @@ function racialAbilityCost(actor) {
   return Math.min(2, Math.max(0, Array.isArray(state.abilityCostTraits) ? state.abilityCostTraits.length : 0));
 }
 
+function racialFreeExperienceValue(actor) {
+  const state = actor?.getFlag?.(MODULE_ID, STATE_FLAG) ?? {};
+  const paid = new Set(state.abilityCostTraits ?? []);
+  const costs = game.symbaroum?.config?.expCosts ?? {};
+  return Array.from(state.raceTraits ?? []).reduce((total, id) => {
+    if (paid.has(id)) return total;
+    const trait = coreRaceTrait(id);
+    if (trait?.type === "boon") return total + (Number(costs.boon?.cost) || 5);
+    if (trait?.type === "burden") return total + (Number(costs.burden?.cost) || -5);
+    if (trait?.type === "trait") return total + abilityRankCost("novice", costs.power);
+    return total;
+  }, 0);
+}
+
 async function abilitiesBookContent(actor, abilities, racialCost) {
   const firstId = abilities[0]?.id ?? "";
+  const costs = abilityExperienceCosts();
   const state = actor?.getFlag?.(MODULE_ID, STATE_FLAG) ?? {};
   const racialTraits = (state.abilityCostTraits ?? [])
     .map((id) => coreRaceTrait(id))
@@ -816,10 +850,11 @@ async function abilitiesBookContent(actor, abilities, racialCost) {
           ${levels.map(({ rank, action, description }) => `
             <section class="symbaroum-hud-ability-level" data-rank="${rank}">
               <header><h3>${localizeEscaped(`SYMBAROUMHUD.CharacterCreator.Abilities.${rank[0].toUpperCase()}${rank.slice(1)}`)}</h3>
-                ${rank === "master" ? "" : `<button type="button" data-select-ability="${escapeHtml(ability.id)}" data-rank="${rank}">
+                <button type="button" data-select-ability="${escapeHtml(ability.id)}" data-rank="${rank}">
                   <i class="fa-regular fa-circle" aria-hidden="true"></i>
-                  <span>${localizeEscaped(rank === "novice" ? "SYMBAROUMHUD.CharacterCreator.Abilities.SelectNovice" : "SYMBAROUMHUD.CharacterCreator.Abilities.SelectAdept")}</span>
-                </button>`}
+                  <span>${localizeEscaped(`SYMBAROUMHUD.CharacterCreator.Abilities.Select${rank[0].toUpperCase()}${rank.slice(1)}`)}</span>
+                  <small>${abilityRankCost(rank, costs)} XP</small>
+                </button>
               </header>
               ${action ? `<strong>${escapeHtml(action)}</strong>` : ""}
               <div>${description}</div>
@@ -828,9 +863,10 @@ async function abilitiesBookContent(actor, abilities, racialCost) {
       </article>`;
   }))).join("");
   const limits = abilitySelectionLimits(ABILITY_DISTRIBUTION_MODES.FIVE_NOVICE, racialCost);
+  const initialExperience = Math.max(0, Number(actor.system?.experience?.total) || 50);
   return `
     <div class="symbaroum-hud-abilities-book">
-      <input type="hidden" name="abilityDistributionMode" value="${ABILITY_DISTRIBUTION_MODES.FIVE_NOVICE}">
+      <input type="hidden" name="abilityDistributionMode" value="${ABILITY_DISTRIBUTION_MODES.EXPERIENCE}">
       <input type="hidden" name="abilitySelections" value="[]">
       <header class="symbaroum-hud-creator-step-guide">
         <div class="symbaroum-hud-creator-step-number"><strong>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Guide.AbilitiesProgress")}</strong></div>
@@ -838,13 +874,21 @@ async function abilitiesBookContent(actor, abilities, racialCost) {
         <p>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Guide.StepFourText")}</p></div>
       </header>
       <nav class="symbaroum-hud-ability-mode-tabs" aria-label="${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.DistributionMethod")}">
-        <button type="button" data-ability-mode="five-novice" data-active="true" aria-pressed="true"><i class="fa-solid fa-hand-fist"></i>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.FiveNovice")}</button>
+        <button type="button" data-ability-mode="experience" data-active="true" aria-pressed="true"><i class="fa-solid fa-coins"></i>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.ExperiencePurchase")}</button>
+        <button type="button" data-ability-mode="five-novice" data-active="false" aria-pressed="false"><i class="fa-solid fa-hand-fist"></i>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.FiveNovice")}</button>
         <button type="button" data-ability-mode="mixed" data-active="false" aria-pressed="false"><i class="fa-solid fa-crown"></i>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.Mixed")}</button>
       </nav>
       <div class="symbaroum-hud-ability-workspace">
         <aside class="symbaroum-hud-ability-index">
           <label><i class="fa-solid fa-magnifying-glass"></i><input type="search" data-ability-search placeholder="${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.SearchPlaceholder")}"></label>
-          <div class="symbaroum-hud-ability-slots">
+          <section class="symbaroum-hud-ability-experience" data-ability-experience-panel>
+            <label><span>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.ExperienceAvailable")}</span>
+              <input type="number" name="abilityExperienceBudget" value="${initialExperience}" min="0" step="1"></label>
+            <div><span>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.ExperienceSpent")} <b data-experience-spent>0</b></span>
+              <span>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.ExperienceRemaining")} <b data-experience-remaining>${initialExperience}</b></span></div>
+            <small>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.ExperienceCosts")}</small>
+          </section>
+          <div class="symbaroum-hud-ability-slots" hidden>
             <span data-ability-slot="novice"><b>0</b>/${limits.novice} ${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.Novice")}</span>
             <span data-ability-slot="adept" hidden><b>0</b>/0 ${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.Adept")}</span>
           </div>
@@ -859,6 +903,8 @@ async function abilitiesBookContent(actor, abilities, racialCost) {
 function bindAbilitiesBook(element, racialCost) {
   const modeInput = element.querySelector('input[name="abilityDistributionMode"]');
   const selectionsInput = element.querySelector('input[name="abilitySelections"]');
+  const experienceInput = element.querySelector('input[name="abilityExperienceBudget"]');
+  const costs = abilityExperienceCosts();
   const entries = [...element.querySelectorAll("[data-creation-ability-id]")];
   const pages = [...element.querySelectorAll("[data-creation-ability-page]")];
   const selections = new Map();
@@ -873,9 +919,25 @@ function bindAbilitiesBook(element, racialCost) {
   const refresh = () => {
     const mode = modeInput.value;
     const limits = abilitySelectionLimits(mode, racialCost);
-    const counts = { novice: 0, adept: 0 };
+    const counts = { novice: 0, adept: 0, master: 0 };
     for (const rank of selections.values()) counts[rank]++;
     selectionsInput.value = JSON.stringify([...selections].map(([id, rank]) => ({ id, rank })));
+    const experienceMode = mode === ABILITY_DISTRIBUTION_MODES.EXPERIENCE;
+    const budget = Math.max(0, Number(experienceInput?.value) || 0);
+    const spent = abilitySelectionCost(
+      [...selections].map(([id, rank]) => ({ id, rank })), costs
+    ) + racialCost * abilityRankCost("novice", costs);
+    const experiencePanel = element.querySelector("[data-ability-experience-panel]");
+    const slotsPanel = element.querySelector(".symbaroum-hud-ability-slots");
+    if (experiencePanel) experiencePanel.hidden = !experienceMode;
+    if (slotsPanel) slotsPanel.hidden = experienceMode;
+    const spentElement = element.querySelector("[data-experience-spent]");
+    const remainingElement = element.querySelector("[data-experience-remaining]");
+    if (spentElement) spentElement.textContent = String(spent);
+    if (remainingElement) {
+      remainingElement.textContent = String(budget - spent);
+      remainingElement.dataset.insufficient = String(spent > budget);
+    }
     for (const rank of ["novice", "adept"]) {
       const slot = element.querySelector(`[data-ability-slot="${rank}"]`);
       if (!slot) continue;
@@ -894,12 +956,15 @@ function bindAbilitiesBook(element, racialCost) {
       const rank = selections.get(button.dataset.selectAbility);
       const active = rank === button.dataset.rank;
       button.dataset.selected = String(active);
-      button.hidden = button.dataset.rank === "adept" && limits.adept === 0;
+      button.hidden = experienceMode
+        ? false
+        : button.dataset.rank === "master" || (button.dataset.rank === "adept" && limits.adept === 0);
       button.querySelector("i").className = active ? "fa-solid fa-circle-check" : "fa-regular fa-circle";
     }
     const confirm = element.querySelector('[data-action="choose-abilities"]');
     if (confirm) confirm.disabled = !isValidAbilitySelection(
-      [...selections].map(([id, rank]) => ({ id, rank })), mode, racialCost
+      [...selections].map(([id, rank]) => ({ id, rank })), mode, racialCost,
+      { experienceBudget: budget, costs }
     );
   };
   for (const entry of entries) entry.addEventListener("click", () => openPage(entry.dataset.creationAbilityId));
@@ -917,11 +982,24 @@ function bindAbilitiesBook(element, racialCost) {
     const { selectAbility: id, rank } = button.dataset;
     if (selections.get(id) === rank) selections.delete(id);
     else {
-      const limits = abilitySelectionLimits(modeInput.value, racialCost);
-      const occupied = [...selections].filter(([otherId, otherRank]) => otherId !== id && otherRank === rank).length;
-      if (occupied >= limits[rank]) {
-        ui.notifications?.warn(game.i18n.localize("SYMBAROUMHUD.CharacterCreator.Abilities.SlotFull"));
-        return;
+      if (modeInput.value === ABILITY_DISTRIBUTION_MODES.EXPERIENCE) {
+        const candidates = new Map(selections);
+        candidates.set(id, rank);
+        const budget = Math.max(0, Number(experienceInput?.value) || 0);
+        const spent = abilitySelectionCost(
+          [...candidates].map(([candidateId, candidateRank]) => ({ id: candidateId, rank: candidateRank })), costs
+        ) + racialCost * abilityRankCost("novice", costs);
+        if (spent > budget) {
+          ui.notifications?.warn(game.i18n.localize("SYMBAROUMHUD.CharacterCreator.Abilities.NotEnoughExperience"));
+          return;
+        }
+      } else {
+        const limits = abilitySelectionLimits(modeInput.value, racialCost);
+        const occupied = [...selections].filter(([otherId, otherRank]) => otherId !== id && otherRank === rank).length;
+        if (occupied >= limits[rank]) {
+          ui.notifications?.warn(game.i18n.localize("SYMBAROUMHUD.CharacterCreator.Abilities.SlotFull"));
+          return;
+        }
       }
       selections.set(id, rank);
     }
@@ -934,6 +1012,7 @@ function bindAbilitiesBook(element, racialCost) {
     const active = entries.find((entry) => entry.dataset.active === "true" && !entry.hidden);
     if (!active) openPage(entries.find((entry) => !entry.hidden)?.dataset.creationAbilityId ?? "");
   });
+  experienceInput?.addEventListener("input", refresh);
   refresh();
 }
 
@@ -953,17 +1032,19 @@ function creationAbilityData(source, rank) {
   data.system ??= {};
   for (const level of ["novice", "adept", "master"]) data.system[level] ??= {};
   data.system.novice.isActive = true;
-  data.system.adept.isActive = rank === "adept";
-  data.system.master.isActive = false;
+  data.system.adept.isActive = rank === "adept" || rank === "master";
+  data.system.master.isActive = rank === "master";
   return data;
 }
 
 function creationAbilityExperienceCost(source, rank) {
-  const costs = game.symbaroum?.config?.expCosts?.power ?? {};
+  const costs = abilityExperienceCosts();
   if (Array.isArray(costs.nocost) && costs.nocost.includes(source?.system?.reference)) return 0;
-  const novice = Number(costs.novice) || 10;
-  const adept = Number(costs.adept) || 20;
-  return novice + (rank === "adept" ? adept : 0);
+  return abilityRankCost(rank, costs);
+}
+
+function abilityExperienceCosts() {
+  return game.symbaroum?.config?.expCosts?.power ?? { novice: 10, adept: 20, master: 30, nocost: [] };
 }
 
 async function enrichCreatorDescription(value, relativeTo) {

@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.50
+
+- Adiciona **Compra com XP** como modo principal e inicial da etapa de Habilidades.
+- Permite informar o XP disponível e comprar níveis Novato, Adepto e Mestre pelos custos cumulativos de `10`, `30` e `60 XP`.
+- Mostra em tempo real o XP gasto e restante, bloqueando compras que ultrapassem o orçamento informado.
+- Mantém as duas distribuições iniciais prontas como alternativas.
+- Inclui no catálogo todas as Habilidades do mundo compartilhadas com o jogador em nível **Observer** ou superior.
+- Registra o XP inicial e ativa corretamente todos os níveis necessários das Habilidades compradas.
+
 ## 0.1.49
 
 - Adiciona o quarto passo do Criador de Fichas: seleção de Habilidades disponíveis no mundo.
