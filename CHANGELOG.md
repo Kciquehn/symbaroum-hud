@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.34
+
+- Exibe as abas de nível Novato, Adepto e Mestre nos traços monstruosos.
+- Mostra a ação, a descrição e a indicação do nível ativo de cada traço.
+- Mantém dádivas, fardos e traços marcadores sem níveis, conforme a estrutura do sistema Symbaroum.
+
 ## 0.1.33
 
 - Adiciona uma animação curta de deslize e transparência ao recolher e expandir o HUD.

@@ -12,6 +12,15 @@ export function isTraitLikeItem(item) {
     || Boolean(item?.system?.isBurden);
 }
 
+export function hasPowerLevels(item) {
+  const system = item?.system ?? {};
+  const traitLike = isTraitLikeItem(item);
+  return Boolean(
+    (system.hasLevels ?? (item?.type === "trait" || !traitLike))
+    && !system.marker
+  );
+}
+
 export function canUsePowerItem(item) {
   if (!item?.system?.isPower || !item.system?.hasScript) {
     return false;

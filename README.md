@@ -23,7 +23,7 @@ O módulo usa as rolagens e os documentos nativos do sistema. Ele não altera o 
 - rolagem dos oito atributos, armas, armadura e teste de morte;
 - recuperação, descanso, custo de nova rolagem e efeitos ativos;
 - táticas das criaturas selecionadas pelo mestre exibidas junto aos efeitos para consulta rápida;
-- painéis de ataques, habilidades, traços, poderes místicos e rituais;
+- painéis de ataques, habilidades, traços, poderes místicos e rituais, com níveis Novato, Adepto e Mestre nos traços monstruosos;
 - busca e adição de habilidades ou rituais existentes no mundo;
 - painel de Ritualista com grau, capacidade e progressão;
 - descrições completas expansíveis no seletor de manobras;

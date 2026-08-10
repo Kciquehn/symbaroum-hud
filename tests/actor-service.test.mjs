@@ -40,7 +40,33 @@ globalThis.CONFIG = {
 };
 globalThis.canvas = { tokens: { controlled: [] } };
 
-const { ActorService } = await import("../scripts/services/actor-service.mjs");
+const { ActorService, hasPowerLevels } = await import("../scripts/services/actor-service.mjs");
+
+test("monster traits expose their novice, adept and master levels", () => {
+  assert.equal(hasPowerLevels({
+    type: "trait",
+    system: { isPower: true, isTrait: true, hasLevels: true }
+  }), true);
+  assert.equal(hasPowerLevels({
+    type: "trait",
+    system: { isPower: true, isTrait: true }
+  }), true);
+});
+
+test("boons, burdens and marker traits remain level-less", () => {
+  assert.equal(hasPowerLevels({
+    type: "boon",
+    system: { isPower: true, isBoon: true, hasLevels: false }
+  }), false);
+  assert.equal(hasPowerLevels({
+    type: "burden",
+    system: { isPower: true, isBurden: true }
+  }), false);
+  assert.equal(hasPowerLevels({
+    type: "trait",
+    system: { isPower: true, isTrait: true, hasLevels: true, marker: true }
+  }), false);
+});
 
 function actor({ owner = true } = {}) {
   const calls = [];

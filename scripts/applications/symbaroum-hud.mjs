@@ -10,7 +10,12 @@ import {
   getSetting,
   getStorageViewMode
 } from "../settings.mjs";
-import { ActorService, canUsePowerItem, isTraitLikeItem } from "../services/actor-service.mjs";
+import {
+  ActorService,
+  canUsePowerItem,
+  hasPowerLevels,
+  isTraitLikeItem
+} from "../services/actor-service.mjs";
 import { defenseDisplayValue } from "../services/defense-service.mjs";
 import { ritualistProgress } from "../services/ritual-service.mjs";
 import {
@@ -81,6 +86,7 @@ export class SymbaroumHud extends ApplicationV2 {
   #selectedMysticalPowerTab = DEFAULT_ABILITY_TAB;
   #selectedRitualId = null;
   #selectedTraitId = null;
+  #selectedTraitTab = DEFAULT_ABILITY_TAB;
   #storageContainerId = null;
   #storageDragData = null;
   #storageOpen = false;
@@ -127,6 +133,7 @@ export class SymbaroumHud extends ApplicationV2 {
       this.#selectedMysticalPowerTab = DEFAULT_ABILITY_TAB;
       this.#selectedRitualId = null;
       this.#selectedTraitId = null;
+      this.#selectedTraitTab = DEFAULT_ABILITY_TAB;
       this.#storageContainerId = null;
       this.#storageOpen = false;
       this.#ritualsOpen = false;
@@ -188,7 +195,7 @@ export class SymbaroumHud extends ApplicationV2 {
     const traits = await abilityContext(
       actor,
       this.#selectedTraitId,
-      DEFAULT_ABILITY_TAB,
+      this.#selectedTraitTab,
       { traits: true }
     );
     const rituals = await ritualContext(actor, this.#selectedRitualId);
@@ -370,6 +377,7 @@ export class SymbaroumHud extends ApplicationV2 {
     this.#selectedMysticalPowerTab = DEFAULT_ABILITY_TAB;
     this.#selectedRitualId = null;
     this.#selectedTraitId = null;
+    this.#selectedTraitTab = DEFAULT_ABILITY_TAB;
     this.#storageContainerId = null;
     this.#storageDragData = null;
     this.#storageOpen = false;
@@ -772,6 +780,7 @@ export class SymbaroumHud extends ApplicationV2 {
           this.#ritualsOpen = false;
           this.#storageOpen = false;
           this.#selectedTraitId = item.id;
+          this.#selectedTraitTab = DEFAULT_ABILITY_TAB;
           this.#traitsOpen = true;
           return this.render();
         }).catch((error) => {
@@ -1591,6 +1600,7 @@ export class SymbaroumHud extends ApplicationV2 {
         this.#storageOpen = false;
         this.#traitsOpen = true;
         this.#selectedTraitId = element.dataset.itemId || null;
+        this.#selectedTraitTab = DEFAULT_ABILITY_TAB;
         return this.render();
       }
       if (action === "select-ability-tab") {
@@ -1611,6 +1621,16 @@ export class SymbaroumHud extends ApplicationV2 {
         this.#traitsOpen = false;
         this.#mysticalPowersOpen = true;
         this.#selectedMysticalPowerTab = element.dataset.abilityTab || DEFAULT_ABILITY_TAB;
+        return this.render();
+      }
+      if (action === "select-trait-tab") {
+        this.#abilitiesOpen = false;
+        this.#attacksOpen = false;
+        this.#mysticalPowersOpen = false;
+        this.#ritualsOpen = false;
+        this.#storageOpen = false;
+        this.#traitsOpen = true;
+        this.#selectedTraitTab = element.dataset.abilityTab || DEFAULT_ABILITY_TAB;
         return this.render();
       }
       if (action === "toggle-ability-level") {
@@ -2190,6 +2210,7 @@ export class SymbaroumHud extends ApplicationV2 {
     this.#selectedMysticalPowerTab = DEFAULT_ABILITY_TAB;
     this.#selectedRitualId = null;
     this.#selectedTraitId = null;
+    this.#selectedTraitTab = DEFAULT_ABILITY_TAB;
     this.#storageContainerId = null;
     this.#storageOpen = false;
     this.#ritualsOpen = false;
@@ -2422,8 +2443,7 @@ function isMysticalPowerItem(item) {
 
 async function abilityDetailContext(item, selectedAbilityTab = DEFAULT_ABILITY_TAB) {
   const system = item.system ?? {};
-  const trait = isTraitLikeItem(item);
-  const hasLevels = !trait;
+  const hasLevels = hasPowerLevels(item);
   const description = await enrichDescription(system.description, item);
   const levels = [];
 

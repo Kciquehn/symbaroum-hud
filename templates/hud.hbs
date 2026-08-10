@@ -1137,6 +1137,24 @@
                   </div>
                 </header>
 
+                {{#if traits.selected.hasLevels}}
+                  <nav class="symbaroum-hud-ability-tabs" role="tablist"
+                    aria-label="{{localize 'SYMBAROUMHUD.Abilities.Tabs'}}">
+                    {{#each traits.selected.tabs}}
+                      <button type="button" class="symbaroum-hud-ability-tab"
+                        role="tab" data-action="select-trait-tab"
+                        data-ability-tab="{{id}}" data-active="{{active}}"
+                        data-learned="{{learned}}"
+                        aria-selected="{{active}}">
+                        {{#if learned}}
+                          <i class="fa-solid fa-check" aria-hidden="true"></i>
+                        {{/if}}
+                        {{label}}
+                      </button>
+                    {{/each}}
+                  </nav>
+                {{/if}}
+
                 <section class="symbaroum-hud-ability-tab-panel" role="tabpanel"
                   data-ability-section="{{traits.selected.activeTab.id}}">
                   <header class="symbaroum-hud-ability-page-heading">
@@ -1145,6 +1163,13 @@
                       <h3>{{traits.selected.activeTab.label}}</h3>
                       <span aria-hidden="true"></span>
                     </div>
+                    {{#if traits.selected.activeTab.action}}
+                      <div class="symbaroum-hud-ability-level-controls">
+                        <span class="symbaroum-hud-ability-tab-action">
+                          <strong>{{traits.selected.activeTab.action}}</strong>
+                        </span>
+                      </div>
+                    {{/if}}
                   </header>
                   <div class="symbaroum-hud-ability-page-content">
                     {{#if traits.selected.activeTab.description}}
