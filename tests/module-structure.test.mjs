@@ -19,6 +19,7 @@ assert.equal(manifest.license, "https://github.com/Kciquehn/symbaroum-hud/blob/m
 assert.equal(manifest.bugs, "https://github.com/Kciquehn/symbaroum-hud/issues");
 assert.ok(manifest.esmodules.includes("scripts/main.mjs"));
 assert.ok(fs.existsSync(path.join(root, "scripts", "services", "character-creator-service.mjs")), "Missing character creator service");
+assert.ok(fs.existsSync(path.join(root, "scripts", "data", "core-occupations.mjs")), "Missing core occupations data");
 assert.ok(fs.existsSync(path.join(root, "LICENSE")), "Missing LICENSE file");
 assert.ok(fs.existsSync(path.join(root, "CHANGELOG.md")), "Missing CHANGELOG.md file");
 assert.ok(fs.existsSync(path.join(root, "FOUNDRY-PACKAGE-DESCRIPTION.html")), "Missing Foundry package description HTML");
@@ -66,6 +67,7 @@ const template = fs.readFileSync(path.join(root, "templates", "hud.hbs"), "utf8"
 const application = fs.readFileSync(path.join(root, "scripts", "applications", "symbaroum-hud.mjs"), "utf8");
 const actorService = fs.readFileSync(path.join(root, "scripts", "services", "actor-service.mjs"), "utf8");
 const characterCreatorService = fs.readFileSync(path.join(root, "scripts", "services", "character-creator-service.mjs"), "utf8");
+const coreOccupations = fs.readFileSync(path.join(root, "scripts", "data", "core-occupations.mjs"), "utf8");
 const hooks = fs.readFileSync(path.join(root, "scripts", "hooks.mjs"), "utf8");
 const main = fs.readFileSync(path.join(root, "scripts", "main.mjs"), "utf8");
 const settings = fs.readFileSync(path.join(root, "scripts", "settings.mjs"), "utf8");
@@ -726,6 +728,11 @@ assert.match(characterCreatorService, /characterCreationMode/);
 assert.match(characterCreatorService, /DialogV2\.wait/);
 assert.match(characterCreatorService, /CHARACTER_CREATION_MODES\.CREATOR/);
 assert.match(characterCreatorService, /CHARACTER_CREATION_MODES\.MANUAL/);
+assert.match(characterCreatorService, /system\.bio\.occupation/);
+assert.match(characterCreatorService, /characterCreatorState/);
+assert.match(characterCreatorService, /choose-occupation/);
+assert.match(coreOccupations, /CORE_OCCUPATIONS/);
+assert.equal((coreOccupations.match(/occupation\("/g) ?? []).length, 15);
 assert.match(settings, /scope: "client"[\s\S]*config: false[\s\S]*STORAGE_VIEW_MODES\.GRID/);
 assert.match(main, /registerHotbarShortcutKeybindings\(\)/);
 assert.match(hotbarShortcuts, /Hooks\.on\("hotbarDrop"/);

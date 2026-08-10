@@ -10,9 +10,38 @@
       "DecisionHint": "Closing this window without choosing will show the question again the next time the sheet opens.",
       "UseCreator": "Use Character Creator",
       "FillManually": "Fill in manually",
-      "PrototypeTitle": "Character Creator — Prototype",
-      "PrototypeText": "The Character Creator has been enabled for this character. In the next test, this screen will begin ancestry selection and fill in the sheet as each choice is made.",
-      "Understood": "Got it"
+      "Archetypes": {
+        "Warrior": "Warrior",
+        "Mystic": "Mystic",
+        "Rogue": "Rogue"
+      },
+      "Occupation": {
+        "Title": "Character Creator — Choose Your Occupation",
+        "Step": "Chapter I",
+        "Index": "Occupations",
+        "IndexHint": "Choose a name from the index to learn about its place in the world and style of adventure.",
+        "AtTheTable": "At the table",
+        "Choose": "Choose this occupation",
+        "ContinueLater": "Continue later",
+        "SelectionHint": "Your occupation guides your concept but does not restrict the character's future choices."
+      },
+      "Occupations": {
+        "berserker": { "Name": "Berserker", "Summary": "A combatant who turns fury and endurance into weapons. They stride into danger without hesitation and trust their strength to remain standing.", "Playstyle": "Ideal for players who want to meet enemies up close, endure punishment, and make a strong physical impact." },
+        "duelist": { "Name": "Duelist", "Summary": "A specialist in precision, mobility, and command of the blade. They prevail through technique and by choosing the right moment to attack or defend.", "Playstyle": "Suited to players who favor agility, finesse, and careful combat decisions." },
+        "captain": { "Name": "Captain", "Summary": "A leader accustomed to turning individuals into a coordinated force. Their presence inspires allies and restores order when everything threatens to collapse.", "Playstyle": "Supports leadership, social interaction, and tactical assistance for the whole group." },
+        "sellsword": { "Name": "Sellsword", "Summary": "A pragmatic veteran who trades steel and experience for payment. They survived by changing tactics whenever the job demanded it.", "Playstyle": "A versatile choice for martial competence without strict vows or traditions." },
+        "knight": { "Name": "Knight", "Summary": "A disciplined, armored warrior driven by duty, honor, or loyalty. They often stand between danger and their companions.", "Playstyle": "Well suited to defense, protecting allies, and making a strong impression in and out of battle." },
+        "witch": { "Name": "Witch", "Summary": "A mystic tied to clan traditions, spirits, and the wild rhythms of Davokar. Their power grows from pacts, memory, and respect for the living world.", "Playstyle": "Combines magic, spiritual perception, and a strong bond with nature and barbarian culture." },
+        "sorcerer": { "Name": "Sorcerer", "Summary": "An occultist who faces forbidden powers and Corruption in ways few would dare. The path offers strength but demands constant vigilance.", "Playstyle": "For players interested in dark magic, risk, and difficult choices involving Corruption." },
+        "theurg": { "Name": "Theurg", "Summary": "A mystical servant of Prios who channels faith, light, and religious authority. They may protect the living, confront darkness, and represent the Church.", "Playstyle": "Blends sacred powers, group support, and ties to Ambrian faith and institutions." },
+        "wizard": { "Name": "Wizard", "Summary": "A scholar trained by the Ordo Magica to understand and control the supernatural through method, discipline, and research.", "Playstyle": "Favors knowledge, preparation, and an academic approach to powers and mysteries." },
+        "selfTaughtMystic": { "Name": "Self-taught Mystic", "Summary": "An independent practitioner taught by intuition, fragments of lore, or unusual encounters. Their freedom comes with suspicion and danger.", "Playstyle": "Offers broad conceptual freedom with less protection from the risks of mystical practice." },
+        "charlatan": { "Name": "Charlatan", "Summary": "A master of stories, disguises, and half-truths. They open doors by learning what others want to hear — and when it is time to disappear.", "Playstyle": "Excels in social scenes, infiltration, bluffing, and creative solutions that avoid direct conflict." },
+        "witchhunter": { "Name": "Witchhunter", "Summary": "A relentless investigator of cults, abominations, and corrupt practices. They combine knowledge of the enemy with the resolve to pursue it to the end.", "Playstyle": "Works well in investigation, tracking, and confrontations with supernatural threats." },
+        "thug": { "Name": "Thug", "Summary": "A street survivor versed in intimidation, ambushes, and unceremonious violence. They do what is needed when manners stop working.", "Playstyle": "Combines strength, opportunism, and contacts in urban or marginal environments." },
+        "treasureHunter": { "Name": "Treasure-hunter", "Summary": "An explorer drawn to ruins, artifacts, and buried secrets. Every discovery in Davokar may bring fortune — or something far worse.", "Playstyle": "Excellent for exploration, knowledge of ruins, traps, and the search for artifacts." },
+        "ranger": { "Name": "Ranger", "Summary": "A scout used to dangerous trails, long watches, and untamed lands. They find paths where others see only forest and darkness.", "Playstyle": "Favors survival, tracking, reconnaissance, and ranged combat." }
+      }
     },
     "ActorTypes": {
       "player": "Character",

@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.38
+
+- Implementa a primeira etapa real do Criador de Fichas: escolha de ocupação.
+- Apresenta as 15 ocupações do Livro Básico, divididas entre Guerreiro, Místico e Ladino, em uma interface de livro aberto.
+- Permite navegar pelo índice e ler resumos originais sobre o conceito e o estilo de jogo de cada ocupação.
+- Preenche automaticamente `system.bio.occupation` e salva o arquétipo, a ocupação e o progresso do criador na ficha.
+- Retoma o livro ao reabrir a ficha quando o jogador escolher continuar depois.
+
 ## 0.1.37
 
 - Adiciona o primeiro protótipo do Criador de Fichas para personagens jogadores.

@@ -67,7 +67,7 @@
 .symbaroum-hud-character-creator-intro h2 {
   margin: 0;
   color: #451b14;
-  font-family: "Primitive", serif;
+  font-family: "Symbaroum HUD Primitive", "Philosopher", serif;
   font-size: 1.45rem;
 }
 
@@ -107,6 +107,289 @@
 .symbaroum-hud-character-creator-dialog .form-footer button:focus-visible {
   border-color: #d7b14a;
   box-shadow: 0 0 7px rgb(215 177 74 / 48%);
+}
+
+.symbaroum-hud-occupation-book-dialog .window-content,
+.symbaroum-hud-occupation-book-dialog .dialog-content {
+  padding: 0;
+  overflow: hidden;
+}
+
+.symbaroum-hud-occupation-book-dialog .dialog-form {
+  gap: 0;
+}
+
+.symbaroum-hud-occupation-book-dialog .form-footer {
+  padding: 9px 12px;
+  border-top: 1px solid #7b5528;
+  background: #17110e;
+}
+
+.symbaroum-hud-occupation-book {
+  display: grid;
+  min-height: 530px;
+  grid-template-columns: minmax(300px, 39%) minmax(0, 61%);
+  color: #261d16;
+  background: #160f0c;
+  box-shadow: inset 0 0 28px rgb(0 0 0 / 72%);
+}
+
+.symbaroum-hud-occupation-index {
+  display: flex;
+  min-height: 0;
+  padding: 22px 23px 18px 20px;
+  flex-direction: column;
+  gap: 14px;
+  overflow: hidden;
+  border-right: 2px solid #6b4b25;
+  color: #eadcb9;
+  background:
+    linear-gradient(90deg, rgb(0 0 0 / 42%), transparent 15%, transparent 82%, rgb(0 0 0 / 58%)),
+    linear-gradient(rgb(28 24 20 / 86%), rgb(9 16 14 / 94%)),
+    url("/systems/symbaroum/asset/image/background/title.webp") center / cover;
+  box-shadow: inset -14px 0 22px rgb(0 0 0 / 54%);
+}
+
+.symbaroum-hud-occupation-index > header {
+  display: grid;
+  gap: 4px;
+  text-align: center;
+}
+
+.symbaroum-hud-occupation-index > header small {
+  color: #c9a849;
+  font-family: "Symbaroum HUD Primitive", "Philosopher", serif;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.symbaroum-hud-occupation-index > header h2 {
+  margin: 0;
+  color: #f3e6c5;
+  font-family: "Symbaroum HUD Primitive", "Philosopher", serif;
+  font-size: 1.65rem;
+}
+
+.symbaroum-hud-occupation-index > header p {
+  margin: 2px 0 0;
+  color: rgb(234 220 185 / 72%);
+  font-size: 0.76rem;
+  line-height: 1.35;
+}
+
+.symbaroum-hud-occupation-index-list {
+  display: grid;
+  min-height: 0;
+  padding-right: 5px;
+  gap: 10px;
+  overflow-y: auto;
+  scrollbar-color: #8f6f2b rgb(0 0 0 / 28%);
+}
+
+.symbaroum-hud-occupation-index-group {
+  display: grid;
+  gap: 4px;
+}
+
+.symbaroum-hud-occupation-index-group h3 {
+  margin: 0;
+  padding: 3px 7px;
+  border-bottom: 1px solid rgb(201 168 73 / 42%);
+  color: #c9a849;
+  font-family: "Symbaroum HUD Primitive", "Philosopher", serif;
+  font-size: 0.86rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.symbaroum-hud-occupation-index-group button.symbaroum-hud-occupation-index-entry {
+  display: grid;
+  min-height: 31px;
+  margin: 0;
+  padding: 3px 8px;
+  grid-template-columns: 24px minmax(0, 1fr);
+  align-items: center;
+  gap: 7px;
+  border: 1px solid transparent;
+  border-radius: 0;
+  color: #ddd0af;
+  background: transparent;
+  box-shadow: none;
+  font-size: 0.78rem;
+  text-align: left;
+}
+
+.symbaroum-hud-occupation-index-group button.symbaroum-hud-occupation-index-entry i {
+  color: #9f8742;
+  text-align: center;
+}
+
+.symbaroum-hud-occupation-index-group button.symbaroum-hud-occupation-index-entry:hover,
+.symbaroum-hud-occupation-index-group button.symbaroum-hud-occupation-index-entry:focus-visible,
+.symbaroum-hud-occupation-index-group button.symbaroum-hud-occupation-index-entry[data-active="true"] {
+  border-color: rgb(201 168 73 / 54%);
+  color: #fff1c9;
+  background: linear-gradient(90deg, rgb(116 40 28 / 72%), rgb(47 26 20 / 36%));
+  outline: none;
+}
+
+.symbaroum-hud-occupation-index-group button.symbaroum-hud-occupation-index-entry[data-active="true"] i {
+  color: #e5c45d;
+}
+
+.symbaroum-hud-occupation-reading-page {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  padding: 18px 42px 22px 48px;
+  flex-direction: column;
+  overflow: hidden;
+  background:
+    linear-gradient(90deg, rgb(74 48 25 / 26%), transparent 8%, transparent 94%, rgb(88 50 23 / 18%)),
+    linear-gradient(rgb(249 243 224 / 96%), rgb(231 220 192 / 97%)),
+    url("/systems/symbaroum/asset/image/foreground.webp") center / cover;
+  box-shadow: inset 16px 0 20px rgb(79 52 28 / 20%);
+}
+
+.symbaroum-hud-occupation-reading-page::before,
+.symbaroum-hud-occupation-reading-page::after {
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  content: "";
+  pointer-events: none;
+}
+
+.symbaroum-hud-occupation-reading-page::before {
+  top: 18px;
+  left: 22px;
+  border-top: 2px solid #8f3325;
+  border-left: 2px solid #8f3325;
+}
+
+.symbaroum-hud-occupation-reading-page::after {
+  right: 22px;
+  bottom: 20px;
+  border-right: 2px solid #8f3325;
+  border-bottom: 2px solid #8f3325;
+}
+
+.symbaroum-hud-occupation-character-name {
+  display: flex;
+  min-height: 26px;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 7px;
+  border-bottom: 1px solid rgb(110 74 39 / 28%);
+  color: #68513d;
+  font-size: 0.72rem;
+  font-style: italic;
+}
+
+.symbaroum-hud-occupation-page {
+  display: grid;
+  padding: 24px 13px 8px;
+  justify-items: center;
+  gap: 10px;
+  text-align: center;
+}
+
+.symbaroum-hud-occupation-page[hidden] {
+  display: none;
+}
+
+.symbaroum-hud-occupation-page-icon {
+  display: grid;
+  width: 58px;
+  height: 58px;
+  place-items: center;
+  border: 1px solid #76572d;
+  color: #d5b348;
+  background: #17120f;
+  box-shadow: inset 0 0 13px rgb(0 0 0 / 82%), 0 2px 5px rgb(58 34 18 / 26%);
+  font-size: 1.55rem;
+}
+
+.symbaroum-hud-occupation-archetype {
+  color: #8f3325;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.symbaroum-hud-occupation-page h2 {
+  margin: 0;
+  color: #351a15;
+  font-family: "Symbaroum HUD Primitive", "Philosopher", serif;
+  font-size: 2rem;
+}
+
+.symbaroum-hud-occupation-page h3 {
+  margin: 9px 0 0;
+  color: #6f291f;
+  font-family: "Symbaroum HUD Primitive", "Philosopher", serif;
+  font-size: 1rem;
+}
+
+.symbaroum-hud-occupation-page p {
+  max-width: 500px;
+  margin: 0;
+  font-family: var(--font-serif, serif);
+  font-size: 0.88rem;
+  line-height: 1.65;
+}
+
+.symbaroum-hud-occupation-page .symbaroum-hud-occupation-summary {
+  font-size: 0.94rem;
+}
+
+.symbaroum-hud-occupation-ornament {
+  display: grid;
+  width: min(300px, 78%);
+  grid-template-columns: 1fr 10px 1fr;
+  align-items: center;
+  gap: 8px;
+}
+
+.symbaroum-hud-occupation-ornament span {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #a14b38);
+}
+
+.symbaroum-hud-occupation-ornament span:last-child {
+  background: linear-gradient(90deg, #a14b38, transparent);
+}
+
+.symbaroum-hud-occupation-ornament i {
+  width: 8px;
+  height: 8px;
+  border: 2px solid #a14b38;
+  transform: rotate(45deg);
+}
+
+.symbaroum-hud-occupation-reading-page > footer {
+  margin-top: auto;
+  padding: 9px 25px 0;
+  border-top: 1px solid rgb(110 74 39 / 24%);
+  color: #76634f;
+  font-size: 0.7rem;
+  font-style: italic;
+  text-align: center;
+}
+
+@media (max-width: 800px) {
+  .symbaroum-hud-occupation-book {
+    grid-template-columns: minmax(230px, 36%) minmax(0, 64%);
+  }
+
+  .symbaroum-hud-occupation-index {
+    padding-inline: 12px;
+  }
+
+  .symbaroum-hud-occupation-reading-page {
+    padding-inline: 34px 28px;
+  }
 }
 
 #symbaroum-hud .window-content {

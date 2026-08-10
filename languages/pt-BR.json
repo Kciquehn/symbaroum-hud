@@ -10,9 +10,38 @@
       "DecisionHint": "Fechar esta janela sem escolher fará a pergunta aparecer novamente na próxima abertura.",
       "UseCreator": "Usar o Criador de Fichas",
       "FillManually": "Preencher manualmente",
-      "PrototypeTitle": "Criador de Fichas — Protótipo",
-      "PrototypeText": "O Criador de Fichas foi ativado para este personagem. No próximo teste, esta tela iniciará a escolha de raça e preencherá a ficha conforme cada decisão.",
-      "Understood": "Entendi"
+      "Archetypes": {
+        "Warrior": "Guerreiro",
+        "Mystic": "Místico",
+        "Rogue": "Ladino"
+      },
+      "Occupation": {
+        "Title": "Criador de Fichas — Escolha sua ocupação",
+        "Step": "Capítulo I",
+        "Index": "Ocupações",
+        "IndexHint": "Escolha um nome no índice para conhecer seu lugar no mundo e seu estilo de aventura.",
+        "AtTheTable": "Durante o jogo",
+        "Choose": "Escolher esta ocupação",
+        "ContinueLater": "Continuar depois",
+        "SelectionHint": "A ocupação orienta seu conceito, mas não limita as escolhas futuras do personagem."
+      },
+      "Occupations": {
+        "berserker": { "Name": "Berserker", "Summary": "Um combatente que transforma fúria e resistência em armas. Entra no perigo sem hesitar e confia na própria força para permanecer de pé.", "Playstyle": "Ideal para quem deseja enfrentar inimigos de perto, suportar golpes e causar grande impacto físico." },
+        "duelist": { "Name": "Duelista", "Summary": "Especialista em precisão, mobilidade e domínio da lâmina. Vence pela técnica, escolhendo o momento certo para atacar e se defender.", "Playstyle": "Combina com jogadores que preferem agilidade, finesse e decisões cuidadosas em combate." },
+        "captain": { "Name": "Capitão", "Summary": "Um líder acostumado a transformar indivíduos em uma força coordenada. Sua presença inspira aliados e impõe ordem quando tudo ameaça ruir.", "Playstyle": "Favorece liderança, interação social e apoio tático ao restante do grupo." },
+        "sellsword": { "Name": "Mercenário", "Summary": "Veterano pragmático que oferece aço e experiência em troca de pagamento. Aprendeu a sobreviver mudando de estratégia conforme o trabalho exige.", "Playstyle": "Uma escolha versátil para quem quer competência marcial sem juramentos ou tradições rígidas." },
+        "knight": { "Name": "Cavaleiro", "Summary": "Guerreiro disciplinado, protegido por armadura e movido por dever, honra ou lealdade. Costuma ocupar a linha entre o perigo e seus companheiros.", "Playstyle": "Indicado para defesa, proteção de aliados e presença marcante dentro e fora da batalha." },
+        "witch": { "Name": "Bruxa", "Summary": "Mística ligada às antigas tradições dos clãs, aos espíritos e aos ritmos selvagens de Davokar. Seu poder nasce de pactos, memória e respeito pelo mundo vivo.", "Playstyle": "Une magia, percepção espiritual e forte conexão com a natureza e a cultura bárbara." },
+        "sorcerer": { "Name": "Feiticeiro", "Summary": "Ocultista que encara poderes proibidos e a Corrupção de forma que poucos ousariam. Seu caminho oferece força, mas cobra vigilância constante.", "Playstyle": "Para quem deseja explorar magia sombria, risco e escolhas difíceis ligadas à Corrupção." },
+        "theurg": { "Name": "Teurgo", "Summary": "Servo místico de Prios que canaliza fé, luz e autoridade religiosa. Pode proteger os vivos, enfrentar a escuridão e representar a Igreja no mundo.", "Playstyle": "Mistura poderes sagrados, suporte ao grupo e relações com a fé e as instituições ambrianas." },
+        "wizard": { "Name": "Mago", "Summary": "Estudioso treinado pela Ordo Magica, dedicado a compreender e controlar o sobrenatural por meio de método, disciplina e pesquisa.", "Playstyle": "Favorece conhecimento, preparação e uma abordagem acadêmica para poderes e mistérios." },
+        "selfTaughtMystic": { "Name": "Místico Autodidata", "Summary": "Praticante independente que aprendeu por intuição, fragmentos de saber ou encontros incomuns. Sua liberdade vem acompanhada de suspeita e perigo.", "Playstyle": "Oferece grande liberdade conceitual, com menos proteção contra os riscos da prática mística." },
+        "charlatan": { "Name": "Charlatão", "Summary": "Mestre de histórias, disfarces e meias-verdades. Abre portas ao descobrir o que os outros desejam ouvir — e quando é hora de desaparecer.", "Playstyle": "Brilha em cenas sociais, infiltração, blefes e soluções criativas que evitam confronto direto." },
+        "witchhunter": { "Name": "Caçador de Bruxas", "Summary": "Investigador obstinado de cultos, abominações e práticas corruptas. Combina conhecimento do inimigo com a determinação de persegui-lo até o fim.", "Playstyle": "Funciona bem em investigação, rastreamento e confrontos contra ameaças sobrenaturais." },
+        "thug": { "Name": "Brutamontes", "Summary": "Sobrevivente das ruas que conhece intimidação, emboscadas e violência sem cerimônia. Faz o necessário quando boas maneiras deixam de funcionar.", "Playstyle": "Mistura força, oportunismo e contatos com ambientes urbanos ou marginais." },
+        "treasureHunter": { "Name": "Caçador de Tesouros", "Summary": "Explorador atraído por ruínas, artefatos e segredos enterrados. Sabe que cada descoberta em Davokar pode trazer fortuna — ou algo muito pior.", "Playstyle": "Excelente para exploração, conhecimento de ruínas, armadilhas e busca por artefatos." },
+        "ranger": { "Name": "Patrulheiro", "Summary": "Batedor habituado a trilhas perigosas, longas vigílias e territórios selvagens. Encontra caminhos onde outros enxergam apenas mata e escuridão.", "Playstyle": "Favorece sobrevivência, rastreamento, reconhecimento e combate à distância." }
+      }
     },
     "ActorTypes": {
       "player": "Personagem",
