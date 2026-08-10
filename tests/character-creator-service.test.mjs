@@ -7,9 +7,13 @@ const dialogConfigs = [];
 
 globalThis.game = {
   user: { id: "user" },
-  i18n: { localize: (key) => key }
+  items: [],
+  i18n: {
+    localize: (key) => key,
+    format: (key, data) => `${key}:${data.traits}`
+  }
 };
-globalThis.ui = { notifications: { error: () => undefined } };
+globalThis.ui = { notifications: { error: () => undefined, warn: () => undefined, info: () => undefined } };
 globalThis.Hooks = {
   on: () => undefined,
   callAll: (...args) => hookCalls.push(args)
@@ -27,7 +31,7 @@ globalThis.foundry = {
           const values = choice.form ?? { occupation: choice.occupation };
           const elements = Object.fromEntries(Object.entries(values).map(([name, value]) => [
             name,
-            { value }
+            typeof value === "boolean" ? { checked: value, value: "on" } : { value }
           ]));
           elements.namedItem = (name) => elements[name] ?? null;
           return button.callback({}, {
@@ -37,7 +41,10 @@ globalThis.foundry = {
       }
     }
   },
-  utils: { escapeHTML: (value) => String(value) }
+  utils: {
+    escapeHTML: (value) => String(value),
+    deepClone: (value) => structuredClone(value)
+  }
 };
 
 const {
@@ -46,6 +53,7 @@ const {
   isBlankPlayerActor,
   isAttributesStepComplete,
   isOccupationStepComplete,
+  isRaceStepComplete,
   shouldOfferCharacterCreator
 } = await import("../scripts/services/character-creator-service.mjs");
 const { CORE_OCCUPATIONS, OCCUPATION_ARCHETYPES } = await import(
@@ -57,16 +65,18 @@ const {
   isValidPointBuyDistribution,
   isValidTypicalDistribution
 } = await import("../scripts/data/core-attributes.mjs");
+const { CORE_RACES, CORE_RACE_TRAITS } = await import("../scripts/data/core-races.mjs");
 
 function actor(overrides = {}) {
   const flags = new Map();
   const updates = [];
+  const items = overrides.items ?? [];
   return {
     id: "actor",
     uuid: "Actor.actor",
     name: "Novo Personagem",
     type: "player",
-    items: [],
+    items,
     system: {
       attributes: Object.fromEntries([
         "accurate", "cunning", "discreet", "persuasive",
@@ -86,9 +96,15 @@ function actor(overrides = {}) {
       flags.set(key, value);
     },
     update: async (changes) => updates.push(changes),
+    createEmbeddedDocuments: async (_type, documents) => {
+      const created = documents.map((document, index) => ({ id: `created-${items.length + index}`, ...document }));
+      items.push(...created);
+      return created;
+    },
     flag: (key) => flags.get(key),
     updates,
-    ...overrides
+    ...overrides,
+    items
   };
 }
 
@@ -266,4 +282,52 @@ test("saving point-buy Attributes writes the native Symbaroum fields", async () 
       distribution[index]
     ]))
   });
+});
+
+test("the third creator step presents all core races and their trait rules", async () => {
+  const blank = actor({ id: "races", uuid: "Actor.races" });
+  await blank.setFlag("symbaroum-hud", "characterCreationMode", "creator");
+  await blank.setFlag("symbaroum-hud", "characterCreatorState", {
+    version: 1, step: "attributes-complete", occupation: "wizard"
+  });
+  dialogChoices.push("close");
+
+  await CharacterCreatorService.openRaceStep(blank);
+  const content = dialogConfigs.at(-1).content;
+  assert.equal(CORE_RACES.length, 5);
+  assert.equal(Object.keys(CORE_RACE_TRAITS).length, 9);
+  assert.match(content, /RaceProgress/);
+  assert.equal((content.match(/data-race-id=/g) ?? []).length, 5);
+  assert.match(content, /name="race-choice-ambrian"/);
+  assert.match(content, /name="race-optional-goblin-survivalInstinct"/);
+});
+
+test("a human racial choice is added as a native boon", async () => {
+  const blank = actor({ id: "ambrian", uuid: "Actor.ambrian" });
+  await blank.setFlag("symbaroum-hud", "characterCreationMode", "creator");
+  await blank.setFlag("symbaroum-hud", "characterCreatorState", { version: 1, step: "attributes-complete" });
+  dialogChoices.push({ action: "choose-race", form: { race: "ambrian", "race-choice-ambrian": "contacts" } });
+
+  assert.equal(await CharacterCreatorService.openRaceStep(blank), "ambrian");
+  assert.equal(blank.items.length, 1);
+  assert.equal(blank.items[0].type, "boon");
+  assert.equal(blank.items[0].system.level, 1);
+  assert.deepEqual(blank.updates.at(-1), { "system.bio.race": "SYMBAROUMHUD.CharacterCreator.Race.Entries.ambrian.Name" });
+  assert.equal(isRaceStepComplete(blank), true);
+});
+
+test("goblin adds mandatory burdens and records its optional trait as an Ability choice", async () => {
+  const blank = actor({ id: "goblin", uuid: "Actor.goblin" });
+  await blank.setFlag("symbaroum-hud", "characterCreationMode", "creator");
+  await blank.setFlag("symbaroum-hud", "characterCreatorState", { version: 1, step: "attributes-complete" });
+  dialogChoices.push({
+    action: "choose-race",
+    form: { race: "goblin", "race-optional-goblin-survivalInstinct": true }
+  });
+
+  assert.equal(await CharacterCreatorService.openRaceStep(blank), "goblin");
+  assert.deepEqual(blank.items.map((item) => item.type), ["burden", "burden", "trait"]);
+  assert.equal(blank.items[2].system.novice.isActive, true);
+  assert.deepEqual(blank.flag("characterCreatorState").raceTraits, ["shortLived", "pariah", "survivalInstinct"]);
+  assert.deepEqual(blank.flag("characterCreatorState").abilityCostTraits, ["survivalInstinct"]);
 });

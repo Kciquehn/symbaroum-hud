@@ -13,11 +13,17 @@ import {
   isValidPointBuyDistribution,
   isValidTypicalDistribution
 } from "../data/core-attributes.mjs";
+import {
+  CORE_RACES,
+  coreRace,
+  coreRaceTrait
+} from "../data/core-races.mjs";
 
 const MODE_FLAG = "characterCreationMode";
 const STATE_FLAG = "characterCreatorState";
 const OCCUPATION_STEP_COMPLETE = "occupation-complete";
 const ATTRIBUTES_STEP_COMPLETE = "attributes-complete";
+const RACE_STEP_COMPLETE = "race-complete";
 const ATTRIBUTE_DISTRIBUTION_MODES = Object.freeze({
   TYPICAL: "typical",
   POINT_BUY: "point-buy"
@@ -70,12 +76,17 @@ export function shouldOfferCharacterCreator(actor, user = game.user) {
 }
 
 export function isOccupationStepComplete(actor) {
-  return [OCCUPATION_STEP_COMPLETE, ATTRIBUTES_STEP_COMPLETE]
+  return [OCCUPATION_STEP_COMPLETE, ATTRIBUTES_STEP_COMPLETE, RACE_STEP_COMPLETE]
     .includes(actor?.getFlag?.(MODULE_ID, STATE_FLAG)?.step);
 }
 
 export function isAttributesStepComplete(actor) {
-  return actor?.getFlag?.(MODULE_ID, STATE_FLAG)?.step === ATTRIBUTES_STEP_COMPLETE;
+  return [ATTRIBUTES_STEP_COMPLETE, RACE_STEP_COMPLETE]
+    .includes(actor?.getFlag?.(MODULE_ID, STATE_FLAG)?.step);
+}
+
+export function isRaceStepComplete(actor) {
+  return actor?.getFlag?.(MODULE_ID, STATE_FLAG)?.step === RACE_STEP_COMPLETE;
 }
 
 export function registerCharacterCreatorHooks() {
@@ -96,6 +107,9 @@ export class CharacterCreatorService {
     }
     if (mode === CHARACTER_CREATION_MODES.CREATOR && !isAttributesStepComplete(actor)) {
       return this.openAttributesStep(actor);
+    }
+    if (mode === CHARACTER_CREATION_MODES.CREATOR && !isRaceStepComplete(actor)) {
+      return this.openRaceStep(actor);
     }
     if (!mode) return this.offer(actor);
     return null;
@@ -140,7 +154,10 @@ export class CharacterCreatorService {
       if (choice === CHARACTER_CREATION_MODES.CREATOR) {
         Hooks.callAll(`${MODULE_ID}.characterCreatorRequested`, actor);
         const occupation = await this.#showOccupationBook(DialogV2, actor);
-        if (occupation) await this.#showAttributesBook(DialogV2, actor);
+        if (occupation) {
+          const attributes = await this.#showAttributesBook(DialogV2, actor);
+          if (attributes) await this.#showRaceBook(DialogV2, actor);
+        }
       }
       return choice;
     } catch (error) {
@@ -167,7 +184,9 @@ export class CharacterCreatorService {
     try {
       const occupation = await this.#showOccupationBook(DialogV2, actor);
       if (!occupation) return occupation;
-      return await this.#showAttributesBook(DialogV2, actor);
+      const attributes = await this.#showAttributesBook(DialogV2, actor);
+      if (!attributes) return attributes;
+      return await this.#showRaceBook(DialogV2, actor);
     } catch (error) {
       return handleCreatorError(error);
     } finally {
@@ -191,7 +210,33 @@ export class CharacterCreatorService {
 
     pendingActors.add(key);
     try {
-      return await this.#showAttributesBook(DialogV2, actor);
+      const attributes = await this.#showAttributesBook(DialogV2, actor);
+      if (!attributes) return attributes;
+      await this.#showRaceBook(DialogV2, actor);
+      return attributes;
+    } catch (error) {
+      return handleCreatorError(error);
+    } finally {
+      pendingActors.delete(key);
+    }
+  }
+
+  static async openRaceStep(actor) {
+    const key = actorKey(actor);
+    if (
+      !key
+      || pendingActors.has(key)
+      || !canOwn(actor, game.user)
+      || actor.getFlag?.(MODULE_ID, MODE_FLAG) !== CHARACTER_CREATION_MODES.CREATOR
+      || !isAttributesStepComplete(actor)
+      || isRaceStepComplete(actor)
+    ) return null;
+
+    const DialogV2 = dialogClass();
+    if (!DialogV2) return null;
+    pendingActors.add(key);
+    try {
+      return await this.#showRaceBook(DialogV2, actor);
     } catch (error) {
       return handleCreatorError(error);
     } finally {
@@ -326,6 +371,73 @@ export class CharacterCreatorService {
       }
     });
   }
+
+  static async #showRaceBook(DialogV2, actor) {
+    return DialogV2.wait({
+      classes: [
+        "symbaroum-hud-character-creator-dialog",
+        "symbaroum-hud-occupation-book-dialog",
+        "symbaroum-hud-race-book-dialog"
+      ],
+      window: { title: game.i18n.localize("SYMBAROUMHUD.CharacterCreator.Race.Title") },
+      position: { width: 860, height: 550 },
+      content: raceBookContent(actor),
+      buttons: [
+        {
+          action: "choose-race",
+          icon: "fa-solid fa-people-group",
+          label: game.i18n.localize("SYMBAROUMHUD.CharacterCreator.Race.Choose"),
+          default: true,
+          callback: async (_event, button) => {
+            const race = coreRace(formValue(button.form, "race"));
+            if (!race) return null;
+            const selectedChoice = formValue(button.form, `race-choice-${race.id}`);
+            if (race.choice.length && !race.choice.includes(selectedChoice)) {
+              ui.notifications?.warn(game.i18n.localize("SYMBAROUMHUD.CharacterCreator.Race.ChoiceRequired"));
+              return null;
+            }
+            const optional = race.optional.filter((id) => formChecked(button.form, `race-optional-${race.id}-${id}`));
+            const traitIds = [...race.required, ...(selectedChoice ? [selectedChoice] : []), ...optional];
+            const results = [];
+            for (const id of traitIds) results.push(await addRaceTrait(actor, coreRaceTrait(id)));
+
+            await actor.update({ "system.bio.race": game.i18n.localize(race.name) });
+            const previous = actor.getFlag?.(MODULE_ID, STATE_FLAG) ?? {};
+            await actor.setFlag(MODULE_ID, STATE_FLAG, {
+              ...previous,
+              version: 1,
+              step: RACE_STEP_COMPLETE,
+              race: race.id,
+              raceTraits: traitIds,
+              abilityCostTraits: optional
+            });
+            if (race.required.length) {
+              const names = race.required.map((id) => game.i18n.localize(coreRaceTrait(id).name)).join(", ");
+              ui.notifications?.info(format("SYMBAROUMHUD.CharacterCreator.Race.RequiredAdded", { traits: names }));
+            }
+            Hooks.callAll(`${MODULE_ID}.characterCreatorStepCompleted`, actor, {
+              step: "race", race: race.id, traits: traitIds, results
+            });
+            return race.id;
+          }
+        },
+        {
+          action: "continue-later",
+          icon: "fa-solid fa-bookmark",
+          label: game.i18n.localize("SYMBAROUMHUD.CharacterCreator.Race.ContinueLater"),
+          callback: () => null
+        }
+      ],
+      close: () => null,
+      rejectClose: false,
+      render: (_event, dialog) => {
+        bindRaceBook(dialog.element);
+        globalThis.setTimeout(() => {
+          if (dialog.element?.isConnected) dialog.bringToFront?.();
+        }, 0);
+      }
+    });
+  }
 }
 
 function occupationBookContent(actor) {
@@ -436,6 +548,133 @@ function bindOccupationBook(element) {
       for (const page of pages) page.hidden = page.dataset.occupationPage !== id;
     });
   }
+}
+
+function raceBookContent(actor) {
+  const selectedId = CORE_RACES[0].id;
+  const index = CORE_RACES.map((race) => `
+    <button type="button" class="symbaroum-hud-race-index-entry"
+      data-race-id="${race.id}" data-active="${race.id === selectedId}"
+      aria-pressed="${race.id === selectedId}">
+      <i class="fa-solid ${race.icon}" aria-hidden="true"></i>
+      <span>${localizeEscaped(race.name)}</span>
+      <small>${localizeEscaped(race.family)}</small>
+    </button>
+  `).join("");
+
+  const pages = CORE_RACES.map((race) => {
+    const required = race.required.map((id) => traitCard(id, "required", race.id)).join("");
+    const choices = race.choice.map((id) => traitCard(id, "choice", race.id)).join("");
+    const optional = race.optional.map((id) => traitCard(id, "optional", race.id)).join("");
+    return `
+      <article class="symbaroum-hud-race-page" data-race-page="${race.id}"
+        ${race.id === selectedId ? "" : "hidden"}>
+        <div class="symbaroum-hud-race-heading">
+          <div class="symbaroum-hud-occupation-page-icon" aria-hidden="true"><i class="fa-solid ${race.icon}"></i></div>
+          <div><span>${localizeEscaped(race.family)}</span><h2>${localizeEscaped(race.name)}</h2></div>
+        </div>
+        <p class="symbaroum-hud-race-summary">${localizeEscaped(race.summary)}</p>
+        ${required ? `<section class="symbaroum-hud-race-trait-section"><header><h3>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Race.RequiredTraits")}</h3><span>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Race.Automatic")}</span></header><p>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Race.RequiredHint")}</p><div>${required}</div></section>` : ""}
+        ${choices ? `<section class="symbaroum-hud-race-trait-section"><header><h3>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Race.ChooseOne")}</h3><span>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Race.FreeChoice")}</span></header><p>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Race.ChoiceHint")}</p><div>${choices}</div></section>` : ""}
+        ${optional ? `<section class="symbaroum-hud-race-trait-section"><header><h3>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Race.OptionalTraits")}</h3><span>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Race.CostsAbility")}</span></header><p>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Race.OptionalHint")}</p><div>${optional}</div></section>` : ""}
+      </article>`;
+  }).join("");
+
+  return `
+    <div class="symbaroum-hud-race-book">
+      <input type="hidden" name="race" value="${selectedId}">
+      <header class="symbaroum-hud-creator-step-guide">
+        <div class="symbaroum-hud-creator-step-number"><small>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Guide.Title")}</small><strong>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Guide.RaceProgress")}</strong></div>
+        <div><h2>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Guide.StepThreeTitle")}</h2><p>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Guide.StepThreeText")}</p></div>
+      </header>
+      <aside class="symbaroum-hud-race-index">
+        <header><h2>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Race.Index")}</h2><p>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Race.IndexHint")}</p></header>
+        <nav aria-label="${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Race.Index")}">${index}</nav>
+      </aside>
+      <main class="symbaroum-hud-race-reading-page">
+        <header class="symbaroum-hud-occupation-character-name"><i class="fa-solid fa-book-open" aria-hidden="true"></i><span>${escapeHtml(actor.name)}</span></header>
+        ${pages}
+      </main>
+    </div>`;
+}
+
+function traitCard(id, mode, raceId) {
+  const trait = coreRaceTrait(id);
+  const control = mode === "required"
+    ? `<i class="fa-solid fa-circle-check" aria-hidden="true"></i>`
+    : `<input type="${mode === "choice" ? "radio" : "checkbox"}"
+        name="race-${mode}-${raceId}${mode === "optional" ? `-${id}` : ""}"
+        value="${id}">`;
+  return `
+    <label class="symbaroum-hud-race-trait-card" data-trait-mode="${mode}">
+      <span class="symbaroum-hud-race-trait-control">${control}</span>
+      <i class="fa-solid ${trait.icon}" aria-hidden="true"></i>
+      <span><strong>${localizeEscaped(trait.name)}</strong><small>${localizeEscaped(trait.description)}</small></span>
+    </label>`;
+}
+
+function bindRaceBook(element) {
+  const input = element.querySelector('input[name="race"]');
+  const entries = Array.from(element.querySelectorAll("[data-race-id]"));
+  const pages = Array.from(element.querySelectorAll("[data-race-page]"));
+  const confirm = element.querySelector('[data-action="choose-race"]');
+  const refresh = () => {
+    const race = coreRace(input?.value);
+    if (confirm) confirm.disabled = Boolean(race?.choice.length && !element.querySelector(`input[name="race-choice-${race.id}"]:checked`));
+  };
+  for (const entry of entries) entry.addEventListener("click", () => {
+    const id = entry.dataset.raceId;
+    if (!coreRace(id)) return;
+    input.value = id;
+    for (const candidate of entries) {
+      const active = candidate.dataset.raceId === id;
+      candidate.dataset.active = String(active);
+      candidate.setAttribute("aria-pressed", String(active));
+    }
+    for (const page of pages) page.hidden = page.dataset.racePage !== id;
+    refresh();
+  });
+  for (const control of element.querySelectorAll('input[type="radio"], input[type="checkbox"]')) control.addEventListener("change", refresh);
+  refresh();
+}
+
+async function addRaceTrait(actor, trait) {
+  if (!trait) return null;
+  const aliases = [game.i18n.localize(trait.name), ...trait.aliases].map(normalizeName);
+  const existing = actorItems(actor).find((item) => aliases.includes(normalizeName(item.name)));
+  if (existing) return { id: trait.id, created: false, item: existing };
+  const source = Array.from(game.items?.values?.() ?? game.items ?? []).find((item) =>
+    ["trait", "boon", "burden"].includes(item.type) && aliases.includes(normalizeName(item.name))
+  );
+  const clone = globalThis.foundry?.utils?.deepClone ?? ((value) => structuredClone(value));
+  const data = source?.toObject ? clone(source.toObject()) : fallbackTraitData(trait);
+  delete data._id;
+  if (data.type === "trait") {
+    data.system ??= {};
+    data.system.novice ??= {};
+    data.system.adept ??= {};
+    data.system.master ??= {};
+    data.system.novice.isActive = true;
+    data.system.adept.isActive = false;
+    data.system.master.isActive = false;
+  }
+  const [created] = await actor.createEmbeddedDocuments("Item", [data]);
+  return { id: trait.id, created: true, item: created };
+}
+
+function fallbackTraitData(trait) {
+  const system = trait.type === "trait"
+    ? {
+        description: game.i18n.localize(trait.description), reference: trait.id,
+        novice: { isActive: true, action: "", description: "" },
+        adept: { isActive: false, action: "", description: "" },
+        master: { isActive: false, action: "", description: "" }, marker: false
+      }
+    : { description: game.i18n.localize(trait.description), reference: trait.id, level: 1 };
+  return {
+    name: game.i18n.localize(trait.name), type: trait.type,
+    img: trait.type === "burden" ? "icons/svg/downgrade.svg" : "icons/svg/upgrade.svg", system
+  };
 }
 
 function attributesBookContent(actor) {
@@ -661,6 +900,19 @@ function formValue(form, name) {
   return form?.elements?.namedItem?.(name)?.value
     ?? form?.elements?.[name]?.value
     ?? "";
+}
+
+function formChecked(form, name) {
+  return Boolean(form?.elements?.namedItem?.(name)?.checked ?? form?.elements?.[name]?.checked);
+}
+
+function normalizeName(value) {
+  return String(value ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase().replace(/[^a-z0-9]+/g, "").trim();
+}
+
+function format(key, data) {
+  return game.i18n.format?.(key, data) ?? game.i18n.localize(key).replace("{traits}", data.traits);
 }
 
 function characterCreatorChoiceContent() {

@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.1.42
+
+- Adiciona o terceiro passo do Criador de Fichas: escolha entre ambriano, bárbaro, cambiante, goblin e ogro.
+- Apresenta cada raça em uma página compacta no estilo do Livro Básico, com origem, descrição e seus traços raciais.
+- Exige que ambrianos escolham **Contatos** ou **Privilegiado** e que bárbaros escolham **Contatos** ou **Mateiro**.
+- Adiciona automaticamente os traços obrigatórios de cambiante, goblin e ogro, mostrando ao jogador um aviso com os itens inseridos.
+- Permite escolher **Metamorfo**, **Instinto de Sobrevivência** ou **Robusto** no nível Novato e registra que a opção consumirá uma escolha de Habilidade.
+- Copia preferencialmente os documentos nativos existentes no mundo e evita duplicar um traço que já esteja na ficha.
+- Mantém uma definição de segurança compatível com o schema do Symbaroum quando um dos itens raciais não existir no mundo.
+
 ## 0.1.41
 
 - Adiciona o segundo passo do Criador de Fichas: distribuição dos oito Atributos.

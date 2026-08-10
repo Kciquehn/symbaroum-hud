@@ -17,7 +17,10 @@
         "StepOneText": "Comece escolhendo um arquétipo e uma das ocupações sugeridas. Arquétipos e ocupações são pontos de partida: ajudam a dar vida ao personagem e oferecem uma forma rápida de entrar no jogo, mas não limitam as escolhas das próximas etapas.",
         "AttributesProgress": "Passo 2 de 10",
         "StepTwoTitle": "Distribua os Atributos",
-        "StepTwoText": "Os oito Atributos formam a espinha dorsal do personagem. Escolha uma distribuição típica para trocar os valores prontos de lugar ou use a compra de pontos para construir a combinação desejada."
+        "StepTwoText": "Os oito Atributos formam a espinha dorsal do personagem. Escolha uma distribuição típica para trocar os valores prontos de lugar ou use a compra de pontos para construir a combinação desejada.",
+        "RaceProgress": "Passo 3 de 10",
+        "StepThreeTitle": "Escolha a Raça",
+        "StepThreeText": "A raça descreve a origem e a natureza do personagem. Ela concede traços obrigatórios ou uma escolha cultural; alguns traços especiais também podem ser escolhidos, mas ocupam uma das escolhas de Habilidade da próxima etapa."
       },
       "Archetypes": {
         "Warrior": {
@@ -78,6 +81,42 @@
           "resolute": { "Name": "Resoluto", "Description": "Representa resistência à pressão social, controle mental e Corrupção, além de estar ligado ao uso de poderes místicos. Um valor baixo é arriscado." },
           "strong": { "Name": "Vigoroso", "Description": "Representa força física, capacidade de suportar dor e resistência a venenos e doenças. Também determina a base da Vitalidade do personagem." },
           "vigilant": { "Name": "Vigilante", "Description": "Representa prontidão, sentidos aguçados e capacidade de perceber detalhes nos arredores, frequentemente em oposição ao Discreto de um inimigo." }
+        }
+      },
+      "Race": {
+        "Title": "Criador de Fichas — Escolha a Raça",
+        "Index": "Raças",
+        "IndexHint": "Escolha uma raça para ler seus traços e opções.",
+        "Choose": "Confirmar Raça e Traços",
+        "ContinueLater": "Continuar depois",
+        "RequiredTraits": "Traços obrigatórios",
+        "Automatic": "Adição automática",
+        "RequiredHint": "Estes traços pertencem à raça e serão adicionados à ficha automaticamente.",
+        "ChooseOne": "Escolha um traço",
+        "FreeChoice": "Escolha racial",
+        "ChoiceHint": "Selecione uma das duas opções culturais concedidas pela raça.",
+        "OptionalTraits": "Traço racial opcional",
+        "CostsAbility": "Custa 1 Habilidade",
+        "OptionalHint": "Você pode começar com este traço no nível Novato, mas ele consumirá uma escolha de Habilidade na próxima etapa.",
+        "ChoiceRequired": "Escolha um dos traços oferecidos por esta raça.",
+        "RequiredAdded": "Traços obrigatórios adicionados à ficha: {traits}.",
+        "Entries": {
+          "ambrian": { "Name": "Ambriano", "Family": "Humano", "Summary": "Herdeiros do reino ao sul dos Titãs, os ambrianos chegaram a Davokar com organização, ambição e fortes diferenças sociais. Seus contatos ou privilégios refletem a posição que ocupam na nova pátria." },
+          "barbarian": { "Name": "Bárbaro", "Family": "Humano", "Summary": "Os clãs bárbaros conhecem Davokar e suas fronteiras há gerações. Sua sobrevivência depende tanto dos laços com outras pessoas quanto da experiência prática nos ermos." },
+          "changeling": { "Name": "Cambiante", "Family": "Povo élfico", "Summary": "Deixados entre humanos ainda crianças, os cambiantes vivem entre duas naturezas. Têm vida longa e alguns desenvolvem a capacidade de alterar o próprio corpo." },
+          "goblin": { "Name": "Goblin", "Family": "Povo de vida breve", "Summary": "Goblins vivem intensamente durante suas poucas décadas e ocupam posições marginalizadas. Muitos desenvolvem um instinto extraordinário para escapar de perigos." },
+          "ogre": { "Name": "Ogro", "Family": "Errante solitário", "Summary": "Ogres despertam adultos e sem memória nas profundezas de Davokar. São longevos, vistos como párias e alguns possuem uma constituição especialmente robusta." }
+        },
+        "Traits": {
+          "contacts": { "Name": "Contatos", "Description": "O personagem possui uma rede de conhecidos ligada a uma região ou grupo social." },
+          "privileged": { "Name": "Privilegiado", "Description": "O personagem pertence à elite social e pode usar sua posição, recursos e influência." },
+          "bushcraft": { "Name": "Mateiro", "Description": "O personagem sabe encontrar alimento, abrigo e caminhos seguros em ambientes selvagens." },
+          "longLived": { "Name": "Vida Longa", "Description": "A raça amadurece lentamente e pode viver por muitos séculos." },
+          "shortLived": { "Name": "Vida Curta", "Description": "A raça cresce rapidamente e raramente vive mais que algumas décadas." },
+          "pariah": { "Name": "Pária", "Description": "O personagem pertence a um povo tratado com suspeita e hostilidade pela sociedade dominante." },
+          "shapeshifter": { "Name": "Metamorfo", "Description": "Permite alterar a aparência e, com domínio maior, assumir formas mais radicais." },
+          "survivalInstinct": { "Name": "Instinto de Sobrevivência", "Description": "Um instinto racial aguçado ajuda o personagem a evitar golpes e sobreviver a ameaças." },
+          "robust": { "Name": "Robusto", "Description": "O personagem possui tamanho, força e resistência física muito acima do comum." }
         }
       },
       "Occupations": {
