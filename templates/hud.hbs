@@ -12,9 +12,19 @@
       </div>
     {{/if}}
     {{#if tactics}}
-      <section class="symbaroum-hud-tactics" aria-label="{{localize 'BIO.TACTICS'}}">
-        <h2><i class="fa-solid fa-chess-knight" aria-hidden="true"></i>{{localize "BIO.TACTICS"}}</h2>
-        <div class="symbaroum-hud-tactics-content">{{{tactics.html}}}</div>
+      <section class="symbaroum-hud-tactics" aria-label="{{localize 'BIO.TACTICS'}}"
+        data-tactics-collapsed="{{tactics.collapsed}}">
+        <h2>
+          <i class="fa-solid fa-chess-knight" aria-hidden="true"></i>
+          <span>{{localize "BIO.TACTICS"}}</span>
+          <button type="button" class="symbaroum-hud-tactics-toggle" data-action="toggle-tactics"
+            aria-expanded="{{#unless tactics.collapsed}}true{{else}}false{{/unless}}"
+            aria-label="{{#if tactics.collapsed}}{{localize 'SYMBAROUMHUD.Actions.ShowTactics'}}{{else}}{{localize 'SYMBAROUMHUD.Actions.HideTactics'}}{{/if}}"
+            data-tooltip="{{#if tactics.collapsed}}{{localize 'SYMBAROUMHUD.Actions.ShowTactics'}}{{else}}{{localize 'SYMBAROUMHUD.Actions.HideTactics'}}{{/if}}">
+            <i class="fa-solid {{#if tactics.collapsed}}fa-chevron-up{{else}}fa-chevron-down{{/if}}" aria-hidden="true"></i>
+          </button>
+        </h2>
+        <div class="symbaroum-hud-tactics-content" aria-hidden="{{tactics.collapsed}}">{{{tactics.html}}}</div>
       </section>
     {{/if}}
   </aside>

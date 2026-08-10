@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.51
+
+- Adiciona uma seta branca discreta ao cabeçalho das Táticas de NPCs.
+- Permite recolher o texto das Táticas para baixo, mantendo somente o cabeçalho compacto acima do HUD.
+- Anima suavemente a ocultação e a reabertura do conteúdo, com rótulos acessíveis para os dois estados.
+
 ## 0.1.50
 
 - Adiciona **Compra com XP** como modo principal e inicial da etapa de Habilidades.

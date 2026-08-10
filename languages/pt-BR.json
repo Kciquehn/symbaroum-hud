@@ -202,7 +202,9 @@
       "HidePlayers": "Ocultar lista de jogadores",
       "ShowPlayers": "Mostrar lista de jogadores",
       "CollapseHud": "Recolher HUD",
-      "ExpandHud": "Expandir HUD"
+      "ExpandHud": "Expandir HUD",
+      "HideTactics": "Ocultar táticas",
+      "ShowTactics": "Mostrar táticas"
     },
     "Resources": {
       "Toughness": "Vitalidade",

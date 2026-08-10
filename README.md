@@ -111,7 +111,7 @@ O modo de visualização do inventário, em grade ou lista, também é lembrado 
 - Use os botões laterais para abrir inventário, ataques, habilidades, traços, poderes místicos e rituais.
 - Painéis abertos permanecem sempre à frente das Táticas e dos efeitos ativos da criatura.
 - Clique com o botão direito em um efeito ativo para abrir o menu de remoção.
-- Ao selecionar uma criatura como mestre, consulte suas **Táticas** diretamente acima do HUD, em um quadro com o mesmo estilo dos atributos e os efeitos ativos organizados acima dele.
+- Ao selecionar uma criatura como mestre, consulte suas **Táticas** diretamente acima do HUD, em um quadro com o mesmo estilo dos atributos e os efeitos ativos organizados acima dele. Use a seta branca discreta no cabeçalho para recolher o texto em direção ao HUD ou exibi-lo novamente.
 - Para criaturas, a Defesa mostra o modificador nativo do NPC, incluindo alterações preparadas por habilidades e condições como **Amoque**.
 - Arraste documentos, incluindo habilidades e poderes místicos diretamente de seus painéis, para a hotbar e crie atalhos sem precisar criar macros.
 - Para jogadores, esses atalhos acompanham o ator exibido no HUD. O GM continua usando a hotbar normal do Foundry.

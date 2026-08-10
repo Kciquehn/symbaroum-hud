@@ -107,6 +107,8 @@ assert.match(template, /#each effects/);
 assert.match(template, /data-effect-id="{{id}}"/);
 assert.match(template, /class="symbaroum-hud-status-summary"/);
 assert.match(template, /class="symbaroum-hud-tactics"/);
+assert.match(template, /class="symbaroum-hud-tactics-toggle" data-action="toggle-tactics"/);
+assert.match(template, /data-tactics-collapsed="{{tactics\.collapsed}}"/);
 assert.match(template, /\{\{\{tactics\.html\}\}\}/);
 assert.ok(
   template.indexOf('class="symbaroum-hud-effects"')
@@ -469,6 +471,8 @@ assert.match(application, /foundry\?\.applications\?\.ux\?\.TextEditor/);
 assert.match(application, /textEditor\.enrichHTML/);
 assert.match(application, /game\.user\?\.isGM && actor\?\.type === "monster"/);
 assert.match(application, /actor\.system\?\.bio\?\.tactics/);
+assert.match(application, /action === "toggle-tactics"/);
+assert.match(application, /#tacticsCollapsed/);
 assert.match(application, /hasStatusSummary: Boolean\(tacticsHtml \|\| effects\.length\)/);
 assert.match(application, /defenseDisplayValue\(actor\)/);
 assert.match(application, /uuid: item\.uuid/);
@@ -720,6 +724,8 @@ assert.match(stylesheet, /\.symbaroum-hud-effects/);
 assert.match(stylesheet, /\.symbaroum-hud-effect/);
 assert.match(stylesheet, /\.symbaroum-hud-status-summary/);
 assert.match(stylesheet, /\.symbaroum-hud-tactics-content/);
+assert.match(stylesheet, /\.symbaroum-hud-tactics-toggle/);
+assert.match(stylesheet, /data-tactics-collapsed="true"/);
 assert.match(stylesheet, /\.symbaroum-hud-tactics \{[^}]+var\(--symbaroum-hud-title\) repeat/s);
 assert.match(stylesheet, /\.symbaroum-hud-tactics-content \{[^}]+var\(--symbaroum-hud-paper\) repeat/s);
 assert.match(stylesheet, /\.symbaroum-hud-effect-context-menu/);

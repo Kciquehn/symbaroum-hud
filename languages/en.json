@@ -202,7 +202,9 @@
       "HidePlayers": "Hide player list",
       "ShowPlayers": "Show player list",
       "CollapseHud": "Collapse HUD",
-      "ExpandHud": "Expand HUD"
+      "ExpandHud": "Expand HUD",
+      "HideTactics": "Hide tactics",
+      "ShowTactics": "Show tactics"
     },
     "Resources": {
       "Toughness": "Toughness",

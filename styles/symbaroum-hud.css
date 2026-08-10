@@ -1349,6 +1349,50 @@ button.symbaroum-hud-ability-index-entry[data-selected="true"] { box-shadow: ins
   color: #c8af52;
 }
 
+#symbaroum-hud .symbaroum-hud-tactics > h2 > span {
+  flex: 1;
+}
+
+#symbaroum-hud .symbaroum-hud-tactics-toggle {
+  display: grid;
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+  place-items: center;
+  margin: -1px -3px -1px auto;
+  padding: 0;
+  border: 0;
+  color: rgb(255 255 255 / 76%);
+  background: transparent;
+  box-shadow: none;
+  font-size: 10px;
+  line-height: 1;
+  cursor: pointer;
+  transition: color 120ms ease, transform 120ms ease;
+}
+
+#symbaroum-hud .symbaroum-hud-tactics-toggle:hover,
+#symbaroum-hud .symbaroum-hud-tactics-toggle:focus-visible {
+  color: #fff;
+  background: transparent;
+  box-shadow: none;
+  transform: translateY(1px);
+}
+
+#symbaroum-hud .symbaroum-hud-tactics-toggle:focus {
+  border: 0;
+  outline: none;
+}
+
+#symbaroum-hud .symbaroum-hud-tactics-toggle:focus-visible {
+  outline: 1px solid rgb(255 255 255 / 44%);
+  outline-offset: 1px;
+}
+
+#symbaroum-hud .symbaroum-hud-tactics > h2 .symbaroum-hud-tactics-toggle > i {
+  color: inherit;
+}
+
 #symbaroum-hud .symbaroum-hud-tactics-content {
   box-sizing: border-box;
   width: calc(100% - 10px);
@@ -1364,6 +1408,28 @@ button.symbaroum-hud-ability-index-entry[data-selected="true"] { box-shadow: ins
   line-height: 1.4;
   scrollbar-width: thin;
   text-shadow: none;
+  transform-origin: bottom center;
+  transition:
+    max-height 180ms ease,
+    margin 180ms ease,
+    padding 180ms ease,
+    border-width 180ms ease,
+    opacity 140ms ease,
+    transform 180ms ease;
+}
+
+#symbaroum-hud .symbaroum-hud-tactics[data-tactics-collapsed="true"] .symbaroum-hud-tactics-content {
+  max-height: 0;
+  margin-top: 0;
+  margin-bottom: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  overflow: hidden;
+  border-top-width: 0;
+  border-bottom-width: 0;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(7px) scaleY(0.96);
 }
 
 #symbaroum-hud .symbaroum-hud-tactics-content > :first-child {

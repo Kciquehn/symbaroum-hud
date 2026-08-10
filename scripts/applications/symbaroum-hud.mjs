@@ -90,6 +90,7 @@ export class SymbaroumHud extends ApplicationV2 {
   #storageContainerId = null;
   #storageDragData = null;
   #storageOpen = false;
+  #tacticsCollapsed = false;
   #tooltipElement = null;
   #tooltipTimeout = null;
   #ritualsOpen = false;
@@ -136,6 +137,7 @@ export class SymbaroumHud extends ApplicationV2 {
       this.#selectedTraitTab = DEFAULT_ABILITY_TAB;
       this.#storageContainerId = null;
       this.#storageOpen = false;
+      this.#tacticsCollapsed = false;
       this.#ritualsOpen = false;
       this.#traitsOpen = false;
       if (resolvedActor) this.#actor = resolvedActor;
@@ -286,7 +288,7 @@ export class SymbaroumHud extends ApplicationV2 {
         open: this.#attacksOpen
       },
       effects,
-      tactics: tacticsHtml ? { html: tacticsHtml } : null,
+      tactics: tacticsHtml ? { html: tacticsHtml, collapsed: this.#tacticsCollapsed } : null,
       hasStatusSummary: Boolean(tacticsHtml || effects.length),
       storage: indResources.storage
         ? {
@@ -381,6 +383,7 @@ export class SymbaroumHud extends ApplicationV2 {
     this.#storageContainerId = null;
     this.#storageDragData = null;
     this.#storageOpen = false;
+    this.#tacticsCollapsed = false;
     this.#ritualsOpen = false;
     this.#traitsOpen = false;
     return super._onClose(options);
@@ -1460,6 +1463,23 @@ export class SymbaroumHud extends ApplicationV2 {
           this.#collapseTransition = null;
           this.#collapseAnimationRunning = false;
         }
+      }
+
+      if (action === "toggle-tactics") {
+        this.#tacticsCollapsed = !this.#tacticsCollapsed;
+        const section = element.closest(".symbaroum-hud-tactics");
+        const content = section?.querySelector(".symbaroum-hud-tactics-content");
+        section?.setAttribute("data-tactics-collapsed", String(this.#tacticsCollapsed));
+        content?.setAttribute("aria-hidden", String(this.#tacticsCollapsed));
+        element.setAttribute("aria-expanded", String(!this.#tacticsCollapsed));
+        const label = game.i18n.localize(this.#tacticsCollapsed
+          ? "SYMBAROUMHUD.Actions.ShowTactics"
+          : "SYMBAROUMHUD.Actions.HideTactics");
+        element.setAttribute("aria-label", label);
+        element.dataset.tooltip = label;
+        const icon = element.querySelector("i");
+        if (icon) icon.className = `fa-solid ${this.#tacticsCollapsed ? "fa-chevron-up" : "fa-chevron-down"}`;
+        return;
       }
 
       const actor = this.#actor;
