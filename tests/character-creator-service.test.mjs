@@ -186,6 +186,7 @@ test("the first creator step explains the process and exposes a detailed occupat
   const content = dialogConfigs.at(-1).content;
   assert.match(content, /symbaroum-hud-creator-step-guide/);
   assert.match(content, /Guide\.Progress/);
+  assert.doesNotMatch(content, /Guide\.Title/);
   assert.match(content, /input[^>]+name="occupation"/);
   assert.equal((content.match(/data-occupation-id=/g) ?? []).length, 15);
   assert.match(content, /symbaroum-hud-archetype-introduction/);
@@ -228,6 +229,7 @@ test("the second creator step offers typical distribution and point buy", async 
   await CharacterCreatorService.openAttributesStep(blank);
   const content = dialogConfigs.at(-1).content;
   assert.match(content, /AttributesProgress/);
+  assert.doesNotMatch(content, /Guide\.Title/);
   assert.match(content, /data-attribute-mode="typical"/);
   assert.match(content, /data-attribute-mode="point-buy"/);
   assert.equal((content.match(/data-attribute-card=/g) ?? []).length, 8);
@@ -297,6 +299,7 @@ test("the third creator step presents all core races and their trait rules", asy
   assert.equal(CORE_RACES.length, 5);
   assert.equal(Object.keys(CORE_RACE_TRAITS).length, 9);
   assert.match(content, /RaceProgress/);
+  assert.doesNotMatch(content, /Guide\.Title/);
   assert.equal((content.match(/data-race-id=/g) ?? []).length, 5);
   assert.match(content, /name="race-choice-ambrian"/);
   assert.match(content, /name="race-optional-goblin-survivalInstinct"/);

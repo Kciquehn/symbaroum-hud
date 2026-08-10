@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.43
+
+- Remove o texto redundante **Como criar um personagem** do marcador superior do Criador de Fichas.
+- Mantém apenas **Passo X de 10** nas etapas de Ocupação, Atributos e Raças, deixando o cabeçalho mais limpo e compacto.
+
 ## 0.1.42
 
 - Adiciona o terceiro passo do Criador de Fichas: escolha entre ambriano, bárbaro, cambiante, goblin e ogro.

@@ -501,7 +501,6 @@ function occupationBookContent(actor) {
       <input type="hidden" name="occupation" value="${selectedId}">
       <header class="symbaroum-hud-creator-step-guide">
         <div class="symbaroum-hud-creator-step-number">
-          <small>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Guide.Title")}</small>
           <strong>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Guide.Progress")}</strong>
         </div>
         <div>
@@ -584,7 +583,7 @@ function raceBookContent(actor) {
     <div class="symbaroum-hud-race-book">
       <input type="hidden" name="race" value="${selectedId}">
       <header class="symbaroum-hud-creator-step-guide">
-        <div class="symbaroum-hud-creator-step-number"><small>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Guide.Title")}</small><strong>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Guide.RaceProgress")}</strong></div>
+        <div class="symbaroum-hud-creator-step-number"><strong>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Guide.RaceProgress")}</strong></div>
         <div><h2>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Guide.StepThreeTitle")}</h2><p>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Guide.StepThreeText")}</p></div>
       </header>
       <aside class="symbaroum-hud-race-index">
@@ -718,7 +717,6 @@ function attributesBookContent(actor) {
         value="${ATTRIBUTE_DISTRIBUTION_MODES.TYPICAL}">
       <header class="symbaroum-hud-creator-step-guide">
         <div class="symbaroum-hud-creator-step-number">
-          <small>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Guide.Title")}</small>
           <strong>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Guide.AttributesProgress")}</strong>
         </div>
         <div>
