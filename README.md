@@ -118,7 +118,7 @@ O modo de visualização do inventário, em grade ou lista, também é lembrado 
 Quando a integração está ativa, o HUD usa a API pública do Ind Resources para:
 
 - carga e recipientes;
-- pão de viagem e fome;
+- pão de viagem e fome para personagens jogadores;
 - aljavas, munição e recuperação de munição;
 - dinheiro;
 - manobras;

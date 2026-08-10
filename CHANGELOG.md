@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.35
+
+- Oculta o pão de viagem do HUD quando o mestre seleciona um NPC.
+- Mantém aljava e munição visíveis para NPCs, pois continuam relevantes em combate.
+
 ## 0.1.34
 
 - Exibe as abas de nível Novato, Adepto e Mestre nos traços monstruosos.

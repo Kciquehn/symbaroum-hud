@@ -304,7 +304,7 @@ export class SymbaroumHud extends ApplicationV2 {
         experience: showPlayerResources ? experienceContext(actor) : null,
         load: showPlayerResources && indResources.active ? indResources.load : null,
         money: showPlayerResources ? moneyContext(actor) : null,
-        rations: indResources.active ? indResources.rations : null,
+        rations: showPlayerResources && indResources.active ? indResources.rations : null,
         quiver: indResources.active ? indResources.quiver : null
       },
       actor: actor

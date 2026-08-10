@@ -424,6 +424,7 @@ assert.match(application, /const showPlayerResources = actor\?\.type === "player
 assert.match(application, /available: showPlayerResources \|\| knowledgeButtons > 0/);
 assert.match(application, /showExperience: showPlayerResources/);
 assert.match(application, /showEconomy: showPlayerResources/);
+assert.match(application, /rations: showPlayerResources && indResources\.active \? indResources\.rations : null/);
 assert.match(application, /columns: knowledgeButtons > 2 \? 2 : 1/);
 assert.match(application, /isMysticalPowerItem\(item\) === mysticalPowers/);
 assert.match(application, /mysticalPowers \|\| isTraitLikeItem\(item\) === traits/);
