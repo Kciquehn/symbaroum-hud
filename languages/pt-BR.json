@@ -39,7 +39,6 @@
       "Occupation": {
         "Title": "Criador de Fichas — Escolha sua ocupação",
         "Index": "Ocupações",
-        "IndexHint": "Clique em uma opção para abrir a página completa à direita.",
         "SelectLabel": "Arquétipo e ocupação",
         "ArchetypeLabel": "Sobre o arquétipo",
         "OccupationLabel": "Ocupação",

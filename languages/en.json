@@ -39,7 +39,6 @@
       "Occupation": {
         "Title": "Character Creator — Choose Your Occupation",
         "Index": "Occupations",
-        "IndexHint": "Click an option to open its complete page on the right.",
         "SelectLabel": "Archetype and occupation",
         "ArchetypeLabel": "About the archetype",
         "OccupationLabel": "Occupation",

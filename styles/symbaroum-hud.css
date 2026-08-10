@@ -225,13 +225,6 @@
   font-size: 1.25rem;
 }
 
-.symbaroum-hud-occupation-index > header p {
-  margin: 2px 0 0;
-  color: rgb(234 220 185 / 72%);
-  font-size: 0.67rem;
-  line-height: 1.25;
-}
-
 .symbaroum-hud-occupation-index-list {
   display: grid;
   min-height: 0;

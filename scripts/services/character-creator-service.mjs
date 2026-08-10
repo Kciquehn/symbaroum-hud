@@ -511,7 +511,6 @@ function occupationBookContent(actor) {
       <aside class="symbaroum-hud-occupation-index">
         <header>
           <h2>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Occupation.Index")}</h2>
-          <p>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Occupation.IndexHint")}</p>
         </header>
         <div class="symbaroum-hud-occupation-index-list" role="navigation"
           aria-label="${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Occupation.SelectLabel")}">

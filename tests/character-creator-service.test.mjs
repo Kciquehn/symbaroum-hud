@@ -188,6 +188,7 @@ test("the first creator step explains the process and exposes a detailed occupat
   assert.match(content, /Guide\.Progress/);
   assert.doesNotMatch(content, /Guide\.Title/);
   assert.match(content, /input[^>]+name="occupation"/);
+  assert.doesNotMatch(content, /Occupation\.IndexHint/);
   assert.equal((content.match(/data-occupation-id=/g) ?? []).length, 15);
   assert.match(content, /symbaroum-hud-archetype-introduction/);
   assert.match(content, /symbaroum-hud-occupation-details/);

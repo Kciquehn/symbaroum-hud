@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.44
+
+- Remove o texto auxiliar abaixo do título **Ocupações**, deixando o índice do Criador de Fichas mais limpo e compacto.
+
 ## 0.1.43
 
 - Remove o texto redundante **Como criar um personagem** do marcador superior do Criador de Fichas.
