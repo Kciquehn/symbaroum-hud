@@ -14,7 +14,7 @@ O módulo usa as rolagens e os documentos nativos do sistema. Ele não altera o 
 ## Principais recursos
 
 - HUD persistente integrado à hotbar do Foundry;
-- Criador de Fichas guiado passo a passo, iniciado pela seleção detalhada das 15 ocupações do Livro Básico;
+- Criador de Fichas guiado passo a passo, em um livro compacto e temático iniciado pela seleção detalhada das 15 ocupações do Livro Básico;
 - botão lateral para recolher todo o HUD e manter somente o retrato do personagem;
 - controles laterais distribuídos por toda a altura do HUD;
 - seleção pelo token controlado, combatente atual ou personagem atribuído;
@@ -91,7 +91,7 @@ O modo de visualização do inventário, em grade ou lista, também é lembrado 
 
 ## Uso rápido
 
-- Ao abrir uma ficha de jogador totalmente nova, escolha **Usar o Criador de Fichas** ou **Preencher manualmente**. No modo guiado, uma introdução mostra o passo atual e explica o processo. O primeiro passo lista as 15 ocupações do Livro Básico por arquétipo; ao clicar em uma opção, a página à direita apresenta o conceito do arquétipo, descrição, Atributos importantes, Raças sugeridas e Habilidades apropriadas. A escolha preenche automaticamente a ocupação da ficha. O progresso fica salvo na própria ficha e **Continuar depois** retoma a etapa na próxima abertura.
+- Ao abrir uma ficha de jogador totalmente nova, escolha **Usar o Criador de Fichas** ou **Preencher manualmente**. No modo guiado, uma introdução compacta mostra o passo atual e explica o processo. O primeiro passo lista as 15 ocupações do Livro Básico em um índice temático por arquétipo; ao clicar em uma opção, a página à direita apresenta o conceito do arquétipo, descrição, Atributos importantes, Raças sugeridas e Habilidades apropriadas. A escolha preenche automaticamente a ocupação da ficha. O progresso fica salvo na própria ficha e **Continuar depois** retoma a etapa na próxima abertura.
 - Passe o mouse sobre o retrato para revelar o nome e as setas de troca; clique na imagem para abrir a ficha do ator.
 - Use a seta entre o slot `0` e os controles de página, travar e excluir da hotbar para recolher o HUD até o retrato ou expandi-lo novamente, com uma transição curta de deslize e transparência.
 - Clique na barra de Vitalidade para curar o personagem ou aplicar uma quantidade de dano.

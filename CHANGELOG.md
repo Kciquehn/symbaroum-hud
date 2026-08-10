@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.40
+
+- Reduz o Criador de Fichas de 1080 × 700 para 860 × 550, liberando mais espaço da mesa durante a criação.
+- Compacta o guia da etapa, o índice, a apresentação do arquétipo e os detalhes da ocupação sem remover a identidade visual de Symbaroum.
+- Substitui a lista nativa por um índice temático com ícones, grupos e seleção em vermelho escuro e dourado.
+- Organiza Atributos e Raças lado a lado e mantém Habilidades em uma linha própria para aproveitar melhor a página.
+- Mantém rolagem independente no índice e na página de leitura, sem cortes horizontais.
+- Garante que o livro permaneça acima da ficha quando uma criação interrompida for retomada.
+
 ## 0.1.39
 
 - Reorganiza o primeiro passo do Criador de Fichas conforme a sequência apresentada no Livro Básico.

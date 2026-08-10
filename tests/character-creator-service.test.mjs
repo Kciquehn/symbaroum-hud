@@ -153,7 +153,8 @@ test("the first creator step explains the process and exposes a detailed occupat
   const content = dialogConfigs.at(-1).content;
   assert.match(content, /symbaroum-hud-creator-step-guide/);
   assert.match(content, /Guide\.Progress/);
-  assert.match(content, /select[^>]+name="occupation"[^>]+size="15"/);
+  assert.match(content, /input[^>]+name="occupation"/);
+  assert.equal((content.match(/data-occupation-id=/g) ?? []).length, 15);
   assert.match(content, /symbaroum-hud-archetype-introduction/);
   assert.match(content, /symbaroum-hud-occupation-details/);
 });

@@ -149,7 +149,7 @@ export class CharacterCreatorService {
       window: {
         title: game.i18n.localize("SYMBAROUMHUD.CharacterCreator.Occupation.Title")
       },
-      position: { width: 1080, height: 700 },
+      position: { width: 860, height: 550 },
       content: occupationBookContent(actor),
       buttons: [
         {
@@ -186,25 +186,35 @@ export class CharacterCreatorService {
       ],
       close: () => null,
       rejectClose: false,
-      render: (_event, dialog) => bindOccupationBook(dialog.element)
+      render: (_event, dialog) => {
+        bindOccupationBook(dialog.element);
+        globalThis.setTimeout(() => {
+          if (dialog.element?.isConnected) dialog.bringToFront?.();
+        }, 0);
+      }
     });
   }
 }
 
 function occupationBookContent(actor) {
   const selectedId = CORE_OCCUPATIONS[0].id;
-  const options = OCCUPATION_ARCHETYPES.map((archetype) => {
+  const index = OCCUPATION_ARCHETYPES.map((archetype) => {
     const items = CORE_OCCUPATIONS
       .filter((occupation) => occupation.archetype === archetype.id)
       .map((occupation) => `
-        <option value="${occupation.id}" ${occupation.id === selectedId ? "selected" : ""}>
-          ${localizeEscaped(occupation.name)}
-        </option>
+        <button type="button" class="symbaroum-hud-occupation-index-entry"
+          data-occupation-id="${occupation.id}"
+          data-active="${occupation.id === selectedId}"
+          aria-pressed="${occupation.id === selectedId}">
+          <i class="fa-solid ${occupation.icon}" aria-hidden="true"></i>
+          <span>${localizeEscaped(occupation.name)}</span>
+        </button>
       `).join("");
     return `
-      <optgroup label="${localizeEscaped(archetype.label)}">
+      <section class="symbaroum-hud-occupation-index-group">
+        <h3>${localizeEscaped(archetype.label)}</h3>
         ${items}
-      </optgroup>
+      </section>
     `;
   }).join("");
 
@@ -215,8 +225,10 @@ function occupationBookContent(actor) {
         data-occupation-page="${occupation.id}"
         ${occupation.id === selectedId ? "" : "hidden"}>
         <section class="symbaroum-hud-archetype-introduction">
-          <span>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Occupation.ArchetypeLabel")}</span>
-          <h2>${localizeEscaped(archetype.label)}</h2>
+          <div>
+            <span>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Occupation.ArchetypeLabel")}</span>
+            <h2>${localizeEscaped(archetype.label)}</h2>
+          </div>
           <p>${localizeEscaped(archetype.summary)}</p>
         </section>
         <div class="symbaroum-hud-occupation-heading">
@@ -242,6 +254,7 @@ function occupationBookContent(actor) {
 
   return `
     <div class="symbaroum-hud-occupation-book">
+      <input type="hidden" name="occupation" value="${selectedId}">
       <header class="symbaroum-hud-creator-step-guide">
         <div class="symbaroum-hud-creator-step-number">
           <small>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Guide.Title")}</small>
@@ -257,10 +270,10 @@ function occupationBookContent(actor) {
           <h2>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Occupation.Index")}</h2>
           <p>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Occupation.IndexHint")}</p>
         </header>
-        <label for="symbaroum-hud-occupation-select">${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Occupation.SelectLabel")}</label>
-        <select id="symbaroum-hud-occupation-select" name="occupation" size="15">
-          ${options}
-        </select>
+        <div class="symbaroum-hud-occupation-index-list" role="navigation"
+          aria-label="${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Occupation.SelectLabel")}">
+          ${index}
+        </div>
       </aside>
       <main class="symbaroum-hud-occupation-reading-page">
         <header class="symbaroum-hud-occupation-character-name">
@@ -275,13 +288,22 @@ function occupationBookContent(actor) {
 }
 
 function bindOccupationBook(element) {
-  const input = element.querySelector('select[name="occupation"]');
+  const input = element.querySelector('input[name="occupation"]');
+  const entries = Array.from(element.querySelectorAll("[data-occupation-id]"));
   const pages = Array.from(element.querySelectorAll("[data-occupation-page]"));
-  input?.addEventListener("change", () => {
-    const id = input.value;
-    if (!coreOccupation(id)) return;
-    for (const page of pages) page.hidden = page.dataset.occupationPage !== id;
-  });
+  for (const entry of entries) {
+    entry.addEventListener("click", () => {
+      const id = entry.dataset.occupationId;
+      if (!coreOccupation(id)) return;
+      input.value = id;
+      for (const candidate of entries) {
+        const active = candidate.dataset.occupationId === id;
+        candidate.dataset.active = String(active);
+        candidate.setAttribute("aria-pressed", String(active));
+      }
+      for (const page of pages) page.hidden = page.dataset.occupationPage !== id;
+    });
+  }
 }
 
 function characterCreatorChoiceContent() {
