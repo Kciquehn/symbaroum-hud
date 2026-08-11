@@ -101,12 +101,94 @@
         "OptionalHint": "Você pode começar com este traço no nível Novato, mas ele consumirá uma escolha de Habilidade na próxima etapa.",
         "ChoiceRequired": "Escolha um dos traços oferecidos por esta raça.",
         "RequiredAdded": "Traços obrigatórios adicionados à ficha: {traits}.",
+        "HistoryAndCulture": "História e cultura",
+        "Names": "Nomes",
+        "Surnames": "Sobrenomes ambrianos",
+        "MaleNames": "Masculinos:",
+        "FemaleNames": "Femininos:",
+        "NameExamples": "Exemplos:",
+        "TraitsHeading": "Traços da raça",
         "Entries": {
-          "ambrian": { "Name": "Ambriano", "Summary": "Herdeiros do reino ao sul dos Titãs, os ambrianos chegaram a Davokar com organização, ambição e fortes diferenças sociais. Seus contatos ou privilégios refletem a posição que ocupam na nova pátria." },
-          "barbarian": { "Name": "Bárbaro", "Summary": "Os clãs bárbaros conhecem Davokar e suas fronteiras há gerações. Sua sobrevivência depende tanto dos laços com outras pessoas quanto da experiência prática nos ermos." },
-          "changeling": { "Name": "Cambiante", "Summary": "Deixados entre humanos ainda crianças, os cambiantes vivem entre duas naturezas. Têm vida longa e alguns desenvolvem a capacidade de alterar o próprio corpo." },
-          "goblin": { "Name": "Goblin", "Summary": "Goblins vivem intensamente durante suas poucas décadas e ocupam posições marginalizadas. Muitos desenvolvem um instinto extraordinário para escapar de perigos." },
-          "ogre": { "Name": "Ogro", "Summary": "Ogres despertam adultos e sem memória nas profundezas de Davokar. São longevos, vistos como párias e alguns possuem uma constituição especialmente robusta." }
+          "ambrian": {
+            "Name": "Ambriano", "Summary": "Herdeiros do reino ao sul dos Titãs, os ambrianos chegaram a Davokar com organização, ambição e fortes diferenças sociais.",
+            "Lore": {
+              "history": {
+                "Paragraph1": "Segundo os estudiosos da Ordo Magica, os povos de Ambria e Davokar descendem da mesma tribo, embora bárbaros e Povo da Rainha dificilmente se considerem tão próximos.",
+                "Paragraph2": "A reivindicação da Rainha Korinthia sobre Ambria, ao sul de Davokar, apoia-se numa conexão ancestral com a região. Até linguistas inexperientes reconhecem a semelhança entre a linguagem desarticulada dos bárbaros e a língua melodiosa do Povo da Rainha. Mais controversa é a hipótese de ambos se originarem da mesma árvore genealógica, enraizada no antigo império de Symbaroum.",
+                "Paragraph3": "As diferenças culturais são profundas. Os ambrianos deixaram Alberetor, sua terra natal maculada, vinte anos atrás e trouxeram arquitetura, conhecimento, economia e hierarquias sociais. Em campo aberto seus exércitos disciplinados superam os guerreiros dos clãs, enquanto nas florestas o conhecimento local dos bárbaros reduz essa vantagem.",
+                "Paragraph4": "A maioria dos ambrianos evita penetrar profundamente em Davokar, com exceção de caçadores de tesouros, fanáticos religiosos e colonos que desejam escapar do controle da Rainha.",
+                "Paragraph5": "A possibilidade de uma resistência bárbara unida preocupa a corte. Desde a destruição de Haloban e seus Jezitas no Ano 10, os ambrianos tratam Davokar com cautela; a tentativa templária de tomar o platô de Karvosti no Ano 16 terminou em derrota desencorajadora."
+              },
+              "names": {
+                "Paragraph1": "Nomes femininos ambrianos normalmente terminam em -a e nomes masculinos em -o, embora haja exceções. Muitos nomes nobres terminam em -gai, -goi ou -mei; a letra x é rara e o j costuma ser substituído por i.",
+                "male": "Aro, Beremo, Demeon, Edogai, Gadramei, Iasogoi, Jomilo, Karlio, Malliano, Peonio.",
+                "female": "Abesina, Elindra, Elionara, Levia, Mehira, Ordelia, Revina, Suria, Variol, Vidina."
+              },
+              "surnames": { "Paragraph1": "Com exceção dos nobres e suas casas, o povo de Ambria não usa nomes de família. Indivíduos notáveis podem receber sobrenomes honorários ligados àquilo que os tornou famosos, como Lasifor Campo Noturno e Lysindra Aperto Dourado." }
+            }
+          },
+          "barbarian": {
+            "Name": "Bárbaro", "Summary": "Os clãs bárbaros conhecem Davokar e suas fronteiras há gerações, vivendo sob chefes e antigas tradições.",
+            "Lore": {
+              "history": {
+                "Paragraph1": "Segundo a Ordo Magica, bárbaros e ambrianos descendem da mesma tribo, ainda que nenhum dos povos goste de reconhecer essa proximidade. Suas línguas semelhantes e as ruínas de Symbaroum alimentam teorias sobre uma origem comum.",
+                "Paragraph2": "Desde tempos antigos, os bárbaros são governados por chefes, mas desfrutam de mais independência que arrendatários e camponeses do sul. Nem todos os líderes impõem um modo de vida rígido aos subordinados.",
+                "Paragraph3": "As bruxas, líderes espirituais entre os bárbaros, governam com leveza por meio de tabus e regras gerais: reverenciam a natureza, evitam abusá-la e mantêm distância das partes mais escuras da floresta.",
+                "Paragraph4": "Os clãs vivem de forma independente, salvo em conflitos por recursos nas fronteiras. Seus líderes respondem ao Alto Chefe em Karvosti, mas esse cargo funciona mais como árbitro do que como autoridade absoluta.",
+                "Paragraph5": "Espera-se que o Alto Chefe reúna os clãs contra invasores. A derrota dos templários em Karvosti no Ano 16 mostrou aos ambrianos quanto uma resistência bárbara unida pode ser perigosa."
+              },
+              "names": {
+                "Paragraph1": "Nomes femininos bárbaros tendem a terminar em -a; os masculinos, em -mar, -mon ou -mer. Consoantes duplas quase não aparecem, e os bárbaros apreciam especialmente as vogais a, o e u.",
+                "male": "Adelar, Gadramon, Haloban, Konarad, Lothar, Odaban, Rábaiamon, Taran, Tharaban, Vikomer.",
+                "female": "Adela, Aloeta, Eferneya, Elmea, Elda, Galoma, Horosa, Karona, Verama, Yagaba."
+              }
+            }
+          },
+          "changeling": {
+            "Name": "Cambiante", "Summary": "Deixados entre humanos ainda crianças, os cambiantes vivem entre duas naturezas e uma identidade frequentemente negada.",
+            "Lore": {
+              "history": {
+                "Paragraph1": "O fato de elfos às vezes roubarem crianças humanas e deixarem cambiantes nos berços é conhecido pelos bárbaros desde que as bruxas se lembram. Desde a chegada dos ambrianos, casos semelhantes surgiram entre todas as castas sociais, sem que se saiba o propósito exato dos elfos.",
+                "Paragraph2": "Um cambiante parece humano na infância e desenvolve características élficas na adolescência, mas nunca se torna um elfo verdadeiro. Amadurece na mesma idade que um humano e então passa a viver por muito tempo. Alguns estudiosos dizem que são uma raça criada por magia élfica; outros, descendentes élficos cujo ciclo natural foi interrompido.",
+                "Paragraph3": "Sua vida costuma ser difícil. Quando a natureza verdadeira é revelada, poucos permanecem com a família. Bruxas e magos às vezes os acolhem como assistentes; a maioria sobrevive nas ruas, solitária, frequentemente amarga e melancólica — ou frívola e indiferente às dificuldades alheias."
+              },
+              "names": {
+                "Paragraph1": "Alguns mantêm nomes élficos quando são abandonados na floresta ou expulsos de casa; outros assumem um novo nome, às vezes extravagante, como gesto de desafio e independência.",
+                "male": "Aka, Ardri, Eneáno, Feon, Ganderald, Goriol, Ibliglin, Kalfu, Radomaramei, Sinue.",
+                "female": "Bekora, Danive, Yeloéna, Elorinda, Hinéua, Kinlegelana, Riamata, Roha, Seanua, Varaneia."
+              }
+            }
+          },
+          "goblin": {
+            "Name": "Goblin", "Summary": "Goblins vivem intensamente durante poucas décadas e ocupam posições marginalizadas na sociedade ambriana.",
+            "Lore": {
+              "history": {
+                "Paragraph1": "Pouco se sabe sobre a origem dos goblins, mas sua presença nos ermos ao sul de Davokar é evidente. A tribo que se instalou perto de Forte do Cardo tornou-se impopular por seu temperamento impetuoso e seus estranhos jogos sociais.",
+                "Paragraph2": "A vida de um goblin é curta: é jovem aos cinco anos, adulto aos dez e idoso aos vinte. Chegar aos trinta é raro, e ninguém ouviu falar de um com quarenta. A maioria volta voluntariamente para Davokar quando sente a morte se aproximar.",
+                "Paragraph3": "São tolerados em Forte do Cardo por aceitarem trabalhos sujos e perigosos, como drenar charcos, esvaziar latrinas e pendurar andaimes. Entram em massa pela manhã e são afastados da cidade ao anoitecer.",
+                "Paragraph4": "Alguns escapam desse padrão como caçadores de tesouros, empregados de casas ricas ou alunos do monastério. Garm Verminquieto, formado pelos monges, tornou-se um caçador de tesouros célebre."
+              },
+              "names": {
+                "Paragraph1": "Nomes goblins seguem poucas convenções e podem mudar ou ganhar sílabas conforme acontecimentos importantes. Em geral, quanto mais longo o nome, maior a posição do portador na tribo.",
+                "male": "Alfbolg, Barra, Goltas, Illefons, Ler, Rosti, Shigg, Tengel, Ul.",
+                "female": "Aa, Fosa, Guhula, Hugalea, Tulga, Udelia, Ufa, Wamba, Yla, Yppa."
+              }
+            }
+          },
+          "ogre": {
+            "Name": "Ogro", "Summary": "Ogres surgem adultos e sem memória das profundezas de Davokar, aprendendo com aqueles que os encontram.",
+            "Lore": {
+              "history": {
+                "Paragraph1": "Ogres são criaturas solitárias e estranhas que saem de Davokar completamente crescidas, sem lembranças e sem identidade. Cabe aos humanos ou goblins que os encontram dar-lhes um nome e ensinar-lhes sobre o mundo.",
+                "Paragraph2": "Histórias sobre ogres variam entre o engraçado, o místico e o horrível. Bruxas podem acolhê-los como guardas e servos; exploradores valorizam sua força; gangues goblins os usam como capangas de punho pesado.",
+                "Paragraph3": "No sul de Davokar contam-se histórias de Deterror e Vitrona, um batedor habilidoso criado por bruxas e seu enorme amigo ogro. Suas aventuras nas ruínas de Symbaroum viraram canções populares em Forte do Cardo."
+              },
+              "names": {
+                "Paragraph1": "Ogres aparentemente não possuem nomes próprios. Recebem apelidos baseados no tamanho, na aparência ou no temperamento; a Ordo Magica suspeita que a própria criatura considere isso suficiente.",
+                "examples": "Arruaceiro, Bauta, Bocaberta, Boi, Esquisito, Estranho, Feio, Grande Bruto, Imbecil, Nervoso, Pesado, Raiva."
+              }
+            }
+          }
         },
         "Traits": {
           "contacts": { "Name": "Contatos", "Description": "O personagem possui uma rede de conhecidos ligada a uma região ou grupo social." },

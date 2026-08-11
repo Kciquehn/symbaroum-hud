@@ -364,6 +364,10 @@ test("the third creator step presents all core races and their trait rules", asy
   assert.doesNotMatch(content, /Guide\.Title/);
   assert.doesNotMatch(content, /\.Family/);
   assert.equal((content.match(/data-race-id=/g) ?? []).length, 5);
+  assert.equal((content.match(/class="symbaroum-hud-race-art"/g) ?? []).length, 5);
+  assert.equal((content.match(/data-race-lore="history"/g) ?? []).length, 5);
+  assert.ok(content.indexOf("Entries.ambrian.Lore.history.Paragraph1") < content.indexOf("name=\"race-choice-ambrian\""));
+  assert.ok(CORE_RACES.every((race) => race.art.endsWith(".webp") && race.lore.length >= 2));
   assert.match(content, /name="race-choice-ambrian"/);
   assert.match(content, /name="race-optional-goblin-survivalInstinct"/);
 });

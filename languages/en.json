@@ -101,12 +101,75 @@
         "OptionalHint": "You may start with this trait at Novice, but it will use one Ability choice in the next step.",
         "ChoiceRequired": "Choose one of the traits offered by this race.",
         "RequiredAdded": "Mandatory traits added to the sheet: {traits}.",
+        "HistoryAndCulture": "History and culture",
+        "Names": "Names",
+        "Surnames": "Ambrian surnames",
+        "MaleNames": "Male:",
+        "FemaleNames": "Female:",
+        "NameExamples": "Examples:",
+        "TraitsHeading": "Racial traits",
         "Entries": {
-          "ambrian": { "Name": "Ambrian", "Summary": "Heirs to the realm south of the Titans, Ambrians came to Davokar with organization, ambition and strong social divisions. Their contacts or privileges reflect their place in the new homeland." },
-          "barbarian": { "Name": "Barbarian", "Summary": "The barbarian clans have known Davokar and its borders for generations. Their survival relies on both personal bonds and practical wilderness experience." },
-          "changeling": { "Name": "Changeling", "Summary": "Left among humans as children, changelings live between two natures. They are long-lived and some develop the power to alter their own body." },
-          "goblin": { "Name": "Goblin", "Summary": "Goblins live intensely through their few decades and occupy marginalized positions. Many develop an extraordinary instinct for escaping danger." },
-          "ogre": { "Name": "Ogre", "Summary": "Ogres awaken as adults without memories in Davokar's depths. They are long-lived, treated as pariahs, and some possess a particularly robust build." }
+          "ambrian": {
+            "Name": "Ambrian", "Summary": "Heirs to the realm south of the Titans, Ambrians came to Davokar with organization, ambition and strong social divisions.",
+            "Lore": {
+              "history": {
+                "Paragraph1": "According to the scholars of Ordo Magica, the peoples of Ambria and Davokar descend from the same tribe, although neither barbarians nor the Queen's People regard the other as close kin.",
+                "Paragraph2": "Queen Korinthia's claim on Ambria rests on an ancestral bond with the region. The related languages support it, while the theory that both peoples descend from a family tree rooted in ancient Symbaroum remains disputed.",
+                "Paragraph3": "The cultures differ greatly. Ambrians left blighted Alberetor twenty years ago, bringing architecture, learning, economy and social hierarchy. Their disciplined armies excel in open country, while barbarian knowledge prevails in the forest.",
+                "Paragraph4": "Most Ambrians avoid travelling deep into Davokar, except treasure-hunters, religious zealots and settlers hoping to escape the Queen's control.",
+                "Paragraph5": "A united barbarian resistance troubles the court. Haloban's fall in Year 10 and the Templars' failed assault on Karvosti in Year 16 taught the Ambrians to approach Davokar cautiously."
+              },
+              "names": { "Paragraph1": "Ambrian female names usually end in -a and male names in -o. Many noble names end in -gai, -goi or -mei; x is uncommon and j is often replaced by i.", "male": "Aro, Beremo, Demeon, Edogai, Gadramei, Iasogoi, Jomilo, Karlio, Malliano, Peonio.", "female": "Abesina, Elindra, Elionara, Levia, Mehira, Ordelia, Revina, Suria, Variol, Vidina." },
+              "surnames": { "Paragraph1": "Apart from nobles and their houses, Ambrians do not use family names. Famous people may earn honorific surnames tied to their deeds, such as Lasifor Nightpitch and Lysindra Goldengrasp." }
+            }
+          },
+          "barbarian": {
+            "Name": "Barbarian", "Summary": "The barbarian clans have known Davokar and its borders for generations, living under chieftains and ancient traditions.",
+            "Lore": {
+              "history": {
+                "Paragraph1": "Ordo Magica claims that barbarians and Ambrians descend from the same tribe, though neither people welcomes the comparison. Their related languages and Symbaroum's ruins fuel theories of a common origin.",
+                "Paragraph2": "Barbarians have long been governed by chieftains, yet enjoy greater freedom than southern tenants and peasants. Not every leader imposes a rigid way of life.",
+                "Paragraph3": "Witches guide the clans lightly through taboos and broad rules: revere nature, never abuse it and avoid the darkest reaches of the forest.",
+                "Paragraph4": "Clans live independently except during border disputes. Their leaders answer to the High Chieftain at Karvosti, who acts more as arbiter than absolute ruler.",
+                "Paragraph5": "The High Chieftain is expected to unite the clans against invaders. The Templars' defeat at Karvosti in Year 16 showed how dangerous a united barbarian resistance could be."
+              },
+              "names": { "Paragraph1": "Female barbarian names tend to end in -a; male names in -mar, -mon or -mer. Double consonants are rare, and a, o and u are especially favored.", "male": "Adelar, Gadramon, Haloban, Konarad, Lothar, Odaban, Rábaiamon, Taran, Tharaban, Vikomer.", "female": "Adela, Aloeta, Eferneya, Elmea, Elda, Galoma, Horosa, Karona, Verama, Yagaba." }
+            }
+          },
+          "changeling": {
+            "Name": "Changeling", "Summary": "Left among humans as children, changelings live between two natures and an identity often denied to them.",
+            "Lore": {
+              "history": {
+                "Paragraph1": "Elves have stolen human babies and left changelings in their cradles for as long as barbarian witches can remember. Since the Ambrians arrived, cases have appeared in every social caste, with no clear elven purpose.",
+                "Paragraph2": "A changeling looks human in childhood and develops elven features in adolescence without becoming a true elf. It matures at a human pace, then lives for a very long time. Scholars dispute whether changelings are made by elven magic or are elven offspring whose natural cycle was interrupted.",
+                "Paragraph3": "Their lives are difficult. Few remain with their families after their nature is revealed. Witches and mages sometimes take them as assistants; most survive alone, becoming bitter and melancholy or frivolous and indifferent."
+              },
+              "names": { "Paragraph1": "Some keep elven names after being abandoned or cast out; others take a new, sometimes extravagant name as an act of defiance and independence.", "male": "Aka, Ardri, Eneáno, Feon, Ganderald, Goriol, Ibliglin, Kalfu, Radomaramei, Sinue.", "female": "Bekora, Danive, Yeloéna, Elorinda, Hinéua, Kinlegelana, Riamata, Roha, Seanua, Varaneia." }
+            }
+          },
+          "goblin": {
+            "Name": "Goblin", "Summary": "Goblins live intensely through their few decades and occupy marginalized positions in Ambrian society.",
+            "Lore": {
+              "history": {
+                "Paragraph1": "Little is known of goblin origins, but their presence south of Davokar is obvious. The tribe near Thistle Hold became unpopular for its impulsive temperament and strange social games.",
+                "Paragraph2": "Goblin life is short: young at five, adult at ten and old at twenty. Thirty is rare and no forty-year-old is known. Most return voluntarily to Davokar when death approaches.",
+                "Paragraph3": "They are tolerated in Thistle Hold because they perform dirty and dangerous work. Crowds enter at dawn and are driven out again at night.",
+                "Paragraph4": "Some escape this pattern as treasure-hunters, servants to wealthy households or monastery pupils. Garm Wormwriggler became the most famous successful treasure-hunter among them."
+              },
+              "names": { "Paragraph1": "Goblin names follow few conventions and may change or gain syllables after major events. In general, a longer name signals higher status in the tribe.", "male": "Alfbolg, Barra, Goltas, Illefons, Ler, Rosti, Shigg, Tengel, Ul.", "female": "Aa, Fosa, Guhula, Hugalea, Tulga, Udelia, Ufa, Wamba, Yla, Yppa." }
+            }
+          },
+          "ogre": {
+            "Name": "Ogre", "Summary": "Ogres emerge fully grown and without memories from Davokar, learning from whoever finds them.",
+            "Lore": {
+              "history": {
+                "Paragraph1": "Ogres are strange solitary creatures that wander out of Davokar fully grown, without memories or identity. The humans or goblins who find them give them names and teach them about the world.",
+                "Paragraph2": "Ogre stories range from humorous to mystical and horrific. Witches take them as guards, explorers value their strength and goblin gangs use them as heavy-handed enforcers.",
+                "Paragraph3": "In southern Davokar, stories tell of Deterror and Vitrona, a witch-trained scout and his huge ogre friend. Their adventures in Symbaroum's ruins became popular songs in Thistle Hold."
+              },
+              "names": { "Paragraph1": "Ogres seem to have no names of their own. Others give them nicknames based on size, appearance or temperament; Ordo Magica suspects the creature considers that sufficient.", "examples": "Bauta, Big Brute, Brawler, Bull, Calm, Heavy, Nervous, Odd, Rage, Strange, Ugly." }
+            }
+          }
         },
         "Traits": {
           "contacts": { "Name": "Contacts", "Description": "The character has a network of acquaintances tied to a region or social group." },

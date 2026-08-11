@@ -726,6 +726,13 @@ function raceBookContent(actor) {
     const required = race.required.map((id) => traitCard(id, "required", race.id)).join("");
     const choices = race.choice.map((id) => traitCard(id, "choice", race.id)).join("");
     const optional = race.optional.map((id) => traitCard(id, "optional", race.id)).join("");
+    const lore = race.lore.map((section) => `
+      <section class="symbaroum-hud-race-lore-section" data-race-lore="${section.id}">
+        <h3>${localizeEscaped(section.title)}</h3>
+        ${section.paragraphs.map((paragraph) => `<p>${localizeEscaped(paragraph)}</p>`).join("")}
+        ${section.facts.length ? `<dl>${section.facts.map((fact) => `<div><dt>${localizeEscaped(fact.label)}</dt><dd>${localizeEscaped(fact.value)}</dd></div>`).join("")}</dl>` : ""}
+      </section>
+    `).join("");
     return `
       <article class="symbaroum-hud-race-page" data-race-page="${race.id}"
         ${race.id === selectedId ? "" : "hidden"}>
@@ -734,9 +741,13 @@ function raceBookContent(actor) {
           <h2>${localizeEscaped(race.name)}</h2>
         </div>
         <p class="symbaroum-hud-race-summary">${localizeEscaped(race.summary)}</p>
-        ${required ? `<section class="symbaroum-hud-race-trait-section"><header><h3>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Race.RequiredTraits")}</h3><span>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Race.Automatic")}</span></header><p>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Race.RequiredHint")}</p><div>${required}</div></section>` : ""}
-        ${choices ? `<section class="symbaroum-hud-race-trait-section"><header><h3>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Race.ChooseOne")}</h3><span>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Race.FreeChoice")}</span></header><p>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Race.ChoiceHint")}</p><div>${choices}</div></section>` : ""}
-        ${optional ? `<section class="symbaroum-hud-race-trait-section"><header><h3>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Race.OptionalTraits")}</h3><span>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Race.CostsAbility")}</span></header><p>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Race.OptionalHint")}</p><div>${optional}</div></section>` : ""}
+        <figure class="symbaroum-hud-race-art"><img src="modules/symbaroum-hud/${race.art}" alt="" style="object-position:${race.artPosition}"></figure>
+        <div class="symbaroum-hud-race-lore">${lore}</div>
+        <section class="symbaroum-hud-race-traits"><h3>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Race.TraitsHeading")}</h3>
+          ${required ? `<section class="symbaroum-hud-race-trait-section"><header><h3>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Race.RequiredTraits")}</h3><span>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Race.Automatic")}</span></header><p>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Race.RequiredHint")}</p><div>${required}</div></section>` : ""}
+          ${choices ? `<section class="symbaroum-hud-race-trait-section"><header><h3>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Race.ChooseOne")}</h3><span>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Race.FreeChoice")}</span></header><p>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Race.ChoiceHint")}</p><div>${choices}</div></section>` : ""}
+          ${optional ? `<section class="symbaroum-hud-race-trait-section"><header><h3>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Race.OptionalTraits")}</h3><span>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Race.CostsAbility")}</span></header><p>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Race.OptionalHint")}</p><div>${optional}</div></section>` : ""}
+        </section>
       </article>`;
   }).join("");
 

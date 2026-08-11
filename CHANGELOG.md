@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.54
+
+- Reconstrói as páginas de Raças do Criador de Fichas com composição inspirada diretamente no Livro Básico: arte oficial, texto em colunas e tratamento editorial temático.
+- Acrescenta história, cultura, costumes e informações completas de nomes para ambrianos, bárbaros, cambiantes, goblins e ogres.
+- Mantém todas as escolhas mecânicas de traços reunidas ao final de cada página, depois da leitura da raça.
+- Adapta o enquadramento das ilustrações por raça e preserva uma leitura compacta em telas menores.
+
 ## 0.1.53
 
 - Transforma o nome de cada Poder Místico no Criador de Fichas em um atalho para abrir sua ficha nativa de item.

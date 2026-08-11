@@ -19,22 +19,65 @@ export const CORE_RACE_TRAITS = Object.freeze({
   robust: trait("robust", "trait", "fa-person", ["Robusto", "Robust"])
 });
 
-const race = (id, icon, required, choice = [], optional = []) => Object.freeze({
+const LORE_TITLES = Object.freeze({
+  history: "SYMBAROUMHUD.CharacterCreator.Race.HistoryAndCulture",
+  names: "SYMBAROUMHUD.CharacterCreator.Race.Names",
+  surnames: "SYMBAROUMHUD.CharacterCreator.Race.Surnames"
+});
+
+const LORE_FACT_LABELS = Object.freeze({
+  male: "SYMBAROUMHUD.CharacterCreator.Race.MaleNames",
+  female: "SYMBAROUMHUD.CharacterCreator.Race.FemaleNames",
+  examples: "SYMBAROUMHUD.CharacterCreator.Race.NameExamples"
+});
+
+const loreSection = (raceId, sectionId, paragraphCount, factIds = []) => Object.freeze({
+  id: sectionId,
+  title: LORE_TITLES[sectionId],
+  paragraphs: Object.freeze(Array.from({ length: paragraphCount }, (_value, index) =>
+    `SYMBAROUMHUD.CharacterCreator.Race.Entries.${raceId}.Lore.${sectionId}.Paragraph${index + 1}`
+  )),
+  facts: Object.freeze(factIds.map((factId) => Object.freeze({
+    label: LORE_FACT_LABELS[factId],
+    value: `SYMBAROUMHUD.CharacterCreator.Race.Entries.${raceId}.Lore.${sectionId}.${factId}`
+  })))
+});
+
+const race = (id, icon, art, artPosition, required, choice = [], optional = [], lore = []) => Object.freeze({
   id,
   icon,
+  art,
+  artPosition,
   required: Object.freeze(required),
   choice: Object.freeze(choice),
   optional: Object.freeze(optional),
+  lore: Object.freeze(lore),
   name: `SYMBAROUMHUD.CharacterCreator.Race.Entries.${id}.Name`,
   summary: `SYMBAROUMHUD.CharacterCreator.Race.Entries.${id}.Summary`
 });
 
 export const CORE_RACES = Object.freeze([
-  race("ambrian", "fa-crown", [], ["contacts", "privileged"]),
-  race("barbarian", "fa-tree", [], ["contacts", "bushcraft"]),
-  race("changeling", "fa-masks-theater", ["longLived"], [], ["shapeshifter"]),
-  race("goblin", "fa-face-grin-wide", ["shortLived", "pariah"], [], ["survivalInstinct"]),
-  race("ogre", "fa-person", ["pariah", "longLived"], [], ["robust"])
+  race("ambrian", "fa-crown", "assets/races/ambrian.webp", "50% 30%", [], ["contacts", "privileged"], [], [
+    loreSection("ambrian", "history", 5),
+    loreSection("ambrian", "names", 1, ["male", "female"]),
+    loreSection("ambrian", "surnames", 1)
+  ]),
+  race("barbarian", "fa-tree", "assets/races/barbarian.webp", "50% 34%", [], ["contacts", "bushcraft"], [], [
+    loreSection("barbarian", "history", 5),
+    loreSection("barbarian", "names", 1, ["male", "female"])
+  ]),
+  race("changeling", "fa-masks-theater", "assets/races/changeling.webp", "50% 28%", ["longLived"], [], ["shapeshifter"], [
+    loreSection("changeling", "history", 3),
+    loreSection("changeling", "names", 1, ["male", "female"])
+  ]),
+  race("goblin", "fa-face-grin-wide", "assets/races/goblin-ogre.webp", "70% 45%", ["shortLived", "pariah"], [], ["survivalInstinct"], [
+    loreSection("goblin", "history", 4),
+    loreSection("goblin", "names", 1, ["male", "female"])
+  ]),
+  race("ogre", "fa-person", "assets/races/goblin-ogre.webp", "38% 32%", ["pariah", "longLived"], [], ["robust"], [
+    loreSection("ogre", "history", 3),
+    loreSection("ogre", "names", 1, ["examples"])
+  ])
 ]);
 
 export function coreRace(id) {
