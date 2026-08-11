@@ -1288,6 +1288,22 @@ button.symbaroum-hud-ability-index-entry[data-selected="true"] { box-shadow: ins
 .symbaroum-hud-ability-special-card > header { display: grid; min-height: 42px; padding: 4px; grid-template-columns: 36px minmax(0, 1fr); align-items: center; gap: 6px; }
 .symbaroum-hud-ability-special-card > header img { width: 36px; height: 36px; border: 1px solid #795e28; background: #0a0908; object-fit: cover; }
 .symbaroum-hud-ability-special-card h4 { margin: 0; color: #4d211b; font-family: "Symbaroum HUD Primitive", "Philosopher", serif; font-size: 0.72rem; }
+.symbaroum-hud-ability-special-open {
+  display: block;
+  width: auto;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  text-align: left;
+}
+.symbaroum-hud-ability-special-open:hover,
+.symbaroum-hud-ability-special-open:focus-visible { background: transparent; box-shadow: none; outline: none; }
+.symbaroum-hud-ability-special-open:hover h4,
+.symbaroum-hud-ability-special-open:focus-visible h4 { color: #8a2f24; text-decoration: underline; text-underline-offset: 2px; }
 .symbaroum-hud-ability-special-card small { display: block; overflow: hidden; color: #756451; font-size: 0.5rem; text-overflow: ellipsis; white-space: nowrap; }
 .symbaroum-hud-ability-special-ranks { display: grid; padding: 0 4px 4px; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 3px; }
 .symbaroum-hud-ability-special-ranks button {
@@ -1313,9 +1329,6 @@ button.symbaroum-hud-ability-index-entry[data-selected="true"] { box-shadow: ins
 .symbaroum-hud-ability-special-card details > div,
 .symbaroum-hud-ability-special-card details > section { margin: 0 6px 6px; line-height: 1.3; }
 .symbaroum-hud-ability-special-card details p { margin: 0 0 4px; }
-.symbaroum-hud-ability-special-level { padding-top: 4px; border-top: 1px solid rgb(103 74 39 / 24%); }
-.symbaroum-hud-ability-special-level h5 { margin: 0; color: #6f291f; font-family: "Symbaroum HUD Primitive", "Philosopher", serif; font-size: 0.62rem; }
-.symbaroum-hud-ability-special-level > strong { display: block; color: #755d26; font-size: 0.49rem; text-transform: uppercase; }
 .symbaroum-hud-ritual-choice-card > button {
   display: grid;
   width: 100%;

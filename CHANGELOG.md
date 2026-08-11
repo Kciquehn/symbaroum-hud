@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.53
+
+- Transforma o nome de cada Poder Místico no Criador de Fichas em um atalho para abrir sua ficha nativa de item.
+- Remove as descrições expansíveis de dentro da lista de poderes, deixando os cartões menores e a consulta mais rápida.
+- Mantém os seletores de nível e permite consultar na ficha aberta todas as descrições, ações e bônus do poder.
+
 ## 0.1.52
 
 - Integra **Poder Místico** à etapa de Habilidades do Criador de Fichas, listando todos os poderes do mundo compartilhados com o jogador como **Observer** ou superior.

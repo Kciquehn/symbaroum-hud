@@ -512,6 +512,8 @@ test("Poder Místico and Ritualista list every accessible world choice as Observ
   assert.match(content, /Cascata de Enxofre/);
   assert.match(content, /Interrogatório Telepático/);
   assert.match(content, /data-choice-type="mysticalPower"/);
+  assert.match(content, /data-open-creation-item="power-visible"/);
+  assert.doesNotMatch(content, /ReadMysticalPower/);
   assert.match(content, /data-select-ritual="ritual-visible"/);
   assert.doesNotMatch(content, /Poder Oculto/);
   assert.doesNotMatch(content, /Ritual Oculto/);

@@ -993,17 +993,15 @@ async function mysticalPowerChoiceContent(ability, mysticalPowers, costs) {
     return `<p class="symbaroum-hud-ability-special-empty">${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.NoMysticalPowers")}</p>`;
   }
   const cards = await Promise.all(mysticalPowers.map(async (power) => {
-    const description = await enrichCreatorDescription(power.system?.description, power);
-    const levels = await Promise.all(["novice", "adept", "master"].map(async (rank) => ({
-      rank,
-      action: power.system?.[rank]?.action ?? "",
-      description: await enrichCreatorDescription(power.system?.[rank]?.description, power)
-    })));
     return `
       <article class="symbaroum-hud-ability-special-card" data-mystical-power-choice="${escapeHtml(power.id)}">
         <header>
           <img src="${escapeHtml(power.img || "icons/svg/daze.svg")}" alt="">
-          <div><h4>${escapeHtml(power.name)}</h4>
+          <div><button type="button" class="symbaroum-hud-ability-special-open"
+            data-open-creation-item="${escapeHtml(power.id)}"
+            title="${formatEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.OpenMysticalPower", { name: power.name })}">
+            <h4>${escapeHtml(power.name)}</h4>
+          </button>
           ${power.system?.reference ? `<small>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.Reference")}: ${escapeHtml(power.system.reference)}</small>` : ""}</div>
         </header>
         <div class="symbaroum-hud-ability-special-ranks">
@@ -1015,15 +1013,6 @@ async function mysticalPowerChoiceContent(ability, mysticalPowers, costs) {
               <small>${abilityRankCost(rank, costs)} XP</small>
             </button>`).join("")}
         </div>
-        <details><summary>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.ReadMysticalPower")}</summary>
-          <div class="symbaroum-hud-ability-special-description">${description}</div>
-          ${levels.map(({ rank, action, description: levelDescription }) => `
-            <section class="symbaroum-hud-ability-special-level">
-              <h5>${localizeEscaped(`SYMBAROUMHUD.CharacterCreator.Abilities.${rank[0].toUpperCase()}${rank.slice(1)}`)}</h5>
-              ${action ? `<strong>${escapeHtml(action)}</strong>` : ""}
-              <div>${levelDescription}</div>
-            </section>`).join("")}
-        </details>
       </article>`;
   }));
   return `
@@ -1157,6 +1146,15 @@ function bindAbilitiesBook(element, racialCost) {
     );
   };
   for (const entry of entries) entry.addEventListener("click", () => openPage(entry.dataset.creationAbilityId));
+  for (const button of element.querySelectorAll("[data-open-creation-item]")) button.addEventListener("click", () => {
+    const item = availableWorldItem(button.dataset.openCreationItem);
+    const observerLevel = globalThis.CONST?.DOCUMENT_OWNERSHIP_LEVELS?.OBSERVER ?? "OBSERVER";
+    if (!item || (item.testUserPermission && !item.testUserPermission(game.user, observerLevel))) {
+      ui.notifications?.warn(game.i18n.localize("SYMBAROUMHUD.CharacterCreator.Abilities.Unavailable"));
+      return;
+    }
+    item.sheet?.render(true);
+  });
   for (const tab of element.querySelectorAll("[data-ability-mode]")) tab.addEventListener("click", () => {
     modeInput.value = tab.dataset.abilityMode;
     selections.clear();
@@ -1233,6 +1231,11 @@ function bindAbilitiesBook(element, racialCost) {
   });
   experienceInput?.addEventListener("input", refresh);
   refresh();
+}
+
+function availableWorldItem(id) {
+  return game.items?.get?.(id)
+    ?? Array.from(game.items?.values?.() ?? game.items ?? []).find((item) => item.id === id);
 }
 
 function parseAbilitySelections(value) {
@@ -1636,6 +1639,14 @@ function handleCreatorError(error) {
 
 function localizeEscaped(key) {
   return escapeHtml(game.i18n.localize(key));
+}
+
+function formatEscaped(key, data) {
+  const fallback = Object.entries(data ?? {}).reduce(
+    (value, [placeholder, replacement]) => value.replaceAll(`{${placeholder}}`, String(replacement)),
+    game.i18n.localize(key)
+  );
+  return escapeHtml(game.i18n.format?.(key, data) ?? fallback);
 }
 
 function escapeHtml(value) {

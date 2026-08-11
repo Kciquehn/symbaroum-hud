@@ -150,7 +150,7 @@
         "NotEnoughExperience": "Não há XP suficiente para comprar esta Habilidade neste nível.",
         "ChooseMysticalPower": "Escolha o Poder Místico",
         "MysticalPowerChoiceIntro": "Cada poder conta como uma Habilidade. Escolha o poder e o nível que deseja aprender; você pode comprar mais de um poder.",
-        "ReadMysticalPower": "Ler descrição do poder",
+        "OpenMysticalPower": "Abrir ficha de {name}",
         "NoMysticalPowers": "Nenhum Poder Místico acessível está disponível no mundo.",
         "ChooseRituals": "Escolha os Rituais",
         "RitualChoiceIntro": "Ritualista concede 1 ritual como Novato, 3 como Adepto e 6 como Mestre. Os rituais escolhidos serão adicionados à ficha.",
