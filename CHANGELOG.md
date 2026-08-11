@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.56
+
+- Substitui a ilustração da página de Bárbaro pela nova arte fornecida.
+- Ajusta o enquadramento para preservar o rosto, a armadura e os elementos do escudo na página compacta.
+
 ## 0.1.55
 
 - Substitui a ilustração compartilhada da página de Goblin pela arte individual fornecida para a raça.

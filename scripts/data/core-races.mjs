@@ -62,7 +62,7 @@ export const CORE_RACES = Object.freeze([
     loreSection("ambrian", "names", 1, ["male", "female"]),
     loreSection("ambrian", "surnames", 1)
   ]),
-  race("barbarian", "fa-tree", "assets/races/barbarian.webp", "50% 34%", [], ["contacts", "bushcraft"], [], [
+  race("barbarian", "fa-tree", "assets/races/barbarian.webp", "50% 16%", [], ["contacts", "bushcraft"], [], [
     loreSection("barbarian", "history", 5),
     loreSection("barbarian", "names", 1, ["male", "female"])
   ]),
