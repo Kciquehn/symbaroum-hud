@@ -27,7 +27,7 @@ assert.ok(fs.existsSync(path.join(root, "CHANGELOG.md")), "Missing CHANGELOG.md 
 assert.ok(fs.existsSync(path.join(root, "FOUNDRY-PACKAGE-DESCRIPTION.html")), "Missing Foundry package description HTML");
 assert.ok(fs.existsSync(path.join(root, "assets", "overlays", "low-health-blood.png")), "Missing low-health blood overlay");
 assert.ok(fs.existsSync(path.join(root, "assets", "overlays", "button-cracks.png")), "Missing per-button cracks overlay");
-for (const raceArt of ["ambrian.webp", "barbarian.webp", "changeling.webp", "goblin-ogre.webp"]) {
+for (const raceArt of ["ambrian.webp", "barbarian.webp", "changeling.webp", "goblin.webp", "goblin-ogre.webp"]) {
   assert.ok(fs.existsSync(path.join(root, "assets", "races", raceArt)), `Missing race artwork: ${raceArt}`);
 }
 assert.ok(fs.existsSync(path.join(root, ".github", "workflows", "release.yml")), "Missing GitHub release workflow");

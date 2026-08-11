@@ -70,7 +70,7 @@ export const CORE_RACES = Object.freeze([
     loreSection("changeling", "history", 3),
     loreSection("changeling", "names", 1, ["male", "female"])
   ]),
-  race("goblin", "fa-face-grin-wide", "assets/races/goblin-ogre.webp", "70% 45%", ["shortLived", "pariah"], [], ["survivalInstinct"], [
+  race("goblin", "fa-face-grin-wide", "assets/races/goblin.webp", "50% 24%", ["shortLived", "pariah"], [], ["survivalInstinct"], [
     loreSection("goblin", "history", 4),
     loreSection("goblin", "names", 1, ["male", "female"])
   ]),

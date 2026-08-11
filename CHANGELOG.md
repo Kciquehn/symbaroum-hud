@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.55
+
+- Substitui a ilustração compartilhada da página de Goblin pela arte individual fornecida para a raça.
+- Ajusta o enquadramento vertical para destacar o rosto e a silhueta do goblin sem alterar a arte usada pelo Ogro.
+
 ## 0.1.54
 
 - Reconstrói as páginas de Raças do Criador de Fichas com composição inspirada diretamente no Livro Básico: arte oficial, texto em colunas e tratamento editorial temático.
