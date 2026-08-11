@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.58
+
+- Substitui a reprodução visual do painel de Habilidades pela renderização direta do template da ficha nativa fornecido pelo sistema Symbaroum.
+- Usa os dados preparados pela própria classe de ficha do Item, preservando descrições enriquecidas, ações, abas e bônus definidos pelo sistema.
+- Remove apenas o formulário externo da janela, bloqueia a edição e aplica um encaixe compacto para exibir a ficha real dentro do Criador.
+- Mantém os controles de compra de XP separados da ficha nativa, evitando alterações no documento do mundo antes da confirmação da etapa.
+
 ## 0.1.57
 
 - Substitui o painel próprio de leitura das Habilidades por uma adaptação compacta da ficha nativa do Item.

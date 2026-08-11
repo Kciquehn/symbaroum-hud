@@ -916,19 +916,9 @@ async function abilitiesBookContent(actor, abilities, racialCost, mysticalPowers
       <strong data-ability-entry-rank></strong>
     </button>`).join("");
   const pages = (await Promise.all(abilities.map(async (ability) => {
-    const system = ability.system ?? {};
     const mysticalPowerAbility = isMysticalPowerAbility(ability);
     const ritualistAbility = isRitualistAbility(ability);
-    const general = await enrichCreatorDescription(system.description, ability);
-    const levels = await Promise.all(["novice", "adept", "master"].map(async (rank) => ({
-      rank,
-      action: system[rank]?.action ?? "",
-      description: await enrichCreatorDescription(system[rank]?.description, ability)
-    })));
-    const bonusFields = Array.from(game.symbaroum?.config?.BONUS_FIELDS ?? []).map((bonus) => ({
-      label: game.i18n.localize(bonus.label),
-      value: creatorItemProperty(ability, bonus.name)
-    }));
+    const nativeSheet = await renderCreationAbilitySheet(ability);
     const mysticalPowerChoices = mysticalPowerAbility
       ? await mysticalPowerChoiceContent(ability, mysticalPowers, costs)
       : "";
@@ -938,42 +928,15 @@ async function abilitiesBookContent(actor, abilities, racialCost, mysticalPowers
     return `
       <article class="symbaroum-hud-ability-page" data-creation-ability-page="${escapeHtml(ability.id)}"
         ${ability.id === firstId ? "" : "hidden"}>
-        <header class="symbaroum-hud-ability-heading">
-          <img src="${escapeHtml(ability.img || "icons/svg/book.svg")}" alt="">
-          <div><button type="button" class="symbaroum-hud-ability-sheet-name" data-open-creation-item="${escapeHtml(ability.id)}"
-            title="${formatEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.OpenAbility", { name: ability.name })}"><h2>${escapeHtml(ability.name)}</h2></button>
-          ${system.reference ? `<small>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.Reference")}: ${escapeHtml(system.reference)}</small>` : ""}</div>
-          <img class="symbaroum-hud-ability-sheet-mark" src="icons/vtt-512.png" alt="" aria-hidden="true">
-        </header>
-        <nav class="symbaroum-hud-ability-sheet-tabs" aria-label="${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.ItemSheetSections")}">
-          ${["description", "novice", "adept", "master", "bonus"].map((tab) => `<button type="button"
-            data-ability-sheet-tab="${tab}" data-active="${tab === "description"}" aria-pressed="${tab === "description"}">
-            ${localizeEscaped(`SYMBAROUMHUD.CharacterCreator.Abilities.${tab[0].toUpperCase()}${tab.slice(1)}Tab`)}</button>`).join("")}
-        </nav>
-        <div class="symbaroum-hud-ability-sheet-body">
-          <section data-ability-sheet-panel="description">
-            <h3>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.GeneralDescription")}</h3>
-            <div class="symbaroum-hud-ability-sheet-description">${general}</div>
-          </section>
-          ${levels.map(({ rank, action, description }) => `
-            <section data-ability-sheet-panel="${rank}" hidden>
-              <header><div><h3>${localizeEscaped(`SYMBAROUMHUD.CharacterCreator.Abilities.${rank[0].toUpperCase()}${rank.slice(1)}`)}</h3>
-                ${action ? `<span><b>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.Action")}</b> ${escapeHtml(action)}</span>` : ""}</div>
-                ${mysticalPowerAbility ? "" : `<button type="button" data-select-ability="${escapeHtml(ability.id)}" data-rank="${rank}"
-                  ${ritualistAbility ? 'data-choice-type="ritualist"' : ""}>
-                  <i class="fa-regular fa-circle" aria-hidden="true"></i>
-                  <span>${localizeEscaped(`SYMBAROUMHUD.CharacterCreator.Abilities.Select${rank[0].toUpperCase()}${rank.slice(1)}`)}</span>
-                  <small>${abilityRankCost(rank, costs)} XP</small>
-                </button>`}
-              </header>
-              <div class="symbaroum-hud-ability-sheet-description">${description}</div>
-            </section>`).join("")}
-          <section data-ability-sheet-panel="bonus" hidden>
-            <h3>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.BonusTab")}</h3>
-            ${bonusFields.length ? `<dl class="symbaroum-hud-ability-sheet-bonuses">${bonusFields.map((bonus) => `
-              <div><dt>${escapeHtml(bonus.label)}</dt><dd>${escapeHtml(String(bonus.value ?? 0))}</dd></div>`).join("")}</dl>`
-              : `<p class="symbaroum-hud-ability-no-bonuses">${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.NoBonuses")}</p>`}
-          </section>
+        <div class="symbaroum sheet item symbaroum-hud-native-ability-sheet">${nativeSheet}</div>
+        <div class="symbaroum-hud-native-ability-purchase" ${mysticalPowerAbility ? "hidden" : ""}>
+          ${["novice", "adept", "master"].map((rank) => `<button type="button"
+            data-select-ability="${escapeHtml(ability.id)}" data-rank="${rank}"
+            ${ritualistAbility ? 'data-choice-type="ritualist"' : ""}>
+            <i class="fa-regular fa-circle" aria-hidden="true"></i>
+            <span>${localizeEscaped(`SYMBAROUMHUD.CharacterCreator.Abilities.Select${rank[0].toUpperCase()}${rank.slice(1)}`)}</span>
+            <small>${abilityRankCost(rank, costs)} XP</small>
+          </button>`).join("")}
         </div>
         ${mysticalPowerAbility ? mysticalPowerChoices : ""}
         ${ritualChoices}
@@ -1017,9 +980,21 @@ async function abilitiesBookContent(actor, abilities, racialCost, mysticalPowers
     </div>`;
 }
 
-function creatorItemProperty(item, path) {
-  if (foundry?.utils?.getProperty) return foundry.utils.getProperty(item, path);
-  return String(path ?? "").split(".").reduce((value, key) => value?.[key], item);
+async function renderCreationAbilitySheet(ability) {
+  const sheet = ability?.sheet;
+  const renderTemplate = foundry?.applications?.handlebars?.renderTemplate;
+  if (!sheet?.getData || !renderTemplate) return "";
+  const data = await sheet.getData();
+  data.owner = false;
+  data.editable = false;
+  data.isOwned = false;
+  data.cssClass = "locked";
+  const template = sheet.options?.template ?? "systems/symbaroum/template/sheet/ability.hbs";
+  const rendered = await renderTemplate(template, data);
+  return String(rendered)
+    .replace(/^\s*<form\b[^>]*>/i, "")
+    .replace(/<\/form>\s*$/i, "")
+    .replace(/<(input|select|textarea)\b/gi, "<$1 disabled");
 }
 
 async function mysticalPowerChoiceContent(ability, mysticalPowers, costs) {
@@ -1181,16 +1156,29 @@ function bindAbilitiesBook(element, racialCost) {
   };
   for (const entry of entries) entry.addEventListener("click", () => openPage(entry.dataset.creationAbilityId));
   for (const page of pages) {
-    const tabs = [...page.querySelectorAll("[data-ability-sheet-tab]")];
-    const panels = [...page.querySelectorAll("[data-ability-sheet-panel]")];
-    for (const tab of tabs) tab.addEventListener("click", () => {
+    const tabs = [...page.querySelectorAll(".symbaroum-hud-native-ability-sheet .sheet-tabs [data-tab]")];
+    const panels = [...page.querySelectorAll(".symbaroum-hud-native-ability-sheet .sheet-body > .tab[data-tab]")];
+    const activateTab = (tab) => {
       for (const candidate of tabs) {
         const active = candidate === tab;
-        candidate.dataset.active = String(active);
+        candidate.classList.toggle("active", active);
         candidate.setAttribute("aria-pressed", String(active));
       }
-      for (const panel of panels) panel.hidden = panel.dataset.abilitySheetPanel !== tab.dataset.abilitySheetTab;
-    });
+      for (const panel of panels) {
+        const active = panel.dataset.tab === tab.dataset.tab;
+        panel.classList.toggle("active", active);
+        panel.hidden = !active;
+      }
+    };
+    for (const tab of tabs) {
+      tab.setAttribute("role", "button");
+      tab.setAttribute("tabindex", "0");
+      tab.addEventListener("click", () => activateTab(tab));
+      tab.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" || event.key === " ") activateTab(tab);
+      });
+    }
+    if (tabs[0]) activateTab(tabs[0]);
   }
   for (const button of element.querySelectorAll("[data-open-creation-item]")) button.addEventListener("click", () => {
     const item = availableWorldItem(button.dataset.openCreationItem);

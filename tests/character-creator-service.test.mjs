@@ -25,6 +25,13 @@ globalThis.Hooks = {
 };
 globalThis.foundry = {
   applications: {
+    handlebars: {
+      renderTemplate: async (_template, data) => `<form class="${data.cssClass}"><div class="ability">
+        <div class="sheet-header"><img src="${data.item.img}"><input name="name" value="${data.item.name}"></div>
+        <div class="sheet-tabs">${["description", "novice", "adept", "master", "bonus"].map((tab) => `<b class="item" data-tab="${tab}">${tab}</b>`).join("")}</div>
+        <div class="sheet-body">${["description", "novice", "adept", "master", "bonus"].map((tab) => `<div class="tab" data-tab="${tab}">${tab === "bonus" ? "Defense 2" : data.system[tab]?.description ?? data.system.description}</div>`).join("")}</div>
+      </div></form>`
+    },
     api: {
       DialogV2: {
         wait: async (config) => {
@@ -97,11 +104,16 @@ function worldAbility(id, name = `Ability ${id}`, permission = () => true) {
       master: { isActive: false, action: "Active", description: `Master ${id}` }
     }
   };
-  return {
+  const document = {
     ...data,
     testUserPermission: permission,
     toObject: () => structuredClone(data)
   };
+  document.sheet = {
+    options: { template: "systems/symbaroum/template/sheet/ability.hbs" },
+    getData: async () => ({ item: document, system: structuredClone(data.system), cssClass: "editable", owner: true, editable: true, isOwned: false })
+  };
+  return document;
 }
 
 function worldMysticalPower(id, name = `Power ${id}`, permission = () => true) {
@@ -458,11 +470,11 @@ test("the fourth creator step provides search, full Ability reading and both dis
   assert.match(content, /data-ability-search/);
   assert.equal((content.match(/data-creation-ability-id=/g) ?? []).length, 2);
   assert.equal((content.match(/data-creation-ability-page=/g) ?? []).length, 2);
-  assert.equal((content.match(/data-ability-sheet-tab=/g) ?? []).length, 10);
-  assert.equal((content.match(/data-ability-sheet-panel=/g) ?? []).length, 10);
-  assert.match(content, /data-ability-sheet-tab="bonus"/);
-  assert.match(content, /<dt>Defense<\/dt><dd>2<\/dd>/);
-  assert.match(content, /data-open-creation-item="a"/);
+  assert.equal((content.match(/class="symbaroum sheet item symbaroum-hud-native-ability-sheet"/g) ?? []).length, 2);
+  assert.equal((content.match(/class="sheet-tabs"/g) ?? []).length, 2);
+  assert.equal((content.match(/data-tab="bonus"/g) ?? []).length, 4);
+  assert.match(content, /<input disabled name="name" value="Acrobatics">/);
+  assert.match(content, /Defense 2/);
   assert.match(content, /Novice a/);
   assert.match(content, /Adept a/);
   assert.match(content, /Master a/);
