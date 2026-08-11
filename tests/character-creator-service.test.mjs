@@ -8,7 +8,10 @@ const dialogConfigs = [];
 globalThis.game = {
   user: { id: "user" },
   items: [],
-  symbaroum: { config: { expCosts: { power: { novice: 10, adept: 20, nocost: [] } } } },
+  symbaroum: { config: {
+    expCosts: { power: { novice: 10, adept: 20, nocost: [] } },
+    BONUS_FIELDS: [{ name: "system.bonus.defense", label: "Defense" }]
+  } },
   i18n: {
     localize: (key) => key,
     format: (key, data) => `${key}:${data.traits}`
@@ -88,6 +91,7 @@ function worldAbility(id, name = `Ability ${id}`, permission = () => true) {
     system: {
       reference: id,
       description: `General ${id}`,
+      bonus: { defense: 2 },
       novice: { isActive: false, action: "Active", description: `Novice ${id}` },
       adept: { isActive: false, action: "Active", description: `Adept ${id}` },
       master: { isActive: false, action: "Active", description: `Master ${id}` }
@@ -454,6 +458,11 @@ test("the fourth creator step provides search, full Ability reading and both dis
   assert.match(content, /data-ability-search/);
   assert.equal((content.match(/data-creation-ability-id=/g) ?? []).length, 2);
   assert.equal((content.match(/data-creation-ability-page=/g) ?? []).length, 2);
+  assert.equal((content.match(/data-ability-sheet-tab=/g) ?? []).length, 10);
+  assert.equal((content.match(/data-ability-sheet-panel=/g) ?? []).length, 10);
+  assert.match(content, /data-ability-sheet-tab="bonus"/);
+  assert.match(content, /<dt>Defense<\/dt><dd>2<\/dd>/);
+  assert.match(content, /data-open-creation-item="a"/);
   assert.match(content, /Novice a/);
   assert.match(content, /Adept a/);
   assert.match(content, /Master a/);

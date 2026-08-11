@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.57
+
+- Substitui o painel próprio de leitura das Habilidades por uma adaptação compacta da ficha nativa do Item.
+- Adiciona as abas **Descrição**, **Novato**, **Adepto**, **Mestre** e **Bônus**, alimentadas diretamente pelos campos do documento existente no mundo.
+- Integra os controles de compra de XP às abas de nível e permite abrir a ficha original ao clicar no nome da Habilidade.
+- Exibe ações e todos os modificadores configurados pelo sistema sem copiar ou manter descrições paralelas no módulo.
+
 ## 0.1.56
 
 - Substitui a ilustração da página de Bárbaro pela nova arte fornecida.

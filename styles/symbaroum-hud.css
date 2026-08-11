@@ -1331,11 +1331,47 @@ button.symbaroum-hud-ability-index-entry[data-selected="true"] { box-shadow: ins
   box-shadow: inset 14px 0 18px rgb(79 52 28 / 18%);
 }
 .symbaroum-hud-ability-page[hidden] { display: none; }
-.symbaroum-hud-ability-page { display: grid; gap: 9px; }
-.symbaroum-hud-ability-heading { display: grid; grid-template-columns: 58px minmax(0, 1fr); align-items: center; gap: 11px; border-bottom: 2px solid #7b3126; padding-bottom: 7px; }
+.symbaroum-hud-ability-page {
+  display: grid;
+  gap: 7px;
+  padding: 8px;
+  border: 7px solid transparent;
+  border-image: var(--title-image) 20 / 7px;
+  background: rgb(47 60 37 / 84%);
+}
+.symbaroum-hud-ability-heading { display: grid; min-height: 74px; padding: 7px; grid-template-columns: 58px minmax(0, 1fr) 58px; align-items: center; gap: 10px; border: 1px solid #10110d; background: url("/systems/symbaroum/asset/image/foreground.webp") repeat; box-shadow: inset 0 0 6px rgb(0 0 0 / 72%); }
 .symbaroum-hud-ability-heading img { width: 58px; height: 58px; border: 2px solid #8a6b27; background: #080807; object-fit: cover; }
-.symbaroum-hud-ability-heading h2 { margin: 0; color: #351a15; font-family: "Symbaroum HUD Primitive", "Philosopher", serif; font-size: 1.55rem; }
+.symbaroum-hud-ability-heading h2 { margin: 0; color: #351a15; font-family: "Symbaroum HUD Primitive", "Philosopher", serif; font-size: 1.35rem; }
 .symbaroum-hud-ability-heading small { color: #71604c; font-size: 0.59rem; }
+.symbaroum-hud-ability-heading img.symbaroum-hud-ability-sheet-mark { padding: 7px; border-color: #17120d; background: #050504; object-fit: contain; }
+.symbaroum-hud-ability-sheet-name { display: block; width: 100%; min-height: 0; margin: 0; padding: 5px 8px; border: 1px solid #8e8069; border-radius: 0; background: rgb(242 237 219 / 74%); box-shadow: inset 0 0 6px rgb(0 0 0 / 38%); text-align: center; }
+.symbaroum-hud-ability-sheet-name:hover,
+.symbaroum-hud-ability-sheet-name:focus-visible { background: rgb(252 247 225 / 92%); box-shadow: inset 0 0 6px rgb(0 0 0 / 38%); outline: 1px solid #8a6b27; }
+.symbaroum-hud-ability-sheet-tabs { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 2px; padding: 5px; background: #10100e url("/systems/symbaroum/asset/image/background/title.webp") center / cover; }
+.symbaroum-hud-ability-sheet-tabs button { min-height: 28px; margin: 0; padding: 3px 5px; border: 0; border-radius: 0; color: #eee8dc; background: rgb(0 0 0 / 46%); box-shadow: none; font-family: "Symbaroum HUD Primitive", "Philosopher", serif; font-size: 0.68rem; }
+.symbaroum-hud-ability-sheet-tabs button:hover,
+.symbaroum-hud-ability-sheet-tabs button:focus-visible,
+.symbaroum-hud-ability-sheet-tabs button[data-active="true"] { color: #e7cc4e; background: rgb(0 0 0 / 70%); text-shadow: 0 0 8px rgb(231 204 78 / 45%); outline: none; }
+.symbaroum-hud-ability-sheet-body { min-height: 224px; padding: 5px; background: url("/systems/symbaroum/asset/image/foreground.webp") repeat; }
+.symbaroum-hud-ability-sheet-body > section { min-height: 214px; border: 1px solid #8b806e; background: rgb(249 246 233 / 72%); box-shadow: inset 0 0 6px rgb(0 0 0 / 35%); }
+.symbaroum-hud-ability-sheet-body > section[hidden] { display: none; }
+.symbaroum-hud-ability-sheet-body > section > h3,
+.symbaroum-hud-ability-sheet-body > section > header { margin: 0; padding: 6px 9px; color: #eee8dc; background: #11110f url("/systems/symbaroum/asset/image/background/title.webp") center / cover; }
+.symbaroum-hud-ability-sheet-body > section > h3 { font-family: var(--font-serif, serif); font-size: 0.83rem; text-align: center; text-transform: uppercase; }
+.symbaroum-hud-ability-sheet-body > section > header { display: flex; min-height: 41px; align-items: center; justify-content: space-between; gap: 9px; }
+.symbaroum-hud-ability-sheet-body > section > header h3 { margin: 0; color: #eee8dc; font-family: var(--font-serif, serif); font-size: 0.83rem; text-transform: uppercase; }
+.symbaroum-hud-ability-sheet-body > section > header span { color: #cfbf9d; font-size: 0.57rem; }
+.symbaroum-hud-ability-sheet-body > section > header button { width: auto; min-height: 25px; margin: 0; padding: 3px 8px; border: 1px solid #8d7538; border-radius: 0; color: #4e241d; background: #eee2bd; box-shadow: none; font-size: 0.57rem; }
+.symbaroum-hud-ability-sheet-body > section > header button small { margin-left: 4px; color: inherit; font-size: 0.48rem; opacity: 0.75; }
+.symbaroum-hud-ability-sheet-body > section > header button:hover,
+.symbaroum-hud-ability-sheet-body > section > header button[data-selected="true"] { color: #fff9d9; background: #52663f; }
+.symbaroum-hud-ability-sheet-description { min-height: 162px; margin: 7px; padding: 8px; color: #332d27; background: rgb(255 253 244 / 62%); box-shadow: inset 0 0 6px rgb(0 0 0 / 28%); font-family: var(--font-serif, serif); font-size: 0.68rem; line-height: 1.4; }
+.symbaroum-hud-ability-sheet-description p { margin: 0 0 5px; }
+.symbaroum-hud-ability-sheet-bonuses { display: grid; max-height: 169px; margin: 7px; overflow-y: auto; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 7px; }
+.symbaroum-hud-ability-sheet-bonuses > div { display: grid; grid-template-columns: minmax(0, 1fr) 42px; align-items: center; border: 1px solid #9a8a70; background: rgb(255 253 244 / 62%); }
+.symbaroum-hud-ability-sheet-bonuses dt { padding: 4px 6px; color: #40362c; font-size: 0.58rem; }
+.symbaroum-hud-ability-sheet-bonuses dd { margin: 0; padding: 4px; border-left: 1px solid #9a8a70; color: #2d261f; background: rgb(241 235 214 / 80%); text-align: center; font-size: 0.62rem; font-weight: 700; }
+.symbaroum-hud-ability-no-bonuses { margin: 35px 10px; color: #6d6254; font-style: italic; text-align: center; }
 .symbaroum-hud-ability-general h3,
 .symbaroum-hud-ability-level h3 { margin: 0; color: #6f291f; font-family: "Symbaroum HUD Primitive", "Philosopher", serif; font-size: 0.9rem; }
 .symbaroum-hud-ability-general > div { margin-top: 3px; color: #493d31; font-family: var(--font-serif, serif); font-size: 0.7rem; line-height: 1.38; }
