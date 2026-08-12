@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.61
+
+- Remove a moldura verde externa ao redor da ficha nativa de Habilidade no Criador.
+- Reduz as margens do painel direito para a ficha ocupar toda a largura e altura disponíveis.
+- Preserva somente as próprias molduras pretas oficiais da ficha de Item do sistema.
+
 ## 0.1.60
 
 - Reorganiza o quadro de Experiência da etapa de Habilidades para destacar o XP restante no número principal.

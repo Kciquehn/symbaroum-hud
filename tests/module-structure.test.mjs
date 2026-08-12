@@ -101,6 +101,7 @@ assert.match(characterCreatorTheme, /green_flower_dark\.webp/);
 assert.match(characterCreatorTheme, /foreground\.webp/);
 assert.match(characterCreatorTheme, /title\.webp/);
 assert.match(characterCreatorTheme, /font-family: "Primitive"/);
+assert.match(characterCreatorTheme, /\.symbaroum-hud-abilities-book \.symbaroum-hud-ability-page \{[\s\S]*?border: 0;[\s\S]*?background: transparent;/);
 for (const file of scriptFiles(path.join(root, "scripts"))) {
   const source = fs.readFileSync(file, "utf8");
   assert.doesNotMatch(source, /\beval\s*\(/, `${file} must not use eval()`);
