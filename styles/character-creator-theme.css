@@ -1,0 +1,372 @@
+/* Character Creator theme built from the native Symbaroum visual language. */
+.symbaroum-hud-character-creator-dialog {
+  --symba-creator-gold: #a48b02;
+  --symba-creator-gold-soft: #c5ae45;
+  --symba-creator-ink: #171411;
+  --symba-creator-red: #67261d;
+  --symba-creator-green: #344431;
+  --symba-creator-title: url("/systems/symbaroum/asset/image/background/title.webp");
+  --symba-creator-page: url("/systems/symbaroum/asset/image/foreground.webp");
+  --symba-creator-field: url("/systems/symbaroum/asset/image/background/editable.webp");
+  --symba-creator-green-light: url("/systems/symbaroum/asset/image/background/green_flower_light.webp");
+  --symba-creator-green-dark: url("/systems/symbaroum/asset/image/background/green_flower_dark.webp");
+  --symba-creator-brown: url("/systems/symbaroum/asset/image/background/brown_dark.webp");
+  color: var(--color-text, #111);
+  font-family: var(--font-text, "Philosopher"), serif;
+  z-index: 1000 !important;
+}
+
+.symbaroum-hud-character-creator-dialog .window-header {
+  min-height: 34px;
+  border-bottom: 2px solid #090807;
+  color: var(--color-title, #fff);
+  background: #080807 var(--symba-creator-title) repeat;
+  box-shadow: inset 0 -1px var(--symba-creator-gold), 0 3px 8px rgb(0 0 0 / 65%);
+  font-family: "Primitive", "Symbaroum HUD Primitive", serif;
+  text-shadow: 0 1px 2px #000;
+}
+
+.symbaroum-hud-character-creator-dialog .window-title { letter-spacing: 0.025em; }
+.symbaroum-hud-character-creator-dialog .window-header button:hover {
+  color: var(--color-active, var(--symba-creator-gold));
+  text-shadow: 0 0 9px var(--color-active, var(--symba-creator-gold));
+}
+
+.symbaroum-hud-character-creator-dialog .window-content,
+.symbaroum-hud-character-creator-dialog .dialog-content,
+.symbaroum-hud-character-creator-dialog .dialog-form {
+  color: #171411;
+  background: #566a4e var(--symba-creator-green-light) repeat;
+}
+
+.symbaroum-hud-character-creator-dialog .window-content { padding: 0; }
+.symbaroum-hud-character-creator-dialog .dialog-content { overflow: hidden; }
+.symbaroum-hud-character-creator-dialog .dialog-form { gap: 0; }
+
+.symbaroum-hud-character-creator-dialog .form-footer {
+  min-height: 48px;
+  padding: 7px 10px;
+  gap: 8px;
+  border-top: 2px solid #050504;
+  background: #090807 var(--symba-creator-title) repeat;
+  box-shadow: inset 0 1px var(--symba-creator-gold), 0 -3px 10px rgb(0 0 0 / 48%);
+}
+
+.symbaroum-hud-character-creator-dialog .form-footer button {
+  min-height: 32px;
+  margin: 0;
+  border: 7px solid transparent;
+  border-radius: 0;
+  border-image: var(--symba-creator-title) 20 / 7px;
+  color: var(--color-label, #fff);
+  background: #090807 var(--symba-creator-title) repeat;
+  box-shadow: inset 0 0 5px #000;
+  font-family: "Primitive", "Symbaroum HUD Primitive", serif;
+  font-size: 0.8rem;
+  text-shadow: 0 1px 2px #000;
+}
+
+.symbaroum-hud-character-creator-dialog .form-footer button:hover,
+.symbaroum-hud-character-creator-dialog .form-footer button:focus-visible {
+  color: var(--color-active, var(--symba-creator-gold));
+  border-image: var(--symba-creator-title) 20 / 7px;
+  box-shadow: inset 0 0 8px #000;
+  text-shadow: 0 0 9px var(--color-active, var(--symba-creator-gold));
+  outline: none;
+}
+
+/* Opening decision */
+.symbaroum-hud-character-creator-choice,
+.symbaroum-hud-character-creator-intro {
+  margin: 12px;
+  padding: 22px 28px 18px;
+  border: 10px solid transparent;
+  border-image: var(--symba-creator-title) 20 / 10px;
+  background: var(--symba-creator-page) repeat;
+  box-shadow: 0 4px 14px rgb(0 0 0 / 45%);
+}
+
+.symbaroum-hud-character-creator-choice h2,
+.symbaroum-hud-character-creator-intro h2 {
+  color: #181512;
+  font-family: "Primitive", "Symbaroum HUD Primitive", serif;
+  font-size: 1.45rem;
+}
+
+.symbaroum-hud-character-creator-emblem,
+.symbaroum-hud-character-creator-intro > i,
+.symbaroum-hud-occupation-page-icon {
+  border: 8px solid transparent;
+  border-image: var(--symba-creator-title) 20 / 8px;
+  color: var(--symba-creator-gold-soft);
+  background: #080807 var(--symba-creator-title) repeat;
+}
+
+/* Shared book structure */
+:is(.symbaroum-hud-occupation-book, .symbaroum-hud-attributes-book, .symbaroum-hud-race-book, .symbaroum-hud-abilities-book) {
+  color: #171411;
+  background: #566a4e var(--symba-creator-green-light) repeat;
+  box-shadow: inset 0 0 24px rgb(0 0 0 / 38%);
+}
+
+.symbaroum-hud-creator-step-guide {
+  min-height: 66px;
+  padding: 7px 14px;
+  border: 10px solid transparent;
+  border-image: var(--symba-creator-title) 20 / 10px;
+  color: var(--color-text, #111);
+  background: var(--symba-creator-page) repeat;
+  box-shadow: 0 3px 8px rgb(0 0 0 / 38%);
+}
+
+.symbaroum-hud-creator-step-number {
+  border-right: 2px solid #080807;
+  box-shadow: 1px 0 var(--symba-creator-gold);
+}
+
+.symbaroum-hud-creator-step-number strong,
+.symbaroum-hud-creator-step-guide h2 {
+  color: #211d18;
+  font-family: "Primitive", "Symbaroum HUD Primitive", serif;
+}
+
+.symbaroum-hud-creator-step-guide h2 { font-size: 1.06rem; }
+.symbaroum-hud-creator-step-guide p {
+  color: #302b25;
+  font-family: var(--font-text, "Philosopher"), serif;
+  font-size: 0.69rem;
+}
+
+:is(.symbaroum-hud-occupation-index, .symbaroum-hud-attribute-rules, .symbaroum-hud-race-index, .symbaroum-hud-ability-index) {
+  border: 9px solid transparent;
+  border-image: var(--symba-creator-title) 20 / 9px;
+  color: #eee9dc;
+  background:
+    linear-gradient(rgb(3 7 4 / 20%), rgb(0 0 0 / 36%)),
+    var(--symba-creator-green-dark) repeat;
+  box-shadow: inset 0 0 16px #000, 3px 0 8px rgb(0 0 0 / 38%);
+}
+
+:is(.symbaroum-hud-occupation-reading-page, .symbaroum-hud-attribute-reading-page, .symbaroum-hud-race-reading-page, .symbaroum-hud-ability-reading-page) {
+  border: 10px solid transparent;
+  border-image: var(--symba-creator-title) 20 / 10px;
+  background: var(--symba-creator-page) repeat;
+  box-shadow: inset 0 0 8px rgb(0 0 0 / 42%);
+}
+
+:is(.symbaroum-hud-occupation-reading-page, .symbaroum-hud-attribute-reading-page)::before,
+:is(.symbaroum-hud-occupation-reading-page, .symbaroum-hud-attribute-reading-page)::after {
+  display: none;
+}
+
+/* Official tab treatment */
+:is(.symbaroum-hud-attribute-mode-tabs, .symbaroum-hud-ability-mode-tabs) {
+  min-height: 40px;
+  padding: 4px 10px;
+  gap: 5px;
+  border: 0;
+  border-bottom: 1px solid var(--symba-creator-gold);
+  background: #090807 var(--symba-creator-title) repeat;
+}
+
+:is(.symbaroum-hud-attribute-mode-tabs, .symbaroum-hud-ability-mode-tabs) button {
+  min-height: 30px;
+  margin: 0;
+  border: 1px solid #050504;
+  border-radius: 0;
+  color: var(--color-label, #fff);
+  background: rgb(0 0 0 / 42%);
+  box-shadow: inset 0 0 4px #000;
+  font-family: "Primitive", "Symbaroum HUD Primitive", serif;
+  font-size: 0.76rem;
+}
+
+:is(.symbaroum-hud-attribute-mode-tabs, .symbaroum-hud-ability-mode-tabs) button:hover,
+:is(.symbaroum-hud-attribute-mode-tabs, .symbaroum-hud-ability-mode-tabs) button:focus-visible,
+:is(.symbaroum-hud-attribute-mode-tabs, .symbaroum-hud-ability-mode-tabs) button[data-active="true"] {
+  border-color: var(--symba-creator-gold);
+  color: var(--color-active, var(--symba-creator-gold));
+  background: #070706 var(--symba-creator-title) repeat;
+  text-shadow: 0 0 8px var(--color-active, var(--symba-creator-gold));
+  outline: none;
+}
+
+/* Dark navigation entries */
+:is(
+  .symbaroum-hud-occupation-index-entry,
+  .symbaroum-hud-race-index-entry,
+  .symbaroum-hud-ability-index-entry
+) {
+  border: 1px solid #090807 !important;
+  color: #eee9dc !important;
+  background: rgb(0 0 0 / 35%) !important;
+  box-shadow: inset 0 0 5px rgb(0 0 0 / 58%) !important;
+  font-family: var(--font-text, "Philosopher"), serif;
+}
+
+:is(
+  .symbaroum-hud-occupation-index-entry,
+  .symbaroum-hud-race-index-entry,
+  .symbaroum-hud-ability-index-entry
+):is(:hover, :focus-visible, [data-active="true"]) {
+  border-color: var(--symba-creator-gold) !important;
+  color: var(--color-active, var(--symba-creator-gold)) !important;
+  background: #080807 var(--symba-creator-title) repeat !important;
+  text-shadow: 0 0 7px rgb(164 139 2 / 65%);
+}
+
+.symbaroum-hud-occupation-index-group h3,
+.symbaroum-hud-occupation-index > header small {
+  color: var(--symba-creator-gold-soft);
+  font-family: "Primitive", "Symbaroum HUD Primitive", serif;
+}
+
+.symbaroum-hud-occupation-index > header h2,
+.symbaroum-hud-race-index h2,
+.symbaroum-hud-attribute-rules h2 {
+  color: var(--color-label, #fff);
+  font-family: "Primitive", "Symbaroum HUD Primitive", serif;
+}
+
+/* Paper typography and native field texture */
+:is(
+  .symbaroum-hud-occupation-page h2,
+  .symbaroum-hud-occupation-page h3,
+  .symbaroum-hud-attribute-introduction h2,
+  .symbaroum-hud-attribute-choice h3,
+  .symbaroum-hud-race-heading h2,
+  .symbaroum-hud-race-trait-section h3,
+  .symbaroum-hud-race-trait-card strong,
+  .symbaroum-hud-ability-special-picker h3,
+  .symbaroum-hud-ability-special-card h4
+) {
+  color: #211d18;
+  font-family: "Primitive", "Symbaroum HUD Primitive", serif;
+}
+
+:is(.symbaroum-hud-occupation-details > div, .symbaroum-hud-attribute-choice, .symbaroum-hud-race-trait-card, .symbaroum-hud-ability-special-picker, .symbaroum-hud-ability-special-card) {
+  border: 1px solid #171411;
+  border-left: 1px solid #171411;
+  background: var(--symba-creator-field) repeat;
+  box-shadow: inset 0 0 6px #000;
+}
+
+.symbaroum-hud-archetype-introduction {
+  border: 7px solid transparent;
+  border-image: var(--symba-creator-title) 20 / 7px;
+  background: var(--symba-creator-page) repeat;
+}
+
+.symbaroum-hud-occupation-archetype,
+.symbaroum-hud-archetype-introduction > div > span,
+.symbaroum-hud-occupation-details dt,
+.symbaroum-hud-race-lore-section h3,
+.symbaroum-hud-race-traits > h3 {
+  color: #511f19;
+}
+
+.symbaroum-hud-occupation-ornament span { background: linear-gradient(90deg, transparent, var(--symba-creator-gold)); }
+.symbaroum-hud-occupation-ornament span:last-child { background: linear-gradient(90deg, var(--symba-creator-gold), transparent); }
+.symbaroum-hud-occupation-ornament i { border-color: var(--symba-creator-gold); }
+
+/* Attributes */
+.symbaroum-hud-attribute-value-sequence strong,
+.symbaroum-hud-attribute-points,
+.symbaroum-hud-ability-experience,
+.symbaroum-hud-ability-slots span {
+  border: 7px solid transparent;
+  border-image: var(--symba-creator-title) 20 / 7px;
+  color: #fff;
+  background: #080807 var(--symba-creator-title) repeat;
+  box-shadow: inset 0 0 5px #000;
+}
+
+.symbaroum-hud-attribute-value-sequence strong[data-used="true"] { color: rgb(255 255 255 / 35%); }
+
+.symbaroum-hud-attribute-typical-control select,
+.symbaroum-hud-attribute-point-control input,
+.symbaroum-hud-ability-experience input,
+.symbaroum-hud-ability-index input[type="search"] {
+  border: 1px solid #171411;
+  border-radius: 0;
+  color: #171411;
+  background: var(--symba-creator-field) repeat;
+  box-shadow: inset 0 0 6px #000;
+  font-family: var(--font-text, "Philosopher"), serif;
+}
+
+.symbaroum-hud-attribute-point-control button {
+  border: 1px solid #050504;
+  color: #fff;
+  background: #080807 var(--symba-creator-title) repeat;
+  font-family: "Primitive", "Symbaroum HUD Primitive", serif;
+}
+
+.symbaroum-hud-attribute-point-control button:hover { color: var(--color-active, var(--symba-creator-gold)); }
+
+/* Races */
+.symbaroum-hud-race-art {
+  border: 9px solid transparent;
+  border-image: var(--symba-creator-title) 20 / 9px;
+  background: #080807 var(--symba-creator-title) repeat;
+  box-shadow: 0 3px 10px rgb(0 0 0 / 55%);
+}
+
+.symbaroum-hud-race-traits { border-top: 8px solid transparent; border-image: var(--symba-creator-title) 20 / 8px 0 0; }
+.symbaroum-hud-race-trait-section > header { border-bottom: 1px solid #171411; }
+.symbaroum-hud-race-trait-section > header span {
+  color: #fff;
+  background: #080807 var(--symba-creator-title) repeat;
+  font-family: "Primitive", "Symbaroum HUD Primitive", serif;
+}
+.symbaroum-hud-race-trait-card:has(input:checked) {
+  border-color: var(--symba-creator-gold);
+  background: var(--symba-creator-field) repeat;
+  box-shadow: inset 0 0 7px #000, 0 0 5px rgb(164 139 2 / 40%);
+}
+
+/* Ability catalogue */
+.symbaroum-hud-ability-index > label {
+  border: 7px solid transparent;
+  border-image: var(--symba-creator-title) 20 / 7px;
+  background: #080807 var(--symba-creator-title) repeat;
+}
+
+.symbaroum-hud-ability-index input[type="search"] { height: 26px; }
+.symbaroum-hud-ability-page {
+  border: 9px solid transparent;
+  border-image: var(--symba-creator-title) 20 / 9px;
+  background: #566a4e var(--symba-creator-green-light) repeat;
+  box-shadow: inset 0 0 10px rgb(0 0 0 / 45%);
+}
+
+.symbaroum-hud-native-ability-purchase button,
+.symbaroum-hud-ability-special-ranks button,
+.symbaroum-hud-ritual-choice-card > button {
+  border: 7px solid transparent;
+  border-image: var(--symba-creator-title) 20 / 7px;
+  border-radius: 0;
+  color: #fff;
+  background: #080807 var(--symba-creator-title) repeat;
+  box-shadow: inset 0 0 5px #000;
+  font-family: var(--font-text, "Philosopher"), serif;
+}
+
+.symbaroum-hud-native-ability-purchase button:is(:hover, [data-selected="true"]),
+.symbaroum-hud-ability-special-ranks button:is(:hover, [data-selected="true"]),
+.symbaroum-hud-ritual-choice-card > button:is(:hover, [data-selected="true"]) {
+  color: var(--color-active, var(--symba-creator-gold));
+  background: #080807 var(--symba-creator-title) repeat;
+  text-shadow: 0 0 7px var(--color-active, var(--symba-creator-gold));
+}
+
+.symbaroum-hud-native-ability-purchase button small { color: inherit; opacity: 0.72; }
+
+/* Compact responsive treatment without changing the official composition. */
+@media (max-width: 800px) {
+  .symbaroum-hud-creator-step-guide { border-width: 8px; border-image-width: 8px; }
+  :is(.symbaroum-hud-occupation-index, .symbaroum-hud-attribute-rules, .symbaroum-hud-race-index, .symbaroum-hud-ability-index) {
+    border-width: 7px;
+    border-image-width: 7px;
+  }
+}

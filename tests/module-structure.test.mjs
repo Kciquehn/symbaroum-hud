@@ -24,6 +24,7 @@ assert.ok(fs.existsSync(path.join(root, "scripts", "data", "core-attributes.mjs"
 assert.ok(fs.existsSync(path.join(root, "scripts", "data", "character-creation-abilities.mjs")), "Missing character creation Abilities data");
 assert.ok(fs.existsSync(path.join(root, "LICENSE")), "Missing LICENSE file");
 assert.ok(fs.existsSync(path.join(root, "CHANGELOG.md")), "Missing CHANGELOG.md file");
+assert.ok(fs.existsSync(path.join(root, "styles", "character-creator-theme.css")), "Missing Character Creator theme");
 assert.ok(fs.existsSync(path.join(root, "FOUNDRY-PACKAGE-DESCRIPTION.html")), "Missing Foundry package description HTML");
 assert.ok(fs.existsSync(path.join(root, "assets", "overlays", "low-health-blood.png")), "Missing low-health blood overlay");
 assert.ok(fs.existsSync(path.join(root, "assets", "overlays", "button-cracks.png")), "Missing per-button cracks overlay");
@@ -90,6 +91,16 @@ const hotbarCompat = fs.readFileSync(
   "utf8"
 );
 const stylesheet = fs.readFileSync(path.join(root, "styles", "symbaroum-hud.css"), "utf8");
+const characterCreatorTheme = fs.readFileSync(
+  path.join(root, "styles", "character-creator-theme.css"),
+  "utf8"
+);
+assert.match(stylesheet, /@import url\("\.\/character-creator-theme\.css"\)/);
+assert.match(characterCreatorTheme, /green_flower_light\.webp/);
+assert.match(characterCreatorTheme, /green_flower_dark\.webp/);
+assert.match(characterCreatorTheme, /foreground\.webp/);
+assert.match(characterCreatorTheme, /title\.webp/);
+assert.match(characterCreatorTheme, /font-family: "Primitive"/);
 for (const file of scriptFiles(path.join(root, "scripts"))) {
   const source = fs.readFileSync(file, "utf8");
   assert.doesNotMatch(source, /\beval\s*\(/, `${file} must not use eval()`);

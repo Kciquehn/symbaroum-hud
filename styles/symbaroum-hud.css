@@ -1,3 +1,5 @@
+@import url("./character-creator-theme.css");
+
 #symbaroum-hud {
   position: fixed;
   inset: auto auto 8px 8px;

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.59
+
+- Reconstrói a aparência completa do Criador de Fichas com os próprios fundos, molduras, fontes e padrões visuais do sistema Symbaroum.
+- Unifica todas as etapas com tecido verde oficial, páginas claras, títulos pretos, bordas ornamentais e estados de seleção dourados.
+- Aproxima índices, abas, campos, cartões e botões dos componentes usados nas fichas nativas de Ator e Item.
+- Mantém o layout compacto e garante que a janela do Criador permaneça acima da ficha do personagem durante a preparação.
+
 ## 0.1.58
 
 - Substitui a reprodução visual do painel de Habilidades pela renderização direta do template da ficha nativa fornecido pelo sistema Symbaroum.
