@@ -962,10 +962,11 @@ async function abilitiesBookContent(actor, abilities, racialCost, mysticalPowers
         <aside class="symbaroum-hud-ability-index">
           <label><i class="fa-solid fa-magnifying-glass"></i><input type="search" data-ability-search placeholder="${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.SearchPlaceholder")}"></label>
           <section class="symbaroum-hud-ability-experience" data-ability-experience-panel>
-            <label><span>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.ExperienceAvailable")}</span>
-              <input type="number" name="abilityExperienceBudget" value="${initialExperience}" min="0" step="1"></label>
+            <header><span>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.ExperienceRemaining")}</span>
+              <strong data-experience-remaining>${initialExperience}</strong></header>
             <div><span>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.ExperienceSpent")} <b data-experience-spent>0</b></span>
-              <span>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.ExperienceRemaining")} <b data-experience-remaining>${initialExperience}</b></span></div>
+              <label><span>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.ExperienceAvailable")}</span>
+                <input type="number" name="abilityExperienceBudget" value="${initialExperience}" min="0" step="1"></label></div>
             <small>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.ExperienceCosts")}</small>
           </section>
           <div class="symbaroum-hud-ability-slots" hidden>

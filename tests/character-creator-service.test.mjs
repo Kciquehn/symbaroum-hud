@@ -465,6 +465,11 @@ test("the fourth creator step provides search, full Ability reading and both dis
   assert.match(content, /AbilitiesProgress/);
   assert.match(content, /data-ability-mode="experience" data-active="true"/);
   assert.match(content, /name="abilityExperienceBudget" value="50"/);
+  assert.match(content, /<strong data-experience-remaining>50<\/strong>/);
+  assert.ok(
+    content.indexOf("data-experience-remaining") < content.indexOf('name="abilityExperienceBudget"'),
+    "Remaining XP must be emphasized above the total XP input"
+  );
   assert.match(content, /data-ability-mode="five-novice"/);
   assert.match(content, /data-ability-mode="mixed"/);
   assert.match(content, /data-ability-search/);

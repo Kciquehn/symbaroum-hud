@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.60
+
+- Reorganiza o quadro de Experiência da etapa de Habilidades para destacar o XP restante no número principal.
+- Move o XP total informado pelo jogador para a linha inferior, ao lado do valor já gasto.
+- Mantém o saldo principal atualizado imediatamente a cada compra ou remoção de Habilidade.
+
 ## 0.1.59
 
 - Reconstrói a aparência completa do Criador de Fichas com os próprios fundos, molduras, fontes e padrões visuais do sistema Symbaroum.
