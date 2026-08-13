@@ -46,6 +46,12 @@ const releaseWorkflow = fs.readFileSync(
 );
 assert.match(checkWorkflow, /run: npm test/);
 assert.match(releaseWorkflow, /run: npm test/);
+assert.match(checkWorkflow, /actions\/checkout@v6/);
+assert.match(checkWorkflow, /actions\/setup-node@v6/);
+assert.match(checkWorkflow, /node-version: 24/);
+assert.match(releaseWorkflow, /actions\/checkout@v6/);
+assert.match(releaseWorkflow, /actions\/setup-node@v6/);
+assert.match(releaseWorkflow, /softprops\/action-gh-release@v3/);
 assert.match(releaseWorkflow, /cp module\.json LICENSE dist\/symbaroum-hud\//);
 assert.match(releaseWorkflow, /cp -R assets languages scripts styles templates dist\/symbaroum-hud\//);
 assert.doesNotMatch(releaseWorkflow, /rsync/);
