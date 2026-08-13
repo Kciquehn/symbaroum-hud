@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.1.62
+
+- Completa o Criador de Fichas em oito etapas: Ocupação, Atributos, Raça, Habilidades, Sombra, Equipamentos, História e Personalidade, e Amigos e Grupo.
+- Reconstrói o visual do Criador com os fundos, molduras, fontes e composição editorial do sistema Symbaroum, incluindo páginas detalhadas de ocupações e raças.
+- Adiciona navegação entre etapas concluídas, opção de adiar Atributos e preparação especial para o traço Contatos.
+- Integra Compra com XP, distribuições iniciais, Poder Místico e Ritualista à etapa de Habilidades, renderizando a ficha nativa de Item no painel de leitura.
+- Faz o botão **+** de Habilidades do HUD abrir o mesmo navegador temático em personagens prontos, usando o XP disponível e apenas documentos acessíveis como Observer.
+- Automatiza o equipamento inicial, dinheiro e Equipamento de Acampar, preservando os itens configurados do mundo e identificando a Habilidade que concedeu cada recompensa.
+- Adiciona a escolha especial de Atirador entre Arco e Besta, acompanhada de Aljava e 10 Flechas/Virotes.
+- Usa Bordão, Adaga, Espada, Arco, Aljava e munição configurados no mundo nas combinações iniciais, sem substituí-los por categorias genéricas.
+- Impede a concessão de Armadura Leve quando uma Habilidade já entrega outra armadura.
+- Melhora o layout e a leitura de ocupações, raças, traços, sombras, equipamentos e fichas nativas incorporadas.
+- Atualiza o HUD para a API namespaced de templates do Foundry v13, eliminando o aviso de compatibilidade da API global obsoleta.
+- Limpa o pacote de distribuição: a release agora inclui somente o manifesto, a licença e os diretórios necessários ao funcionamento no Foundry.
+- Amplia a suíte automatizada para 136 testes cobrindo o Criador, navegador de Habilidades, equipamentos e regressões do HUD.
+
 ## 0.1.61
 
 - Remove a moldura verde externa ao redor da ficha nativa de Habilidade no Criador.
@@ -120,7 +136,7 @@
 ## 0.1.43
 
 - Remove o texto redundante **Como criar um personagem** do marcador superior do Criador de Fichas.
-- Mantém apenas **Passo X de 10** nas etapas de Ocupação, Atributos e Raças, deixando o cabeçalho mais limpo e compacto.
+- Mantém apenas o indicador numérico de etapa no cabeçalho do Criador, deixando-o mais limpo e compacto.
 
 ## 0.1.42
 

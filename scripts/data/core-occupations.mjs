@@ -5,33 +5,34 @@ export const OCCUPATION_ARCHETYPES = Object.freeze([
 ]);
 
 export const CORE_OCCUPATIONS = Object.freeze([
-  occupation("berserker", "warrior", "fa-hand-fist"),
-  occupation("duelist", "warrior", "fa-khanda"),
-  occupation("captain", "warrior", "fa-chess-king"),
-  occupation("sellsword", "warrior", "fa-coins"),
-  occupation("knight", "warrior", "fa-shield-halved"),
-  occupation("witch", "mystic", "fa-masks-theater"),
-  occupation("sorcerer", "mystic", "fa-eye"),
-  occupation("theurg", "mystic", "fa-sun"),
-  occupation("wizard", "mystic", "fa-book-open"),
-  occupation("selfTaughtMystic", "mystic", "fa-wand-sparkles"),
-  occupation("charlatan", "rogue", "fa-comments"),
-  occupation("witchhunter", "rogue", "fa-crosshairs"),
-  occupation("thug", "rogue", "fa-user-ninja"),
-  occupation("treasureHunter", "rogue", "fa-gem"),
-  occupation("ranger", "rogue", "fa-tree"),
+  occupation("berserker", "warrior", "fa-hand-fist", "berserker-rage.webp"),
+  occupation("duelist", "warrior", "fa-khanda", "duelist-arch.webp"),
+  occupation("captain", "warrior", "fa-chess-king", "captain-arch.webp"),
+  occupation("sellsword", "warrior", "fa-coins", "sellsword-arch.webp"),
+  occupation("knight", "warrior", "fa-shield-halved", "knight-arch.webp"),
+  occupation("witch", "mystic", "fa-masks-theater", "witch.webp"),
+  occupation("sorcerer", "mystic", "fa-eye", "sorcerer-arch.webp"),
+  occupation("theurg", "mystic", "fa-sun", "theurg-arch.webp"),
+  occupation("wizard", "mystic", "fa-book-open", "wizard-arch.webp"),
+  occupation("selfTaughtMystic", "mystic", "fa-wand-sparkles", "self-taught-mystic-arch.webp"),
+  occupation("charlatan", "rogue", "fa-comments", "rouges-domain.webp"),
+  occupation("witchhunter", "rogue", "fa-crosshairs", "witchfinder-arch.webp"),
+  occupation("thug", "rogue", "fa-user-ninja", "thug-arch.webp"),
+  occupation("treasureHunter", "rogue", "fa-gem", "treasure-hunter-arch.webp"),
+  occupation("ranger", "rogue", "fa-tree", "ranger-arch.webp"),
 ]);
 
 export function coreOccupation(id) {
   return CORE_OCCUPATIONS.find((entry) => entry.id === id) ?? null;
 }
 
-function occupation(id, archetype, icon) {
+function occupation(id, archetype, icon, art) {
   const prefix = `SYMBAROUMHUD.CharacterCreator.Occupations.${id}`;
   return Object.freeze({
     id,
     archetype,
     icon,
+    art: `modules/symbaroum-corerules/images/pictures/${art}`,
     name: `${prefix}.Name`,
     quote: `${prefix}.Quote`,
     summary: `${prefix}.Summary`,

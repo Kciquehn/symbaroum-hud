@@ -36,15 +36,8 @@ jobs:
         shell: bash
         run: |
           mkdir -p dist/symbaroum-hud
-          rsync -av \
-            --exclude ".git" \
-            --exclude ".github" \
-            --exclude "dist" \
-            --exclude "node_modules" \
-            --exclude "tests" \
-            --exclude "package-lock.json" \
-            --exclude "*.zip" \
-            ./ dist/symbaroum-hud/
+          cp module.json LICENSE dist/symbaroum-hud/
+          cp -R assets languages scripts styles templates dist/symbaroum-hud/
           cp module.json dist/module.json
           cd dist
           zip -r symbaroum-hud.zip symbaroum-hud
