@@ -16,6 +16,7 @@ import {
   hasPowerLevels,
   isTraitLikeItem
 } from "../services/actor-service.mjs";
+import { CharacterCreatorService } from "../services/character-creator-service.mjs";
 import { defenseDisplayValue } from "../services/defense-service.mjs";
 import { ritualistProgress } from "../services/ritual-service.mjs";
 import {
@@ -338,15 +339,30 @@ export class SymbaroumHud extends ApplicationV2 {
   }
 
   async _renderHTML(context) {
-    return renderTemplate(`modules/${MODULE_ID}/templates/hud.hbs`, context);
+    return foundry.applications.handlebars.renderTemplate(
+      `modules/${MODULE_ID}/templates/hud.hbs`,
+      context
+    );
   }
 
   _replaceHTML(result, content) {
     this.#closeEffectMenu();
     const hotbar = document.getElementById("hotbar");
     if (hotbar && content.contains(hotbar)) hotbar.remove();
+    const stableCharacterCard = this.#collapseAnimationRunning
+      ? content.querySelector(".symbaroum-hud-character-card")
+      : null;
+    const stableHotbarControls = this.#collapseAnimationRunning
+      ? content.querySelector(".symbaroum-hud-hotbar-controls")
+      : null;
 
     content.innerHTML = result;
+    if (stableCharacterCard) {
+      content.querySelector(".symbaroum-hud-character-card")?.replaceWith(stableCharacterCard);
+    }
+    if (stableHotbarControls) {
+      content.querySelector(".symbaroum-hud-hotbar-controls")?.replaceWith(stableHotbarControls);
+    }
     this.#updateHostilityTint(content);
     this.#dockHotbar(content, hotbar);
     this.#activateListeners(content);
@@ -1397,7 +1413,6 @@ export class SymbaroumHud extends ApplicationV2 {
     const root = this.element;
     const targets = [
       root?.querySelector?.(".symbaroum-hud-status-summary"),
-      root?.querySelector?.(".symbaroum-hud-hotbar-controls"),
       root?.querySelector?.(".symbaroum-hud-main-column")
     ].filter((element) => typeof element?.animate === "function");
     if (!targets.length) return;
@@ -1937,72 +1952,25 @@ export class SymbaroumHud extends ApplicationV2 {
     dialog.render(true);
   }
 
-  #openAddAbilityDialog(actor) {
+  async #openAddAbilityDialog(actor) {
     if (!ActorService.canUpdate(actor)) {
       ui.notifications.warn(game.i18n.localize("SYMBAROUMHUD.Notifications.NoPermission"));
       return;
     }
-
-    const abilities = ActorService.availableWorldAbilities(actor);
-    if (!abilities.length) {
-      ui.notifications.warn(game.i18n.localize("SYMBAROUMHUD.Notifications.NoAvailableAbilities"));
-      return;
+    const created = await CharacterCreatorService.openAbilityBrowser(actor);
+    if (!created?.length) return null;
+    const ability = created.find((item) => item.type === "ability");
+    if (ability) {
+      this.#selectedAbilityId = ability.id;
+      this.#selectedAbilityTab = DEFAULT_ABILITY_TAB;
     }
-
-    const entries = abilities.map((item, index) => `
-      <label class="symbaroum-hud-ability-picker-entry" data-search-index="${escapeHtml(`${item.name ?? ""} ${item.system?.reference ?? ""}`.toLocaleLowerCase())}">
-        <input type="radio" name="abilityId" value="${escapeHtml(item.id)}" ${index === 0 ? "checked" : ""}>
-        <img src="${escapeHtml(item.img ?? "icons/svg/item-bag.svg")}" alt="">
-        <span>
-          <strong>${escapeHtml(item.name)}</strong>
-          ${item.system?.reference ? `<small>${escapeHtml(item.system.reference)}</small>` : ""}
-        </span>
-      </label>
-    `).join("");
-    const content = `
-      <form class="symbaroum-hud-ability-picker">
-        <p>${game.i18n.localize("SYMBAROUMHUD.Abilities.AddPrompt")}</p>
-        <label class="symbaroum-hud-ability-picker-search">
-          <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
-          <input type="search" name="abilitySearch" autocomplete="off" placeholder="${escapeHtml(game.i18n.localize("SYMBAROUMHUD.Abilities.Search"))}">
-        </label>
-        <div class="symbaroum-hud-ability-picker-list">${entries}</div>
-        <p class="symbaroum-hud-ability-picker-empty" hidden>${game.i18n.localize("SYMBAROUMHUD.Abilities.NoSearchResults")}</p>
-      </form>
-    `;
-
-    const dialog = new Dialog({
-      title: game.i18n.localize("SYMBAROUMHUD.Abilities.Add"),
-      content,
-      buttons: {
-        ok: {
-          label: game.i18n.localize("SYMBAROUMHUD.Abilities.Buy"),
-          callback: async (html) => {
-            const root = html?.[0] ?? html;
-            const itemId = root?.querySelector?.("input[name='abilityId']:checked")?.value;
-            const created = await ActorService.buyWorldAbility(actor, itemId);
-            if (created) {
-              this.#selectedAbilityId = created.id;
-              this.#selectedAbilityTab = DEFAULT_ABILITY_TAB;
-              this.#abilitiesOpen = true;
-              this.#attacksOpen = false;
-              this.#mysticalPowersOpen = false;
-              this.#ritualsOpen = false;
-              this.#storageOpen = false;
-              this.#traitsOpen = false;
-              return this.render();
-            }
-            return null;
-          }
-        },
-        cancel: {
-          label: game.i18n.localize("Cancel")
-        }
-      },
-      default: "ok",
-      render: setupAbilityPickerSearch
-    });
-    dialog.render(true);
+    this.#abilitiesOpen = true;
+    this.#attacksOpen = false;
+    this.#mysticalPowersOpen = false;
+    this.#ritualsOpen = false;
+    this.#storageOpen = false;
+    this.#traitsOpen = false;
+    return this.render();
   }
 
   #openManeuverDialog(actor) {

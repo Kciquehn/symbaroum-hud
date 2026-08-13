@@ -66,7 +66,7 @@ export const CORE_RACES = Object.freeze([
     loreSection("barbarian", "history", 5),
     loreSection("barbarian", "names", 1, ["male", "female"])
   ]),
-  race("changeling", "fa-masks-theater", "assets/races/changeling.webp", "50% 28%", ["longLived"], [], ["shapeshifter"], [
+  race("changeling", "fa-masks-theater", "assets/races/changeling.webp", "50% 8%", ["longLived"], [], ["shapeshifter"], [
     loreSection("changeling", "history", 3),
     loreSection("changeling", "names", 1, ["male", "female"])
   ]),
