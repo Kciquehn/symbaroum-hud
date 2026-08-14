@@ -237,7 +237,13 @@ test("remembers the manual character creation choice", async () => {
 test("closes the original Actor sheet, marks a creator request and opens the occupation book", async () => {
   const blank = actor({ id: "creator", uuid: "Actor.creator" });
   let sheetCloseCount = 0;
-  const sheet = { close: async () => { sheetCloseCount += 1; } };
+  const order = [];
+  const originalSetFlag = blank.setFlag.bind(blank);
+  blank.setFlag = async (...args) => {
+    order.push(`flag:${args[1]}`);
+    return originalSetFlag(...args);
+  };
+  const sheet = { close: async () => { sheetCloseCount += 1; order.push("close"); } };
   dialogChoices.push(CHARACTER_CREATION_MODES.CREATOR, "close");
 
   assert.equal(
@@ -246,12 +252,26 @@ test("closes the original Actor sheet, marks a creator request and opens the occ
   );
   assert.equal(blank.flag("characterCreationMode"), CHARACTER_CREATION_MODES.CREATOR);
   assert.equal(sheetCloseCount, 1);
+  assert.deepEqual(order.slice(0, 2), ["close", "flag:characterCreationMode"]);
   assert.ok(dialogConfigs.at(-2).classes.includes("symbaroum-hud-character-creator-choice-dialog"));
   assert.match(dialogConfigs.at(-1).content, /symbaroum-hud-occupation-book/);
   assert.deepEqual(hookCalls.at(-1), [
     "symbaroum-hud.characterCreatorRequested",
     blank
   ]);
+});
+
+test("closes an Actor sheet before resuming an unfinished creator", async () => {
+  const blank = actor({ id: "creator-resume", uuid: "Actor.creator-resume" });
+  await blank.setFlag("symbaroum-hud", "characterCreationMode", CHARACTER_CREATION_MODES.CREATOR);
+  let sheetCloseCount = 0;
+  const sheet = { close: async () => { sheetCloseCount += 1; } };
+  dialogChoices.push("close");
+
+  await CharacterCreatorService.handleSheet(blank, sheet);
+
+  assert.equal(sheetCloseCount, 1);
+  assert.match(dialogConfigs.at(-1).content, /symbaroum-hud-occupation-book/);
 });
 
 test("the core occupation book contains all fifteen occupations in three archetypes", () => {
@@ -783,6 +803,45 @@ test("the fourth creator step provides search, full Ability reading and both dis
   assert.match(content, /data-rank="master"/);
 });
 
+test("mystical tradition Abilities open an adapted book chapter before their native sheet", async () => {
+  const blank = actor({ id: "traditions", uuid: "Actor.traditions" });
+  await blank.setFlag("symbaroum-hud", "characterCreationMode", "creator");
+  await blank.setFlag("symbaroum-hud", "characterCreatorState", {
+    version: 1, step: "race-complete", race: "ambrian"
+  });
+  const traditions = [
+    ["witchcraft", "Bruxaria"],
+    ["sorcery", "Feitiçaria"],
+    ["wizardry", "Magismo"],
+    ["theurgy", "Teurgia"]
+  ].map(([reference, name]) => {
+    const ability = worldAbility(reference, name);
+    ability.system.reference = reference;
+    return ability;
+  });
+  const previous = game.items;
+  game.items = traditions;
+  dialogChoices.push("close");
+  try {
+    await CharacterCreatorService.openAbilitiesStep(blank);
+  } finally {
+    game.items = previous;
+  }
+  const content = dialogConfigs.at(-1).content;
+  for (const [reference, name] of [["witchcraft", "Bruxaria"], ["sorcery", "Feitiçaria"], ["wizardry", "Magismo"], ["theurgy", "Teurgia"]]) {
+    assert.match(content, new RegExp(`data-mystical-tradition="${reference}"`));
+    const chapter = content.indexOf(`data-mystical-tradition="${reference}"`);
+    const sheet = content.indexOf("symbaroum-hud-native-ability-sheet", chapter);
+    assert.ok(chapter < sheet, `${name} chapter must appear before the native Ability sheet`);
+  }
+  assert.equal((content.match(/symbaroum-hud-mystical-tradition-page/g) ?? []).length, 4);
+  assert.match(content, /Traditions\.PurchaseExplanation/);
+  assert.match(content, /Traditions\.CorruptionHeading/);
+  assert.match(content, /Traditions\.AbilityHeading/);
+  assert.match(content, /data-tradition-fallback-src=/);
+  assert.doesNotMatch(content, /\bonerror\s*=/i);
+});
+
 test("the HUD Ability browser reuses the creator book with the character available XP", async () => {
   const blank = actor({ id: "ability-browser", uuid: "Actor.ability-browser" });
   blank.system.experience = { total: 50, spent: 30, available: 20 };
@@ -1140,7 +1199,15 @@ test("the fifth creator step explains Shadows with principles and examples", asy
   assert.match(content, /SYMBAROUMHUD\.CharacterCreator\.Guide\.ShadowProgress/);
   assert.match(content, /data-shadow-tone="nature"/);
   assert.match(content, /data-shadow-tone="civilization"/);
-  assert.match(content, /data-shadow-tone="darkness"/);
+  assert.match(content, /data-shadow-tone="corrupted"/);
+  assert.match(content, /symbaroum-hud-shadow-index/);
+  assert.match(content, /data-shadow-page-id="nature"/);
+  assert.match(content, /data-shadow-page-id="civilization"/);
+  assert.match(content, /data-shadow-page-id="darkness"/);
+  assert.match(content, /data-shadow-page="nature"/);
+  assert.match(content, /assets\/shadows\/nature\.webp/);
+  assert.match(content, /assets\/shadows\/civilization\.webp/);
+  assert.match(content, /assets\/shadows\/darkness\.webp/);
   assert.match(content, /data-shadow-example=/);
   assert.match(content, /textarea name="shadow"/);
   assert.equal(isAbilitiesStepComplete(blank), true);
@@ -1495,6 +1562,35 @@ test("a character without weapon or armor grants chooses an official weapon comb
   assert.equal(arrows.flags["symbaroum-ind-resources"].isAmmo, true);
 });
 
+test("the Bow combination recognizes the official regular arrows and bolts item name", async () => {
+  const blank = actor({ id: "regular-ammo-equipment", uuid: "Actor.regular-ammo-equipment" });
+  await blank.setFlag("symbaroum-hud", "characterCreationMode", "creator");
+  await blank.setFlag("symbaroum-hud", "characterCreatorState", { version: 1, step: "shadow-complete" });
+  const previous = game.items;
+  game.items = [
+    worldEquipment("bow", "Arco", "weapon", { reference: "bow" }),
+    worldEquipment("dagger", "Adaga", "weapon", { reference: "short" }),
+    worldEquipment("quiver", "Aljava", "equipment", { reference: "quiver" }),
+    worldEquipment("ammo", "Flechas/Virotes - Regulares", "equipment", { reference: "regular-ammunition" }),
+    worldEquipment("light-armor", "Armadura Leve", "armor", { reference: "lightarmor", baseProtection: "1d4" }),
+    worldEquipment("camp", "Equipamento de Acampar", "equipment", { reference: "campingEquipment" })
+  ];
+  const firstDialog = dialogConfigs.length;
+  dialogChoices.push({ action: "choose-equipment", form: {
+    "equipmentGrant-basicweapon-0": "bow"
+  } });
+  try {
+    await CharacterCreatorService.openEquipmentStep(blank);
+  } finally {
+    game.items = previous;
+  }
+  const content = dialogConfigs[firstDialog].content;
+  assert.match(content, /value="bow" required data-equipment-grant >/);
+  assert.ok(blank.items.find((item) => item.name === "Arco"));
+  assert.ok(blank.items.find((item) => item.name === "Aljava"));
+  assert.equal(blank.items.find((item) => item.name === "Flechas/Virotes - Regulares")?.system.number, 10);
+});
+
 test("starting combinations import the configured named weapons from the world", async () => {
   const blank = actor({ id: "category-equipment", uuid: "Actor.category-equipment" });
   await blank.setFlag("symbaroum-hud", "characterCreationMode", "creator");
@@ -1626,8 +1722,24 @@ test("the eighth creator step mirrors the official friends and group fields", as
   assert.match(config.content, /name="friendPlayer-0"/);
   assert.match(config.content, /name="groupName"/);
   assert.match(config.content, /name="groupGoal"/);
+  assert.doesNotMatch(config.content, /name="groupGoal" required/);
+  assert.match(config.content, /Friends\.Optional/);
   assert.equal(isPersonalityStepComplete(blank), true);
   assert.equal(isFriendsStepComplete(blank), false);
+});
+
+test("the optional friends and group step can be completed without any fields", async () => {
+  const blank = actor({ id: "friends-skip", uuid: "Actor.friends-skip" });
+  await blank.setFlag("symbaroum-hud", "characterCreationMode", "creator");
+  await blank.setFlag("symbaroum-hud", "characterCreatorState", {
+    version: 1, step: "personality-complete"
+  });
+  dialogChoices.push({ action: "choose-friends", form: {} });
+
+  const result = await CharacterCreatorService.openFriendsStep(blank);
+  assert.deepEqual(result, { companions: [], group: { name: "", goal: "" } });
+  assert.equal(blank.flag("characterCreatorState").step, "friends-complete");
+  assert.equal(isFriendsStepComplete(blank), true);
 });
 
 test("friends and group are saved as structured actor creation data", async () => {

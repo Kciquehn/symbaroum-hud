@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.1.63
+
+- Reconstrói a etapa **Sombra** como páginas ilustradas de Natureza, Civilização e Escuridão, seguindo a composição editorial usada nas Raças.
+- Adiciona páginas temáticas para Bruxaria, Feitiçaria, Magismo e Teurgia antes da ficha nativa da Habilidade, explicando tradição, poderes, rituais e Corrupção.
+- Remove o título de nível duplicado da ficha nativa de Habilidade incorporada ao Criador.
+- Fecha de forma confiável a ficha original do Ator ao iniciar o Criador de Fichas.
+- Reconhece o item mundial **Flechas/Virotes - Regulares** na combinação inicial de Arco.
+- Torna todos os campos da etapa **Amigos e Grupo** opcionais, permitindo concluir ou pular essa parte livremente.
+- Substitui o manipulador de erro inline das ilustrações por eventos vinculados com segurança e amplia as verificações estáticas contra execução dinâmica e handlers inline.
+- Mantém a distribuição instalável restrita ao manifesto, licença, recursos, idiomas, scripts, estilos e templates necessários ao módulo.
+
 ## 0.1.62
 
 - Completa o Criador de Fichas em oito etapas: Ocupação, Atributos, Raça, Habilidades, Sombra, Equipamentos, História e Personalidade, e Amigos e Grupo.

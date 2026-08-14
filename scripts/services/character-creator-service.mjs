@@ -26,6 +26,7 @@ import {
   abilitySelectionLimits,
   isValidAbilitySelection
 } from "../data/character-creation-abilities.mjs";
+import { coreMysticalTradition } from "../data/core-mystical-traditions.mjs";
 
 const MODE_FLAG = "characterCreationMode";
 const STATE_FLAG = "characterCreatorState";
@@ -148,32 +149,18 @@ export class CharacterCreatorService {
   static async handleSheet(actor, sheet = null) {
     if (!actor || actor.type !== "player" || !canOwn(actor, game.user)) return null;
     const mode = actor.getFlag?.(MODULE_ID, MODE_FLAG);
-    if (mode === CHARACTER_CREATION_MODES.CREATOR && !isOccupationStepComplete(actor)) {
-      return this.openOccupationStep(actor);
-    }
-    if (mode === CHARACTER_CREATION_MODES.CREATOR && !isAttributesStepComplete(actor)) {
-      return this.openAttributesStep(actor);
-    }
-    if (mode === CHARACTER_CREATION_MODES.CREATOR && !isRaceStepComplete(actor)) {
-      return this.openRaceStep(actor);
-    }
-    if (mode === CHARACTER_CREATION_MODES.CREATOR && isContactsPreparationRequired(actor)) {
-      return this.openContactsStep(actor);
-    }
-    if (mode === CHARACTER_CREATION_MODES.CREATOR && !isAbilitiesStepComplete(actor)) {
-      return this.openAbilitiesStep(actor);
-    }
-    if (mode === CHARACTER_CREATION_MODES.CREATOR && !isShadowStepComplete(actor)) {
-      return this.openShadowStep(actor);
-    }
-    if (mode === CHARACTER_CREATION_MODES.CREATOR && !isEquipmentStepComplete(actor)) {
-      return this.openEquipmentStep(actor);
-    }
-    if (mode === CHARACTER_CREATION_MODES.CREATOR && !isPersonalityStepComplete(actor)) {
-      return this.openPersonalityStep(actor);
-    }
-    if (mode === CHARACTER_CREATION_MODES.CREATOR && !isFriendsStepComplete(actor)) {
-      return this.openFriendsStep(actor);
+    if (mode === CHARACTER_CREATION_MODES.CREATOR) {
+      await closeOriginalActorSheet(sheet, actor);
+      if (!isOccupationStepComplete(actor)) return this.openOccupationStep(actor);
+      if (!isAttributesStepComplete(actor)) return this.openAttributesStep(actor);
+      if (!isRaceStepComplete(actor)) return this.openRaceStep(actor);
+      if (isContactsPreparationRequired(actor)) return this.openContactsStep(actor);
+      if (!isAbilitiesStepComplete(actor)) return this.openAbilitiesStep(actor);
+      if (!isShadowStepComplete(actor)) return this.openShadowStep(actor);
+      if (!isEquipmentStepComplete(actor)) return this.openEquipmentStep(actor);
+      if (!isPersonalityStepComplete(actor)) return this.openPersonalityStep(actor);
+      if (!isFriendsStepComplete(actor)) return this.openFriendsStep(actor);
+      return null;
     }
     if (!mode) return this.offer(actor, sheet);
     return null;
@@ -217,11 +204,15 @@ export class CharacterCreatorService {
       });
 
       if (!Object.values(CHARACTER_CREATION_MODES).includes(choice)) return null;
-      await actor.setFlag(MODULE_ID, MODE_FLAG, choice);
       if (choice === CHARACTER_CREATION_MODES.CREATOR) {
+        // Close before persisting the mode: setFlag can re-render an open Actor
+        // sheet and replace the application instance that triggered this prompt.
         await closeOriginalActorSheet(sheet, actor);
+        await actor.setFlag(MODULE_ID, MODE_FLAG, choice);
         Hooks.callAll(`${MODULE_ID}.characterCreatorRequested`, actor);
         await this.#runCreatorSteps(DialogV2, actor, "occupation");
+      } else {
+        await actor.setFlag(MODULE_ID, MODE_FLAG, choice);
       }
       return choice;
     } catch (error) {
@@ -1245,10 +1236,6 @@ export class CharacterCreatorService {
               name: formValue(button.form, "groupName").trim(),
               goal: formValue(button.form, "groupGoal").trim()
             };
-            if (!group.goal) {
-              ui.notifications?.warn(game.i18n.localize("SYMBAROUMHUD.CharacterCreator.Friends.Required"));
-              return null;
-            }
             const previous = actor.getFlag?.(MODULE_ID, STATE_FLAG) ?? {};
             const friendsGroup = { companions, group };
             await actor.setFlag(MODULE_ID, STATE_FLAG, {
@@ -1943,6 +1930,7 @@ async function abilitiesBookContent(actor, abilities, racialCost, mysticalPowers
   const pages = (await Promise.all(abilities.map(async (ability) => {
     const mysticalPowerAbility = isMysticalPowerAbility(ability);
     const ritualistAbility = isRitualistAbility(ability);
+    const mysticalTradition = coreMysticalTradition(ability);
     const nativeSheet = await renderCreationAbilitySheet(ability);
     const mysticalPowerChoices = mysticalPowerAbility
       ? await mysticalPowerChoiceContent(ability, mysticalPowers, costs)
@@ -1952,7 +1940,9 @@ async function abilitiesBookContent(actor, abilities, racialCost, mysticalPowers
       : "";
     return `
       <article class="symbaroum-hud-ability-page" data-creation-ability-page="${escapeHtml(ability.id)}"
+        ${mysticalTradition ? `data-mystical-tradition="${escapeHtml(mysticalTradition.id)}"` : ""}
         ${ability.id === firstId ? "" : "hidden"}>
+        ${mysticalTradition ? mysticalTraditionContent(mysticalTradition, ability) : ""}
         <div class="symbaroum sheet item symbaroum-hud-native-ability-sheet">${nativeSheet}</div>
         <div class="symbaroum-hud-native-ability-purchase" ${mysticalPowerAbility ? "hidden" : ""}>
           ${["novice", "adept", "master"].map((rank) => `<button type="button"
@@ -2030,75 +2020,164 @@ function occupationAbilityRecommendation(actor) {
 }
 
 function shadowBookContent(actor) {
-  const examples = [
-    ["nature", "fa-leaf", "Nature"],
-    ["civilization", "fa-crown", "Civilization"],
-    ["mixed", "fa-circle-half-stroke", "Mixed"],
-    ["spiritual", "fa-cloud", "Spiritual"],
-    ["corrupted", "fa-burst", "Corrupted"]
-  ].map(([tone, icon, key]) => {
-    const example = game.i18n.localize(`SYMBAROUMHUD.CharacterCreator.Shadow.Examples.${key}`);
+  const selectedId = "nature";
+  const principles = [
+    {
+      id: "nature",
+      icon: "fa-leaf",
+      key: "Nature",
+      art: "assets/shadows/nature.webp",
+      examples: [["nature", "fa-leaf", "Nature"], ["spiritual", "fa-cloud", "Spiritual"], ["mixed", "fa-circle-half-stroke", "Mixed"]]
+    },
+    {
+      id: "civilization",
+      icon: "fa-landmark",
+      key: "Civilization",
+      art: "assets/shadows/civilization.webp",
+      examples: [["civilization", "fa-crown", "Civilization"], ["mixed", "fa-circle-half-stroke", "Mixed"]]
+    },
+    {
+      id: "darkness",
+      icon: "fa-moon",
+      key: "Darkness",
+      art: "assets/shadows/darkness.webp",
+      examples: [["corrupted", "fa-burst", "Corrupted"], ["mixed", "fa-circle-half-stroke", "Mixed"]]
+    }
+  ];
+  const index = principles.map((principle) => `
+    <button type="button" class="symbaroum-hud-shadow-index-entry"
+      data-shadow-page-id="${principle.id}" data-active="${principle.id === selectedId}"
+      aria-pressed="${principle.id === selectedId}">
+      <i class="fa-solid ${principle.icon}" aria-hidden="true"></i>
+      <span>${localizeEscaped(`SYMBAROUMHUD.CharacterCreator.Shadow.Principles.${principle.key}.Title`)}</span>
+    </button>
+  `).join("");
+  const pages = principles.map((principle) => {
+    const examples = principle.examples.map(([tone, icon, key]) => {
+      const example = game.i18n.localize(`SYMBAROUMHUD.CharacterCreator.Shadow.Examples.${key}`);
+      return `
+        <button type="button" class="symbaroum-hud-shadow-example" data-shadow-tone="${tone}"
+          data-shadow-example="${escapeHtml(example)}">
+          <i class="fa-solid ${icon}" aria-hidden="true"></i>
+          <span>${escapeHtml(example)}</span>
+        </button>`;
+    }).join("");
+    const darkness = principle.id === "darkness" ? `
+      <section class="symbaroum-hud-shadow-corruption">
+        <i class="fa-solid fa-droplet" aria-hidden="true"></i>
+        <div><h3>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Shadow.CorruptionHeading")}</h3>
+          <p>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Shadow.CorruptionText")}</p></div>
+      </section>` : "";
     return `
-      <button type="button" class="symbaroum-hud-shadow-example" data-shadow-tone="${tone}"
-        data-shadow-example="${escapeHtml(example)}">
-        <i class="fa-solid ${icon}" aria-hidden="true"></i>
-        <span>${escapeHtml(example)}</span>
-      </button>`;
-  }).join("");
-  const current = String(actor.system?.bio?.shadow ?? "").trim();
-  return `
-    <div class="symbaroum-hud-shadow-book">
-      <header class="symbaroum-hud-creator-step-guide">
-        ${creatorStepNumber(actor, "shadow", "SYMBAROUMHUD.CharacterCreator.Guide.ShadowProgress")}
-        <div><h2>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Guide.StepFiveTitle")}</h2>
-          <p>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Guide.StepFiveText")}</p></div>
-      </header>
-      <div class="symbaroum-hud-shadow-workspace">
-        <aside class="symbaroum-hud-shadow-principles">
-          <header><i class="fa-solid fa-eye" aria-hidden="true"></i>
-            <h2>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Shadow.PrinciplesHeading")}</h2></header>
-          ${[
-            ["nature", "fa-leaf", "Nature"],
-            ["civilization", "fa-landmark", "Civilization"],
-            ["darkness", "fa-moon", "Darkness"]
-          ].map(([tone, icon, key]) => `
-            <section data-shadow-tone="${tone}">
-              <i class="fa-solid ${icon}" aria-hidden="true"></i>
-              <div><h3>${localizeEscaped(`SYMBAROUMHUD.CharacterCreator.Shadow.Principles.${key}.Title`)}</h3>
-                <p>${localizeEscaped(`SYMBAROUMHUD.CharacterCreator.Shadow.Principles.${key}.Text`)}</p></div>
-            </section>`).join("")}
-          <p class="symbaroum-hud-shadow-mixed-note"><i class="fa-solid fa-circle-half-stroke" aria-hidden="true"></i>
-            ${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Shadow.MixedNote")}</p>
-        </aside>
-        <main class="symbaroum-hud-shadow-page">
-          <section class="symbaroum-hud-shadow-explanation">
-            <span>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Shadow.BookLabel")}</span>
-            <h2>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Shadow.Heading")}</h2>
+      <article class="symbaroum-hud-shadow-page" data-shadow-page="${principle.id}"
+        ${principle.id === selectedId ? "" : "hidden"}>
+        <div class="symbaroum-hud-shadow-heading">
+          <div class="symbaroum-hud-occupation-page-icon" aria-hidden="true"><i class="fa-solid ${principle.icon}"></i></div>
+          <div><span>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Shadow.BookLabel")}</span>
+            <h2>${localizeEscaped(`SYMBAROUMHUD.CharacterCreator.Shadow.Principles.${principle.key}.Title`)}</h2></div>
+        </div>
+        <p class="symbaroum-hud-shadow-summary">${localizeEscaped(`SYMBAROUMHUD.CharacterCreator.Shadow.Principles.${principle.key}.Text`)}</p>
+        <figure class="symbaroum-hud-shadow-art">
+          <img src="modules/symbaroum-hud/${principle.art}"
+            alt="${localizeEscaped(`SYMBAROUMHUD.CharacterCreator.Shadow.IllustrationAlt.${principle.key}`)}">
+        </figure>
+        <div class="symbaroum-hud-shadow-lore">
+          <section>
+            <h3>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Shadow.Heading")}</h3>
             <p>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Shadow.Introduction")}</p>
             <p>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Shadow.Visibility")}</p>
           </section>
-          <section class="symbaroum-hud-shadow-corruption">
-            <i class="fa-solid fa-droplet" aria-hidden="true"></i>
-            <div><h3>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Shadow.CorruptionHeading")}</h3>
-              <p>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Shadow.CorruptionText")}</p></div>
+          <section>
+            <h3>${localizeEscaped(`SYMBAROUMHUD.CharacterCreator.Shadow.Principles.${principle.key}.Title`)}</h3>
+            <p>${localizeEscaped(`SYMBAROUMHUD.CharacterCreator.Shadow.PageText.${principle.key}`)}</p>
+            <p class="symbaroum-hud-shadow-mixed-note"><i class="fa-solid fa-circle-half-stroke" aria-hidden="true"></i>
+              ${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Shadow.MixedNote")}</p>
           </section>
+          ${darkness}
           <section class="symbaroum-hud-shadow-examples">
             <header><h3>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Shadow.ExamplesHeading")}</h3>
               <small>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Shadow.ExamplesHint")}</small></header>
             <div>${examples}</div>
           </section>
+        </div>
+      </article>`;
+  }).join("");
+  const current = String(actor.system?.bio?.shadow ?? "").trim();
+  return `
+    <div class="symbaroum-hud-shadow-book">
+      <input type="hidden" name="shadow-principle" value="${selectedId}">
+      <header class="symbaroum-hud-creator-step-guide">
+        ${creatorStepNumber(actor, "shadow", "SYMBAROUMHUD.CharacterCreator.Guide.ShadowProgress")}
+        <div><h2>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Guide.StepFiveTitle")}</h2>
+          <p>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Guide.StepFiveText")}</p></div>
+      </header>
+      <aside class="symbaroum-hud-shadow-index">
+        <header><h2>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Shadow.Index")}</h2>
+          <p>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Shadow.IndexHint")}</p></header>
+        <nav aria-label="${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Shadow.Index")}">${index}</nav>
+      </aside>
+      <main class="symbaroum-hud-shadow-reading-page">
+        <header class="symbaroum-hud-occupation-character-name"><i class="fa-solid fa-book-open" aria-hidden="true"></i><span>${escapeHtml(actor.name)}</span></header>
+        ${pages}
           <label class="symbaroum-hud-shadow-entry">
             <span>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Shadow.FieldLabel")}</span>
             <textarea name="shadow" maxlength="420" required
               placeholder="${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Shadow.Placeholder")}">${escapeHtml(current)}</textarea>
-            <small><span data-shadow-count>${current.length}</span>/420 · ${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Shadow.FieldHint")}</small>
+            <small><span data-shadow-count>${current.length}</span>/420 &middot; ${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Shadow.FieldHint")}</small>
           </label>
-        </main>
-      </div>
+      </main>
     </div>`;
 }
 
+function mysticalTraditionContent(tradition, ability) {
+  const artFallback = escapeHtml(tradition.fallbackArt);
+  return `
+    <section class="symbaroum-hud-mystical-tradition-page">
+      <header class="symbaroum-hud-mystical-tradition-hero">
+        <figure>
+          <img src="${escapeHtml(tradition.art)}" alt="${localizeEscaped(tradition.name)}"
+            data-tradition-fallback-src="${artFallback}">
+        </figure>
+        <div>
+          <span><i class="fa-solid ${escapeHtml(tradition.icon)}" aria-hidden="true"></i>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.Traditions.BookLabel")}</span>
+          <h2>${localizeEscaped(tradition.name)}</h2>
+          <p>${localizeEscaped(tradition.introduction)}</p>
+          <aside>
+            <i class="fa-solid fa-scroll" aria-hidden="true"></i>
+            <p>${formatEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.Traditions.PurchaseExplanation", { ability: ability.name })}</p>
+          </aside>
+        </div>
+      </header>
+      <div class="symbaroum-hud-mystical-tradition-chapter">
+        <section class="symbaroum-hud-mystical-tradition-doctrine">
+          <h3>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.Traditions.TraditionHeading")}</h3>
+          <p>${localizeEscaped(tradition.doctrine)}</p>
+        </section>
+        <section>
+          <h3>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.Traditions.TitlesHeading")}</h3>
+          <p>${localizeEscaped(tradition.titles)}</p>
+        </section>
+        <section>
+          <h3>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.Traditions.PowersHeading")}</h3>
+          <p>${localizeEscaped(tradition.powers)}</p>
+        </section>
+        <section>
+          <h3>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.Traditions.RitualsHeading")}</h3>
+          <p>${localizeEscaped(tradition.rituals)}</p>
+        </section>
+        <section class="symbaroum-hud-mystical-tradition-corruption">
+          <h3><i class="fa-solid fa-droplet" aria-hidden="true"></i>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.Traditions.CorruptionHeading")}</h3>
+          <p>${localizeEscaped(tradition.corruption)}</p>
+        </section>
+      </div>
+      <footer><span>${formatEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.Traditions.AbilityHeading", { ability: ability.name })}</span></footer>
+    </section>`;
+}
+
 function bindShadowBook(element) {
+  const principle = element.querySelector('input[name="shadow-principle"]');
+  const entries = Array.from(element.querySelectorAll("[data-shadow-page-id]"));
+  const pages = Array.from(element.querySelectorAll("[data-shadow-page]"));
   const textarea = element.querySelector('textarea[name="shadow"]');
   const count = element.querySelector("[data-shadow-count]");
   const confirm = element.querySelector('[data-action="choose-shadow"]');
@@ -2106,6 +2185,17 @@ function bindShadowBook(element) {
     if (count) count.textContent = String(textarea?.value?.length ?? 0);
     if (confirm) confirm.disabled = !textarea?.value?.trim();
   };
+  for (const entry of entries) entry.addEventListener("click", () => {
+    const id = entry.dataset.shadowPageId;
+    if (!pages.some((page) => page.dataset.shadowPage === id)) return;
+    if (principle) principle.value = id;
+    for (const candidate of entries) {
+      const active = candidate.dataset.shadowPageId === id;
+      candidate.dataset.active = String(active);
+      candidate.setAttribute("aria-pressed", String(active));
+    }
+    for (const page of pages) page.hidden = page.dataset.shadowPage !== id;
+  });
   textarea?.addEventListener("input", refreshCount);
   for (const example of element.querySelectorAll("[data-shadow-example]")) {
     example.addEventListener("click", () => {
@@ -2288,9 +2378,13 @@ function resolveStartingCombination(equipment, combinationId) {
 
 function findConfiguredStartingItem(equipment, configured) {
   const aliases = CONFIGURED_STARTING_ITEM_ALIASES[configured] ?? [];
-  return equipment.find((item) => aliases.includes(normalizeName(item?.name)))
-    ?? equipment.find((item) => aliases.includes(normalizeName(item?.system?.reference)))
+  return equipment.find((item) => aliases.includes(configuredStartingItemIdentity(item?.name)))
+    ?? equipment.find((item) => aliases.includes(configuredStartingItemIdentity(item?.system?.reference)))
     ?? null;
+}
+
+function configuredStartingItemIdentity(value) {
+  return normalizeName(value).replace(/regulares$/, "");
 }
 
 function findMarksmanWeapon(equipment, choice) {
@@ -2599,8 +2693,8 @@ function friendsBookContent(actor) {
             <header><i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
               <h2>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Friends.GroupTitle")}</h2></header>
             ${field("groupName", "SYMBAROUMHUD.CharacterCreator.Friends.GroupName", group.name)}
-            <label class="symbaroum-hud-group-goal"><span>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Friends.GroupGoal")}<i class="fa-solid fa-asterisk" aria-hidden="true"></i></span>
-              <textarea name="groupGoal" required placeholder="${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Friends.GroupGoalPlaceholder")}">${escapeHtml(group.goal ?? "")}</textarea>
+            <label class="symbaroum-hud-group-goal"><span>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Friends.GroupGoal")}<small>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Friends.Optional")}</small></span>
+              <textarea name="groupGoal" placeholder="${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Friends.GroupGoalPlaceholder")}">${escapeHtml(group.goal ?? "")}</textarea>
               <small>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Friends.GroupGoalHint")}</small></label>
           </section>
         </main>
@@ -2609,13 +2703,8 @@ function friendsBookContent(actor) {
 }
 
 function bindFriendsBook(element) {
-  const goal = element.querySelector('textarea[name="groupGoal"]');
   const confirm = element.querySelector('[data-action="choose-friends"]');
-  const refresh = () => {
-    if (confirm) confirm.disabled = !goal?.value.trim();
-  };
-  goal?.addEventListener("input", refresh);
-  refresh();
+  if (confirm) confirm.disabled = false;
 }
 
 function creationEquipmentData(source, quantity = 1) {
@@ -2723,6 +2812,14 @@ function bindAbilitiesBook(element, racialCost, {
   const entries = [...element.querySelectorAll("[data-creation-ability-id]")];
   const pages = [...element.querySelectorAll("[data-creation-ability-page]")];
   const selections = new Map();
+  for (const image of element.querySelectorAll("[data-tradition-fallback-src]")) {
+    const useFallback = () => {
+      const fallback = image.dataset.traditionFallbackSrc;
+      if (fallback && image.getAttribute("src") !== fallback) image.setAttribute("src", fallback);
+    };
+    image.addEventListener("error", useFallback, { once: true });
+    if (image.complete && image.naturalWidth === 0) useFallback();
+  }
   const selectionKey = (id, choiceId = "") => choiceId ? `${id}:${choiceId}` : id;
   const selectionValues = (source = selections) => [...source.values()];
   const openPage = (id) => {

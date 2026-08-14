@@ -122,10 +122,15 @@ assert.match(characterCreatorTheme, /\.symbaroum-hud-equipment-item-link/);
 assert.match(stylesheet, /\.symbaroum-hud-native-ability-sheet \.editor-content \{[^}]*font-size: 0\.72rem;[^}]*line-height: 1\.5;/);
 assert.match(stylesheet, /\.symbaroum-hud-native-ability-sheet \.editor-content p \{[^}]*border: 0;[^}]*text-decoration: none;/);
 assert.match(stylesheet, /\.symbaroum-hud-native-ability-sheet \.editor-content hr \{ display: none; \}/);
+assert.match(stylesheet, /\.symbaroum-hud-native-ability-sheet \.ability :is\(\.novice, \.adept, \.master\) > h1 \{ display: none; \}/);
+assert.match(stylesheet, /\.symbaroum-hud-mystical-tradition-hero \{/);
+assert.match(stylesheet, /\.symbaroum-hud-mystical-tradition-chapter \{/);
+assert.match(stylesheet, /\.symbaroum-hud-mystical-tradition-corruption \{/);
 for (const file of scriptFiles(path.join(root, "scripts"))) {
   const source = fs.readFileSync(file, "utf8");
   assert.doesNotMatch(source, /\beval\s*\(/, `${file} must not use eval()`);
   assert.doesNotMatch(source, /\bnew Function\s*\(/, `${file} must not create dynamic functions`);
+  assert.doesNotMatch(source, /\bonerror\s*=/i, `${file} must not use inline error handlers`);
   assert.doesNotMatch(source, /\bdebugger\b/, `${file} must not contain debugger statements`);
   assert.doesNotMatch(source, /console\.log\s*\(/, `${file} must not log noisy public output`);
 }
@@ -640,6 +645,9 @@ assert.match(stylesheet, /\.symbaroum-hud-ability-index-label > small/);
 assert.match(stylesheet, /data-occupation-recommended="true"/);
 assert.match(stylesheet, /\.symbaroum-hud-shadow-principles/);
 assert.match(stylesheet, /\.symbaroum-hud-shadow-example/);
+assert.match(stylesheet, /\.symbaroum-hud-shadow-index/);
+assert.match(stylesheet, /\.symbaroum-hud-shadow-reading-page/);
+assert.match(stylesheet, /\.symbaroum-hud-shadow-art/);
 assert.match(stylesheet, /\.symbaroum-hud-action-area \{[\s\S]*?grid-template-columns: 44px auto/);
 assert.match(stylesheet, /\.symbaroum-hud-action-area \{[\s\S]*?grid-template-rows: 19px auto/);
 assert.match(stylesheet, /\.symbaroum-hud-panel-stack/);

@@ -321,7 +321,53 @@
         "SelectedCount": "{count} escolhidos",
         "SelectRitualistRankFirst": "Escolha primeiro o nível de Ritualista.",
         "RitualCapacityFull": "Todas as vagas de Ritual deste nível já estão preenchidas.",
-        "InvalidSpecialChoice": "Escolha todos os Poderes Místicos ou Rituais exigidos antes de continuar."
+        "InvalidSpecialChoice": "Escolha todos os Poderes Místicos ou Rituais exigidos antes de continuar.",
+        "Traditions": {
+          "BookLabel": "Tradições Místicas",
+          "PurchaseExplanation": "Para pertencer a esta tradição, o personagem deve comprar a Habilidade {ability}. Essa escolha representa seu treinamento, seus princípios e a forma como aprende a lidar com a Corrupção.",
+          "TraditionHeading": "A tradição",
+          "TitlesHeading": "Títulos e caminho",
+          "PowersHeading": "Poderes associados",
+          "RitualsHeading": "Rituais associados",
+          "CorruptionHeading": "Corrupção",
+          "AbilityHeading": "A Habilidade {ability}",
+          "witchcraft": {
+            "Name": "Bruxaria",
+            "Introduction": "A mais antiga das tradições místicas está enraizada na vida selvagem de Davokar. Suas praticantes leem o mundo por meio dos ventos, do sangue e de tudo que cresce.",
+            "Doctrine": "A Bruxaria percorre três caminhos perigosos: o branco, ligado aos ventos e espíritos; o vermelho, marcado pelo sangue; e o verde, coberto por raízes e vegetação. Para as bruxas, esses caminhos fazem parte de um mesmo equilíbrio natural.",
+            "Titles": "Cada aldeia bárbara costuma abrigar uma bruxa e sua aprendiz. As bruxas de um clã formam um nodo guiado por uma Mantenedora; em Karvosti, a Huldra aconselha o Alto Chefe e ocupa o lugar mais respeitado da tradição.",
+            "Powers": "Abraço da Natureza, Dobrar Vontade, Enfeitiçar, Fervilhar Larvas, Flecha de Tempestade, Herdar Ferimento, Imposição de Mãos, Maldição, Maltransformação, Metamorfose e Vinhas Emaranhadoras.",
+            "Rituals": "Cantiga da Natureza, Círculo de Bruxa, Crescimento Rápido, Emprestar Besta, Familiar, Laço de Sangue, Necromancia, Oráculo e Virar o Clima.",
+            "Corruption": "A Corrupção é entendida como a resposta da natureza ao que a bruxa exige do mundo. Cada uso de poder deve ser pesado contra sua necessidade, e algumas bruxas aceitam o sacrifício para proteger seu povo."
+          },
+          "sorcery": {
+            "Name": "Feitiçaria",
+            "Introduction": "Feiticeiros buscam poder em fontes maculadas e estudam forças que outras tradições temem tocar. Seu caminho oferece resultados rápidos, mas cobra um preço sobre o corpo e a alma.",
+            "Doctrine": "A Feitiçaria reúne poderes e rituais alimentados pela mácula. Seus praticantes aprendem a reconhecer, suportar e explorar a Corrupção sem se entregar completamente a ela.",
+            "Titles": "Não existe uma ordem única que governe os feiticeiros. Muitos aprendem isolados, com mestres secretos ou por meio de textos e artefatos proibidos; por isso, são caçados e estudados por organizações como os Mantos Negros.",
+            "Powers": "Aura Profana, Dobrar Vontade, Fervilhar Larvas, Golpe de Regresso e Maldição.",
+            "Rituals": "Escravizar, Possessão, Rito de Profanação e Trocar Sombra.",
+            "Corruption": "O feiticeiro vê a Corrupção como parte inevitável de um mundo moribundo. A tradição ensina a caminhar junto da escuridão e usar sua força, mantendo distância suficiente para não ser devorado por ela."
+          },
+          "wizardry": {
+            "Name": "Magismo",
+            "Introduction": "O Magismo é a tradição da Ordo Magica. Seus praticantes estudam as leis fundamentais da natureza e aprendem a alterá-las por meio de disciplina, razão e vontade treinada.",
+            "Doctrine": "Para os magos, o mundo é profundamente mágico e pode ser compreendido sem depender da vontade dos deuses. A formação é longa e exigente, recompensando aqueles que perseveram com domínio sistemático dos mistérios.",
+            "Titles": "A progressão começa como Aprendiz, segue por Adepto e Magistrado e alcança o posto de Mestre. Cada capítulo da Ordo Magica é governado por um Mestre de Capítulo e toda a ordem responde ao Grão Mestre.",
+            "Powers": "Anátema, Arremesso Mental, Cascata de Enxofre, Confusão, Correção Ilusória, Dobrar Vontade, Forma Verdadeira, Imperceptível, Levitação e Muralha de Fogo.",
+            "Rituals": "Círculo Mágico, Clarividência, Conto das Cinzas, Ilusão, Interrogatório Telepático, Passo de Sete Léguas, Pedra da Alma, Sacrário, Servo Flamejante e Terreno Falso.",
+            "Corruption": "A Ordo Magica descreve a Corrupção como uma reação natural ao uso do poder. Conhecimento, método e cautela permitem ao mago provocar essa reação sem perder o controle."
+          },
+          "theurgy": {
+            "Name": "Teurgia",
+            "Introduction": "A Teurgia é a tradição dos sacerdotes místicos de Prios. Seus poderes são tratados como a luz do Deus Sol irradiando através dos fiéis escolhidos para proteger a humanidade.",
+            "Doctrine": "Os teurgos sustentam a Igreja com oração, devoção e poder místico. Eles se veem como emissários de Prios e defensores da ordem humana contra a noite, a selva e a corrupção.",
+            "Titles": "Os Iniciados auxiliam e aprendem com os Irmãos e Irmãs da Igreja, que servem aos teurgos mais antigos, chamados de Pais ou Mães. A obediência aos superiores é uma virtude central da tradição.",
+            "Powers": "Anátema, Aura Sagrada, Escudo Abençoado, Forma Verdadeira, Herdar Ferimento, Imperceptível, Imposição de Mãos, Levitação, Luz Ardente de Prios e Martelo Bruxo.",
+            "Rituals": "Comandar Confissão, Elos de Julgamento, Exorcismo, Fogo Purgante, Fumaça Sagrada, Oráculo, Rastro do Herege, Rito de Santificação e Santo Patrono.",
+            "Corruption": "Os teurgos associam a Corrupção ao que cresce sem cultivo e controle. Ainda assim, todo devoto deve aceitar o risco da mácula e manter acesa sua chama interior ao enfrentar a escuridão."
+          }
+        }
       },
       "Shadow": {
         "Title": "Criador de Fichas — Descreva sua Sombra",
@@ -332,10 +378,22 @@
         "Introduction": "Toda criatura e todo objeto possuem uma Sombra: a expressão invisível de sua essência e de suas afinidades espirituais. Ela pode parecer uma cor, um brilho, uma névoa, uma textura ou uma sensação, sem imitar a silhueta física.",
         "Visibility": "Visão de Bruxa e Fumaça Sagrada permitem percebê-la e interpretar o que revela. Sua aparência descreve quem o personagem é por dentro, mas não concede bônus.",
         "PrinciplesHeading": "Os três princípios",
+        "Index": "Princípios da Sombra",
+        "IndexHint": "Abra uma página para conhecer cada origem e encontrar inspiração para a sua Sombra.",
         "Principles": {
           "Nature": { "Title": "Natureza", "Text": "Verdes, vermelhos e brancos; seiva, folhas, sangue, neve, névoa e formas orgânicas." },
           "Civilization": { "Title": "Civilização", "Text": "Ouro, prata e cobre; metal polido, moedas, linhas precisas, brasões e luz disciplinada." },
           "Darkness": { "Title": "Escuridão", "Text": "Negro abissal e sinais de mácula. A Corrupção costuma manchar, corroer, apagar ou deformar outras cores." }
+        },
+        "PageText": {
+          "Nature": "Sombras ligadas à Natureza lembram coisas vivas e indomadas: folhas agitadas por um vento invisível, o vermelho do sangue, a brancura da neve, raízes, cascas, musgo e água corrente. Elas podem ser serenas ou ferozes, mas raramente parecem perfeitamente ordenadas.",
+          "Civilization": "Sombras ligadas à Civilização assumem a aparência de metais, moedas, brasões, linhas precisas ou luz trabalhada. Ouro, prata e cobre podem expressar posição, ambição, disciplina, ofício ou a influência das instituições ambrianas.",
+          "Darkness": "A Escuridão se revela como ausência, mancha e deformação. Uma Sombra corrompida pode conservar sua cor original, mas apresentar ferrugem, rachaduras, cinzas, áreas pálidas ou trechos que parecem devorados por um vazio silencioso."
+        },
+        "IllustrationAlt": {
+          "Nature": "Uma figura envolvida por uma Sombra verde de folhas, musgo e veios vermelhos.",
+          "Civilization": "Uma figura envolvida por uma Sombra de ouro, prata, cobre e linhas ordenadas.",
+          "Darkness": "Uma figura envolvida por uma Sombra escura e violeta marcada pela Corrupção."
         },
         "MixedNote": "Uma pessoa pode reunir mais de um princípio. Sombras mescladas são comuns nas fronteiras entre Ambria e Davokar.",
         "CorruptionHeading": "Sombra e Corrupção",
@@ -452,7 +510,8 @@
       "Friends": {
         "Title": "Criador de Fichas — Amigos e Grupo",
         "Choose": "Confirmar Amigos e Grupo",
-        "Required": "Defina um objetivo para o grupo antes de continuar.",
+        "Required": "Esta etapa é opcional e pode ser concluída sem preenchimento.",
+        "Optional": "Opcional",
         "BookLabel": "Laços de aventura",
         "GuideHeading": "Amigos & Companheiros",
         "CompanionsHeading": "Quem caminha ao seu lado?",
@@ -478,7 +537,7 @@
         "GroupName": "Nome do grupo",
         "GroupGoal": "Objetivo do grupo",
         "GroupGoalPlaceholder": "O que todos desejam conquistar, proteger, descobrir ou impedir?",
-        "GroupGoalHint": "O objetivo poderá mudar depois conforme a campanha evoluir."
+        "GroupGoalHint": "Campo opcional. Você pode deixar para definir o grupo durante a campanha."
       },
       "Occupations": {
         "berserker": { "Name": "Amoque", "Quote": "Mantenha distância! Eu não gostaria de te machucar.", "Summary": "Espíritos de fúria seguem você e o preenchem com uma ferocidade descontrolada em batalha. Fora do combate, sua disposição paciente e pensativa cria um contraste que o torna estimado e temido.", "Attributes": "Vigoroso 13+, Rápido 11+", "Races": "Bárbaro ou ogro", "Abilities": "Amoque, Força da Empunhadura Dupla, Punho de Ferro, Recuperação" },

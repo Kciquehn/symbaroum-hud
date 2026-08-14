@@ -302,7 +302,53 @@
         "SelectedCount": "{count} selected",
         "SelectRitualistRankFirst": "Choose the Ritualist rank first.",
         "RitualCapacityFull": "Every Ritual slot at this rank is already filled.",
-        "InvalidSpecialChoice": "Choose every required Mystical Power or Ritual before continuing."
+        "InvalidSpecialChoice": "Choose every required Mystical Power or Ritual before continuing.",
+        "Traditions": {
+          "BookLabel": "Mystical Traditions",
+          "PurchaseExplanation": "To belong to this tradition, the character must purchase the {ability} Ability. This choice represents their training, principles, and way of handling Corruption.",
+          "TraditionHeading": "The tradition",
+          "TitlesHeading": "Titles and path",
+          "PowersHeading": "Associated powers",
+          "RitualsHeading": "Associated rituals",
+          "CorruptionHeading": "Corruption",
+          "AbilityHeading": "The {ability} Ability",
+          "witchcraft": {
+            "Name": "Witchcraft",
+            "Introduction": "The oldest mystical tradition is rooted in the wilds of Davokar. Its practitioners read the world through winds, blood, and all growing things.",
+            "Doctrine": "Witchcraft follows three dangerous paths: the white path of winds and spirits, the red path marked by blood, and the green path covered in roots and vegetation. Witches regard them as parts of one natural balance.",
+            "Titles": "Each barbarian village commonly shelters a witch and an apprentice. A clan's witches form a coven led by a Keeper; at Karvosti, the Huldra advises the High Chieftain and holds the tradition's most respected position.",
+            "Powers": "Bend Will, Curse, Entangling Vines, Inherit Wound, Larvae Boil, Lay on Hands, Maltransformation, Nature's Embrace, Shapeshift, Storm Arrow, and Witch Hammer.",
+            "Rituals": "Borrow Beast, Familiar, Nature's Lullaby, Necromancy, Oracle, Quick Growth, Turn Weather, Witch Circle, and Blood Bond.",
+            "Corruption": "Corruption is understood as nature's answer to what the witch demands of the world. Every use of power must be weighed against necessity, and some witches accept sacrifice to protect their people."
+          },
+          "sorcery": {
+            "Name": "Sorcery",
+            "Introduction": "Sorcerers seek power in tainted sources and study forces other traditions fear to touch. Their path offers swift results but exacts a price from body and soul.",
+            "Doctrine": "Sorcery gathers powers and rituals fueled by taint. Its practitioners learn to recognize, withstand, and exploit Corruption without surrendering completely to it.",
+            "Titles": "No single order governs sorcerers. Many learn in isolation, from secret masters, or through forbidden texts and artifacts; they are therefore hunted and studied by organizations such as the Black Cloaks.",
+            "Powers": "Bend Will, Curse, Larvae Boil, Unholy Aura, and Unnoticeable Strike.",
+            "Rituals": "Enslave, Possess, Desecrating Rite, and Exchange Shadow.",
+            "Corruption": "The sorcerer sees Corruption as an inevitable part of a dying world. The tradition teaches how to walk beside darkness and use its strength while staying far enough away not to be consumed."
+          },
+          "wizardry": {
+            "Name": "Wizardry",
+            "Introduction": "Wizardry is the tradition of the Ordo Magica. Its practitioners study nature's fundamental laws and learn to alter them through discipline, reason, and trained will.",
+            "Doctrine": "To wizards, the world is deeply magical and can be understood without depending on the will of gods. The long, demanding education rewards perseverance with systematic command of its mysteries.",
+            "Titles": "Progress begins as Apprentice, continues through Adept and Magistrate, and reaches Master. Each Ordo Magica chapter is governed by a Chapter Master, while the whole order answers to the Grand Master.",
+            "Powers": "Anathema, Bend Will, Brimstone Cascade, Confusion, Illusory Correction, Levitate, Mind-Throw, True Form, Unnoticeable, and Wall of Fire.",
+            "Rituals": "Clairvoyance, False Terrain, Flaming Servant, Illusion, Magic Circle, Necromancy, Seven-league Stride, Soul Stone, Telepathic Interrogation, and Wizard's Sanctum.",
+            "Corruption": "The Ordo Magica describes Corruption as a natural reaction to mystical power. Knowledge, method, and caution let a wizard provoke that reaction without losing control."
+          },
+          "theurgy": {
+            "Name": "Theurgy",
+            "Introduction": "Theurgy is the tradition of Prios's mystical priests. Its powers are regarded as the Sun God's light radiating through faithful champions chosen to protect humanity.",
+            "Doctrine": "Theurgs sustain the Church through prayer, devotion, and mystical power. They see themselves as Prios's emissaries and defenders of human order against night, wilderness, and corruption.",
+            "Titles": "Initiates assist and learn from the Church's Brothers and Sisters, who serve senior theurgs known as Fathers or Mothers. Obedience to superiors is a central virtue of the tradition.",
+            "Powers": "Anathema, Blessed Shield, Inherit Wound, Lay on Hands, Levitate, Prios's Burning Glass, Sacred Aura, True Form, Unnoticeable, and Witch Hammer.",
+            "Rituals": "Command Confession, Exorcism, Holy Smoke, Judgment Bonds, Oracle, Patron Saint, Purging Fire, Heretic's Trail, and Sanctifying Rite.",
+            "Corruption": "Theurgs associate Corruption with what grows without cultivation and control. Even so, every devotee must accept the risk of taint and keep their inner flame alive when facing darkness."
+          }
+        }
       },
       "Shadow": {
         "Title": "Character Creator — Describe your Shadow",
@@ -313,10 +359,22 @@
         "Introduction": "Every creature and object has a Shadow: the invisible expression of its essence and spiritual affinities. It may appear as a color, glow, mist, texture, or sensation without resembling a physical silhouette.",
         "Visibility": "Witchsight and Holy Smoke make it possible to perceive it and interpret what it reveals. Its appearance describes who the character is within, but grants no bonus.",
         "PrinciplesHeading": "The three principles",
+        "Index": "Shadow Principles",
+        "IndexHint": "Open a page to learn about each source and find inspiration for your Shadow.",
         "Principles": {
           "Nature": { "Title": "Nature", "Text": "Greens, reds, and whites; sap, leaves, blood, snow, mist, and organic forms." },
           "Civilization": { "Title": "Civilization", "Text": "Gold, silver, and copper; polished metal, coins, precise lines, heraldry, and disciplined light." },
           "Darkness": { "Title": "Darkness", "Text": "Abyssal black and signs of taint. Corruption often stains, corrodes, erases, or distorts other colors." }
+        },
+        "PageText": {
+          "Nature": "Shadows tied to Nature resemble living and untamed things: leaves stirred by an unseen wind, the red of blood, the white of snow, roots, bark, moss, and running water. They may be peaceful or fierce, but rarely appear perfectly ordered.",
+          "Civilization": "Shadows tied to Civilization take the appearance of metals, coins, heraldry, precise lines, or crafted light. Gold, silver, and copper may express status, ambition, discipline, trade, or the influence of Ambrian institutions.",
+          "Darkness": "Darkness reveals itself as absence, stain, and distortion. A corrupted Shadow may retain its original color while showing rust, cracks, ash, pale patches, or places that seem consumed by a silent void."
+        },
+        "IllustrationAlt": {
+          "Nature": "A figure surrounded by a green Shadow of leaves, moss, and red veins.",
+          "Civilization": "A figure surrounded by a Shadow of gold, silver, copper, and ordered lines.",
+          "Darkness": "A figure surrounded by a dark violet Shadow marked by Corruption."
         },
         "MixedNote": "A person may embody more than one principle. Mixed Shadows are common along the borders between Ambria and Davokar.",
         "CorruptionHeading": "Shadow and Corruption",
@@ -433,7 +491,8 @@
       "Friends": {
         "Title": "Character Creator — Friends and Group",
         "Choose": "Confirm Friends and Group",
-        "Required": "Define a goal for the group before continuing.",
+        "Required": "This step is optional and may be completed without filling any fields.",
+        "Optional": "Optional",
         "BookLabel": "Bonds of adventure",
         "GuideHeading": "Friends & Companions",
         "CompanionsHeading": "Who walks beside you?",
@@ -459,7 +518,7 @@
         "GroupName": "Group name",
         "GroupGoal": "Group goal",
         "GroupGoalPlaceholder": "What does everyone wish to achieve, protect, discover, or prevent?",
-        "GroupGoalHint": "The goal may change later as the campaign evolves."
+        "GroupGoalHint": "Optional field. You may define the group later during the campaign."
       },
       "Occupations": {
         "berserker": { "Name": "Berserker", "Quote": "Keep your distance! I would not want to hurt you.", "Summary": "Spirits of rage follow you and fill you with uncontrolled ferocity in battle. Outside combat, your patient and thoughtful disposition makes the contrast both admired and feared.", "Attributes": "Strong 13+, Quick 11+", "Races": "Barbarian or ogre", "Abilities": "Berserker, Two-handed Force, Iron Fist, Recovery" },
