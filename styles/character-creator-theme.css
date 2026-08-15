@@ -11,6 +11,14 @@
   --symba-creator-green-light: url("/systems/symbaroum/asset/image/background/green_flower_light.webp");
   --symba-creator-green-dark: url("/systems/symbaroum/asset/image/background/green_flower_dark.webp");
   --symba-creator-brown: url("/systems/symbaroum/asset/image/background/brown_dark.webp");
+  /* The native system stores these as ../asset URLs. Once a native Item sheet is
+     embedded in this module, that relative path would incorrectly resolve under
+     modules/symbaroum-hud. Keep the native variables scoped to absolute system assets. */
+  --color-charBG: var(--symba-creator-green-light) repeat;
+  --color-npcBG: url("/systems/symbaroum/asset/image/background/purple_flower_light.webp") repeat;
+  --title-image: var(--symba-creator-title);
+  --box-editable: var(--symba-creator-field) repeat;
+  --box-non-editable: url("/systems/symbaroum/asset/image/background/not-editable.webp") repeat;
   color: var(--color-text, #111);
   font-family: var(--font-text, "Philosopher"), serif;
   z-index: 1000 !important;

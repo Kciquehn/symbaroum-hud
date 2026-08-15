@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.64
+
+- Mantém todas as escolhas do Criador de Fichas salvas ao voltar, avançar ou reabrir uma etapa, incluindo Atributos, Raça, Traços, Habilidades, Sombra, equipamentos, personalidade, amigos e grupo.
+- Faz o traço **Privilegiado** substituir o dinheiro inicial por exatamente 50 táleres.
+- Corrige os caminhos das texturas usadas pela ficha nativa de Habilidade incorporada, eliminando erros 404 de `title.webp` e `green_flower_light.webp`.
+- Adiciona **Abrir Criador de Fichas** ao topo das fichas de jogador, retomando a etapa pendente ou permitindo revisar uma criação concluída sem fechar a ficha original.
+- Amplia a suíte automatizada para 146 testes cobrindo os novos fluxos e regressões.
+
 ## 0.1.63
 
 - Reconstrói a etapa **Sombra** como páginas ilustradas de Natureza, Civilização e Escuridão, seguindo a composição editorial usada nas Raças.

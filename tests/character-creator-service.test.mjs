@@ -274,6 +274,41 @@ test("closes an Actor sheet before resuming an unfinished creator", async () => 
   assert.match(dialogConfigs.at(-1).content, /symbaroum-hud-occupation-book/);
 });
 
+test("keeps a completed Actor sheet open so its creator button remains available", async () => {
+  const completed = actor({ id: "creator-completed", uuid: "Actor.creator-completed" });
+  await completed.setFlag("symbaroum-hud", "characterCreationMode", CHARACTER_CREATION_MODES.CREATOR);
+  await completed.setFlag("symbaroum-hud", "characterCreatorState", {
+    version: 1,
+    step: "friends-complete"
+  });
+  let sheetCloseCount = 0;
+  const sheet = { close: async () => { sheetCloseCount += 1; } };
+  const dialogCount = dialogConfigs.length;
+
+  await CharacterCreatorService.handleSheet(completed, sheet);
+
+  assert.equal(sheetCloseCount, 0);
+  assert.equal(dialogConfigs.length, dialogCount);
+});
+
+test("opens the creator on demand and resumes or reviews the saved creation", async () => {
+  const completed = actor({ id: "creator-review", uuid: "Actor.creator-review" });
+  await completed.setFlag("symbaroum-hud", "characterCreationMode", CHARACTER_CREATION_MODES.CREATOR);
+  await completed.setFlag("symbaroum-hud", "characterCreatorState", {
+    version: 1,
+    step: "friends-complete"
+  });
+  dialogChoices.push("close");
+
+  await CharacterCreatorService.open(completed);
+
+  assert.match(dialogConfigs.at(-1).content, /symbaroum-hud-occupation-book/);
+  assert.deepEqual(hookCalls.at(-1), [
+    "symbaroum-hud.characterCreatorRequested",
+    completed
+  ]);
+});
+
 test("the core occupation book contains all fifteen occupations in three archetypes", () => {
   assert.equal(CORE_OCCUPATIONS.length, 15);
   assert.deepEqual(OCCUPATION_ARCHETYPES.map((entry) => entry.id), [
@@ -1244,6 +1279,126 @@ test("completed creator steps can be reviewed backward and forward from the step
   assert.match(opened[2].content, /data-creator-navigation="next"/);
 });
 
+test("reviewing earlier steps restores saved Attributes, Race traits and Abilities", async () => {
+  const acrobatics = worldAbility("acrobatics", "Acrobacias");
+  const learnedAcrobatics = { ...acrobatics.toObject(), id: "learned-acrobatics" };
+  const blank = actor({
+    id: "creator-review-state",
+    uuid: "Actor.creator-review-state",
+    items: [learnedAcrobatics]
+  });
+  await blank.setFlag("symbaroum-hud", "characterCreationMode", "creator");
+  await blank.setFlag("symbaroum-hud", "characterCreatorState", {
+    version: 1,
+    step: "abilities-complete",
+    occupation: "wizard",
+    attributeDistribution: "point-buy",
+    attributes: {
+      accurate: 15,
+      cunning: 13,
+      discreet: 12,
+      persuasive: 10,
+      quick: 9,
+      resolute: 8,
+      strong: 7,
+      vigilant: 6
+    },
+    race: "ambrian",
+    raceTraits: ["privileged"],
+    abilityDistribution: "experience",
+    abilityExperienceBudget: 60,
+    abilityExperienceSpent: 10,
+    abilities: [{ id: "acrobatics", rank: "novice", name: "Acrobacias" }]
+  });
+  const previous = game.items;
+  game.items = [acrobatics];
+  const firstDialog = dialogConfigs.length;
+  dialogChoices.push(
+    { action: "creator-previous-step" },
+    { action: "creator-previous-step" },
+    { action: "creator-previous-step" },
+    "close"
+  );
+  try {
+    await CharacterCreatorService.openShadowStep(blank);
+  } finally {
+    game.items = previous;
+  }
+
+  const opened = dialogConfigs.slice(firstDialog);
+  const abilities = opened[1].content;
+  const race = opened[2].content;
+  const attributes = opened[3].content;
+  assert.match(abilities, /name="abilityDistributionMode" value="experience"/);
+  assert.match(abilities, /name="abilitySelections" value="[^\n]*acrobatics/);
+  assert.match(abilities, /name="abilityExperienceBudget" value="60"/);
+  assert.match(race, /name="race" value="ambrian"/);
+  assert.match(race, /name="race-choice-ambrian"[\s\S]*value="privileged" checked/);
+  assert.match(attributes, /name="attributeDistributionMode"[\s\S]*value="point-buy"/);
+  assert.match(attributes, /name="points-accurate" value="15"/);
+  assert.match(attributes, /name="points-vigilant" value="6"/);
+  assert.match(attributes, /data-attribute-mode="point-buy" data-active="true"/);
+});
+
+test("reviewing Shadows and Equipment restores the selected page, text and weapon choice", async () => {
+  const blank = actor({ id: "creator-review-late", uuid: "Actor.creator-review-late" });
+  await blank.setFlag("symbaroum-hud", "characterCreationMode", "creator");
+  await blank.setFlag("symbaroum-hud", "characterCreatorState", {
+    version: 1,
+    step: "personality-complete",
+    occupation: "wizard",
+    attributes: {},
+    race: "ambrian",
+    abilities: [],
+    shadow: "Negra como uma noite sem estrelas.",
+    shadowPrinciple: "darkness",
+    equipment: [{
+      ability: "basicweapon",
+      category: "starting-combination",
+      itemId: "bow",
+      itemName: "Arco",
+      quantity: 1,
+      combination: "bow"
+    }],
+    personality: {
+      characterName: "Novo Personagem",
+      appearance: "Um viajante encapuzado.",
+      background: "Veio das fronteiras.",
+      personalGoal: "Encontrar respostas."
+    }
+  });
+  const previous = game.items;
+  game.items = [
+    worldEquipment("bow", "Arco", "weapon", { reference: "bow" }),
+    worldEquipment("dagger", "Adaga", "weapon", { reference: "dagger" }),
+    worldEquipment("quiver", "Aljava", "equipment", { reference: "quiver" }),
+    worldEquipment("ammo", "Flechas/Virotes", "equipment", { reference: "ammo" }),
+    worldEquipment("light-armor", "Armadura Leve", "armor", { reference: "lightarmor", baseProtection: "1d4" }),
+    worldEquipment("camp", "Equipamento de Acampar", "equipment", { reference: "campingEquipment" })
+  ];
+  const firstDialog = dialogConfigs.length;
+  dialogChoices.push(
+    { action: "creator-previous-step" },
+    { action: "creator-previous-step" },
+    { action: "creator-previous-step" },
+    "close"
+  );
+  try {
+    await CharacterCreatorService.openFriendsStep(blank);
+  } finally {
+    game.items = previous;
+  }
+
+  const opened = dialogConfigs.slice(firstDialog);
+  const equipment = opened[2].content;
+  const shadow = opened[3].content;
+  assert.match(equipment, /value="bow" required data-equipment-grant checked/);
+  assert.match(shadow, /name="shadow-principle" value="darkness"/);
+  assert.match(shadow, /data-shadow-page-id="darkness" data-active="true"/);
+  assert.match(shadow, /data-shadow-page="darkness"\s*>/);
+  assert.match(shadow, /Negra como uma noite sem estrelas\./);
+});
+
 test("editing an earlier creator step preserves the furthest completed step", async () => {
   const blank = actor({ id: "creator-review-save", uuid: "Actor.creator-review-save" });
   await blank.setFlag("symbaroum-hud", "characterCreationMode", "creator");
@@ -1302,6 +1457,42 @@ test("starting money grants one thaler for every complete ten XP", () => {
   assert.equal(startingThalerForExperience(79), 7);
 });
 
+test("Privileged replaces the normal starting-money calculation with exactly fifty thalers", async () => {
+  const blank = actor({ id: "privileged-money", uuid: "Actor.privileged-money" });
+  await blank.setFlag("symbaroum-hud", "characterCreationMode", "creator");
+  await blank.setFlag("symbaroum-hud", "characterCreatorState", {
+    version: 1,
+    step: "shadow-complete",
+    race: "ambrian",
+    raceTraits: ["privileged"],
+    abilityExperienceBudget: 50,
+    shadow: "Dourada como uma moeda real."
+  });
+  const previous = game.items;
+  game.items = [
+    worldEquipment("staff", "Bordão", "weapon", { reference: "long" }),
+    worldEquipment("dagger", "Adaga", "weapon", { reference: "short" }),
+    worldEquipment("light-armor", "Armadura Leve", "armor", { reference: "lightarmor", baseProtection: "1d4" }),
+    worldEquipment("camp", "Equipamento de Acampar", "equipment", { reference: "campingEquipment" })
+  ];
+  const equipmentDialog = dialogConfigs.length;
+  dialogChoices.push({ action: "choose-equipment", form: {
+    "equipmentGrant-basicweapon-0": "staff"
+  } });
+  try {
+    await CharacterCreatorService.openEquipmentStep(blank);
+  } finally {
+    game.items = previous;
+  }
+
+  assert.match(dialogConfigs[equipmentDialog].content, /symbaroum-hud-equipment-privileged-money/);
+  assert.match(dialogConfigs[equipmentDialog].content, /<strong>50<\/strong>/);
+  assert.deepEqual(blank.updates.at(-1), { "system.money.thaler": 50 });
+  assert.equal(blank.flag("characterCreatorState").startingThalerBase, 5);
+  assert.equal(blank.flag("characterCreatorState").startingThalerOverride, 50);
+  assert.equal(blank.flag("characterCreatorState").startingThaler, 50);
+});
+
 test("the sixth creator step maps learned Abilities to compatible accessible equipment", async () => {
   const twinAttack = worldAbility("twin", "Ataque Gêmeo");
   twinAttack.system.reference = "twinattack";
@@ -1317,7 +1508,7 @@ test("the sixth creator step maps learned Abilities to compatible accessible equ
   const permissions = [];
   const previous = game.items;
   game.items = [
-    worldEquipment("one-handed", "Arma de Uma Mão", "weapon", { reference: "1handed" }, (_user, level) => { permissions.push(level); return true; }),
+    worldEquipment("sword", "Espada", "weapon", { reference: "1handed" }, (_user, level) => { permissions.push(level); return true; }),
     worldEquipment("short", "Arma Curta", "weapon", { reference: "short" }),
     worldEquipment("crossbow", "Besta", "weapon", { reference: "crossbow" }),
     worldEquipment("bow", "Arco", "weapon", { reference: "bow" }),
@@ -1344,7 +1535,7 @@ test("the sixth creator step maps learned Abilities to compatible accessible equ
   assert.match(content, /symbaroum-hud-equipment-ability-rewards/);
   assert.match(content, /AbilityGrantLead/);
   assert.match(content, /GrantedByAbility/);
-  assert.match(content, /Arma de Uma Mão/);
+  assert.match(content, /Espada/);
   assert.match(content, /Besta/);
   assert.match(content, /Arco/);
   assert.match(content, /Aljava/);
@@ -1354,7 +1545,7 @@ test("the sixth creator step maps learned Abilities to compatible accessible equ
   assert.match(content, /Armadura Leve/);
   assert.match(content, /×2/);
   assert.match(content, /data-open-equipment-item="camp"/);
-  assert.match(content, /data-open-equipment-item="one-handed"/);
+  assert.match(content, /data-open-equipment-item="sword"/);
   assert.match(content, /data-open-equipment-item="light-armor"/);
   assert.doesNotMatch(content, /symbaroum-hud-equipment-automatic-grant/);
   assert.doesNotMatch(content, /symbaroum-hud-equipment-camping/);
@@ -1403,6 +1594,37 @@ test("an Ability-granted armor identifies its source and replaces the basic Ligh
   assert.doesNotMatch(content, /data-open-equipment-item="light-armor"/);
   assert.ok(blank.items.find((item) => item.name === "Armadura Média"));
   assert.equal(blank.items.some((item) => item.name === "Armadura Leve"), false);
+});
+
+test("Twin Attack imports the configured Sword instead of a generic one-handed weapon", async () => {
+  const twinAttack = worldAbility("twin-sword", "Ataque Gêmeo");
+  twinAttack.system.reference = "twinattack";
+  twinAttack.system.novice.isActive = true;
+  const blank = actor({ id: "twin-sword-grant", uuid: "Actor.twin-sword-grant", items: [twinAttack] });
+  await blank.setFlag("symbaroum-hud", "characterCreationMode", "creator");
+  await blank.setFlag("symbaroum-hud", "characterCreatorState", {
+    version: 1, step: "shadow-complete"
+  });
+  const previous = game.items;
+  game.items = [
+    worldEquipment("sword", "Espada", "weapon", { reference: "1handed" }),
+    worldEquipment("generic-one-handed", "Arma de Uma Mão", "weapon", { reference: "1handed" }),
+    worldEquipment("light-armor", "Armadura Leve", "armor", {
+      reference: "lightarmor", baseProtection: "1d4"
+    }),
+    worldEquipment("camp", "Equipamento de Acampar", "equipment", {
+      reference: "campingEquipment"
+    })
+  ];
+  dialogChoices.push({ action: "choose-equipment", form: {} });
+  try {
+    await CharacterCreatorService.openEquipmentStep(blank);
+  } finally {
+    game.items = previous;
+  }
+
+  assert.equal(blank.items.filter((item) => item.name === "Espada").length, 1);
+  assert.equal(blank.items.some((item) => item.name === "Arma de Uma Mão"), false);
 });
 
 test("Marksman imports the chosen Bow plus a quiver and ten arrows or bolts", async () => {

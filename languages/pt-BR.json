@@ -5,6 +5,7 @@
     "None": "Nenhum item disponível.",
     "CharacterCreator": {
       "Title": "Nova ficha de personagem",
+      "OpenButton": "Abrir Criador de Fichas",
       "Heading": "Como deseja criar este personagem?",
       "Description": "Você pode preencher a ficha livremente ou seguir o Criador de Fichas, que guiará cada etapa da criação segundo as regras de Symbaroum.",
       "DecisionHint": "Fechar esta janela sem escolher fará a pergunta aparecer novamente na próxima abertura.",
@@ -420,6 +421,7 @@
         "StartingMoney": "Dinheiro inicial",
         "Thaler": "táleres",
         "MoneyFormula": "{experience} XP totais concedem {thaler} táleres — 1 táler para cada 10 XP.",
+        "PrivilegedStartingMoney": "O traço Privilegiado substitui o cálculo normal: o personagem começa com exatamente {total} táleres.",
         "CampingHeading": "Kit de viagem",
         "Automatic": "Será adicionado automaticamente",
         "AlreadyAdded": "Já está na ficha",
@@ -467,6 +469,7 @@
           "Shield": "Um escudo",
           "ThrownWeapon": "Uma arma de arremesso",
           "OneHandedWeapon": "Uma arma de uma mão",
+          "Sword": "Uma espada",
           "TwoHandedWeapon": "Uma arma de duas mãos"
         }
       },

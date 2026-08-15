@@ -5,6 +5,7 @@
     "None": "No items available.",
     "CharacterCreator": {
       "Title": "New character sheet",
+      "OpenButton": "Open Character Creator",
       "Heading": "How would you like to create this character?",
       "Description": "You can fill in the sheet freely or use the Character Creator, which will guide each creation step according to the Symbaroum rules.",
       "DecisionHint": "Closing this window without choosing will show the question again the next time the sheet opens.",
@@ -401,6 +402,7 @@
         "StartingMoney": "Starting money",
         "Thaler": "thalers",
         "MoneyFormula": "{experience} total XP grants {thaler} thalers — 1 thaler for every 10 XP.",
+        "PrivilegedStartingMoney": "The Privileged trait replaces the normal calculation: the character starts with exactly {total} thalers.",
         "CampingHeading": "Travel kit",
         "Automatic": "Will be added automatically",
         "AlreadyAdded": "Already on the sheet",
@@ -448,6 +450,7 @@
           "Shield": "One shield",
           "ThrownWeapon": "One thrown weapon",
           "OneHandedWeapon": "One one-handed weapon",
+          "Sword": "One sword",
           "TwoHandedWeapon": "One two-handed weapon"
         }
       },

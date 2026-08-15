@@ -38,6 +38,7 @@ const SHADOW_STEP_COMPLETE = "shadow-complete";
 const EQUIPMENT_STEP_COMPLETE = "equipment-complete";
 const PERSONALITY_STEP_COMPLETE = "personality-complete";
 const FRIENDS_STEP_COMPLETE = "friends-complete";
+const PRIVILEGED_STARTING_THALER = 50;
 const CREATOR_STEPS = Object.freeze([
   Object.freeze({ id: "occupation", complete: OCCUPATION_STEP_COMPLETE }),
   Object.freeze({ id: "attributes", complete: ATTRIBUTES_STEP_COMPLETE }),
@@ -136,11 +137,63 @@ export function isFriendsStepComplete(actor) {
   return actor?.getFlag?.(MODULE_ID, STATE_FLAG)?.step === FRIENDS_STEP_COMPLETE;
 }
 
+function canOpenCharacterCreator(actor) {
+  return Boolean(actor?.type === "player" && canOwn(actor, game.user));
+}
+
+function creatorEntryStep(actor) {
+  if (!isOccupationStepComplete(actor)) return "occupation";
+  if (!isAttributesStepComplete(actor)) return "attributes";
+  if (!isRaceStepComplete(actor)) return "race";
+  if (isContactsPreparationRequired(actor)) return "contacts";
+  if (!isAbilitiesStepComplete(actor)) return "abilities";
+  if (!isShadowStepComplete(actor)) return "shadow";
+  if (!isEquipmentStepComplete(actor)) return "equipment";
+  if (!isPersonalityStepComplete(actor)) return "personality";
+  if (!isFriendsStepComplete(actor)) return "friends";
+  return "occupation";
+}
+
+function attachCharacterCreatorHeaderButton(sheet, html, actor) {
+  if (!canOpenCharacterCreator(actor)) return;
+  const candidates = [html, html?.[0], sheet?.element, sheet?.element?.[0]];
+  const root = candidates.find((candidate) => candidate?.querySelector?.(".window-header"));
+  const header = root?.querySelector?.(".window-header");
+  if (!header || header.querySelector(".symbaroum-hud-open-character-creator")) return;
+
+  const button = root.ownerDocument.createElement("button");
+  const label = game.i18n.localize("SYMBAROUMHUD.CharacterCreator.OpenButton");
+  button.type = "button";
+  button.className = "header-control symbaroum-hud-open-character-creator";
+  button.dataset.tooltip = label;
+  button.setAttribute("aria-label", label);
+  button.title = label;
+  button.innerHTML = `<i class="fa-solid fa-book-open" aria-hidden="true"></i><span>${escapeHtml(label)}</span>`;
+  button.addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    void CharacterCreatorService.open(actor);
+  });
+  (header.querySelector(".window-controls") ?? header).prepend(button);
+}
+
 export function registerCharacterCreatorHooks() {
-  const handleSheet = (sheet) => {
+  const handleSheet = (sheet, html) => {
     const actor = sheet?.actor ?? sheet?.document ?? sheet?.object;
+    attachCharacterCreatorHeaderButton(sheet, html, actor);
     void CharacterCreatorService.handleSheet(actor, sheet);
   };
+  Hooks.on("getActorSheetHeaderButtons", (sheet, buttons) => {
+    const actor = sheet?.actor ?? sheet?.document ?? sheet?.object;
+    if (!canOpenCharacterCreator(actor)) return;
+    if (buttons.some((button) => button.class === "symbaroum-hud-open-character-creator")) return;
+    buttons.unshift({
+      label: game.i18n.localize("SYMBAROUMHUD.CharacterCreator.OpenButton"),
+      class: "symbaroum-hud-open-character-creator",
+      icon: "fas fa-book-open",
+      onclick: () => void CharacterCreatorService.open(actor)
+    });
+  });
   Hooks.on("renderActorSheet", handleSheet);
   Hooks.on("renderSymbaroumActorSheet", handleSheet);
 }
@@ -150,6 +203,7 @@ export class CharacterCreatorService {
     if (!actor || actor.type !== "player" || !canOwn(actor, game.user)) return null;
     const mode = actor.getFlag?.(MODULE_ID, MODE_FLAG);
     if (mode === CHARACTER_CREATION_MODES.CREATOR) {
+      if (isFriendsStepComplete(actor)) return null;
       await closeOriginalActorSheet(sheet, actor);
       if (!isOccupationStepComplete(actor)) return this.openOccupationStep(actor);
       if (!isAttributesStepComplete(actor)) return this.openAttributesStep(actor);
@@ -164,6 +218,23 @@ export class CharacterCreatorService {
     }
     if (!mode) return this.offer(actor, sheet);
     return null;
+  }
+
+  static async open(actor) {
+    const key = actorKey(actor);
+    if (!key || pendingActors.has(key) || !canOpenCharacterCreator(actor)) return null;
+    const DialogV2 = dialogClass();
+    if (!DialogV2) return null;
+
+    pendingActors.add(key);
+    try {
+      Hooks.callAll(`${MODULE_ID}.characterCreatorRequested`, actor);
+      return await this.#runCreatorSteps(DialogV2, actor, creatorEntryStep(actor));
+    } catch (error) {
+      return handleCreatorError(error);
+    } finally {
+      pendingActors.delete(key);
+    }
   }
 
   static async offer(actor, sheet = null) {
@@ -797,9 +868,17 @@ export class CharacterCreatorService {
   }
 
   static async #showAbilitiesBook(DialogV2, actor) {
-    const abilities = availableCreationAbilities(actor);
-    const mysticalPowers = availableCreationMysticalPowers(actor);
-    const rituals = availableCreationRituals(actor);
+    const creatorState = actor.getFlag?.(MODULE_ID, STATE_FLAG) ?? {};
+    const savedSelections = parseAbilitySelections(JSON.stringify(creatorState.abilities ?? []));
+    const abilities = availableCreationAbilities(actor, {
+      includeKnownIds: savedSelections.map((selection) => selection.id)
+    });
+    const mysticalPowers = availableCreationMysticalPowers(actor, {
+      includeKnownIds: savedSelections.map((selection) => selection.choiceId).filter(Boolean)
+    });
+    const rituals = availableCreationRituals(actor, {
+      includeKnownIds: savedSelections.flatMap((selection) => selection.ritualIds ?? [])
+    });
     const racialCost = racialAbilityCost(actor);
     return DialogV2.wait({
       classes: [
@@ -820,14 +899,21 @@ export class CharacterCreatorService {
             const mode = formValue(button.form, "abilityDistributionMode");
             const experienceBudget = Number(formValue(button.form, "abilityExperienceBudget"));
             const selections = parseAbilitySelections(formValue(button.form, "abilitySelections"));
+            const previous = actor.getFlag?.(MODULE_ID, STATE_FLAG) ?? {};
             const costs = abilityExperienceCosts();
             if (!isValidAbilitySelection(selections, mode, racialCost, { experienceBudget, costs })) {
               ui.notifications?.warn(game.i18n.localize("SYMBAROUMHUD.CharacterCreator.Abilities.Invalid"));
               return null;
             }
-            const available = new Map(availableCreationAbilities(actor).map((item) => [item.id, item]));
-            const availablePowers = new Map(availableCreationMysticalPowers(actor).map((item) => [item.id, item]));
-            const availableRituals = new Map(availableCreationRituals(actor).map((item) => [item.id, item]));
+            const available = new Map(availableCreationAbilities(actor, {
+              includeKnownIds: selections.map((selection) => selection.id)
+            }).map((item) => [item.id, item]));
+            const availablePowers = new Map(availableCreationMysticalPowers(actor, {
+              includeKnownIds: selections.map((selection) => selection.choiceId).filter(Boolean)
+            }).map((item) => [item.id, item]));
+            const availableRituals = new Map(availableCreationRituals(actor, {
+              includeKnownIds: selections.flatMap((selection) => selection.ritualIds ?? [])
+            }).map((item) => [item.id, item]));
             if (selections.some((selection) => !available.has(selection.id))) {
               ui.notifications?.warn(game.i18n.localize("SYMBAROUMHUD.CharacterCreator.Abilities.Unavailable"));
               return null;
@@ -847,9 +933,7 @@ export class CharacterCreatorService {
               }
               return created;
             });
-            const created = documents.length
-              ? await actor.createEmbeddedDocuments("Item", documents)
-              : [];
+            const created = await applyCreationAbilityDocuments(actor, documents);
             const purchasedWithExperience = mode === ABILITY_DISTRIBUTION_MODES.EXPERIENCE;
             const freeExperience = purchasedWithExperience ? 0 : selections.reduce((total, selection) => {
               const source = selection.kind === "mysticalPower"
@@ -859,18 +943,28 @@ export class CharacterCreatorService {
             }, 0);
             const freeRaceExperience = racialFreeExperienceValue(actor);
             const existingBonus = Number(actor.system?.bonus?.experience?.value ?? 0);
+            const priorCreatorBonus = Number.isFinite(Number(previous.abilityBonusExperienceAwarded))
+              ? Number(previous.abilityBonusExperienceAwarded)
+              : Array.isArray(previous.abilities)
+                ? freeRaceExperience + (previous.abilityDistribution === ABILITY_DISTRIBUTION_MODES.EXPERIENCE
+                  ? 0
+                  : abilitySelectionCost(previous.abilities, costs)
+                    + racialCost * abilityRankCost("novice", costs))
+                : 0;
+            const creatorBonus = freeRaceExperience + (purchasedWithExperience
+              ? 0
+              : freeExperience + racialCost * abilityRankCost("novice", costs));
+            const updatedBonus = Math.max(0, existingBonus - priorCreatorBonus + creatorBonus);
             if (purchasedWithExperience) {
               await actor.update({
                 "system.experience.total": experienceBudget,
-                "system.bonus.experience.value": existingBonus + freeRaceExperience
+                "system.bonus.experience.value": updatedBonus
               });
             } else if (freeExperience > 0) {
               await actor.update({
-                "system.bonus.experience.value": existingBonus + freeRaceExperience + freeExperience
-                  + racialCost * abilityRankCost("novice", costs)
+                "system.bonus.experience.value": updatedBonus
               });
             }
-            const previous = actor.getFlag?.(MODULE_ID, STATE_FLAG) ?? {};
             const saved = selections.map((selection) => {
               const ability = available.get(selection.id);
               const chosen = selection.kind === "mysticalPower"
@@ -894,6 +988,7 @@ export class CharacterCreatorService {
               abilityExperienceSpent: purchasedWithExperience
                 ? abilitySelectionCost(selections, costs) + racialCost * abilityRankCost("novice", costs)
                 : null,
+              abilityBonusExperienceAwarded: creatorBonus,
               abilities: saved
             });
             Hooks.callAll(`${MODULE_ID}.characterCreatorStepCompleted`, actor, {
@@ -1001,6 +1096,7 @@ export class CharacterCreatorService {
           default: true,
           callback: async (_event, button) => {
             const shadow = formValue(button.form, "shadow").trim();
+            const shadowPrinciple = formValue(button.form, "shadow-principle");
             if (!shadow) {
               ui.notifications?.warn(game.i18n.localize("SYMBAROUMHUD.CharacterCreator.Shadow.Required"));
               return null;
@@ -1011,7 +1107,8 @@ export class CharacterCreatorService {
               ...previous,
               version: 1,
               step: furthestCreatorProgress(previous.step, SHADOW_STEP_COMPLETE),
-              shadow
+              shadow,
+              shadowPrinciple
             });
             Hooks.callAll(`${MODULE_ID}.characterCreatorStepCompleted`, actor, {
               step: "shadow", shadow
@@ -1100,11 +1197,11 @@ export class CharacterCreatorService {
 
             const documents = selections.map(({ item, quantity }) => creationEquipmentData(item, quantity));
             if (!alreadyHasCamp) documents.push(creationEquipmentData(camp));
-            const created = documents.length
-              ? await actor.createEmbeddedDocuments("Item", documents)
-              : [];
+            const created = await createMissingEmbeddedItems(actor, documents);
             const experience = creationExperienceTotal(actor);
-            const thaler = startingThalerForExperience(experience);
+            const baseThaler = startingThalerForExperience(experience);
+            const privilegedThaler = privilegedStartingThaler(actor);
+            const thaler = privilegedThaler ?? baseThaler;
             await actor.update({ "system.money.thaler": thaler });
 
             const previous = actor.getFlag?.(MODULE_ID, STATE_FLAG) ?? {};
@@ -1123,6 +1220,8 @@ export class CharacterCreatorService {
               equipment: saved,
               campingEquipment: camp?.name ?? actorItems(actor).find(isCampingEquipment)?.name ?? "",
               startingThaler: thaler,
+              startingThalerBase: baseThaler,
+              startingThalerOverride: privilegedThaler,
               startingExperience: experience
             });
             Hooks.callAll(`${MODULE_ID}.characterCreatorStepCompleted`, actor, {
@@ -1281,6 +1380,8 @@ function isCreatorStepFilled(actor, step) {
     case "abilities": return isAbilitiesStepComplete(actor);
     case "shadow": return isShadowStepComplete(actor);
     case "equipment": return isEquipmentStepComplete(actor);
+    case "personality": return isPersonalityStepComplete(actor);
+    case "friends": return isFriendsStepComplete(actor);
     default: return false;
   }
 }
@@ -1569,7 +1670,9 @@ function occupationAbilityDocument(id, actor = null, label = "") {
 }
 
 function raceBookContent(actor) {
-  const selectedId = CORE_RACES[0].id;
+  const creatorState = actor?.getFlag?.(MODULE_ID, STATE_FLAG) ?? {};
+  const selectedId = coreRace(creatorState.race)?.id ?? CORE_RACES[0].id;
+  const selectedTraits = new Set(Array.isArray(creatorState.raceTraits) ? creatorState.raceTraits : []);
   const index = CORE_RACES.map((race) => `
     <button type="button" class="symbaroum-hud-race-index-entry"
       data-race-id="${race.id}" data-active="${race.id === selectedId}"
@@ -1580,9 +1683,9 @@ function raceBookContent(actor) {
   `).join("");
 
   const pages = CORE_RACES.map((race) => {
-    const required = race.required.map((id) => traitCard(actor, id, "required", race.id)).join("");
-    const choices = race.choice.map((id) => traitCard(actor, id, "choice", race.id)).join("");
-    const optional = race.optional.map((id) => traitCard(actor, id, "optional", race.id)).join("");
+    const required = race.required.map((id) => traitCard(actor, id, "required", race.id, selectedTraits.has(id))).join("");
+    const choices = race.choice.map((id) => traitCard(actor, id, "choice", race.id, selectedTraits.has(id))).join("");
+    const optional = race.optional.map((id) => traitCard(actor, id, "optional", race.id, selectedTraits.has(id))).join("");
     const lore = race.lore.map((section) => `
       <section class="symbaroum-hud-race-lore-section" data-race-lore="${section.id}">
         <h3>${localizeEscaped(section.title)}</h3>
@@ -1626,14 +1729,14 @@ function raceBookContent(actor) {
     </div>`;
 }
 
-function traitCard(actor, id, mode, raceId) {
+function traitCard(actor, id, mode, raceId, selected = false) {
   const trait = coreRaceTrait(id);
   const source = raceTraitDocument(actor, trait);
   const control = mode === "required"
     ? `<i class="fa-solid fa-circle-check" aria-hidden="true"></i>`
     : `<input type="${mode === "choice" ? "radio" : "checkbox"}"
         name="race-${mode}-${raceId}${mode === "optional" ? `-${id}` : ""}"
-        value="${id}">`;
+        value="${id}" ${selected ? "checked" : ""}>`;
   return `
     <article class="symbaroum-hud-race-trait-card" data-trait-mode="${mode}">
       <label class="symbaroum-hud-race-trait-control" title="${localizeEscaped(mode === "required"
@@ -1798,27 +1901,38 @@ function raceTraitDocument(actor, trait) {
   ) ?? null;
 }
 
-function availableCreationAbilities(actor, { includeKnownMysticalPowerAbility = false } = {}) {
+function availableCreationAbilities(actor, {
+  includeKnownMysticalPowerAbility = false,
+  includeKnownIds = []
+} = {}) {
   const known = new Set(actorItems(actor)
     .filter((item) => item.type === "ability")
     .map(abilityIdentity));
+  const included = new Set(includeKnownIds);
   return availableCreationWorldItems(known, (item) => item?.type === "ability", {
-    includeKnown: includeKnownMysticalPowerAbility ? isMysticalPowerAbility : null
+    includeKnown: (item) => included.has(item.id)
+      || (includeKnownMysticalPowerAbility && isMysticalPowerAbility(item))
   });
 }
 
-function availableCreationMysticalPowers(actor) {
+function availableCreationMysticalPowers(actor, { includeKnownIds = [] } = {}) {
   const known = new Set(actorItems(actor)
     .filter(isMysticalPowerDocument)
     .map(abilityIdentity));
-  return availableCreationWorldItems(known, isMysticalPowerDocument);
+  const included = new Set(includeKnownIds);
+  return availableCreationWorldItems(known, isMysticalPowerDocument, {
+    includeKnown: (item) => included.has(item.id)
+  });
 }
 
-function availableCreationRituals(actor) {
+function availableCreationRituals(actor, { includeKnownIds = [] } = {}) {
   const known = new Set(actorItems(actor)
     .filter(isRitualDocument)
     .map(abilityIdentity));
-  return availableCreationWorldItems(known, isRitualDocument);
+  const included = new Set(includeKnownIds);
+  return availableCreationWorldItems(known, isRitualDocument, {
+    includeKnown: (item) => included.has(item.id)
+  });
 }
 
 function availableCreationWorldItems(known, predicate, { includeKnown = null } = {}) {
@@ -1891,6 +2005,13 @@ function racialFreeExperienceValue(actor) {
 
 async function abilitiesBookContent(actor, abilities, racialCost, mysticalPowers, rituals, options = {}) {
   const browserMode = Boolean(options.browserMode);
+  const state = actor?.getFlag?.(MODULE_ID, STATE_FLAG) ?? {};
+  const savedSelections = browserMode
+    ? []
+    : parseAbilitySelections(JSON.stringify(state.abilities ?? []));
+  const savedMode = Object.values(ABILITY_DISTRIBUTION_MODES).includes(state.abilityDistribution)
+    ? state.abilityDistribution
+    : ABILITY_DISTRIBUTION_MODES.EXPERIENCE;
   const recommendation = occupationAbilityRecommendation(actor);
   const recommendationOrder = new Map((recommendation?.abilities ?? []).map((name, index) => [
     normalizeName(name.replace(/\s*\([^)]*\)\s*$/, "")), index
@@ -1907,9 +2028,10 @@ async function abilitiesBookContent(actor, abilities, racialCost, mysticalPowers
     if (leftRecommended) return recommendationIndex(left) - recommendationIndex(right);
     return left.name.localeCompare(right.name, game.i18n?.lang ?? "pt-BR", { sensitivity: "base" });
   });
-  const firstId = orderedAbilities[0]?.id ?? "";
+  const firstId = orderedAbilities.some((ability) => ability.id === savedSelections[0]?.id)
+    ? savedSelections[0].id
+    : orderedAbilities[0]?.id ?? "";
   const costs = abilityExperienceCosts();
-  const state = actor?.getFlag?.(MODULE_ID, STATE_FLAG) ?? {};
   const racialTraits = (state.abilityCostTraits ?? [])
     .map((id) => coreRaceTrait(id))
     .filter(Boolean)
@@ -1960,11 +2082,11 @@ async function abilitiesBookContent(actor, abilities, racialCost, mysticalPowers
   const limits = abilitySelectionLimits(ABILITY_DISTRIBUTION_MODES.FIVE_NOVICE, racialCost);
   const initialExperience = browserMode
     ? Math.max(0, Number(options.experienceBudget) || 0)
-    : Math.max(0, Number(actor.system?.experience?.total) || 50);
+    : Math.max(0, Number(state.abilityExperienceBudget ?? actor.system?.experience?.total) || 50);
   return `
     <div class="symbaroum-hud-abilities-book" data-ability-browser="${browserMode}">
-      <input type="hidden" name="abilityDistributionMode" value="${ABILITY_DISTRIBUTION_MODES.EXPERIENCE}">
-      <input type="hidden" name="abilitySelections" value="[]">
+      <input type="hidden" name="abilityDistributionMode" value="${savedMode}">
+      <input type="hidden" name="abilitySelections" value="${escapeHtml(JSON.stringify(savedSelections))}">
       <header class="symbaroum-hud-creator-step-guide">
         ${browserMode
           ? `<span class="symbaroum-hud-ability-browser-emblem"><i class="fa-solid fa-book-open" aria-hidden="true"></i></span>`
@@ -1977,9 +2099,9 @@ async function abilitiesBookContent(actor, abilities, racialCost, mysticalPowers
           : "SYMBAROUMHUD.CharacterCreator.Guide.StepFourText")}</p></div>
       </header>
       ${browserMode ? "" : `<nav class="symbaroum-hud-ability-mode-tabs" aria-label="${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.DistributionMethod")}">
-        <button type="button" data-ability-mode="experience" data-active="true" aria-pressed="true"><i class="fa-solid fa-coins"></i>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.ExperiencePurchase")}</button>
-        <button type="button" data-ability-mode="five-novice" data-active="false" aria-pressed="false"><i class="fa-solid fa-hand-fist"></i>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.FiveNovice")}</button>
-        <button type="button" data-ability-mode="mixed" data-active="false" aria-pressed="false"><i class="fa-solid fa-crown"></i>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.Mixed")}</button>
+        <button type="button" data-ability-mode="experience" data-active="${savedMode === "experience"}" aria-pressed="${savedMode === "experience"}"><i class="fa-solid fa-coins"></i>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.ExperiencePurchase")}</button>
+        <button type="button" data-ability-mode="five-novice" data-active="${savedMode === "five-novice"}" aria-pressed="${savedMode === "five-novice"}"><i class="fa-solid fa-hand-fist"></i>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.FiveNovice")}</button>
+        <button type="button" data-ability-mode="mixed" data-active="${savedMode === "mixed"}" aria-pressed="${savedMode === "mixed"}"><i class="fa-solid fa-crown"></i>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.Mixed")}</button>
       </nav>`}
       <div class="symbaroum-hud-ability-workspace">
         <aside class="symbaroum-hud-ability-index">
@@ -2020,7 +2142,7 @@ function occupationAbilityRecommendation(actor) {
 }
 
 function shadowBookContent(actor) {
-  const selectedId = "nature";
+  const creatorState = actor?.getFlag?.(MODULE_ID, STATE_FLAG) ?? {};
   const principles = [
     {
       id: "nature",
@@ -2044,6 +2166,9 @@ function shadowBookContent(actor) {
       examples: [["corrupted", "fa-burst", "Corrupted"], ["mixed", "fa-circle-half-stroke", "Mixed"]]
     }
   ];
+  const selectedId = principles.some((principle) => principle.id === creatorState.shadowPrinciple)
+    ? creatorState.shadowPrinciple
+    : "nature";
   const index = principles.map((principle) => `
     <button type="button" class="symbaroum-hud-shadow-index-entry"
       data-shadow-page-id="${principle.id}" data-active="${principle.id === selectedId}"
@@ -2102,7 +2227,7 @@ function shadowBookContent(actor) {
         </div>
       </article>`;
   }).join("");
-  const current = String(actor.system?.bio?.shadow ?? "").trim();
+  const current = String(creatorState.shadow ?? actor.system?.bio?.shadow ?? "").trim();
   return `
     <div class="symbaroum-hud-shadow-book">
       <input type="hidden" name="shadow-principle" value="${selectedId}">
@@ -2212,6 +2337,23 @@ export function startingThalerForExperience(experience) {
   return Math.max(0, Math.floor((Number(experience) || 0) / 10));
 }
 
+function privilegedStartingThaler(actor) {
+  const state = actor?.getFlag?.(MODULE_ID, STATE_FLAG) ?? {};
+  if (Array.isArray(state.raceTraits) && state.raceTraits.includes("privileged")) {
+    return PRIVILEGED_STARTING_THALER;
+  }
+  const trait = coreRaceTrait("privileged");
+  const aliases = new Set([
+    trait?.id,
+    trait?.name ? game.i18n.localize(trait.name) : "",
+    ...(trait?.aliases ?? [])
+  ].map(normalizeName).filter(Boolean));
+  return actorItems(actor).some((item) => ["trait", "boon"].includes(item?.type)
+    && aliases.has(normalizeName(item.system?.reference || item.name)))
+    ? PRIVILEGED_STARTING_THALER
+    : null;
+}
+
 function creationExperienceTotal(actor) {
   const state = actor?.getFlag?.(MODULE_ID, STATE_FLAG) ?? {};
   const chosenBudget = Number(state.abilityExperienceBudget);
@@ -2241,7 +2383,7 @@ const CREATION_EQUIPMENT_RULES = Object.freeze({
   polearmmastery: { category: "long", label: "Polearm", quantity: 1 },
   shieldfighter: { category: "shield", label: "Shield", quantity: 1 },
   steelthrow: { category: "thrown", label: "ThrownWeapon", quantity: 1 },
-  twinattack: { category: "one-handed", label: "OneHandedWeapon", quantity: 1 },
+  twinattack: { category: "sword", label: "Sword", quantity: 1 },
   twohandedforce: { category: "heavy", label: "TwoHandedWeapon", quantity: 1 },
   witchhammer: { category: "one-handed", label: "OneHandedWeapon", quantity: 1 }
 });
@@ -2411,6 +2553,7 @@ function resolveMarksmanEquipment(equipment, choice) {
 }
 
 function findGenericEquipment(equipment, category) {
+  if (category === "sword") return findConfiguredStartingItem(equipment, "sword");
   return equipment.find((item) => genericEquipmentCategory(item) === category) ?? null;
 }
 
@@ -2462,8 +2605,13 @@ function creationEquipmentAbilitySource(grant) {
 }
 
 function equipmentBookContent(actor, grants, equipment, campingEquipment) {
+  const creatorState = actor?.getFlag?.(MODULE_ID, STATE_FLAG) ?? {};
+  const savedEquipment = Array.isArray(creatorState.equipment) ? creatorState.equipment : [];
+  const savedCombination = (category) => savedEquipment.find((entry) => entry.category === category)?.combination ?? "";
   const experience = creationExperienceTotal(actor);
-  const thaler = startingThalerForExperience(experience);
+  const baseThaler = startingThalerForExperience(experience);
+  const privilegedThaler = privilegedStartingThaler(actor);
+  const thaler = privilegedThaler ?? baseThaler;
   const alreadyHasCamp = actorItems(actor).some(isCampingEquipment);
   const campItem = alreadyHasCamp ? actorItems(actor).find(isCampingEquipment) : campingEquipment;
   const abilityGrants = grants.filter((grant) => grant.source === "ability");
@@ -2506,7 +2654,11 @@ function equipmentBookContent(actor, grants, equipment, campingEquipment) {
             <i class="fa-solid fa-coins" aria-hidden="true"></i>
             <div><span>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Equipment.StartingMoney")}</span>
               <strong>${thaler}</strong><small>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Equipment.Thaler")}</small></div>
-            <p>${formatEscaped("SYMBAROUMHUD.CharacterCreator.Equipment.MoneyFormula", { experience, thaler })}</p>
+            <p>${formatEscaped("SYMBAROUMHUD.CharacterCreator.Equipment.MoneyFormula", { experience, thaler: baseThaler })}</p>
+            ${privilegedThaler !== null ? `<p class="symbaroum-hud-equipment-privileged-money"><i class="fa-solid fa-crown" aria-hidden="true"></i>${formatEscaped(
+              "SYMBAROUMHUD.CharacterCreator.Equipment.PrivilegedStartingMoney",
+              { total: privilegedThaler }
+            )}</p>` : ""}
           </section>
         </aside>
         <main class="symbaroum-hud-equipment-page">
@@ -2522,7 +2674,7 @@ function equipmentBookContent(actor, grants, equipment, campingEquipment) {
               <legend>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Equipment.MarksmanChoice")}</legend>
               <div class="symbaroum-hud-equipment-choice-list">
                 ${marksmanChoices.map(({ choice, item, resolved }) => `<label class="symbaroum-hud-equipment-choice" data-available="${Boolean(resolved)}">
-                  <input type="radio" name="${equipmentGrantField(marksmanGrant, 0)}" value="${choice}" required data-equipment-grant ${resolved ? "" : "disabled"}>
+                  <input type="radio" name="${equipmentGrantField(marksmanGrant, 0)}" value="${choice}" required data-equipment-grant${savedCombination("marksman-choice") === choice ? " checked" : ""}${resolved ? " " : " disabled"}>
                   <span class="symbaroum-hud-equipment-choice-marker" aria-hidden="true"></span>
                   <img src="${escapeHtml(item?.img || "icons/svg/item-bag.svg")}" alt="">
                   <span class="symbaroum-hud-equipment-choice-name"><strong>${escapeHtml(item?.name || game.i18n.localize(`SYMBAROUMHUD.CharacterCreator.Equipment.${choice === "crossbow" ? "Crossbow" : "Bow"}`))}</strong>${creationEquipmentAbilitySource(marksmanGrant)}</span>
@@ -2538,7 +2690,7 @@ function equipmentBookContent(actor, grants, equipment, campingEquipment) {
             <fieldset class="symbaroum-hud-equipment-choice-group">
               <div class="symbaroum-hud-equipment-choice-list symbaroum-hud-equipment-combination-list">
                 ${combinations.map(({ combination, resolved }) => `<label class="symbaroum-hud-equipment-choice symbaroum-hud-equipment-combination-choice" data-available="${Boolean(resolved)}">
-                  <input type="radio" name="${equipmentGrantField(combinationGrant, 0)}" value="${combination.id}" required data-equipment-grant ${resolved ? "" : "disabled"}>
+                  <input type="radio" name="${equipmentGrantField(combinationGrant, 0)}" value="${combination.id}" required data-equipment-grant${savedCombination("starting-combination") === combination.id ? " checked" : ""}${resolved ? " " : " disabled"}>
                   <span class="symbaroum-hud-equipment-choice-marker" aria-hidden="true"></span>
                   <span class="symbaroum-hud-equipment-choice-name"><strong>${localizeEscaped(`SYMBAROUMHUD.CharacterCreator.Equipment.${combination.label}`)}</strong></span>
                 </label>`).join("")}
@@ -2812,6 +2964,10 @@ function bindAbilitiesBook(element, racialCost, {
   const entries = [...element.querySelectorAll("[data-creation-ability-id]")];
   const pages = [...element.querySelectorAll("[data-creation-ability-page]")];
   const selections = new Map();
+  const selectionKey = (id, choiceId = "") => choiceId ? `${id}:${choiceId}` : id;
+  for (const selection of parseAbilitySelections(selectionsInput?.value ?? "[]")) {
+    selections.set(selectionKey(selection.id, selection.choiceId), selection);
+  }
   for (const image of element.querySelectorAll("[data-tradition-fallback-src]")) {
     const useFallback = () => {
       const fallback = image.dataset.traditionFallbackSrc;
@@ -2820,7 +2976,6 @@ function bindAbilitiesBook(element, racialCost, {
     image.addEventListener("error", useFallback, { once: true });
     if (image.complete && image.naturalWidth === 0) useFallback();
   }
-  const selectionKey = (id, choiceId = "") => choiceId ? `${id}:${choiceId}` : id;
   const selectionValues = (source = selections) => [...source.values()];
   const openPage = (id) => {
     for (const entry of entries) {
@@ -3090,6 +3245,44 @@ function creationAbilityData(source, rank) {
   return data;
 }
 
+async function applyCreationAbilityDocuments(actor, documents) {
+  const remaining = [...actorItems(actor)];
+  const missing = [];
+  for (const document of documents) {
+    const identity = abilityIdentity(document);
+    const index = remaining.findIndex((item) => item.type === document.type && abilityIdentity(item) === identity);
+    if (index < 0) {
+      missing.push(document);
+      continue;
+    }
+    const [existing] = remaining.splice(index, 1);
+    if (typeof existing.update === "function" && document.system?.novice) {
+      await existing.update({
+        "system.novice.isActive": Boolean(document.system.novice.isActive),
+        "system.adept.isActive": Boolean(document.system.adept?.isActive),
+        "system.master.isActive": Boolean(document.system.master?.isActive)
+      });
+    }
+  }
+  return missing.length ? actor.createEmbeddedDocuments("Item", missing) : [];
+}
+
+async function createMissingEmbeddedItems(actor, documents) {
+  const existingCounts = new Map();
+  for (const item of actorItems(actor)) {
+    const key = `${item.type}:${abilityIdentity(item)}`;
+    existingCounts.set(key, (existingCounts.get(key) ?? 0) + 1);
+  }
+  const missing = documents.filter((document) => {
+    const key = `${document.type}:${abilityIdentity(document)}`;
+    const available = existingCounts.get(key) ?? 0;
+    if (available <= 0) return true;
+    existingCounts.set(key, available - 1);
+    return false;
+  });
+  return missing.length ? actor.createEmbeddedDocuments("Item", missing) : [];
+}
+
 function creationRitualData(source) {
   const clone = globalThis.foundry?.utils?.deepClone ?? ((value) => structuredClone(value));
   const data = clone(source.toObject ? source.toObject() : source);
@@ -3156,8 +3349,12 @@ function fallbackTraitData(trait) {
 }
 
 function attributesBookContent(actor) {
+  const creatorState = actor?.getFlag?.(MODULE_ID, STATE_FLAG) ?? {};
+  const selectedMode = Object.values(ATTRIBUTE_DISTRIBUTION_MODES).includes(creatorState.attributeDistribution)
+    ? creatorState.attributeDistribution
+    : ATTRIBUTE_DISTRIBUTION_MODES.TYPICAL;
   const typicalValues = typicalDistribution(actor);
-  const pointValues = pointBuyDistribution();
+  const pointValues = pointBuyDistribution(actor);
   const occupationRecommendation = occupationAttributeRecommendation(actor);
   const occupationRecommendationContent = occupationRecommendation ? `
     <aside class="symbaroum-hud-attribute-occupation-recommendation">
@@ -3173,7 +3370,7 @@ function attributesBookContent(actor) {
       <header>
         <i class="fa-solid ${attribute.icon}" aria-hidden="true"></i>
         <h3>${localizeEscaped(attribute.name)}</h3>
-        <div class="symbaroum-hud-attribute-typical-control" data-mode-control="typical">
+        <div class="symbaroum-hud-attribute-typical-control" data-mode-control="typical" ${selectedMode === ATTRIBUTE_DISTRIBUTION_MODES.TYPICAL ? "" : "hidden"}>
           <label class="sr-only" for="symbaroum-hud-typical-${attribute.id}">
             ${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Attributes.Value")}
           </label>
@@ -3184,7 +3381,7 @@ function attributesBookContent(actor) {
             ${typicalOptions}
           </select>
         </div>
-        <div class="symbaroum-hud-attribute-point-control" data-mode-control="point-buy" hidden>
+        <div class="symbaroum-hud-attribute-point-control" data-mode-control="point-buy" ${selectedMode === ATTRIBUTE_DISTRIBUTION_MODES.POINT_BUY ? "" : "hidden"}>
           <button type="button" data-adjust-attribute="${attribute.id}" data-delta="-1"
             aria-label="${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Attributes.Decrease")}">−</button>
           <input type="number" name="points-${attribute.id}" value="${pointValues[index]}"
@@ -3201,7 +3398,7 @@ function attributesBookContent(actor) {
   return `
     <div class="symbaroum-hud-attributes-book">
       <input type="hidden" name="attributeDistributionMode"
-        value="${ATTRIBUTE_DISTRIBUTION_MODES.TYPICAL}">
+        value="${selectedMode}">
       <header class="symbaroum-hud-creator-step-guide">
         ${creatorStepNumber(actor, "attributes", "SYMBAROUMHUD.CharacterCreator.Guide.AttributesProgress")}
         <div>
@@ -3211,18 +3408,18 @@ function attributesBookContent(actor) {
       </header>
       <nav class="symbaroum-hud-attribute-mode-tabs"
         aria-label="${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Attributes.DistributionMethod")}">
-        <button type="button" data-attribute-mode="typical" data-active="true" aria-pressed="true">
+        <button type="button" data-attribute-mode="typical" data-active="${selectedMode === ATTRIBUTE_DISTRIBUTION_MODES.TYPICAL}" aria-pressed="${selectedMode === ATTRIBUTE_DISTRIBUTION_MODES.TYPICAL}">
           <i class="fa-solid fa-shuffle" aria-hidden="true"></i>
           ${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Attributes.Typical")}
         </button>
-        <button type="button" data-attribute-mode="point-buy" data-active="false" aria-pressed="false">
+        <button type="button" data-attribute-mode="point-buy" data-active="${selectedMode === ATTRIBUTE_DISTRIBUTION_MODES.POINT_BUY}" aria-pressed="${selectedMode === ATTRIBUTE_DISTRIBUTION_MODES.POINT_BUY}">
           <i class="fa-solid fa-scale-balanced" aria-hidden="true"></i>
           ${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Attributes.PointBuy")}
         </button>
       </nav>
       <div class="symbaroum-hud-attribute-workspace">
         <aside class="symbaroum-hud-attribute-rules">
-          <div data-attribute-rules="typical">
+          <div data-attribute-rules="typical" ${selectedMode === ATTRIBUTE_DISTRIBUTION_MODES.TYPICAL ? "" : "hidden"}>
             <h2>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Attributes.Typical")}</h2>
             <p>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Attributes.TypicalRules")}</p>
             <div class="symbaroum-hud-attribute-value-sequence" aria-label="${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Attributes.TypicalValues")}">
@@ -3233,7 +3430,7 @@ function attributesBookContent(actor) {
             </div>
             <small>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Attributes.TypicalHint")}</small>
           </div>
-          <div data-attribute-rules="point-buy" hidden>
+          <div data-attribute-rules="point-buy" ${selectedMode === ATTRIBUTE_DISTRIBUTION_MODES.POINT_BUY ? "" : "hidden"}>
             <h2>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Attributes.PointBuy")}</h2>
             <p>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Attributes.PointBuyRules")}</p>
             <div class="symbaroum-hud-attribute-points">
@@ -3332,7 +3529,7 @@ function bindAttributesBook(element) {
     });
   }
 
-  setMode(ATTRIBUTE_DISTRIBUTION_MODES.TYPICAL);
+  setMode(modeInput.value);
 }
 
 function refreshTypicalDistribution(element, selects, pointInputs) {
@@ -3381,6 +3578,9 @@ function updatePointBuyStatus(element, pointInputs) {
 }
 
 function typicalDistribution(actor) {
+  const saved = actor?.getFlag?.(MODULE_ID, STATE_FLAG)?.attributes ?? {};
+  const savedValues = CORE_ATTRIBUTES.map((attribute) => Number(saved[attribute.id]));
+  if (isValidTypicalDistribution(savedValues)) return savedValues;
   const current = CORE_ATTRIBUTES.map((attribute) =>
     Number(actor?.system?.attributes?.[attribute.id]?.value)
   );
@@ -3388,7 +3588,10 @@ function typicalDistribution(actor) {
   return CORE_ATTRIBUTES.map(() => "");
 }
 
-function pointBuyDistribution() {
+function pointBuyDistribution(actor) {
+  const saved = actor?.getFlag?.(MODULE_ID, STATE_FLAG)?.attributes ?? {};
+  const savedValues = CORE_ATTRIBUTES.map((attribute) => Number(saved[attribute.id]));
+  if (isValidPointBuyDistribution(savedValues)) return savedValues;
   return CORE_ATTRIBUTES.map(() => ATTRIBUTE_MIN);
 }
 
