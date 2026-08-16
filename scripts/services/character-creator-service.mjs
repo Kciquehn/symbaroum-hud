@@ -91,21 +91,17 @@ export function shouldOfferCharacterCreator(actor, user = game.user) {
 }
 
 export function isOccupationStepComplete(actor) {
-  return [OCCUPATION_STEP_COMPLETE, ATTRIBUTES_STEP_COMPLETE, RACE_STEP_COMPLETE, ABILITIES_STEP_COMPLETE, SHADOW_STEP_COMPLETE, EQUIPMENT_STEP_COMPLETE, PERSONALITY_STEP_COMPLETE, FRIENDS_STEP_COMPLETE]
-    .includes(actor?.getFlag?.(MODULE_ID, STATE_FLAG)?.step);
+  return hasCompletedCreatorStep(actor, "occupation");
 }
 
 export function isAttributesStepComplete(actor) {
   const state = actor?.getFlag?.(MODULE_ID, STATE_FLAG) ?? {};
-  const progressed = [ATTRIBUTES_STEP_COMPLETE, RACE_STEP_COMPLETE, ABILITIES_STEP_COMPLETE, SHADOW_STEP_COMPLETE, EQUIPMENT_STEP_COMPLETE, PERSONALITY_STEP_COMPLETE, FRIENDS_STEP_COMPLETE]
-    .includes(state.step);
-  if (!progressed) return false;
+  if (!hasCompletedCreatorStep(actor, "attributes")) return false;
   return !(state.attributesDeferred && isAbilitiesStepComplete(actor));
 }
 
 export function isRaceStepComplete(actor) {
-  return [RACE_STEP_COMPLETE, ABILITIES_STEP_COMPLETE, SHADOW_STEP_COMPLETE, EQUIPMENT_STEP_COMPLETE, PERSONALITY_STEP_COMPLETE, FRIENDS_STEP_COMPLETE]
-    .includes(actor?.getFlag?.(MODULE_ID, STATE_FLAG)?.step);
+  return hasCompletedCreatorStep(actor, "race");
 }
 
 export function isContactsPreparationRequired(actor) {
@@ -114,27 +110,23 @@ export function isContactsPreparationRequired(actor) {
 }
 
 export function isAbilitiesStepComplete(actor) {
-  return [ABILITIES_STEP_COMPLETE, SHADOW_STEP_COMPLETE, EQUIPMENT_STEP_COMPLETE, PERSONALITY_STEP_COMPLETE, FRIENDS_STEP_COMPLETE]
-    .includes(actor?.getFlag?.(MODULE_ID, STATE_FLAG)?.step);
+  return hasCompletedCreatorStep(actor, "abilities");
 }
 
 export function isShadowStepComplete(actor) {
-  return [SHADOW_STEP_COMPLETE, EQUIPMENT_STEP_COMPLETE, PERSONALITY_STEP_COMPLETE, FRIENDS_STEP_COMPLETE]
-    .includes(actor?.getFlag?.(MODULE_ID, STATE_FLAG)?.step);
+  return hasCompletedCreatorStep(actor, "shadow");
 }
 
 export function isEquipmentStepComplete(actor) {
-  return [EQUIPMENT_STEP_COMPLETE, PERSONALITY_STEP_COMPLETE, FRIENDS_STEP_COMPLETE]
-    .includes(actor?.getFlag?.(MODULE_ID, STATE_FLAG)?.step);
+  return hasCompletedCreatorStep(actor, "equipment");
 }
 
 export function isPersonalityStepComplete(actor) {
-  return [PERSONALITY_STEP_COMPLETE, FRIENDS_STEP_COMPLETE]
-    .includes(actor?.getFlag?.(MODULE_ID, STATE_FLAG)?.step);
+  return hasCompletedCreatorStep(actor, "personality");
 }
 
 export function isFriendsStepComplete(actor) {
-  return actor?.getFlag?.(MODULE_ID, STATE_FLAG)?.step === FRIENDS_STEP_COMPLETE;
+  return hasCompletedCreatorStep(actor, "friends");
 }
 
 function canOpenCharacterCreator(actor) {
@@ -682,6 +674,7 @@ export class CharacterCreatorService {
               ...preservedState,
               version: 1,
               step: furthestCreatorProgress(previous.step, OCCUPATION_STEP_COMPLETE),
+              completedSteps: markCreatorStepComplete(previous, "occupation"),
               archetype: occupation?.archetype ?? "custom",
               occupation: occupation?.id ?? "custom",
               ...(customOccupation ? { customOccupation } : {})
@@ -751,6 +744,7 @@ export class CharacterCreatorService {
               ...previous,
               version: 1,
               step: furthestCreatorProgress(previous.step, ATTRIBUTES_STEP_COMPLETE),
+              completedSteps: markCreatorStepComplete(previous, "attributes"),
               attributesDeferred: false,
               attributeDistribution: mode,
               attributes: Object.fromEntries(CORE_ATTRIBUTES.map((attribute, index) => [
@@ -773,10 +767,11 @@ export class CharacterCreatorService {
           callback: async () => {
             const previous = actor.getFlag?.(MODULE_ID, STATE_FLAG) ?? {};
             await actor.setFlag(MODULE_ID, STATE_FLAG, {
-              ...previous,
-              version: 1,
-              step: furthestCreatorProgress(previous.step, ATTRIBUTES_STEP_COMPLETE),
-              attributesDeferred: true
+                ...previous,
+                version: 1,
+                step: furthestCreatorProgress(previous.step, ATTRIBUTES_STEP_COMPLETE),
+                completedSteps: markCreatorStepComplete(previous, "attributes"),
+                attributesDeferred: true
             });
             Hooks.callAll(`${MODULE_ID}.characterCreatorStepDeferred`, actor, {
               step: "attributes",
@@ -832,10 +827,11 @@ export class CharacterCreatorService {
             const previous = actor.getFlag?.(MODULE_ID, STATE_FLAG) ?? {};
             const keepsContacts = traitIds.includes("contacts");
             await actor.setFlag(MODULE_ID, STATE_FLAG, {
-              ...previous,
-              version: 1,
-              step: furthestCreatorProgress(previous.step, RACE_STEP_COMPLETE),
-              race: race.id,
+                ...previous,
+                version: 1,
+                step: furthestCreatorProgress(previous.step, RACE_STEP_COMPLETE),
+                completedSteps: markCreatorStepComplete(previous, "race"),
+                race: race.id,
               raceTraits: traitIds,
               abilityCostTraits: optional,
               contacts: keepsContacts ? previous.contacts : null
@@ -980,10 +976,11 @@ export class CharacterCreatorService {
               };
             });
             await actor.setFlag(MODULE_ID, STATE_FLAG, {
-              ...previous,
-              version: 1,
-              step: furthestCreatorProgress(previous.step, ABILITIES_STEP_COMPLETE),
-              abilityDistribution: mode,
+                ...previous,
+                version: 1,
+                step: furthestCreatorProgress(previous.step, ABILITIES_STEP_COMPLETE),
+                completedSteps: markCreatorStepComplete(previous, "abilities"),
+                abilityDistribution: mode,
               abilityExperienceBudget: purchasedWithExperience ? experienceBudget : null,
               abilityExperienceSpent: purchasedWithExperience
                 ? abilitySelectionCost(selections, costs) + racialCost * abilityRankCost("novice", costs)
@@ -1104,10 +1101,11 @@ export class CharacterCreatorService {
             await actor.update({ "system.bio.shadow": shadow });
             const previous = actor.getFlag?.(MODULE_ID, STATE_FLAG) ?? {};
             await actor.setFlag(MODULE_ID, STATE_FLAG, {
-              ...previous,
-              version: 1,
-              step: furthestCreatorProgress(previous.step, SHADOW_STEP_COMPLETE),
-              shadow,
+                ...previous,
+                version: 1,
+                step: furthestCreatorProgress(previous.step, SHADOW_STEP_COMPLETE),
+                completedSteps: markCreatorStepComplete(previous, "shadow"),
+                shadow,
               shadowPrinciple
             });
             Hooks.callAll(`${MODULE_ID}.characterCreatorStepCompleted`, actor, {
@@ -1214,10 +1212,11 @@ export class CharacterCreatorService {
               ...(combination ? { combination } : {})
             }));
             await actor.setFlag(MODULE_ID, STATE_FLAG, {
-              ...previous,
-              version: 1,
-              step: furthestCreatorProgress(previous.step, EQUIPMENT_STEP_COMPLETE),
-              equipment: saved,
+                ...previous,
+                version: 1,
+                step: furthestCreatorProgress(previous.step, EQUIPMENT_STEP_COMPLETE),
+                completedSteps: markCreatorStepComplete(previous, "equipment"),
+                equipment: saved,
               campingEquipment: camp?.name ?? actorItems(actor).find(isCampingEquipment)?.name ?? "",
               startingThaler: thaler,
               startingThalerBase: baseThaler,
@@ -1283,10 +1282,11 @@ export class CharacterCreatorService {
             });
             const previous = actor.getFlag?.(MODULE_ID, STATE_FLAG) ?? {};
             await actor.setFlag(MODULE_ID, STATE_FLAG, {
-              ...previous,
-              version: 1,
-              step: furthestCreatorProgress(previous.step, PERSONALITY_STEP_COMPLETE),
-              personality: { characterName, ...biography }
+                ...previous,
+                version: 1,
+                step: furthestCreatorProgress(previous.step, PERSONALITY_STEP_COMPLETE),
+                completedSteps: markCreatorStepComplete(previous, "personality"),
+                personality: { characterName, ...biography }
             });
             Hooks.callAll(`${MODULE_ID}.characterCreatorStepCompleted`, actor, {
               step: "personality", personality: { characterName, ...biography }
@@ -1338,10 +1338,11 @@ export class CharacterCreatorService {
             const previous = actor.getFlag?.(MODULE_ID, STATE_FLAG) ?? {};
             const friendsGroup = { companions, group };
             await actor.setFlag(MODULE_ID, STATE_FLAG, {
-              ...previous,
-              version: 1,
-              step: furthestCreatorProgress(previous.step, FRIENDS_STEP_COMPLETE),
-              friendsGroup
+                ...previous,
+                version: 1,
+                step: furthestCreatorProgress(previous.step, FRIENDS_STEP_COMPLETE),
+                completedSteps: markCreatorStepComplete(previous, "friends"),
+                friendsGroup
             });
             Hooks.callAll(`${MODULE_ID}.characterCreatorStepCompleted`, actor, {
               step: "friends", ...friendsGroup
@@ -1366,6 +1367,27 @@ export class CharacterCreatorService {
 
 function creatorStepIndex(step) {
   return CREATOR_STEPS.findIndex((entry) => entry.id === step || entry.complete === step);
+}
+
+function completedCreatorSteps(state = {}) {
+  if (Array.isArray(state.completedSteps)) {
+    return state.completedSteps.filter((step) => creatorStepIndex(step) >= 0);
+  }
+  const legacyProgress = creatorStepIndex(state.step);
+  return legacyProgress < 0
+    ? []
+    : CREATOR_STEPS.slice(0, legacyProgress + 1).map((entry) => entry.id);
+}
+
+function hasCompletedCreatorStep(actor, step) {
+  const state = actor?.getFlag?.(MODULE_ID, STATE_FLAG) ?? {};
+  return completedCreatorSteps(state).includes(step);
+}
+
+function markCreatorStepComplete(state, step) {
+  const completed = new Set(completedCreatorSteps(state));
+  completed.add(step);
+  return CREATOR_STEPS.map((entry) => entry.id).filter((id) => completed.has(id));
 }
 
 function furthestCreatorProgress(previous, completed) {
@@ -1396,25 +1418,18 @@ function nextRequiredCreatorStep(actor, currentStep) {
 
 function creatorNavigationTargets(actor, currentStep) {
   const state = actor?.getFlag?.(MODULE_ID, STATE_FLAG) ?? {};
-  const hasContacts = Boolean(state.raceTraits?.includes("contacts") && state.contacts);
+  const hasContacts = Boolean(state.raceTraits?.includes("contacts"));
   if (currentStep === "contacts") {
-    return { previous: "race", next: isAbilitiesStepComplete(actor) ? "abilities" : null };
+    return { previous: "race", next: "abilities" };
   }
   const index = creatorStepIndex(currentStep);
   const previous = currentStep === "abilities" && hasContacts
     ? "contacts"
-    : index > 0 && isCreatorStepFilled(actor, CREATOR_STEPS[index - 1].id)
-    ? CREATOR_STEPS[index - 1].id
-    : null;
+    : index > 0 ? CREATOR_STEPS[index - 1].id : null;
   const nextEntry = CREATOR_STEPS[index + 1];
-  const deferredAttributesBlock = currentStep === "attributes"
-    && isAbilitiesStepComplete(actor)
-    && !isAttributesStepComplete(actor);
   const next = currentStep === "race" && hasContacts
     ? "contacts"
-    : nextEntry && !deferredAttributesBlock && isCreatorStepFilled(actor, nextEntry.id)
-      ? nextEntry.id
-      : null;
+    : nextEntry?.id ?? null;
   return { previous, next };
 }
 

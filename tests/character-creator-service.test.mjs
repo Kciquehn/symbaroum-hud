@@ -407,6 +407,7 @@ test("choosing an occupation writes it to the sheet and completes the first step
   assert.deepEqual(blank.flag("characterCreatorState"), {
     version: 1,
     step: "occupation-complete",
+    completedSteps: ["occupation"],
     archetype: "mystic",
     occupation: "wizard"
   });
@@ -437,6 +438,7 @@ test("a custom occupation saves its name and editable concept in creator state",
   assert.deepEqual(blank.flag("characterCreatorState"), {
     version: 1,
     step: "occupation-complete",
+    completedSteps: ["occupation"],
     archetype: "custom",
     occupation: "custom",
     customOccupation: {
@@ -547,6 +549,7 @@ test("saving point-buy Attributes writes the native Symbaroum fields", async () 
     step: "attributes-complete",
     archetype: "warrior",
     occupation: "knight",
+    completedSteps: ["occupation", "attributes"],
     attributesDeferred: false,
     attributeDistribution: "point-buy",
     attributes: Object.fromEntries(CORE_ATTRIBUTES.map((attribute, index) => [
@@ -580,6 +583,7 @@ test("Attributes can be deferred until after Abilities and are then required aga
   await blank.setFlag("symbaroum-hud", "characterCreatorState", {
     ...blank.flag("characterCreatorState"),
     step: "abilities-complete",
+    completedSteps: ["occupation", "attributes", "race", "abilities"],
     abilities: [{ id: "mystical-power" }]
   });
   assert.equal(isAbilitiesStepComplete(blank), true);
@@ -1277,6 +1281,50 @@ test("completed creator steps can be reviewed backward and forward from the step
   assert.equal(opened[2].buttons.some((button) => button.action === "creator-next-step"), true);
   assert.match(opened[2].content, /data-creator-navigation="previous"/);
   assert.match(opened[2].content, /data-creator-navigation="next"/);
+});
+
+test("step arrows navigate through every creator page without requiring prior completion", async () => {
+  const blank = actor({ id: "creator-free-navigation", uuid: "Actor.creator-free-navigation" });
+  await blank.setFlag("symbaroum-hud", "characterCreationMode", "creator");
+  const firstDialog = dialogConfigs.length;
+  dialogChoices.push(
+    ...Array.from({ length: 7 }, () => ({ action: "creator-next-step" })),
+    { action: "creator-previous-step" },
+    "close"
+  );
+
+  await CharacterCreatorService.openOccupationStep(blank);
+
+  const opened = dialogConfigs.slice(firstDialog);
+  assert.match(opened[0].content, /symbaroum-hud-occupation-book/);
+  assert.match(opened[1].content, /symbaroum-hud-attributes-book/);
+  assert.match(opened[2].content, /symbaroum-hud-race-book/);
+  assert.match(opened[3].content, /symbaroum-hud-abilities-book/);
+  assert.match(opened[4].content, /symbaroum-hud-shadow-book/);
+  assert.match(opened[5].content, /symbaroum-hud-equipment-book/);
+  assert.match(opened[6].content, /symbaroum-hud-personality-book/);
+  assert.match(opened[7].content, /symbaroum-hud-friends-book/);
+  assert.match(opened[8].content, /symbaroum-hud-personality-book/);
+  assert.equal(blank.flag("characterCreatorState"), undefined);
+});
+
+test("visiting or completing a future step does not mark earlier steps as complete", async () => {
+  const blank = actor({ id: "creator-independent-progress", uuid: "Actor.creator-independent-progress" });
+  await blank.setFlag("symbaroum-hud", "characterCreatorState", {
+    version: 1,
+    step: "equipment-complete",
+    completedSteps: ["equipment"],
+    equipment: []
+  });
+
+  assert.equal(isOccupationStepComplete(blank), false);
+  assert.equal(isAttributesStepComplete(blank), false);
+  assert.equal(isRaceStepComplete(blank), false);
+  assert.equal(isAbilitiesStepComplete(blank), false);
+  assert.equal(isShadowStepComplete(blank), false);
+  assert.equal(isEquipmentStepComplete(blank), true);
+  assert.equal(isPersonalityStepComplete(blank), false);
+  assert.equal(isFriendsStepComplete(blank), false);
 });
 
 test("reviewing earlier steps restores saved Attributes, Race traits and Abilities", async () => {

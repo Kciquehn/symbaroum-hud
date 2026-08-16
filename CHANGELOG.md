@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.65
+
+- Libera as setas do Criador de Fichas para navegar em ambas as direções por todas as oito etapas, mesmo antes de concluir a página atual.
+- Registra cada etapa confirmada separadamente, impedindo que apenas visitar ou concluir uma página futura marque etapas anteriores como prontas.
+- Preserva as escolhas ao voltar, avançar ou reabrir o Criador e migra automaticamente o progresso salvo por versões anteriores.
+- Mantém compatíveis os fluxos especiais de Contatos e de Atributos adiados.
+- Amplia a suíte automatizada para 148 testes, incluindo navegação livre e progresso não linear.
+
 ## 0.1.64
 
 - Mantém todas as escolhas do Criador de Fichas salvas ao voltar, avançar ou reabrir uma etapa, incluindo Atributos, Raça, Traços, Habilidades, Sombra, equipamentos, personalidade, amigos e grupo.

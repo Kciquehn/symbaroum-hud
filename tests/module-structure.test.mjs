@@ -819,6 +819,7 @@ assert.match(characterCreatorService, /CHARACTER_CREATION_MODES\.CREATOR/);
 assert.match(characterCreatorService, /CHARACTER_CREATION_MODES\.MANUAL/);
 assert.match(characterCreatorService, /system\.bio\.occupation/);
 assert.match(characterCreatorService, /characterCreatorState/);
+assert.match(characterCreatorService, /completedSteps: markCreatorStepComplete/);
 assert.match(characterCreatorService, /choose-occupation/);
 assert.match(coreOccupations, /CORE_OCCUPATIONS/);
 assert.equal((coreOccupations.match(/occupation\("/g) ?? []).length, 15);
