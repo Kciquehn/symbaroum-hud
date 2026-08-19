@@ -2,6 +2,7 @@ import { IND_RESOURCES_ID } from "../constants.mjs";
 
 const QUIVER_STORAGE_ID = "__quiver";
 const QUIVER_STORAGE_PREFIX = `${QUIVER_STORAGE_ID}:`;
+const ARMOR_STORAGE_ID = "__armor";
 
 export class IndResourcesIntegration {
   static get active() {
@@ -127,6 +128,57 @@ export class IndResourcesIntegration {
     if (!confirmed) return;
 
     return deleteItemDocument(actor, item);
+  }
+
+  static async setStorageItemQuantity(actor, containerId, itemId, quantity) {
+    const containers = this.api?.containers;
+    if (!containers || !actor?.isOwner || !itemId) return notifyUnavailable();
+
+    const item = storageItemDocument(containers, actor, containerId, itemId);
+    if (!item || !isGear(item)) return notifyUnavailable();
+
+    const previousQuantity = Math.max(0, Math.trunc(number(item?.system?.number)));
+    const nextQuantity = Math.max(0, Math.trunc(number(quantity)));
+    if (nextQuantity === previousQuantity) return item;
+
+    const result = await updateActorItem(actor, item, { "system.number": nextQuantity });
+    await recordManualQuantityChange(this.api, { actor, item, previousQuantity, nextQuantity });
+    return result;
+  }
+
+  static async changeStorageItemQuantity(actor, containerId, itemId, delta) {
+    const containers = this.api?.containers;
+    if (!containers || !actor?.isOwner || !itemId) return notifyUnavailable();
+
+    const item = storageItemDocument(containers, actor, containerId, itemId);
+    if (!item || !isGear(item)) return notifyUnavailable();
+
+    const previousQuantity = Math.max(0, Math.trunc(number(item?.system?.number)));
+    const nextQuantity = Math.max(
+      0,
+      previousQuantity + Math.trunc(number(delta))
+    );
+    if (nextQuantity === previousQuantity) return item;
+
+    const result = await updateActorItem(actor, item, { "system.number": nextQuantity });
+    await recordManualQuantityChange(this.api, { actor, item, previousQuantity, nextQuantity });
+    return result;
+  }
+
+  static async toggleStorageItemState(actor, containerId, itemId) {
+    const containers = this.api?.containers;
+    if (!containers || !actor?.isOwner || !itemId) return notifyUnavailable();
+
+    const item = storageItemDocument(containers, actor, containerId, itemId);
+    if (!item || !isGear(item)) return notifyUnavailable();
+
+    const currentState = normalizeGearState(item?.system?.state);
+    const nextState = currentState === "active"
+      ? "equipped"
+      : currentState === "equipped"
+        ? "other"
+        : "active";
+    return updateActorItem(actor, item, { "system.state": nextState });
   }
 
   static async deleteStorageContainer(actor, itemId) {
@@ -421,21 +473,41 @@ function storageContext(containers, actor, selectedId, quivers = []) {
   ).map((container) => normalizeContainer(containers, actor, container));
   const selectedQuiver = findSelectedQuiver(quivers, selectedId);
   const quiverSelected = Boolean(selectedQuiver);
+  const armorSelected = selectedId === ARMOR_STORAGE_ID;
   const selected = normalized.find((container) => container.id === selectedId) ?? null;
-  const inventory = normalizeInventory(containers, actor);
+  const inventory = normalizeInventory(containers, actor, (item) => !isArmor(item));
+  const armors = normalizeInventory(containers, actor, isArmor).map((item) => ({
+    ...item,
+    containerId: ARMOR_STORAGE_ID,
+    source: "inventory"
+  }));
 
   return {
-    mode: quiverSelected ? "quiver" : selected ? "container" : "inventory",
+    mode: quiverSelected
+      ? "quiver"
+      : armorSelected
+        ? "armor"
+        : selected
+          ? "container"
+          : "inventory",
     containerSelected: Boolean(selected),
     quiverSelected,
-    inventoryActive: !selected && !quiverSelected,
+    armorSelected,
+    inventoryActive: !selected && !quiverSelected && !armorSelected,
+    armorCount: armors.length,
     hasContainers: normalized.length > 0,
     hasQuiver: quivers.length > 0,
     pockets: normalized.length === 0,
-    id: quiverSelected ? selectedQuiver.storageId : selected?.id ?? null,
+    id: quiverSelected
+      ? selectedQuiver.storageId
+      : armorSelected
+        ? ARMOR_STORAGE_ID
+        : selected?.id ?? null,
     name: quiverSelected
       ? selectedQuiver.name
-      : selected?.name ?? game.i18n.localize("SYMBAROUMHUD.Storage.Inventory"),
+      : armorSelected
+        ? game.i18n.localize("SYMBAROUMHUD.Storage.Armors")
+        : selected?.name ?? game.i18n.localize("SYMBAROUMHUD.Storage.Inventory"),
     img: quiverSelected ? selectedQuiver.img : selected?.img ?? null,
     capacity: selected?.capacity ?? null,
     quiver: selectedQuiver ?? quivers[0] ?? null,
@@ -448,7 +520,11 @@ function storageContext(containers, actor, selectedId, quivers = []) {
       capacity: quiver.capacity,
       active: quiver.storageId === selectedQuiver?.storageId
     })),
-    items: quiverSelected ? selectedQuiver.availableAmmo : selected?.items ?? inventory,
+    items: quiverSelected
+      ? selectedQuiver.availableAmmo
+      : armorSelected
+        ? armors
+        : selected?.items ?? inventory,
     containers: normalized.map((container) => ({
       id: container.id,
       name: container.name,
@@ -467,7 +543,7 @@ function normalizeContainer(containers, actor, container) {
     safeCall(() => containers.getStoredItems(actor, container)) ?? []
   )
     .filter((item) => !isWeapon(item))
-    .map((item) => normalizeStorageItem(item, container.id, true));
+    .map((item) => normalizeStorageItem(item, container.id, true, actor?.isOwner));
 
   return {
     id: container.id,
@@ -478,7 +554,7 @@ function normalizeContainer(containers, actor, container) {
   };
 }
 
-function normalizeInventory(containers, actor) {
+function normalizeInventory(containers, actor, predicate = null) {
   if (
     typeof containers.isContainer !== "function"
     || typeof containers.isStored !== "function"
@@ -495,10 +571,28 @@ function normalizeInventory(containers, actor) {
         && !isWeapon(item)
         && Boolean(safeCall(() => containers.canAttemptStoreItem(item)));
     })
-    .map((item) => normalizeStorageItem(item, null, true));
+    .filter((item) => typeof predicate !== "function" || predicate(item))
+    .map((item) => normalizeStorageItem(item, null, true, actor?.isOwner));
 }
 
-function normalizeStorageItem(item, containerId, draggable) {
+async function recordManualQuantityChange(api, { actor, item, previousQuantity, nextQuantity }) {
+  const record = api?.gmLog?.recordItemQuantityChange;
+  if (typeof record !== "function") return;
+
+  try {
+    await record.call(api.gmLog, {
+      actor,
+      item,
+      previousQuantity,
+      quantity: nextQuantity
+    });
+  } catch (error) {
+    console.warn("symbaroum-hud | Could not register the inventory quantity change in the GM log.", error);
+  }
+}
+
+function normalizeStorageItem(item, containerId, draggable, editable = false) {
+  const state = normalizeGearState(item?.system?.state);
   return {
     id: item.id,
     uuid: item.uuid,
@@ -509,7 +603,19 @@ function normalizeStorageItem(item, containerId, draggable) {
       ?? item.thumbnail
       ?? item.texture?.src
       ?? "icons/svg/item-bag.svg",
-    quantity: Math.max(0, number(item?.system?.number ?? 1))
+    quantity: Math.max(0, number(item?.system?.number ?? 1)),
+    state,
+    stateIcon: state === "active"
+      ? "fa-shirt"
+      : state === "equipped"
+        ? "fa-suitcase"
+        : "fa-warehouse",
+    stateLabel: game.i18n.localize(state === "active"
+      ? "SYMBAROUMHUD.Storage.StateActive"
+      : state === "equipped"
+        ? "SYMBAROUMHUD.Storage.StateEquipped"
+        : "SYMBAROUMHUD.Storage.StateStored"),
+    editable: Boolean(editable)
   };
 }
 
@@ -537,6 +643,22 @@ function isItemDropData(data) {
 
 function isWeapon(item) {
   return item?.type === "weapon" || Boolean(item?.system?.isWeapon);
+}
+
+function isArmor(item) {
+  return item?.type === "armor" || Boolean(item?.system?.isArmor);
+}
+
+function isEquipment(item) {
+  return item?.type === "equipment" || Boolean(item?.system?.isEquipment);
+}
+
+function isGear(item) {
+  return isWeapon(item)
+    || isArmor(item)
+    || item?.type === "artifact"
+    || isEquipment(item)
+    || Boolean(item?.system?.isGear);
 }
 
 function isRitual(item) {
@@ -580,6 +702,28 @@ async function deleteItemDocument(actor, item) {
     return actor.deleteEmbeddedDocuments("Item", [item.id]);
   }
   return notifyUnavailable();
+}
+
+function storageItemDocument(containers, actor, containerId, itemId) {
+  const storage = storageContext(containers, actor, containerId || null, quiverContexts(actor));
+  const selectedId = storage?.id ?? null;
+  if (!storage?.quiverSelected && selectedId !== (containerId || null)) return null;
+  if (!storage?.items?.some((entry) => entry.id === itemId && !entry.virtual)) return null;
+  return actorItems(actor).find((candidate) => candidate?.id === itemId) ?? null;
+}
+
+function updateActorItem(actor, item, changes) {
+  const update = { _id: item.id, id: item.id, ...changes };
+  if (typeof actor?.updateEmbeddedDocuments === "function") {
+    return actor.updateEmbeddedDocuments("Item", [update]);
+  }
+  if (typeof item?.update === "function") return item.update(changes);
+  return notifyUnavailable();
+}
+
+function normalizeGearState(value) {
+  const state = String(value ?? "").toLocaleLowerCase();
+  return state === "active" || state === "equipped" ? state : "other";
 }
 
 async function confirmItemDeletion(item) {
@@ -669,7 +813,7 @@ function quiverContext(actor, quiver) {
   const capacity = quiverCapacity();
   const storageId = `${QUIVER_STORAGE_PREFIX}${quiver.id}`;
   const availableAmmo = looseAmmoItems(actor).map((item) => (
-    normalizeStorageItem(item, null, true)
+    normalizeStorageItem(item, null, true, actor?.isOwner)
   ));
 
   return {

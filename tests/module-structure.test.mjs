@@ -19,6 +19,12 @@ assert.equal(manifest.license, "https://github.com/Kciquehn/symbaroum-hud/blob/m
 assert.equal(manifest.bugs, "https://github.com/Kciquehn/symbaroum-hud/issues");
 assert.ok(manifest.esmodules.includes("scripts/main.mjs"));
 assert.ok(fs.existsSync(path.join(root, "scripts", "services", "character-creator-service.mjs")), "Missing character creator service");
+assert.ok(fs.existsSync(path.join(root, "scripts", "applications", "compendium-browser.mjs")), "Missing Compendium Browser application");
+assert.ok(fs.existsSync(path.join(root, "scripts", "services", "content-origin-service.mjs")), "Missing content origin service");
+assert.ok(fs.existsSync(path.join(root, "scripts", "services", "shop-service.mjs")), "Missing shop service");
+assert.ok(fs.existsSync(path.join(root, "scripts", "data", "official-content-origin-ids.mjs")), "Missing bundled official content origins");
+assert.ok(fs.existsSync(path.join(root, "templates", "compendium-browser.hbs")), "Missing Compendium Browser template");
+assert.ok(fs.existsSync(path.join(root, "styles", "compendium-browser.css")), "Missing Compendium Browser stylesheet");
 assert.ok(fs.existsSync(path.join(root, "scripts", "data", "core-occupations.mjs")), "Missing core occupations data");
 assert.ok(fs.existsSync(path.join(root, "scripts", "data", "core-attributes.mjs")), "Missing core attributes data");
 assert.ok(fs.existsSync(path.join(root, "scripts", "data", "character-creation-abilities.mjs")), "Missing character creation Abilities data");
@@ -80,6 +86,7 @@ assert.deepEqual(
 
 const template = fs.readFileSync(path.join(root, "templates", "hud.hbs"), "utf8");
 const application = fs.readFileSync(path.join(root, "scripts", "applications", "symbaroum-hud.mjs"), "utf8");
+const compendiumBrowser = fs.readFileSync(path.join(root, "scripts", "applications", "compendium-browser.mjs"), "utf8");
 const actorService = fs.readFileSync(path.join(root, "scripts", "services", "actor-service.mjs"), "utf8");
 const characterCreatorService = fs.readFileSync(path.join(root, "scripts", "services", "character-creator-service.mjs"), "utf8");
 const coreOccupations = fs.readFileSync(path.join(root, "scripts", "data", "core-occupations.mjs"), "utf8");
@@ -105,6 +112,25 @@ const characterCreatorTheme = fs.readFileSync(
   "utf8"
 );
 assert.match(application, /foundry\.applications\.handlebars\.renderTemplate/);
+assert.match(application, /SymbaroumCompendiumBrowser\.openShop/);
+assert.match(compendiumBrowser, /game\.items/);
+assert.match(compendiumBrowser, /game\.actors/);
+assert.doesNotMatch(compendiumBrowser, /game\.packs/);
+assert.doesNotMatch(compendiumBrowser, /getIndex/);
+assert.match(compendiumBrowser, /testUserPermission/);
+assert.match(compendiumBrowser, /RESULT_BATCH_SIZE/);
+assert.match(compendiumBrowser, /restoreSearchFocus/);
+assert.match(compendiumBrowser, /setSelectionRange/);
+assert.match(compendiumBrowser, /data-browser-filter-panel/);
+assert.match(compendiumBrowser, /toggle-filters/);
+assert.match(main, /registerCompendiumBrowserHooks/);
+assert.match(main, /openCompendiumBrowser/);
+assert.match(main, /openShop/);
+assert.match(compendiumBrowser, /renderItemDirectory/);
+assert.match(compendiumBrowser, /renderActorDirectory/);
+assert.match(compendiumBrowser, /symbaroum-hud-directory-browser-action/);
+assert.doesNotMatch(template, /data-action="open-compendium-browser"/);
+assert.match(template, /data-action="open-shop"/);
 assert.doesNotMatch(application, /return renderTemplate\(/);
 assert.doesNotMatch(characterCreatorService, /continue-later|ContinueLater/);
 assert.match(stylesheet, /@import url\("\.\/character-creator-theme\.css"\)/);
@@ -199,6 +225,7 @@ assert.match(template, /info\.load\.current/);
 assert.match(template, /info\.load\.capacity/);
 assert.match(template, /info\.experience\.available/);
 assert.match(template, /info\.experience\.total/);
+assert.match(template, /fa-weight-hanging[\s\S]*?<strong>\{\{#if info\.load\}\}[\s\S]*?<small aria-hidden="true"><\/small>/);
 assert.match(template, /symbaroum-hud-storage-toggle/);
 assert.match(template, /symbaroum-hud-panel-toggle symbaroum-hud-storage-toggle/);
 assert.match(template, /symbaroum-hud-panel-toggle symbaroum-hud-attacks-toggle/);
@@ -213,6 +240,8 @@ assert.doesNotMatch(template, /class="symbaroum-hud-attack-entry" role="listitem
 assert.match(template, /class="symbaroum-hud-attacks-empty"/);
 assert.match(template, /data-action="toggle-attacks"/);
 assert.match(template, /data-action="close-attacks"/);
+assert.match(template, /data-action="open-weapon-shop"/);
+assert.match(template, /SYMBAROUMHUD\.Attacks\.OpenWeaponShop/);
 assert.match(template, /data-action="roll-weapon"/);
 assert.match(template, /data-weapon-drop="{{attacks\.canUse}}"/);
 assert.match(template, /data-weapon-draggable=/);
@@ -349,11 +378,18 @@ assert.match(template, /data-action="open-storage-item"/);
 assert.match(template, /data-action="delete-storage-item"/);
 assert.match(template, /symbaroum-hud-storage-item-delete/);
 assert.match(template, /data-action="toggle-storage-view"/);
+assert.match(template, /class="symbaroum-hud-storage-shop"/);
 assert.match(template, /data-view-mode="{{storage\.viewMode}}"/);
 assert.equal(
   (template.match(/data-view-mode="{{storage\.viewMode}}"/g) ?? []).length,
-  3
+  2
 );
+assert.match(template, /class="symbaroum-hud-storage-equipment"/);
+assert.match(template, /class="symbaroum-hud-storage-equipment-header"/);
+assert.match(template, /SYMBAROUMHUD\.Storage\.QuantityShort/);
+assert.match(template, /data-action="change-storage-quantity"/);
+assert.match(template, /data-storage-quantity="true"/);
+assert.match(template, /data-action="toggle-storage-item-state"/);
 assert.match(template, /data-storage-drop-container="{{id}}"/);
 assert.match(template, /data-storage-delete-container="{{id}}"/);
 assert.match(template, /data-storage-withdraw-zone="inventory"/);
@@ -495,6 +531,9 @@ assert.match(application, /\.filter\(\(item\) => !isRitualItem\(item\)\)/);
 assert.match(application, /available: items\.length > 0/);
 assert.match(application, /hasLevels/);
 assert.match(application, /#attacksOpen/);
+assert.match(application, /action === "open-weapon-shop"/);
+assert.match(application, /category: "weapon"/);
+assert.match(application, /lockCategory: true/);
 assert.match(application, /abilityContext\(\s*actor,\s*this\.\#selectedAbilityId,\s*this\.\#selectedAbilityTab,\s*\{\s*traits: false\s*\}\s*\)/);
 assert.match(application, /abilityContext\(\s*actor,\s*this\.\#selectedMysticalPowerId,\s*this\.\#selectedMysticalPowerTab,\s*\{\s*mysticalPowers: true\s*\}\s*\)/);
 assert.match(application, /abilityContext\(\s*actor,\s*this\.\#selectedTraitId,\s*this\.\#selectedTraitTab,\s*\{\s*traits: true\s*\}\s*\)/);
@@ -835,9 +874,10 @@ assert.match(characterCreatorService, /dialog\.bringToFront/);
 assert.match(characterCreatorService, /openCreationItemSheet\(item\)/);
 assert.match(characterCreatorService, /classList\.add\("symbaroum-hud-creation-item-preview"\)/);
 assert.match(characterCreatorService, /openShadowStep/);
-assert.match(characterCreatorService, /#showShadowBook/);
+assert.doesNotMatch(characterCreatorService, /#showShadowBook/);
 assert.match(characterCreatorService, /"system\.bio\.shadow": shadow/);
-assert.match(characterCreatorService, /furthestCreatorProgress\(previous\.step, SHADOW_STEP_COMPLETE\)/);
+assert.match(characterCreatorService, /data-personality-section-tab="shadow"/);
+assert.match(characterCreatorService, /shadowBookContent\(actor, \{ embedded: true \}\)/);
 assert.match(characterCreatorService, /data-shadow-example/);
 assert.match(characterCreatorService, /openEquipmentStep/);
 assert.match(characterCreatorService, /#showEquipmentBook/);

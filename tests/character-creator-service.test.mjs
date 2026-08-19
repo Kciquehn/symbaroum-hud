@@ -39,6 +39,30 @@ globalThis.foundry = {
           const choice = dialogChoices.shift() ?? "close";
           if (choice === "close") return null;
           if (typeof choice !== "object") return choice;
+          if (choice.renderPosition && config.render) {
+            const headerListeners = {};
+            const documentListeners = {};
+            const header = {
+              addEventListener: (type, callback) => { headerListeners[type] = callback; }
+            };
+            const element = {
+              isConnected: true,
+              ownerDocument: {
+                addEventListener: (type, callback) => { documentListeners[type] = callback; }
+              },
+              querySelector: (selector) => selector === ".window-header" ? header : null,
+              querySelectorAll: () => [],
+              getBoundingClientRect: () => choice.renderPosition
+            };
+            config.render({}, {
+              element,
+              position: config.position,
+              bringToFront: () => undefined
+            });
+            headerListeners.pointerdown?.();
+            documentListeners.pointerup?.();
+            await new Promise((resolve) => setTimeout(resolve, 0));
+          }
           const button = config.buttons.find((entry) => entry.action === choice.action);
           const values = choice.form ?? { occupation: choice.occupation };
           const elements = Object.fromEntries(Object.entries(values).map(([name, value]) => [
@@ -218,6 +242,55 @@ test("offers the creator only to an owner who has not already chosen", async () 
   assert.equal(shouldOfferCharacterCreator(actor({
     testUserPermission: () => false
   })), false);
+});
+
+test("a player can dismiss the automatic creator offer for one character", async () => {
+  const blank = actor({ id: "dismiss-creator", uuid: "Actor.dismiss-creator" });
+  dialogChoices.push("close");
+  await CharacterCreatorService.offer(blank);
+
+  const dialog = dialogConfigs.at(-1);
+  assert.match(dialog.content, /data-character-creator-dismiss/);
+  let change;
+  const control = {
+    checked: false,
+    addEventListener: (type, callback) => {
+      if (type === "change") change = callback;
+    }
+  };
+  dialog.render({}, {
+    element: { querySelector: () => control }
+  });
+
+  control.checked = true;
+  change();
+  await Promise.resolve();
+  assert.deepEqual(blank.flag("characterCreatorDismissedUsers"), [game.user.id]);
+  assert.equal(shouldOfferCharacterCreator(blank), false);
+
+  control.checked = false;
+  change();
+  await Promise.resolve();
+  assert.deepEqual(blank.flag("characterCreatorDismissedUsers"), []);
+  assert.equal(shouldOfferCharacterCreator(blank), true);
+});
+
+test("a dismissed unfinished creator stays closed but remains available on demand", async () => {
+  const blank = actor({ id: "dismiss-resume", uuid: "Actor.dismiss-resume" });
+  await blank.setFlag("symbaroum-hud", "characterCreationMode", CHARACTER_CREATION_MODES.CREATOR);
+  await blank.setFlag("symbaroum-hud", "characterCreatorDismissedUsers", [game.user.id]);
+  let sheetCloseCount = 0;
+  const sheet = { close: async () => { sheetCloseCount += 1; } };
+  const dialogCount = dialogConfigs.length;
+
+  await CharacterCreatorService.handleSheet(blank, sheet);
+
+  assert.equal(sheetCloseCount, 0);
+  assert.equal(dialogConfigs.length, dialogCount);
+
+  dialogChoices.push("close");
+  await CharacterCreatorService.open(blank);
+  assert.match(dialogConfigs.at(-1).content, /symbaroum-hud-occupation-book/);
 });
 
 test("remembers the manual character creation choice", async () => {
@@ -604,7 +677,7 @@ test("Attributes can be deferred until after Abilities and are then required aga
 
   assert.deepEqual(await CharacterCreatorService.openAttributesStep(blank), distribution);
   assert.equal(dialogConfigs[returnDialog].buttons.some((button) => button.action === "defer-attributes"), false);
-  assert.match(dialogConfigs.at(-1).content, /symbaroum-hud-shadow-book/);
+  assert.match(dialogConfigs.at(-1).content, /symbaroum-hud-equipment-book/);
   assert.equal(blank.flag("characterCreatorState").step, "abilities-complete");
   assert.equal(blank.flag("characterCreatorState").attributesDeferred, false);
   assert.deepEqual(blank.flag("characterCreatorState").abilities, [{ id: "mystical-power" }]);
@@ -689,10 +762,10 @@ test("a human racial choice is added as a native boon", async () => {
   assert.deepEqual(blank.updates.at(-1), { "system.bio.race": "SYMBAROUMHUD.CharacterCreator.Race.Entries.ambrian.Name" });
   assert.equal(isRaceStepComplete(blank), true);
   assert.equal(isContactsPreparationRequired(blank), true);
-  assert.match(dialogConfigs.at(-1).content, /symbaroum-hud-contacts-book/);
+  assert.match(dialogConfigs.at(-1).content, /symbaroum-hud-abilities-book/);
 });
 
-test("Contacts opens a unique preparation page between Race and Abilities", async () => {
+test("Contacts no longer interrupts the flow between Race and Abilities", async () => {
   const blank = actor({ id: "contacts-guide", uuid: "Actor.contacts-guide" });
   await blank.setFlag("symbaroum-hud", "characterCreationMode", "creator");
   await blank.setFlag("symbaroum-hud", "characterCreatorState", {
@@ -703,30 +776,38 @@ test("Contacts opens a unique preparation page between Race and Abilities", asyn
   });
   dialogChoices.push("close");
 
-  await CharacterCreatorService.openContactsStep(blank);
+  await CharacterCreatorService.openAbilitiesStep(blank);
   const config = dialogConfigs.at(-1);
-  assert.deepEqual(config.position, { width: 1060, height: 680 });
-  assert.match(config.content, /symbaroum-hud-contacts-book/);
-  assert.match(config.content, /name="contactsNetwork"/);
-  assert.match(config.content, /name="contactsRelationship"/);
-  assert.equal((config.content.match(/name="contactName-/g) ?? []).length, 4);
-  assert.match(config.content, /Contacts\.InPlay\.Declare/);
+  assert.deepEqual(config.position, { width: 1140, height: 700 });
+  assert.match(config.content, /symbaroum-hud-abilities-book/);
+  assert.doesNotMatch(config.content, /name="contactsNetwork"/);
   assert.equal(config.buttons.some((button) => button.action === "creator-previous-step"), true);
   assert.equal(isContactsPreparationRequired(blank), true);
-  assert.equal(await CharacterCreatorService.openAbilitiesStep(blank), null);
 });
 
-test("saving Contacts records the network and NPCs in native Notes without erasing existing text", async () => {
+test("History and Personality prepares Contacts and records them in native Notes", async () => {
   const blank = actor({ id: "contacts-save", uuid: "Actor.contacts-save" });
   blank.system.notes = "<p>Anotação anterior.</p>";
   await blank.setFlag("symbaroum-hud", "characterCreationMode", "creator");
   await blank.setFlag("symbaroum-hud", "characterCreatorState", {
     version: 1,
-    step: "race-complete",
+    step: "equipment-complete",
     race: "ambrian",
-    raceTraits: ["contacts"]
+    raceTraits: ["contacts"],
+    equipment: []
   });
-  dialogChoices.push({ action: "choose-contacts", form: {
+  const firstDialog = dialogConfigs.length;
+  dialogChoices.push({ action: "choose-personality", form: {
+    personalityName: "Alésia",
+    personalityQuote: "A luz revela os caminhos.",
+    personalityAge: "31 anos",
+    personalityHeight: "1,72 m",
+    personalityWeight: "64 kg",
+    personalityAppearance: "Veste as cores da Igreja do Sol.",
+    personalityBackground: "Serviu como escriba do templo durante a juventude.",
+    personalityGoal: "Proteger os peregrinos de Ambria.",
+    shadow: "Dourada como a luz de Prios.",
+    "shadow-principle": "civilization",
     contactsNetwork: "Igreja do Sol em Yndaros",
     contactsRelationship: "Serviu como escriba do templo durante a juventude.",
     "contactName-0": "Irmã Alésia",
@@ -736,7 +817,13 @@ test("saving Contacts records the network and NPCs in native Notes without erasi
     contactsComplications: "Espera ajuda para proteger peregrinos."
   } }, "close");
 
-  const contacts = await CharacterCreatorService.openContactsStep(blank);
+  const result = await CharacterCreatorService.openPersonalityStep(blank);
+  const contacts = result.contacts;
+  const content = dialogConfigs[firstDialog].content;
+  assert.match(content, /symbaroum-hud-personality-contacts/);
+  assert.match(content, /name="contactsNetwork"/);
+  assert.match(content, /name="contactsRelationship"/);
+  assert.equal((content.match(/name="contactName-/g) ?? []).length, 4);
   assert.equal(contacts.network, "Igreja do Sol em Yndaros");
   assert.deepEqual(contacts.people, [{
     name: "Irmã Alésia",
@@ -750,11 +837,11 @@ test("saving Contacts records the network and NPCs in native Notes without erasi
   assert.match(notesUpdate["system.notes"], /Irmã Alésia/);
   assert.match(notesUpdate["system.notes"], /symbaroum-hud:contacts:start/);
   assert.equal(isContactsPreparationRequired(blank), false);
-  assert.deepEqual(hookCalls.at(-1), [
-    "symbaroum-hud.characterCreatorTraitPrepared",
-    blank,
-    { trait: "contacts", contacts }
-  ]);
+  assert.equal(isPersonalityStepComplete(blank), true);
+  assert.equal(hookCalls.some(([name, hookActor, data]) =>
+    name === "symbaroum-hud.characterCreatorTraitPrepared"
+    && hookActor === blank
+    && data.contacts === contacts), true);
 });
 
 test("goblin adds mandatory burdens and records its optional trait as an Ability choice", async () => {
@@ -802,14 +889,22 @@ test("validates both official Ability distributions and discounts optional racia
   ], ABILITY_DISTRIBUTION_MODES.EXPERIENCE, 1, { experienceBudget: 79 }), false);
 });
 
-test("the fourth creator step provides search, full Ability reading and both distributions", async () => {
+test("the fourth creator step provides the compendium navigator with XP purchase only", async () => {
   const blank = actor({ id: "abilities", uuid: "Actor.abilities" });
   await blank.setFlag("symbaroum-hud", "characterCreationMode", "creator");
   await blank.setFlag("symbaroum-hud", "characterCreatorState", {
     version: 1, step: "race-complete", race: "ambrian"
   });
   const previous = game.items;
+  let renderedAbilitySheets = 0;
   game.items = [worldAbility("a", "Acrobatics"), worldAbility("b", "Alchemy")];
+  for (const ability of game.items) {
+    const getData = ability.sheet.getData;
+    ability.sheet.getData = async (...args) => {
+      renderedAbilitySheets++;
+      return getData(...args);
+    };
+  }
   dialogChoices.push("close");
   try {
     await CharacterCreatorService.openAbilitiesStep(blank);
@@ -819,21 +914,33 @@ test("the fourth creator step provides search, full Ability reading and both dis
   assert.deepEqual(dialogConfigs.at(-1).position, { width: 1140, height: 700 });
   const content = dialogConfigs.at(-1).content;
   assert.match(content, /AbilitiesProgress/);
-  assert.match(content, /data-ability-mode="experience" data-active="true"/);
+  assert.match(content, /name="abilityDistributionMode" value="experience"/);
+  assert.doesNotMatch(content, /data-ability-mode=/);
   assert.match(content, /name="abilityExperienceBudget" value="50"/);
   assert.match(content, /<strong data-experience-remaining>50<\/strong>/);
   assert.ok(
     content.indexOf("data-experience-remaining") < content.indexOf('name="abilityExperienceBudget"'),
     "Remaining XP must be emphasized above the total XP input"
   );
-  assert.match(content, /data-ability-mode="five-novice"/);
-  assert.match(content, /data-ability-mode="mixed"/);
+  assert.match(content, /symbaroum-hud-creator-ability-browser/);
+  assert.doesNotMatch(content, /symbaroum-hud-browser-tabs/);
+  assert.doesNotMatch(content, /SYMBAROUMHUD\.CompendiumBrowser\.Title/);
+  assert.match(content, /data-toggle-ability-filter-panel/);
+  assert.match(content, /data-ability-filter-panel hidden/);
+  assert.match(content, /data-creation-browser-origin/);
+  assert.match(content, /data-creation-browser-source/);
   assert.match(content, /data-ability-search/);
+  assert.doesNotMatch(content, /SYMBAROUMHUD\.CompendiumBrowser\.Types\.Ability/);
+  assert.doesNotMatch(content, /symbaroum-hud-browser-entry-source/);
   assert.equal((content.match(/data-creation-ability-id=/g) ?? []).length, 2);
   assert.equal((content.match(/data-creation-ability-page=/g) ?? []).length, 2);
   assert.equal((content.match(/class="symbaroum sheet item symbaroum-hud-native-ability-sheet"/g) ?? []).length, 2);
-  assert.equal((content.match(/class="sheet-tabs"/g) ?? []).length, 2);
-  assert.equal((content.match(/data-tab="bonus"/g) ?? []).length, 4);
+  assert.equal((content.match(/data-ability-sheet-loaded="true"/g) ?? []).length, 1);
+  assert.equal((content.match(/data-ability-sheet-loaded="false"/g) ?? []).length, 1);
+  assert.equal(renderedAbilitySheets, 1, "Only the initially visible native Ability sheet should render eagerly");
+  assert.equal((content.match(/class="sheet-tabs"/g) ?? []).length, 1);
+  assert.equal((content.match(/data-tab="bonus"/g) ?? []).length, 2);
+  assert.match(content, /LoadingSheet/);
   assert.match(content, /<input disabled name="name" value="Acrobatics">/);
   assert.match(content, /Defense 2/);
   assert.match(content, /Novice a/);
@@ -1018,19 +1125,29 @@ test("Poder Místico and Ritualista list every accessible world choice as Observ
   const ritualist = worldAbility("ritualist-ability", "Ritualista");
   ritualist.system.reference = "ritualist";
   const permissionLevels = [];
+  const visiblePower = worldMysticalPower("power-visible", "Cascata de Enxofre", (_user, level) => {
+    permissionLevels.push(["power", level]);
+    return level === 2;
+  });
+  visiblePower.flags = { "symbaroum-hud": { origin: "core-rulebook" } };
+  const advancedPower = worldMysticalPower("power-advanced", "Poder Avançado");
+  advancedPower.flags = { "symbaroum-hud": { origin: "advanced-players-guide" } };
+  const visibleRitual = worldRitual("ritual-visible", "Interrogatório Telepático", (_user, level) => {
+    permissionLevels.push(["ritual", level]);
+    return level === 2;
+  });
+  visibleRitual.flags = { "symbaroum-hud": { origin: "core-rulebook" } };
+  const advancedRitual = worldRitual("ritual-advanced", "Ritual Avançado");
+  advancedRitual.flags = { "symbaroum-hud": { origin: "advanced-players-guide" } };
   const previous = game.items;
   game.items = [
     mysticalAbility,
     ritualist,
-    worldMysticalPower("power-visible", "Cascata de Enxofre", (_user, level) => {
-      permissionLevels.push(["power", level]);
-      return level === 2;
-    }),
+    visiblePower,
+    advancedPower,
     worldMysticalPower("power-hidden", "Poder Oculto", () => false),
-    worldRitual("ritual-visible", "Interrogatório Telepático", (_user, level) => {
-      permissionLevels.push(["ritual", level]);
-      return level === 2;
-    }),
+    visibleRitual,
+    advancedRitual,
     worldRitual("ritual-hidden", "Ritual Oculto", () => false)
   ];
   dialogChoices.push("close");
@@ -1042,13 +1159,23 @@ test("Poder Místico and Ritualista list every accessible world choice as Observ
   const content = dialogConfigs.at(-1).content;
   assert.match(content, /Cascata de Enxofre/);
   assert.match(content, /Interrogatório Telepático/);
+  assert.match(content, /data-tradition-gateway="power"/);
+  assert.match(content, /data-tradition-gateway="ritual"/);
+  assert.equal((content.match(/data-tradition-ability-recommendation/g) ?? []).length, 2);
   assert.match(content, /data-choice-type="mysticalPower"/);
   assert.match(content, /data-open-creation-item="power-visible"/);
+  assert.match(content, /data-creation-choice-identities="cascatadeenxofre powervisible"/);
+  assert.match(content, /data-mystical-power-choice="power-visible"[\s\S]*?data-creation-choice-origin="core-rulebook"/);
+  assert.match(content, /data-mystical-power-choice="power-advanced"[\s\S]*?data-creation-choice-origin="advanced-players-guide"/);
   assert.doesNotMatch(content, /ReadMysticalPower/);
   assert.match(content, /data-select-ritual="ritual-visible"/);
   assert.match(content, /data-open-creation-item="ritual-visible"/);
+  assert.match(content, /data-creation-choice-identities="interrogatoriotelepatico ritualvisible"/);
+  assert.match(content, /data-ritual-choice="ritual-visible"[\s\S]*?data-creation-choice-origin="core-rulebook"/);
+  assert.match(content, /data-ritual-choice="ritual-advanced"[\s\S]*?data-creation-choice-origin="advanced-players-guide"/);
   assert.doesNotMatch(content, /Ritual description ritual-visible/);
   assert.doesNotMatch(content, /<details>/);
+  assert.equal((content.match(/data-tradition-choice-recommendation/g) ?? []).length, 4);
   assert.doesNotMatch(content, /Poder Oculto/);
   assert.doesNotMatch(content, /Ritual Oculto/);
   assert.deepEqual(permissionLevels, [["power", 2], ["ritual", 2]]);
@@ -1065,7 +1192,7 @@ test("different mystical powers can occupy separate Ability selections", () => {
   ], ABILITY_DISTRIBUTION_MODES.EXPERIENCE, 0, { experienceBudget: 40 }), false);
 });
 
-test("saving five Novice choices creates native Abilities without spending XP", async () => {
+test("obsolete free-distribution input is ignored in favor of XP purchase", async () => {
   const blank = actor({ id: "five-abilities", uuid: "Actor.five-abilities" });
   await blank.setFlag("symbaroum-hud", "characterCreationMode", "creator");
   await blank.setFlag("symbaroum-hud", "characterCreatorState", {
@@ -1078,6 +1205,7 @@ test("saving five Novice choices creates native Abilities without spending XP", 
     action: "choose-abilities",
     form: {
       abilityDistributionMode: "five-novice",
+      abilityExperienceBudget: 50,
       abilitySelections: JSON.stringify(abilities.map(({ id }) => ({ id, rank: "novice" })))
     }
   });
@@ -1089,12 +1217,15 @@ test("saving five Novice choices creates native Abilities without spending XP", 
   assert.equal(blank.items.length, 4);
   assert.equal(blank.items.every((item) => item.system.novice.isActive), true);
   assert.equal(blank.items.every((item) => !item.system.adept.isActive && !item.system.master.isActive), true);
-  assert.deepEqual(blank.updates.at(-1), { "system.bonus.experience.value": 50 });
+  assert.deepEqual(blank.updates.at(-1), {
+    "system.experience.total": 50,
+    "system.bonus.experience.value": 0
+  });
   assert.equal(isAbilitiesStepComplete(blank), true);
-  assert.equal(blank.flag("characterCreatorState").abilityDistribution, "five-novice");
+  assert.equal(blank.flag("characterCreatorState").abilityDistribution, "experience");
 });
 
-test("saving the mixed distribution activates its Adept Ability at both required levels", async () => {
+test("XP purchase still activates every required level of an Adept Ability", async () => {
   const blank = actor({ id: "mixed-abilities", uuid: "Actor.mixed-abilities" });
   await blank.setFlag("symbaroum-hud", "characterCreationMode", "creator");
   await blank.setFlag("symbaroum-hud", "characterCreatorState", { version: 1, step: "race-complete" });
@@ -1105,6 +1236,7 @@ test("saving the mixed distribution activates its Adept Ability at both required
     action: "choose-abilities",
     form: {
       abilityDistributionMode: "mixed",
+      abilityExperienceBudget: 50,
       abilitySelections: JSON.stringify([
         { id: "a", rank: "novice" }, { id: "b", rank: "novice" }, { id: "c", rank: "adept" }
       ])
@@ -1119,7 +1251,10 @@ test("saving the mixed distribution activates its Adept Ability at both required
   assert.equal(adept.system.novice.isActive, true);
   assert.equal(adept.system.adept.isActive, true);
   assert.equal(adept.system.master.isActive, false);
-  assert.deepEqual(blank.updates.at(-1), { "system.bonus.experience.value": 50 });
+  assert.deepEqual(blank.updates.at(-1), {
+    "system.experience.total": 50,
+    "system.bonus.experience.value": 0
+  });
   assert.equal(isAbilitiesStepComplete(blank), true);
 });
 
@@ -1224,18 +1359,20 @@ test("Ritualista automatically adds the number of selected rituals allowed by it
   ]);
 });
 
-test("the fifth creator step explains Shadows with principles and examples", async () => {
+test("History and Personality includes the illustrated Shadow chapter", async () => {
   const blank = actor({ id: "shadow-guide", uuid: "Actor.shadow-guide" });
   await blank.setFlag("symbaroum-hud", "characterCreationMode", "creator");
   await blank.setFlag("symbaroum-hud", "characterCreatorState", {
-    version: 1, step: "abilities-complete"
+    version: 1, step: "equipment-complete"
   });
   dialogChoices.push("close");
-  await CharacterCreatorService.openShadowStep(blank);
-  assert.deepEqual(dialogConfigs.at(-1).position, { width: 1060, height: 690 });
+  await CharacterCreatorService.openPersonalityStep(blank);
+  assert.deepEqual(dialogConfigs.at(-1).position, { width: 1060, height: 700 });
   const content = dialogConfigs.at(-1).content;
+  assert.match(content, /symbaroum-hud-personality-book/);
   assert.match(content, /symbaroum-hud-shadow-book/);
-  assert.match(content, /SYMBAROUMHUD\.CharacterCreator\.Guide\.ShadowProgress/);
+  assert.match(content, /data-personality-section-tab="shadow"/);
+  assert.match(content, /data-personality-section="shadow" hidden/);
   assert.match(content, /data-shadow-tone="nature"/);
   assert.match(content, /data-shadow-tone="civilization"/);
   assert.match(content, /data-shadow-tone="corrupted"/);
@@ -1253,12 +1390,12 @@ test("the fifth creator step explains Shadows with principles and examples", asy
   assert.equal(isShadowStepComplete(blank), false);
 });
 
-test("completed creator steps can be reviewed backward and forward from the step marker", async () => {
+test("the combined biography step can be reviewed backward and forward from the step marker", async () => {
   const blank = actor({ id: "creator-navigation", uuid: "Actor.creator-navigation" });
   await blank.setFlag("symbaroum-hud", "characterCreationMode", "creator");
   await blank.setFlag("symbaroum-hud", "characterCreatorState", {
     version: 1,
-    step: "abilities-complete",
+    step: "equipment-complete",
     occupation: "wizard",
     attributes: {},
     race: "ambrian",
@@ -1272,12 +1409,12 @@ test("completed creator steps can be reviewed backward and forward from the step
     "close"
   );
 
-  await CharacterCreatorService.openShadowStep(blank);
+  await CharacterCreatorService.openPersonalityStep(blank);
   const opened = dialogConfigs.slice(firstDialog);
-  assert.match(opened[0].content, /symbaroum-hud-shadow-book/);
-  assert.match(opened[1].content, /symbaroum-hud-abilities-book/);
-  assert.match(opened[2].content, /symbaroum-hud-race-book/);
-  assert.match(opened[3].content, /symbaroum-hud-abilities-book/);
+  assert.match(opened[0].content, /symbaroum-hud-personality-book/);
+  assert.match(opened[1].content, /symbaroum-hud-equipment-book/);
+  assert.match(opened[2].content, /symbaroum-hud-abilities-book/);
+  assert.match(opened[3].content, /symbaroum-hud-equipment-book/);
   assert.equal(opened[2].buttons.some((button) => button.action === "creator-next-step"), true);
   assert.match(opened[2].content, /data-creator-navigation="previous"/);
   assert.match(opened[2].content, /data-creator-navigation="next"/);
@@ -1288,7 +1425,7 @@ test("step arrows navigate through every creator page without requiring prior co
   await blank.setFlag("symbaroum-hud", "characterCreationMode", "creator");
   const firstDialog = dialogConfigs.length;
   dialogChoices.push(
-    ...Array.from({ length: 7 }, () => ({ action: "creator-next-step" })),
+    ...Array.from({ length: 6 }, () => ({ action: "creator-next-step" })),
     { action: "creator-previous-step" },
     "close"
   );
@@ -1300,12 +1437,172 @@ test("step arrows navigate through every creator page without requiring prior co
   assert.match(opened[1].content, /symbaroum-hud-attributes-book/);
   assert.match(opened[2].content, /symbaroum-hud-race-book/);
   assert.match(opened[3].content, /symbaroum-hud-abilities-book/);
-  assert.match(opened[4].content, /symbaroum-hud-shadow-book/);
-  assert.match(opened[5].content, /symbaroum-hud-equipment-book/);
-  assert.match(opened[6].content, /symbaroum-hud-personality-book/);
-  assert.match(opened[7].content, /symbaroum-hud-friends-book/);
-  assert.match(opened[8].content, /symbaroum-hud-personality-book/);
-  assert.equal(blank.flag("characterCreatorState"), undefined);
+  assert.match(opened[4].content, /symbaroum-hud-equipment-book/);
+  assert.match(opened[5].content, /symbaroum-hud-personality-book/);
+  assert.match(opened[5].content, /symbaroum-hud-shadow-book/);
+  assert.match(opened[6].content, /symbaroum-hud-friends-book/);
+  assert.match(opened[7].content, /symbaroum-hud-personality-book/);
+  assert.deepEqual(blank.flag("characterCreatorState").completedSteps, undefined);
+  assert.equal(isOccupationStepComplete(blank), false);
+  assert.equal(isAttributesStepComplete(blank), false);
+  assert.equal(isRaceStepComplete(blank), false);
+  assert.equal(isAbilitiesStepComplete(blank), false);
+  assert.equal(isShadowStepComplete(blank), false);
+  assert.equal(isEquipmentStepComplete(blank), false);
+  assert.equal(isPersonalityStepComplete(blank), false);
+  assert.equal(isFriendsStepComplete(blank), false);
+});
+
+test("creator steps keep the position chosen by the user", async () => {
+  const blank = actor({ id: "creator-position", uuid: "Actor.creator-position" });
+  await blank.setFlag("symbaroum-hud", "characterCreationMode", "creator");
+  const firstDialog = dialogConfigs.length;
+  dialogChoices.push(
+    {
+      action: "creator-next-step",
+      form: { occupation: "wizard" },
+      renderPosition: { left: 72, top: 34, width: 1060, height: 680 }
+    },
+    "close"
+  );
+
+  await CharacterCreatorService.openOccupationStep(blank);
+
+  const opened = dialogConfigs.slice(firstDialog);
+  assert.deepEqual(opened[0].position, { width: 1060, height: 680 });
+  assert.deepEqual(opened[1].position, {
+    width: 1060,
+    height: 680,
+    left: 72,
+    top: 34
+  });
+});
+
+test("unconfirmed Ability choices survive forward and backward navigation", async () => {
+  const blank = actor({ id: "creator-ability-draft", uuid: "Actor.creator-ability-draft" });
+  await blank.setFlag("symbaroum-hud", "characterCreationMode", "creator");
+  await blank.setFlag("symbaroum-hud", "characterCreatorState", {
+    version: 1,
+    step: "race-complete",
+    completedSteps: ["occupation", "attributes", "race"],
+    occupation: "wizard",
+    attributes: {},
+    race: "ambrian",
+    raceTraits: ["privileged"]
+  });
+  const abilities = Array.from({ length: 5 }, (_entry, index) =>
+    worldAbility(`draft-ability-${index + 1}`, `Habilidade ${index + 1}`));
+  const selections = abilities.map((ability) => ({ id: ability.id, rank: "novice" }));
+  const previous = game.items;
+  game.items = abilities;
+  const firstDialog = dialogConfigs.length;
+  dialogChoices.push(
+    {
+      action: "creator-next-step",
+      form: {
+        abilityDistributionMode: "five-novice",
+        abilityExperienceBudget: 50,
+        abilitySelections: JSON.stringify(selections)
+      }
+    },
+    { action: "creator-previous-step" },
+    "close"
+  );
+  try {
+    await CharacterCreatorService.openAbilitiesStep(blank);
+  } finally {
+    game.items = previous;
+  }
+
+  const opened = dialogConfigs.slice(firstDialog);
+  assert.match(opened[0].content, /symbaroum-hud-abilities-book/);
+  assert.match(opened[1].content, /symbaroum-hud-equipment-book/);
+  assert.match(opened[2].content, /name="abilityDistributionMode" value="experience"/);
+  for (const ability of abilities) assert.match(opened[2].content, new RegExp(ability.id));
+  assert.deepEqual(
+    blank.flag("characterCreatorState").drafts.abilities.state.abilities,
+    selections
+  );
+  assert.equal(blank.flag("characterCreatorState").drafts.abilities.state.abilityDistribution, "experience");
+  assert.equal(blank.items.length, 0);
+  assert.equal(isAbilitiesStepComplete(blank), false);
+});
+
+test("unconfirmed point-buy Attributes survive forward and backward navigation", async () => {
+  const blank = actor({ id: "creator-attribute-draft", uuid: "Actor.creator-attribute-draft" });
+  await blank.setFlag("symbaroum-hud", "characterCreationMode", "creator");
+  await blank.setFlag("symbaroum-hud", "characterCreatorState", {
+    version: 1,
+    step: "occupation-complete",
+    completedSteps: ["occupation"],
+    occupation: "ranger"
+  });
+  const values = {
+    accurate: 15,
+    cunning: 13,
+    discreet: 12,
+    persuasive: 10,
+    quick: 9,
+    resolute: 8,
+    strong: 7,
+    vigilant: 6
+  };
+  const firstDialog = dialogConfigs.length;
+  dialogChoices.push(
+    {
+      action: "creator-next-step",
+      form: {
+        attributeDistributionMode: "point-buy",
+        ...Object.fromEntries(Object.entries(values).map(([id, value]) => [`points-${id}`, value]))
+      }
+    },
+    { action: "creator-previous-step", form: { race: "ambrian" } },
+    "close"
+  );
+
+  await CharacterCreatorService.openAttributesStep(blank);
+
+  const attributes = dialogConfigs.slice(firstDialog)[2].content;
+  assert.match(attributes, /name="attributeDistributionMode"[\s\S]*value="point-buy"/);
+  for (const [id, value] of Object.entries(values)) {
+    assert.match(attributes, new RegExp(`name="points-${id}" value="${value}"`));
+  }
+  assert.equal(isAttributesStepComplete(blank), false);
+});
+
+test("unconfirmed Race and Trait choices survive direct navigation to Abilities", async () => {
+  const blank = actor({ id: "creator-race-draft", uuid: "Actor.creator-race-draft" });
+  await blank.setFlag("symbaroum-hud", "characterCreationMode", "creator");
+  await blank.setFlag("symbaroum-hud", "characterCreatorState", {
+    version: 1,
+    step: "attributes-complete",
+    completedSteps: ["occupation", "attributes"],
+    occupation: "wizard",
+    attributes: {}
+  });
+  const firstDialog = dialogConfigs.length;
+  dialogChoices.push(
+    {
+      action: "creator-next-step",
+      form: { race: "ambrian", "race-choice-ambrian": "contacts" }
+    },
+    {
+      action: "creator-previous-step",
+      form: { abilitySelections: "[]", abilityDistributionMode: "experience" }
+    },
+    "close"
+  );
+
+  await CharacterCreatorService.openRaceStep(blank);
+
+  const opened = dialogConfigs.slice(firstDialog);
+  assert.match(opened[0].content, /symbaroum-hud-race-book/);
+  assert.match(opened[1].content, /symbaroum-hud-abilities-book/);
+  assert.match(opened[2].content, /name="race" value="ambrian"/);
+  assert.match(opened[2].content, /name="race-choice-ambrian"[\s\S]*value="contacts" checked/);
+  assert.deepEqual(blank.flag("characterCreatorState").drafts.race.state.raceTraits, ["contacts"]);
+  assert.equal(blank.items.length, 0);
+  assert.equal(isRaceStepComplete(blank), false);
 });
 
 test("visiting or completing a future step does not mark earlier steps as complete", async () => {
@@ -1338,7 +1635,7 @@ test("reviewing earlier steps restores saved Attributes, Race traits and Abiliti
   await blank.setFlag("symbaroum-hud", "characterCreationMode", "creator");
   await blank.setFlag("symbaroum-hud", "characterCreatorState", {
     version: 1,
-    step: "abilities-complete",
+    step: "equipment-complete",
     occupation: "wizard",
     attributeDistribution: "point-buy",
     attributes: {
@@ -1365,18 +1662,20 @@ test("reviewing earlier steps restores saved Attributes, Race traits and Abiliti
     { action: "creator-previous-step" },
     { action: "creator-previous-step" },
     { action: "creator-previous-step" },
+    { action: "creator-previous-step" },
+    { action: "creator-previous-step" },
     "close"
   );
   try {
-    await CharacterCreatorService.openShadowStep(blank);
+    await CharacterCreatorService.openPersonalityStep(blank);
   } finally {
     game.items = previous;
   }
 
   const opened = dialogConfigs.slice(firstDialog);
-  const abilities = opened[1].content;
-  const race = opened[2].content;
-  const attributes = opened[3].content;
+  const abilities = opened[2].content;
+  const race = opened[3].content;
+  const attributes = opened[4].content;
   assert.match(abilities, /name="abilityDistributionMode" value="experience"/);
   assert.match(abilities, /name="abilitySelections" value="[^\n]*acrobatics/);
   assert.match(abilities, /name="abilityExperienceBudget" value="60"/);
@@ -1438,8 +1737,8 @@ test("reviewing Shadows and Equipment restores the selected page, text and weapo
   }
 
   const opened = dialogConfigs.slice(firstDialog);
+  const shadow = opened[1].content;
   const equipment = opened[2].content;
-  const shadow = opened[3].content;
   assert.match(equipment, /value="bow" required data-equipment-grant checked/);
   assert.match(shadow, /name="shadow-principle" value="darkness"/);
   assert.match(shadow, /data-shadow-page-id="darkness" data-active="true"/);
@@ -1452,12 +1751,15 @@ test("editing an earlier creator step preserves the furthest completed step", as
   await blank.setFlag("symbaroum-hud", "characterCreationMode", "creator");
   await blank.setFlag("symbaroum-hud", "characterCreatorState", {
     version: 1,
-    step: "abilities-complete",
+    step: "personality-complete",
     occupation: "wizard",
     race: "ambrian",
-    abilities: []
+    abilities: [],
+    shadow: "Dourada e marcada por linhas precisas."
   });
   dialogChoices.push(
+    { action: "creator-previous-step" },
+    { action: "creator-previous-step" },
     { action: "creator-previous-step" },
     { action: "creator-previous-step" },
     { action: "creator-previous-step" },
@@ -1466,36 +1768,38 @@ test("editing an earlier creator step preserves the furthest completed step", as
     "close"
   );
 
-  await CharacterCreatorService.openShadowStep(blank);
-  assert.equal(blank.flag("characterCreatorState").step, "abilities-complete");
+  await CharacterCreatorService.open(blank);
+  assert.equal(blank.flag("characterCreatorState").step, "personality-complete");
   assert.equal(blank.flag("characterCreatorState").occupation, "knight");
 });
 
-test("saving the Shadow writes the native biography field and completes step five", async () => {
+test("saving History and Personality writes the Shadow with the other biography fields", async () => {
   const blank = actor({ id: "shadow-save", uuid: "Actor.shadow-save" });
   await blank.setFlag("symbaroum-hud", "characterCreationMode", "creator");
   await blank.setFlag("symbaroum-hud", "characterCreatorState", {
-    version: 1, step: "abilities-complete", abilities: [{ id: "a" }]
+    version: 1, step: "equipment-complete", abilities: [{ id: "a" }]
   });
-  dialogChoices.push({
-    action: "choose-shadow",
-    form: { shadow: "  Prateada como uma lâmina sob a lua.  " }
-  });
-  assert.equal(
-    await CharacterCreatorService.openShadowStep(blank),
-    "Prateada como uma lâmina sob a lua."
-  );
-  assert.deepEqual(blank.updates.at(-1), {
-    "system.bio.shadow": "Prateada como uma lâmina sob a lua."
-  });
-  assert.equal(blank.flag("characterCreatorState").step, "shadow-complete");
+  dialogChoices.push({ action: "choose-personality", form: {
+    personalityName: "Alésia",
+    personalityQuote: "A luz revela.",
+    personalityAge: "31",
+    personalityHeight: "1,72 m",
+    personalityWeight: "64 kg",
+    personalityAppearance: "Veste as cores do templo.",
+    personalityBackground: "Serviu como escriba.",
+    personalityGoal: "Proteger os peregrinos.",
+    shadow: "  Prateada como uma lâmina sob a lua.  ",
+    "shadow-principle": "civilization"
+  } }, "close");
+  const result = await CharacterCreatorService.openPersonalityStep(blank);
+  assert.equal(result.shadow, "Prateada como uma lâmina sob a lua.");
+  assert.equal(blank.updates.at(-1)["system.bio.shadow"], "Prateada como uma lâmina sob a lua.");
+  assert.equal(blank.flag("characterCreatorState").step, "personality-complete");
   assert.equal(blank.flag("characterCreatorState").abilities[0].id, "a");
+  assert.equal(blank.flag("characterCreatorState").shadowPrinciple, "civilization");
   assert.equal(isShadowStepComplete(blank), true);
-  assert.deepEqual(hookCalls.at(-1), [
-    "symbaroum-hud.characterCreatorStepCompleted",
-    blank,
-    { step: "shadow", shadow: "Prateada como uma lâmina sob a lua." }
-  ]);
+  assert.equal(hookCalls.at(-1)[2].step, "personality");
+  assert.equal(hookCalls.at(-1)[2].shadow, "Prateada como uma lâmina sob a lua.");
 });
 
 test("starting money grants one thaler for every complete ten XP", () => {
@@ -1541,7 +1845,7 @@ test("Privileged replaces the normal starting-money calculation with exactly fif
   assert.equal(blank.flag("characterCreatorState").startingThaler, 50);
 });
 
-test("the sixth creator step maps learned Abilities to compatible accessible equipment", async () => {
+test("the fifth creator step maps learned Abilities to compatible accessible equipment", async () => {
   const twinAttack = worldAbility("twin", "Ataque Gêmeo");
   twinAttack.system.reference = "twinattack";
   twinAttack.system.novice.isActive = true;
@@ -1921,7 +2225,7 @@ test("the sword combination imports the configured Sword and Dagger items", asyn
   assert.equal(blank.items.find((item) => item.name === "Espada")?.system.quality, "configured");
 });
 
-test("the seventh creator step guides personality and background through native sheet fields", async () => {
+test("the sixth creator step guides personality, background, and Shadow through native sheet fields", async () => {
   const blank = actor({ id: "personality-guide", uuid: "Actor.personality-guide" });
   await blank.setFlag("symbaroum-hud", "characterCreationMode", "creator");
   await blank.setFlag("symbaroum-hud", "characterCreatorState", { version: 1, step: "equipment-complete" });
@@ -1936,7 +2240,43 @@ test("the seventh creator step guides personality and background through native 
   assert.match(config.content, /name="personalityAppearance"/);
   assert.match(config.content, /name="personalityBackground"/);
   assert.match(config.content, /name="personalityGoal"/);
+  assert.doesNotMatch(config.content, /symbaroum-hud-personality-contacts/);
   assert.equal(isEquipmentStepComplete(blank), true);
+  assert.equal(isPersonalityStepComplete(blank), false);
+});
+
+test("an unconfirmed Contacts biography survives navigation away from Personality", async () => {
+  const blank = actor({ id: "contacts-biography-draft", uuid: "Actor.contacts-biography-draft" });
+  await blank.setFlag("symbaroum-hud", "characterCreationMode", "creator");
+  await blank.setFlag("symbaroum-hud", "characterCreatorState", {
+    version: 1,
+    step: "equipment-complete",
+    raceTraits: ["contacts"],
+    equipment: []
+  });
+  const firstDialog = dialogConfigs.length;
+  dialogChoices.push(
+    { action: "creator-next-step", form: {
+      personalityName: "Alésia",
+      personalityAppearance: "Veste as cores do templo.",
+      personalityBackground: "Foi escriba em Yndaros.",
+      personalityGoal: "Proteger peregrinos.",
+      contactsNetwork: "Igreja do Sol",
+      contactsRelationship: "Antiga escriba do templo.",
+      "contactName-0": "Padre Sarvola",
+      "contactRole-0": "Sacerdote",
+      "contactLocation-0": "Yndaros"
+    } },
+    { action: "creator-previous-step", form: {} },
+    "close"
+  );
+
+  await CharacterCreatorService.openPersonalityStep(blank);
+
+  const reopened = dialogConfigs.slice(firstDialog)[2].content;
+  assert.match(reopened, /name="contactsNetwork" required value="Igreja do Sol"/);
+  assert.match(reopened, /name="contactsRelationship" required[^>]*>Antiga escriba do templo\./);
+  assert.match(reopened, /name="contactName-0" value="Padre Sarvola"/);
   assert.equal(isPersonalityStepComplete(blank), false);
 });
 
@@ -1954,8 +2294,10 @@ test("saving personality and background writes every official biography field", 
     personalityWeight: "130 kg",
     personalityAppearance: "Alta, magrela e de humor seco.",
     personalityBackground: "Foi criada por uma companhia teatral.",
-    personalityGoal: "Encontrar quem lhe ensinou magia."
-  } });
+    personalityGoal: "Encontrar quem lhe ensinou magia.",
+    shadow: "Verde como folhas sob a chuva.",
+    "shadow-principle": "nature"
+  } }, "close");
 
   const result = await CharacterCreatorService.openPersonalityStep(blank);
   assert.equal(result.characterName, "Rabuja");
@@ -1967,14 +2309,15 @@ test("saving personality and background writes every official biography field", 
     "system.bio.weight": "130 kg",
     "system.bio.appearance": "Alta, magrela e de humor seco.",
     "system.bio.background": "Foi criada por uma companhia teatral.",
-    "system.bio.personalGoal": "Encontrar quem lhe ensinou magia."
+    "system.bio.personalGoal": "Encontrar quem lhe ensinou magia.",
+    "system.bio.shadow": "Verde como folhas sob a chuva."
   });
   assert.equal(blank.flag("characterCreatorState").step, "personality-complete");
   assert.deepEqual(blank.flag("characterCreatorState").equipment, [{ itemName: "Arco" }]);
   assert.equal(isPersonalityStepComplete(blank), true);
 });
 
-test("the eighth creator step mirrors the official friends and group fields", async () => {
+test("the seventh creator step mirrors the official friends and group fields", async () => {
   const blank = actor({ id: "friends-guide", uuid: "Actor.friends-guide" });
   await blank.setFlag("symbaroum-hud", "characterCreationMode", "creator");
   await blank.setFlag("symbaroum-hud", "characterCreatorState", { version: 1, step: "personality-complete" });

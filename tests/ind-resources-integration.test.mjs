@@ -11,6 +11,7 @@ const maneuverRolls = [];
 const warnings = [];
 const recoveredAmmo = [];
 const drawnWeapons = [];
+const inventoryQuantityLog = [];
 let confirmations = 0;
 
 globalThis.game = {
@@ -18,6 +19,7 @@ globalThis.game = {
   i18n: {
     localize: (key) => ({
       "SYMBAROUMHUD.Storage.Inventory": "Inventário",
+      "SYMBAROUMHUD.Storage.Armors": "Armaduras",
       "SYMBAROUMHUD.Storage.Pockets": "Bolsos"
     })[key] ?? key
   },
@@ -31,6 +33,9 @@ globalThis.game = {
     ["symbaroum-ind-resources", { active: true }]
   ]),
   tenebreResources: {
+    gmLog: {
+      recordItemQuantityChange: async (entry) => inventoryQuantityLog.push(entry)
+    },
     rations: {
       getState: () => ({ quantity: 3, usesRemaining: 2, usesPerUnit: 4 }),
       consumeDay: async () => "rations"
@@ -216,6 +221,7 @@ test("normalizes the public Ind Resources API into HUD context", () => {
   const actor = {
     id: "actor",
     uuid: "Actor.actor",
+    isOwner: true,
     items: new Map([
       [quiver.id, quiver],
       [arrows.id, arrows],
@@ -275,14 +281,20 @@ test("normalizes the public Ind Resources API into HUD context", () => {
       draggable: true,
       name: "Flechas Regulares",
       img: "arrows.webp",
-      quantity: 12
+      quantity: 12,
+      state: "other",
+      stateIcon: "fa-warehouse",
+      stateLabel: "SYMBAROUMHUD.Storage.StateStored",
+      editable: true
     }]
   });
   assert.deepEqual(context.storage, {
     mode: "inventory",
     containerSelected: false,
     quiverSelected: false,
+    armorSelected: false,
     inventoryActive: true,
+    armorCount: 0,
     hasContainers: true,
     hasQuiver: true,
     pockets: false,
@@ -307,7 +319,11 @@ test("normalizes the public Ind Resources API into HUD context", () => {
       draggable: true,
       name: "Flechas Regulares",
       img: "arrows.webp",
-      quantity: 12
+      quantity: 12,
+      state: "other",
+      stateIcon: "fa-warehouse",
+      stateLabel: "SYMBAROUMHUD.Storage.StateStored",
+      editable: true
     }],
     containers: [{
       id: "backpack",
@@ -332,7 +348,11 @@ test("normalizes the public Ind Resources API into HUD context", () => {
     draggable: true,
     name: "Tocha",
     img: "torch.webp",
-    quantity: 2
+    quantity: 2,
+    state: "other",
+    stateIcon: "fa-warehouse",
+    stateLabel: "SYMBAROUMHUD.Storage.StateStored",
+    editable: true
   }]);
 
   const quiverStorageContext = IndResourcesIntegration.context(actor, {
@@ -427,7 +447,9 @@ test("omits quiver information when the actor does not possess one", () => {
     mode: "inventory",
     containerSelected: false,
     quiverSelected: false,
+    armorSelected: false,
     inventoryActive: true,
+    armorCount: 0,
     hasContainers: false,
     hasQuiver: false,
     pockets: true,
@@ -440,6 +462,50 @@ test("omits quiver information when the actor does not possess one", () => {
     containers: [],
     items: []
   });
+});
+
+test("separates loose armor from the regular inventory", () => {
+  const armor = {
+    id: "medium-armor",
+    uuid: "Actor.actor.Item.medium-armor",
+    name: "Armadura Média",
+    img: "medium-armor.webp",
+    type: "armor",
+    system: { number: 1, state: "active" }
+  };
+  const rope = {
+    id: "rope",
+    uuid: "Actor.actor.Item.rope",
+    name: "Corda",
+    img: "rope.webp",
+    type: "equipment",
+    system: { number: 1, state: "other" }
+  };
+  const actor = {
+    id: "actor",
+    uuid: "Actor.actor",
+    isOwner: true,
+    items: new Map([[armor.id, armor], [rope.id, rope]])
+  };
+
+  const inventory = IndResourcesIntegration.context(actor);
+  assert.equal(inventory.storage.armorCount, 1);
+  assert.deepEqual(inventory.storage.items.map((item) => item.id), ["rope"]);
+
+  const armors = IndResourcesIntegration.context(actor, { containerId: "__armor" });
+  assert.equal(armors.storage.mode, "armor");
+  assert.equal(armors.storage.armorSelected, true);
+  assert.equal(armors.storage.inventoryActive, false);
+  assert.equal(armors.storage.name, "Armaduras");
+  assert.deepEqual(armors.storage.items.map((item) => ({
+    id: item.id,
+    containerId: item.containerId,
+    source: item.source
+  })), [{
+    id: "medium-armor",
+    containerId: "__armor",
+    source: "inventory"
+  }]);
 });
 
 test("opens only an item exposed by the selected Ind Resources storage", async () => {
@@ -527,6 +593,81 @@ test("deletes an item exposed by the selected inventory view after confirmation"
   assert.equal(result, "deleted");
   assert.equal(confirmations > 0, true);
   assert.deepEqual(deletedItems.at(-1), "water");
+});
+
+test("updates equipment quantity and cycles its native Symbaroum state", async () => {
+  const updates = [];
+  const item = {
+    id: "lamp-oil",
+    uuid: "Actor.actor.Item.lamp-oil",
+    name: "Óleo de Lâmpada",
+    type: "equipment",
+    system: { number: 2, state: "other", isEquipment: true, isGear: true }
+  };
+  const actor = {
+    id: "actor",
+    uuid: "Actor.actor",
+    isOwner: true,
+    items: new Map([[item.id, item]]),
+    updateEmbeddedDocuments: async (documentName, documents) => {
+      assert.equal(documentName, "Item");
+      updates.push(documents[0]);
+      const update = documents[0];
+      if ("system.number" in update) item.system.number = update["system.number"];
+      if ("system.state" in update) item.system.state = update["system.state"];
+      return documents;
+    }
+  };
+
+  await IndResourcesIntegration.setStorageItemQuantity(actor, null, item.id, 6);
+  await IndResourcesIntegration.changeStorageItemQuantity(actor, null, item.id, -2);
+  await IndResourcesIntegration.toggleStorageItemState(actor, null, item.id);
+  await IndResourcesIntegration.toggleStorageItemState(actor, null, item.id);
+  await IndResourcesIntegration.toggleStorageItemState(actor, null, item.id);
+
+  assert.equal(item.system.number, 4);
+  assert.equal(item.system.state, "other");
+  assert.deepEqual(inventoryQuantityLog.slice(-2).map(({ previousQuantity, quantity }) => ({
+    previousQuantity,
+    quantity
+  })), [
+    { previousQuantity: 2, quantity: 6 },
+    { previousQuantity: 6, quantity: 4 }
+  ]);
+  assert.deepEqual(updates.map((update) => update["system.number"]), [6, 4, undefined, undefined, undefined]);
+  assert.deepEqual(updates.map((update) => update["system.state"]), [undefined, undefined, "active", "equipped", "other"]);
+});
+
+test("registers manual equipment quantity changes made by the GM", async () => {
+  const originalIsGm = game.user.isGM;
+  const logCount = inventoryQuantityLog.length;
+  const item = {
+    id: "gm-lamp-oil",
+    uuid: "Actor.gm-actor.Item.gm-lamp-oil",
+    name: "Óleo de Lâmpada",
+    type: "equipment",
+    system: { number: 1, isEquipment: true }
+  };
+  const actor = {
+    id: "gm-actor",
+    uuid: "Actor.gm-actor",
+    isOwner: true,
+    items: new Map([[item.id, item]]),
+    updateEmbeddedDocuments: async (_documentName, documents) => {
+      item.system.number = documents[0]["system.number"];
+      return documents;
+    }
+  };
+
+  try {
+    game.user.isGM = true;
+    await IndResourcesIntegration.changeStorageItemQuantity(actor, null, item.id, 2);
+    assert.equal(inventoryQuantityLog.length, logCount + 1);
+    assert.equal(inventoryQuantityLog.at(-1).previousQuantity, 1);
+    assert.equal(inventoryQuantityLog.at(-1).quantity, 3);
+  } finally {
+    game.user.isGM = originalIsGm;
+  }
 });
 
 test("does not delete items outside the selected storage view", async () => {

@@ -1,6 +1,10 @@
 import { MODULE_ID } from "./constants.mjs";
 import { applyPlayerListVisibility, registerSettings } from "./settings.mjs";
 import { SymbaroumHud } from "./applications/symbaroum-hud.mjs";
+import {
+  registerCompendiumBrowserHooks,
+  SymbaroumCompendiumBrowser
+} from "./applications/compendium-browser.mjs";
 import { registerRefreshHooks } from "./hooks.mjs";
 import {
   registerHotbarShortcutKeybindings,
@@ -24,6 +28,7 @@ Hooks.once("setup", () => {
   HotbarShortcutService.setActorResolver(() => hud?.actor ?? null);
   registerHotbarShortcuts();
   registerCharacterCreatorHooks();
+  registerCompendiumBrowserHooks();
   registerRefreshHooks(hud);
 
   const module = game.modules.get(MODULE_ID);
@@ -34,6 +39,13 @@ Hooks.once("setup", () => {
       },
       getActor: () => hud?.actor ?? null,
       getContext: (actor = hud?.actor) => ContextService.build(actor),
+      openCompendiumBrowser: (options = {}) => SymbaroumCompendiumBrowser.open({
+        actor: options.actor ?? null,
+        category: options.category ?? "all"
+      }),
+      openShop: (options = {}) => SymbaroumCompendiumBrowser.openShop({
+        actor: options.actor ?? hud?.actor ?? null
+      }),
       refresh: () => Hooks.callAll(`${MODULE_ID}.refresh`)
     });
   }

@@ -79,6 +79,13 @@ export function registerSettings(onChange) {
     type: String,
     default: STORAGE_VIEW_MODES.GRID
   });
+
+  game.settings.register(MODULE_ID, SETTINGS.COMPENDIUM_BROWSER_SOURCES, {
+    scope: "client",
+    config: false,
+    type: Object,
+    default: {}
+  });
 }
 
 export function getSetting(key) {

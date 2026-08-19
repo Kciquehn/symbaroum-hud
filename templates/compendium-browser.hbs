@@ -1,0 +1,183 @@
+<div class="symbaroum-hud-browser-shell" data-browser-mode="{{#if shop.active}}shop{{else}}browser{{/if}}">
+  <header class="symbaroum-hud-browser-heading">
+    <div>
+      <i class="fa-solid {{#if shop.active}}fa-shop{{else}}fa-book-open{{/if}}" aria-hidden="true"></i>
+      <span>
+        <strong>{{#if shop.weaponOnly}}{{localize "SYMBAROUMHUD.CompendiumBrowser.Shop.WeaponTitle"}}{{else}}{{#if shop.active}}{{localize "SYMBAROUMHUD.CompendiumBrowser.Shop.Title"}}{{else}}{{localize "SYMBAROUMHUD.CompendiumBrowser.Title"}}{{/if}}{{/if}}</strong>
+        <small>{{#if shop.weaponOnly}}{{localize "SYMBAROUMHUD.CompendiumBrowser.Shop.WeaponSubtitle"}}{{else}}{{#if shop.active}}{{localize "SYMBAROUMHUD.CompendiumBrowser.Shop.Subtitle"}}{{else}}{{localize "SYMBAROUMHUD.CompendiumBrowser.Subtitle"}}{{/if}}{{/if}}</small>
+      </span>
+    </div>
+    <button type="button" data-action="configure-sources"
+      data-tooltip="{{localize 'SYMBAROUMHUD.CompendiumBrowser.ConfigureSources'}}"
+      aria-label="{{localize 'SYMBAROUMHUD.CompendiumBrowser.ConfigureSources'}}">
+      <i class="fa-solid fa-gear" aria-hidden="true"></i>
+    </button>
+  </header>
+
+  <nav class="symbaroum-hud-browser-tabs" aria-label="{{localize 'SYMBAROUMHUD.CompendiumBrowser.CategoriesLabel'}}">
+    {{#each categories}}
+      <button type="button" data-action="category" data-category="{{id}}"
+        data-active="{{active}}" aria-pressed="{{active}}"
+        data-tooltip="{{label}}" aria-label="{{label}}">
+        <i class="fa-solid {{icon}}" aria-hidden="true"></i>
+      </button>
+    {{/each}}
+  </nav>
+
+  <aside class="symbaroum-hud-browser-sidebar">
+    <div class="symbaroum-hud-browser-filter-toolbar">
+      <label class="symbaroum-hud-browser-search">
+        <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+        <input type="search" data-browser-search value="{{query}}"
+          placeholder="{{localize 'SYMBAROUMHUD.CompendiumBrowser.Search'}}"
+          aria-label="{{localize 'SYMBAROUMHUD.CompendiumBrowser.Search'}}">
+        {{#if query}}
+          <button type="button" data-action="clear-search"
+            aria-label="{{localize 'SYMBAROUMHUD.CompendiumBrowser.ClearSearch'}}">
+            <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+          </button>
+        {{/if}}
+      </label>
+      <button type="button" class="symbaroum-hud-browser-filter-toggle"
+        data-action="toggle-filters" data-active="{{filters.open}}"
+        aria-expanded="{{filters.open}}"
+        aria-label="{{localize 'SYMBAROUMHUD.CompendiumBrowser.Filters'}}"
+        data-tooltip="{{localize 'SYMBAROUMHUD.CompendiumBrowser.Filters'}}">
+        <i class="fa-solid fa-filter" aria-hidden="true"></i>
+      </button>
+    </div>
+
+    {{#if shop.active}}
+      <section class="symbaroum-hud-shop-balance" aria-label="{{localize 'SYMBAROUMHUD.CompendiumBrowser.Shop.Balance'}}">
+        <header>
+          <h2><i class="fa-solid fa-coins" aria-hidden="true"></i> {{localize "SYMBAROUMHUD.CompendiumBrowser.Shop.Balance"}}</h2>
+        </header>
+        <div>
+          <span><strong>{{shop.balance.thaler}}</strong><small>{{localize "MONEY.THALER"}}</small></span>
+          <span><strong>{{shop.balance.shilling}}</strong><small>{{localize "MONEY.SHILLING"}}</small></span>
+          <span><strong>{{shop.balance.orteg}}</strong><small>{{localize "MONEY.ORTEG"}}</small></span>
+        </div>
+      </section>
+    {{/if}}
+
+    <div class="symbaroum-hud-browser-filter-popover" data-browser-filter-panel {{#unless filters.open}}hidden{{/unless}}>
+      <section class="symbaroum-hud-browser-origin-filter">
+        <header>
+          <h2>{{localize "SYMBAROUMHUD.CompendiumBrowser.Origin"}}</h2>
+          <button type="button" data-action="toggle-all-origins"
+            data-tooltip="{{localize 'SYMBAROUMHUD.CompendiumBrowser.ToggleOrigins'}}"
+            aria-label="{{localize 'SYMBAROUMHUD.CompendiumBrowser.ToggleOrigins'}}">
+            <i class="fa-solid fa-check-double" aria-hidden="true"></i>
+          </button>
+        </header>
+        <div>
+          {{#each origins}}
+            <label data-empty="{{#unless count}}true{{else}}false{{/unless}}">
+              <input type="checkbox" data-browser-origin value="{{id}}" {{#if checked}}checked{{/if}}>
+              <span>{{label}}</span>
+              <small>{{count}}</small>
+            </label>
+          {{/each}}
+        </div>
+      </section>
+
+      <section class="symbaroum-hud-browser-source-filter">
+        <header>
+          <h2>{{localize "SYMBAROUMHUD.CompendiumBrowser.Sources"}}</h2>
+          <button type="button" data-action="toggle-all-sources"
+            data-tooltip="{{localize 'SYMBAROUMHUD.CompendiumBrowser.ToggleSources'}}"
+            aria-label="{{localize 'SYMBAROUMHUD.CompendiumBrowser.ToggleSources'}}">
+            <i class="fa-solid fa-check-double" aria-hidden="true"></i>
+          </button>
+        </header>
+        <div>
+          {{#each sources}}
+            <label data-empty="{{#unless count}}true{{else}}false{{/unless}}">
+              <input type="checkbox" data-browser-source value="{{id}}" {{#if checked}}checked{{/if}}>
+              <span>{{label}}</span>
+              <small>{{count}}</small>
+            </label>
+          {{/each}}
+        </div>
+      </section>
+    </div>
+  </aside>
+
+  <main class="symbaroum-hud-browser-results">
+    <header>
+      <h2>{{#if shop.active}}{{localize "SYMBAROUMHUD.CompendiumBrowser.Shop.AvailableItems"}}{{else}}{{localize "SYMBAROUMHUD.CompendiumBrowser.Results"}}{{/if}}</h2>
+      <span>{{resultCount}} {{localize "SYMBAROUMHUD.CompendiumBrowser.Found"}}</span>
+    </header>
+    <ol>
+      {{#each entries}}
+        <li data-browser-uuid="{{uuid}}" data-document-class="{{documentClass}}" {{#unless ../shop.active}}draggable="true"{{/unless}}>
+          <button type="button" class="symbaroum-hud-browser-entry-main"
+            data-action="open-document" data-uuid="{{uuid}}"
+            aria-label="{{name}}">
+            <img src="{{img}}" alt="">
+            <span class="symbaroum-hud-browser-entry-details">
+              <strong>{{name}}</strong>
+              <small>{{subtitle}}{{#if reference}} · {{reference}}{{/if}}</small>
+            </span>
+            <span class="symbaroum-hud-browser-entry-source">
+              <span class="symbaroum-hud-browser-entry-source-label">{{sourceLabel}}</span>
+              <em class="symbaroum-hud-browser-entry-origin" data-origin="{{origin}}">
+                <i class="fa-solid fa-bookmark" aria-hidden="true"></i>
+                {{originLabel}}
+              </em>
+            </span>
+          </button>
+          <span class="symbaroum-hud-browser-entry-controls">
+            {{#if ../shop.active}}
+              <button type="button" class="symbaroum-hud-shop-buy" data-action="buy-document"
+                data-uuid="{{uuid}}" data-affordable="{{canBuy}}" {{#unless canBuy}}disabled{{/unless}}
+                data-tooltip="{{#if canBuy}}{{localize 'SYMBAROUMHUD.CompendiumBrowser.Shop.Buy'}}{{else}}{{localize 'SYMBAROUMHUD.CompendiumBrowser.Shop.Insufficient'}}{{/if}}: {{name}}"
+                aria-label="{{localize 'SYMBAROUMHUD.CompendiumBrowser.Shop.Buy'}} {{name}} — {{priceLabel}}">
+                <span>{{priceLabel}}</span>
+                <i class="fa-solid fa-cart-shopping" aria-hidden="true"></i>
+              </button>
+            {{/if}}
+            {{#if ../selection.active}}
+              <label data-tooltip="{{localize 'SYMBAROUMHUD.CompendiumBrowser.Select'}}: {{name}}">
+                <input type="checkbox" data-browser-select value="{{uuid}}" {{#if selected}}checked{{/if}}>
+                <i class="fa-solid fa-check" aria-hidden="true"></i>
+              </label>
+            {{/if}}
+            {{#if canAdd}}
+              <button type="button" data-action="add-document" data-uuid="{{uuid}}"
+                data-tooltip="{{localize 'SYMBAROUMHUD.CompendiumBrowser.AddTo'}} {{../actor.name}}"
+                aria-label="{{localize 'SYMBAROUMHUD.CompendiumBrowser.AddTo'}} {{../actor.name}}">
+                <i class="fa-solid fa-plus" aria-hidden="true"></i>
+              </button>
+            {{/if}}
+          </span>
+        </li>
+      {{else}}
+        <li class="symbaroum-hud-browser-empty">
+          <i class="fa-solid {{#if shop.active}}fa-store-slash{{else}}fa-book-open{{/if}}" aria-hidden="true"></i>
+          <strong>{{#if shop.active}}{{localize "SYMBAROUMHUD.CompendiumBrowser.Shop.Empty"}}{{else}}{{localize "SYMBAROUMHUD.CompendiumBrowser.Empty"}}{{/if}}</strong>
+          <span>{{#if shop.active}}{{localize "SYMBAROUMHUD.CompendiumBrowser.Shop.EmptyHint"}}{{else}}{{localize "SYMBAROUMHUD.CompendiumBrowser.EmptyHint"}}{{/if}}</span>
+        </li>
+      {{/each}}
+      {{#if hasMore}}
+        <li class="symbaroum-hud-browser-load-more">
+          <button type="button" data-action="load-more">
+            <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
+            <span>{{localize "SYMBAROUMHUD.CompendiumBrowser.LoadMore"}}</span>
+            <small>{{renderedCount}} / {{resultCount}}</small>
+          </button>
+        </li>
+      {{/if}}
+    </ol>
+  </main>
+
+  {{#if selection.active}}
+    <footer class="symbaroum-hud-browser-footer" data-valid="{{selection.valid}}">
+      <span>{{selection.summary}}</span>
+      <button type="button" data-action="confirm-selection" {{#unless selection.valid}}disabled{{/unless}}>
+        <i class="fa-solid fa-check" aria-hidden="true"></i>
+        {{localize "SYMBAROUMHUD.CompendiumBrowser.ConfirmSelection"}}
+      </button>
+    </footer>
+  {{/if}}
+</div>

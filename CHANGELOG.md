@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.1.66
+
+- Adiciona o **Navegador de Compêndios** para documentos importados no mundo, com pesquisa contínua, categorias, fontes e filtros por livro de origem.
+- Adiciona a **Loja** ao Inventário, com preços exatos ou por intervalo, escolha de qualidade, compra automática e desconto das moedas do personagem.
+- Adiciona ao painel de **Ataques** uma Loja de Armas exclusiva, mantendo armaduras e equipamentos fora dessa entrada.
+- Unifica a escolha de Habilidades do Criador com o Navegador e mantém a Compra com XP como fluxo único, com carregamento mais rápido, filtros aplicados também a Poderes Místicos e Rituais e recomendações por ocupação ou tradição.
+- Reorganiza História, Personalidade, Contatos e Sombra em uma única etapa e preserva rascunhos não confirmados ao navegar livremente pelo Criador.
+- Amplia e melhora a leitura do quadro das Ocupações em monitores menores.
+- Redesenha os conteúdos internos de Habilidades, Poderes Místicos, Rituais, Traços, Inventário, Ataques e Manobras com o padrão escuro e dourado da Loja.
+- Reorganiza o Inventário do HUD com colunas de nome, quantidade e estado, controles discretos, categoria separada para Armaduras e registro privado de alterações manuais de quantidade para o mestre.
+- Corrige imagens cortadas no Inventário, alinha o campo de peso aos valores das moedas e preserva permissões nas automações do Ind Resources.
+- Amplia a suíte automatizada para 188 testes.
+
 ## 0.1.65
 
 - Libera as setas do Criador de Fichas para navegar em ambas as direções por todas as oito etapas, mesmo antes de concluir a página atual.

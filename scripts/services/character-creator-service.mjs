@@ -27,9 +27,17 @@ import {
   isValidAbilitySelection
 } from "../data/character-creation-abilities.mjs";
 import { coreMysticalTradition } from "../data/core-mystical-traditions.mjs";
+import {
+  CONTENT_ORIGINS,
+  UNKNOWN_CONTENT_ORIGIN,
+  contentOriginDefinition,
+  resolveContentOrigin,
+  staticContentOriginIndex
+} from "./content-origin-service.mjs";
 
 const MODE_FLAG = "characterCreationMode";
 const STATE_FLAG = "characterCreatorState";
+const DISMISSED_USERS_FLAG = "characterCreatorDismissedUsers";
 const OCCUPATION_STEP_COMPLETE = "occupation-complete";
 const ATTRIBUTES_STEP_COMPLETE = "attributes-complete";
 const RACE_STEP_COMPLETE = "race-complete";
@@ -44,7 +52,6 @@ const CREATOR_STEPS = Object.freeze([
   Object.freeze({ id: "attributes", complete: ATTRIBUTES_STEP_COMPLETE }),
   Object.freeze({ id: "race", complete: RACE_STEP_COMPLETE }),
   Object.freeze({ id: "abilities", complete: ABILITIES_STEP_COMPLETE }),
-  Object.freeze({ id: "shadow", complete: SHADOW_STEP_COMPLETE }),
   Object.freeze({ id: "equipment", complete: EQUIPMENT_STEP_COMPLETE }),
   Object.freeze({ id: "personality", complete: PERSONALITY_STEP_COMPLETE }),
   Object.freeze({ id: "friends", complete: FRIENDS_STEP_COMPLETE })
@@ -67,6 +74,7 @@ const BIOGRAPHY_FIELDS = Object.freeze([
   "stigmas"
 ]);
 const pendingActors = new Set();
+let characterCreatorOriginIndex = null;
 
 export const CHARACTER_CREATION_MODES = Object.freeze({
   CREATOR: "creator",
@@ -87,6 +95,7 @@ export function shouldOfferCharacterCreator(actor, user = game.user) {
     isBlankPlayerActor(actor)
     && canOwn(actor, user)
     && !actor.getFlag?.(MODULE_ID, MODE_FLAG)
+    && !hasDismissedCharacterCreator(actor, user)
   );
 }
 
@@ -114,7 +123,11 @@ export function isAbilitiesStepComplete(actor) {
 }
 
 export function isShadowStepComplete(actor) {
-  return hasCompletedCreatorStep(actor, "shadow");
+  const state = actor?.getFlag?.(MODULE_ID, STATE_FLAG) ?? {};
+  return Boolean(hasText(actor?.system?.bio?.shadow)
+    || hasText(state.shadow)
+    || [SHADOW_STEP_COMPLETE, PERSONALITY_STEP_COMPLETE, FRIENDS_STEP_COMPLETE].includes(state.step)
+    || state.completedSteps?.some?.((step) => ["shadow", "personality", "friends"].includes(step)));
 }
 
 export function isEquipmentStepComplete(actor) {
@@ -122,7 +135,9 @@ export function isEquipmentStepComplete(actor) {
 }
 
 export function isPersonalityStepComplete(actor) {
-  return hasCompletedCreatorStep(actor, "personality");
+  return hasCompletedCreatorStep(actor, "personality")
+    && isShadowStepComplete(actor)
+    && !isContactsPreparationRequired(actor);
 }
 
 export function isFriendsStepComplete(actor) {
@@ -137,9 +152,7 @@ function creatorEntryStep(actor) {
   if (!isOccupationStepComplete(actor)) return "occupation";
   if (!isAttributesStepComplete(actor)) return "attributes";
   if (!isRaceStepComplete(actor)) return "race";
-  if (isContactsPreparationRequired(actor)) return "contacts";
   if (!isAbilitiesStepComplete(actor)) return "abilities";
-  if (!isShadowStepComplete(actor)) return "shadow";
   if (!isEquipmentStepComplete(actor)) return "equipment";
   if (!isPersonalityStepComplete(actor)) return "personality";
   if (!isFriendsStepComplete(actor)) return "friends";
@@ -195,14 +208,13 @@ export class CharacterCreatorService {
     if (!actor || actor.type !== "player" || !canOwn(actor, game.user)) return null;
     const mode = actor.getFlag?.(MODULE_ID, MODE_FLAG);
     if (mode === CHARACTER_CREATION_MODES.CREATOR) {
-      if (isFriendsStepComplete(actor)) return null;
+      if ((isFriendsStepComplete(actor) && isPersonalityStepComplete(actor))
+        || hasDismissedCharacterCreator(actor, game.user)) return null;
       await closeOriginalActorSheet(sheet, actor);
       if (!isOccupationStepComplete(actor)) return this.openOccupationStep(actor);
       if (!isAttributesStepComplete(actor)) return this.openAttributesStep(actor);
       if (!isRaceStepComplete(actor)) return this.openRaceStep(actor);
-      if (isContactsPreparationRequired(actor)) return this.openContactsStep(actor);
       if (!isAbilitiesStepComplete(actor)) return this.openAbilitiesStep(actor);
-      if (!isShadowStepComplete(actor)) return this.openShadowStep(actor);
       if (!isEquipmentStepComplete(actor)) return this.openEquipmentStep(actor);
       if (!isPersonalityStepComplete(actor)) return this.openPersonalityStep(actor);
       if (!isFriendsStepComplete(actor)) return this.openFriendsStep(actor);
@@ -263,7 +275,10 @@ export class CharacterCreatorService {
           }
         ],
         close: () => null,
-        rejectClose: false
+        rejectClose: false,
+        render: (_event, dialog) => {
+          bindCharacterCreatorDismissal(dialog.element, actor);
+        }
       });
 
       if (!Object.values(CHARACTER_CREATION_MODES).includes(choice)) return null;
@@ -363,7 +378,6 @@ export class CharacterCreatorService {
       || !canOwn(actor, game.user)
       || actor.getFlag?.(MODULE_ID, MODE_FLAG) !== CHARACTER_CREATION_MODES.CREATOR
       || !isRaceStepComplete(actor)
-      || isContactsPreparationRequired(actor)
       || isAbilitiesStepComplete(actor)
     ) return null;
 
@@ -503,27 +517,9 @@ export class CharacterCreatorService {
   }
 
   static async openShadowStep(actor) {
-    const key = actorKey(actor);
-    if (
-      !key
-      || pendingActors.has(key)
-      || !canOwn(actor, game.user)
-      || actor.getFlag?.(MODULE_ID, MODE_FLAG) !== CHARACTER_CREATION_MODES.CREATOR
-      || !isAbilitiesStepComplete(actor)
-      || !isAttributesStepComplete(actor)
-      || isShadowStepComplete(actor)
-    ) return null;
-
-    const DialogV2 = dialogClass();
-    if (!DialogV2) return null;
-    pendingActors.add(key);
-    try {
-      return await this.#runCreatorSteps(DialogV2, actor, "shadow");
-    } catch (error) {
-      return handleCreatorError(error);
-    } finally {
-      pendingActors.delete(key);
-    }
+    // Kept as a public compatibility alias for integrations that used the old
+    // standalone Shadow step. Shadow is now prepared with the biography.
+    return this.openPersonalityStep(actor);
   }
 
   static async openEquipmentStep(actor) {
@@ -533,7 +529,8 @@ export class CharacterCreatorService {
       || pendingActors.has(key)
       || !canOwn(actor, game.user)
       || actor.getFlag?.(MODULE_ID, MODE_FLAG) !== CHARACTER_CREATION_MODES.CREATOR
-      || !isShadowStepComplete(actor)
+      || !isAbilitiesStepComplete(actor)
+      || !isAttributesStepComplete(actor)
       || isEquipmentStepComplete(actor)
     ) return null;
 
@@ -599,9 +596,10 @@ export class CharacterCreatorService {
     let currentStep = initialStep;
     let initialResult;
     let lastResult;
+    const placement = {};
 
     while (currentStep) {
-      const result = await this.#showCreatorStep(DialogV2, actor, currentStep);
+      const result = await this.#showCreatorStep(DialogV2, actor, currentStep, placement);
       if (isCreatorNavigationResult(result)) {
         currentStep = result.step;
         continue;
@@ -620,22 +618,21 @@ export class CharacterCreatorService {
     return initialResult ?? lastResult ?? null;
   }
 
-  static #showCreatorStep(DialogV2, actor, step) {
+  static #showCreatorStep(DialogV2, actor, step, placement) {
     switch (step) {
-      case "occupation": return this.#showOccupationBook(DialogV2, actor);
-      case "attributes": return this.#showAttributesBook(DialogV2, actor);
-      case "race": return this.#showRaceBook(DialogV2, actor);
-      case "contacts": return this.#showContactsBook(DialogV2, actor);
-      case "abilities": return this.#showAbilitiesBook(DialogV2, actor);
-      case "shadow": return this.#showShadowBook(DialogV2, actor);
-      case "equipment": return this.#showEquipmentBook(DialogV2, actor);
-      case "personality": return this.#showPersonalityBook(DialogV2, actor);
-      case "friends": return this.#showFriendsBook(DialogV2, actor);
+      case "occupation": return this.#showOccupationBook(DialogV2, actor, placement);
+      case "attributes": return this.#showAttributesBook(DialogV2, actor, placement);
+      case "race": return this.#showRaceBook(DialogV2, actor, placement);
+      case "contacts": return this.#showContactsBook(DialogV2, actor, placement);
+      case "abilities": return this.#showAbilitiesBook(DialogV2, actor, placement);
+      case "equipment": return this.#showEquipmentBook(DialogV2, actor, placement);
+      case "personality": return this.#showPersonalityBook(DialogV2, actor, placement);
+      case "friends": return this.#showFriendsBook(DialogV2, actor, placement);
       default: return Promise.resolve(null);
     }
   }
 
-  static async #showOccupationBook(DialogV2, actor) {
+  static async #showOccupationBook(DialogV2, actor, placement) {
     return DialogV2.wait({
       classes: [
         "symbaroum-hud-character-creator-dialog",
@@ -644,7 +641,7 @@ export class CharacterCreatorService {
       window: {
         title: game.i18n.localize("SYMBAROUMHUD.CharacterCreator.Occupation.Title")
       },
-      position: { width: 1060, height: 680 },
+      position: creatorDialogPosition(placement, 1060, 680),
       content: occupationBookContent(actor),
       buttons: [
         {
@@ -672,6 +669,7 @@ export class CharacterCreatorService {
             const { customOccupation: _previousCustomOccupation, ...preservedState } = previous;
             await actor.setFlag(MODULE_ID, STATE_FLAG, {
               ...preservedState,
+              ...clearCreatorStepDraftPatch(previous, "occupation"),
               version: 1,
               step: furthestCreatorProgress(previous.step, OCCUPATION_STEP_COMPLETE),
               completedSteps: markCreatorStepComplete(previous, "occupation"),
@@ -693,7 +691,8 @@ export class CharacterCreatorService {
       close: () => null,
       rejectClose: false,
       render: (_event, dialog) => {
-        bindCreatorStepNavigation(dialog.element);
+        bindCreatorDialogPlacement(dialog, placement);
+        bindCreatorStepNavigation(dialog.element, actor, "occupation");
         bindOccupationBook(dialog.element);
         globalThis.setTimeout(() => {
           if (dialog.element?.isConnected) dialog.bringToFront?.();
@@ -702,7 +701,7 @@ export class CharacterCreatorService {
     });
   }
 
-  static async #showAttributesBook(DialogV2, actor) {
+  static async #showAttributesBook(DialogV2, actor, placement) {
     const returningAfterAbilities = isAbilitiesStepComplete(actor);
     return DialogV2.wait({
       classes: [
@@ -713,7 +712,7 @@ export class CharacterCreatorService {
       window: {
         title: game.i18n.localize("SYMBAROUMHUD.CharacterCreator.Attributes.Title")
       },
-      position: { width: 1060, height: 680 },
+      position: creatorDialogPosition(placement, 1060, 680),
       content: attributesBookContent(actor),
       buttons: [
         {
@@ -742,6 +741,7 @@ export class CharacterCreatorService {
             const previous = actor.getFlag?.(MODULE_ID, STATE_FLAG) ?? {};
             await actor.setFlag(MODULE_ID, STATE_FLAG, {
               ...previous,
+              ...clearCreatorStepDraftPatch(previous, "attributes"),
               version: 1,
               step: furthestCreatorProgress(previous.step, ATTRIBUTES_STEP_COMPLETE),
               completedSteps: markCreatorStepComplete(previous, "attributes"),
@@ -768,6 +768,7 @@ export class CharacterCreatorService {
             const previous = actor.getFlag?.(MODULE_ID, STATE_FLAG) ?? {};
             await actor.setFlag(MODULE_ID, STATE_FLAG, {
                 ...previous,
+                ...clearCreatorStepDraftPatch(previous, "attributes"),
                 version: 1,
                 step: furthestCreatorProgress(previous.step, ATTRIBUTES_STEP_COMPLETE),
                 completedSteps: markCreatorStepComplete(previous, "attributes"),
@@ -785,7 +786,8 @@ export class CharacterCreatorService {
       close: () => null,
       rejectClose: false,
       render: (_event, dialog) => {
-        bindCreatorStepNavigation(dialog.element);
+        bindCreatorDialogPlacement(dialog, placement);
+        bindCreatorStepNavigation(dialog.element, actor, "attributes");
         bindAttributesBook(dialog.element);
         globalThis.setTimeout(() => {
           if (dialog.element?.isConnected) dialog.bringToFront?.();
@@ -794,7 +796,7 @@ export class CharacterCreatorService {
     });
   }
 
-  static async #showRaceBook(DialogV2, actor) {
+  static async #showRaceBook(DialogV2, actor, placement) {
     return DialogV2.wait({
       classes: [
         "symbaroum-hud-character-creator-dialog",
@@ -802,7 +804,7 @@ export class CharacterCreatorService {
         "symbaroum-hud-race-book-dialog"
       ],
       window: { title: game.i18n.localize("SYMBAROUMHUD.CharacterCreator.Race.Title") },
-      position: { width: 1060, height: 680 },
+      position: creatorDialogPosition(placement, 1060, 680),
       content: raceBookContent(actor),
       buttons: [
         {
@@ -828,6 +830,7 @@ export class CharacterCreatorService {
             const keepsContacts = traitIds.includes("contacts");
             await actor.setFlag(MODULE_ID, STATE_FLAG, {
                 ...previous,
+                ...clearCreatorStepDraftPatch(previous, "race"),
                 version: 1,
                 step: furthestCreatorProgress(previous.step, RACE_STEP_COMPLETE),
                 completedSteps: markCreatorStepComplete(previous, "race"),
@@ -854,7 +857,8 @@ export class CharacterCreatorService {
       close: () => null,
       rejectClose: false,
       render: (_event, dialog) => {
-        bindCreatorStepNavigation(dialog.element);
+        bindCreatorDialogPlacement(dialog, placement);
+        bindCreatorStepNavigation(dialog.element, actor, "race");
         bindRaceBook(dialog.element, actor);
         globalThis.setTimeout(() => {
           if (dialog.element?.isConnected) dialog.bringToFront?.();
@@ -863,7 +867,7 @@ export class CharacterCreatorService {
     });
   }
 
-  static async #showAbilitiesBook(DialogV2, actor) {
+  static async #showAbilitiesBook(DialogV2, actor, placement) {
     const creatorState = actor.getFlag?.(MODULE_ID, STATE_FLAG) ?? {};
     const savedSelections = parseAbilitySelections(JSON.stringify(creatorState.abilities ?? []));
     const abilities = availableCreationAbilities(actor, {
@@ -883,7 +887,7 @@ export class CharacterCreatorService {
         "symbaroum-hud-abilities-book-dialog"
       ],
       window: { title: game.i18n.localize("SYMBAROUMHUD.CharacterCreator.Abilities.Title") },
-      position: { width: 1140, height: 700 },
+      position: creatorDialogPosition(placement, 1140, 700),
       content: await abilitiesBookContent(actor, abilities, racialCost, mysticalPowers, rituals),
       buttons: [
         {
@@ -892,7 +896,7 @@ export class CharacterCreatorService {
           label: game.i18n.localize("SYMBAROUMHUD.CharacterCreator.Abilities.Choose"),
           default: true,
           callback: async (_event, button) => {
-            const mode = formValue(button.form, "abilityDistributionMode");
+            const mode = ABILITY_DISTRIBUTION_MODES.EXPERIENCE;
             const experienceBudget = Number(formValue(button.form, "abilityExperienceBudget"));
             const selections = parseAbilitySelections(formValue(button.form, "abilitySelections"));
             const previous = actor.getFlag?.(MODULE_ID, STATE_FLAG) ?? {};
@@ -977,6 +981,7 @@ export class CharacterCreatorService {
             });
             await actor.setFlag(MODULE_ID, STATE_FLAG, {
                 ...previous,
+                ...clearCreatorStepDraftPatch(previous, "abilities"),
                 version: 1,
                 step: furthestCreatorProgress(previous.step, ABILITIES_STEP_COMPLETE),
                 completedSteps: markCreatorStepComplete(previous, "abilities"),
@@ -999,7 +1004,8 @@ export class CharacterCreatorService {
       close: () => null,
       rejectClose: false,
       render: (_event, dialog) => {
-        bindCreatorStepNavigation(dialog.element);
+        bindCreatorDialogPlacement(dialog, placement);
+        bindCreatorStepNavigation(dialog.element, actor, "abilities");
         bindAbilitiesBook(dialog.element, racialCost);
         globalThis.setTimeout(() => {
           if (dialog.element?.isConnected) dialog.bringToFront?.();
@@ -1008,7 +1014,7 @@ export class CharacterCreatorService {
     });
   }
 
-  static async #showContactsBook(DialogV2, actor) {
+  static async #showContactsBook(DialogV2, actor, placement) {
     return DialogV2.wait({
       classes: [
         "symbaroum-hud-character-creator-dialog",
@@ -1016,7 +1022,7 @@ export class CharacterCreatorService {
         "symbaroum-hud-contacts-book-dialog"
       ],
       window: { title: game.i18n.localize("SYMBAROUMHUD.CharacterCreator.Contacts.Title") },
-      position: { width: 1060, height: 680 },
+      position: creatorDialogPosition(placement, 1060, 680),
       content: contactsBookContent(actor),
       buttons: [
         {
@@ -1041,17 +1047,11 @@ export class CharacterCreatorService {
               return null;
             }
             await actor.update({ "system.notes": contactsNotes(actor.system?.notes, contacts) });
-            const contactsTrait = actorItems(actor).find((item) =>
-              ["boon", "trait"].includes(item?.type)
-              && normalizeName(item.system?.reference || item.name).startsWith("contacts")
-            );
-            if (typeof contactsTrait?.update === "function") {
-              const traitName = game.i18n.localize("SYMBAROUMHUD.CharacterCreator.Race.Traits.contacts.Name");
-              await contactsTrait.update({ name: `${traitName} (${contacts.network})` });
-            }
+            await updateContactsTraitName(actor, contacts);
             const previous = actor.getFlag?.(MODULE_ID, STATE_FLAG) ?? {};
             await actor.setFlag(MODULE_ID, STATE_FLAG, {
               ...previous,
+              ...clearCreatorStepDraftPatch(previous, "contacts"),
               version: 1,
               contacts
             });
@@ -1066,7 +1066,8 @@ export class CharacterCreatorService {
       close: () => null,
       rejectClose: false,
       render: (_event, dialog) => {
-        bindCreatorStepNavigation(dialog.element);
+        bindCreatorDialogPlacement(dialog, placement);
+        bindCreatorStepNavigation(dialog.element, actor, "contacts");
         bindContactsBook(dialog.element);
         globalThis.setTimeout(() => {
           if (dialog.element?.isConnected) dialog.bringToFront?.();
@@ -1075,60 +1076,7 @@ export class CharacterCreatorService {
     });
   }
 
-  static async #showShadowBook(DialogV2, actor) {
-    return DialogV2.wait({
-      classes: [
-        "symbaroum-hud-character-creator-dialog",
-        "symbaroum-hud-occupation-book-dialog",
-        "symbaroum-hud-shadow-book-dialog"
-      ],
-      window: { title: game.i18n.localize("SYMBAROUMHUD.CharacterCreator.Shadow.Title") },
-      position: { width: 1060, height: 690 },
-      content: shadowBookContent(actor),
-      buttons: [
-        {
-          action: "choose-shadow",
-          icon: "fa-solid fa-eye",
-          label: game.i18n.localize("SYMBAROUMHUD.CharacterCreator.Shadow.Choose"),
-          default: true,
-          callback: async (_event, button) => {
-            const shadow = formValue(button.form, "shadow").trim();
-            const shadowPrinciple = formValue(button.form, "shadow-principle");
-            if (!shadow) {
-              ui.notifications?.warn(game.i18n.localize("SYMBAROUMHUD.CharacterCreator.Shadow.Required"));
-              return null;
-            }
-            await actor.update({ "system.bio.shadow": shadow });
-            const previous = actor.getFlag?.(MODULE_ID, STATE_FLAG) ?? {};
-            await actor.setFlag(MODULE_ID, STATE_FLAG, {
-                ...previous,
-                version: 1,
-                step: furthestCreatorProgress(previous.step, SHADOW_STEP_COMPLETE),
-                completedSteps: markCreatorStepComplete(previous, "shadow"),
-                shadow,
-              shadowPrinciple
-            });
-            Hooks.callAll(`${MODULE_ID}.characterCreatorStepCompleted`, actor, {
-              step: "shadow", shadow
-            });
-            return shadow;
-          }
-        },
-        ...creatorNavigationDialogButtons(actor, "shadow")
-      ],
-      close: () => null,
-      rejectClose: false,
-      render: (_event, dialog) => {
-        bindCreatorStepNavigation(dialog.element);
-        bindShadowBook(dialog.element);
-        globalThis.setTimeout(() => {
-          if (dialog.element?.isConnected) dialog.bringToFront?.();
-        }, 0);
-      }
-    });
-  }
-
-  static async #showEquipmentBook(DialogV2, actor) {
+  static async #showEquipmentBook(DialogV2, actor, placement) {
     const grants = creationEquipmentGrants(actor);
     const equipment = availableCreationEquipment(actor);
     const campingEquipment = findCampingEquipment(actor, equipment);
@@ -1139,7 +1087,7 @@ export class CharacterCreatorService {
         "symbaroum-hud-equipment-book-dialog"
       ],
       window: { title: game.i18n.localize("SYMBAROUMHUD.CharacterCreator.Equipment.Title") },
-      position: { width: 1060, height: 690 },
+      position: creatorDialogPosition(placement, 1060, 690),
       content: equipmentBookContent(actor, grants, equipment, campingEquipment),
       buttons: [
         {
@@ -1213,6 +1161,7 @@ export class CharacterCreatorService {
             }));
             await actor.setFlag(MODULE_ID, STATE_FLAG, {
                 ...previous,
+                ...clearCreatorStepDraftPatch(previous, "equipment"),
                 version: 1,
                 step: furthestCreatorProgress(previous.step, EQUIPMENT_STEP_COMPLETE),
                 completedSteps: markCreatorStepComplete(previous, "equipment"),
@@ -1234,7 +1183,8 @@ export class CharacterCreatorService {
       close: () => null,
       rejectClose: false,
       render: (_event, dialog) => {
-        bindCreatorStepNavigation(dialog.element);
+        bindCreatorDialogPlacement(dialog, placement);
+        bindCreatorStepNavigation(dialog.element, actor, "equipment");
         bindEquipmentBook(dialog.element, actor);
         globalThis.setTimeout(() => {
           if (dialog.element?.isConnected) dialog.bringToFront?.();
@@ -1243,7 +1193,7 @@ export class CharacterCreatorService {
     });
   }
 
-  static async #showPersonalityBook(DialogV2, actor) {
+  static async #showPersonalityBook(DialogV2, actor, placement) {
     return DialogV2.wait({
       classes: [
         "symbaroum-hud-character-creator-dialog",
@@ -1251,7 +1201,7 @@ export class CharacterCreatorService {
         "symbaroum-hud-personality-book-dialog"
       ],
       window: { title: game.i18n.localize("SYMBAROUMHUD.CharacterCreator.Personality.Title") },
-      position: { width: 1060, height: 700 },
+      position: creatorDialogPosition(placement, 1060, 700),
       content: personalityBookContent(actor),
       buttons: [
         {
@@ -1261,6 +1211,10 @@ export class CharacterCreatorService {
           default: true,
           callback: async (_event, button) => {
             const characterName = formValue(button.form, "personalityName").trim();
+            const shadow = formValue(button.form, "shadow").trim();
+            const shadowPrinciple = formValue(button.form, "shadow-principle");
+            const preparesContacts = creatorStepViewState(actor, "race").raceTraits?.includes("contacts");
+            const contacts = preparesContacts ? contactsFromForm(button.form) : null;
             const biography = {
               quote: formValue(button.form, "personalityQuote").trim(),
               age: formValue(button.form, "personalityAge").trim(),
@@ -1270,7 +1224,8 @@ export class CharacterCreatorService {
               background: formValue(button.form, "personalityBackground").trim(),
               personalGoal: formValue(button.form, "personalityGoal").trim()
             };
-            if (!characterName || !biography.appearance || !biography.background || !biography.personalGoal) {
+            if (!characterName || !shadow || !biography.appearance || !biography.background || !biography.personalGoal
+              || (preparesContacts && (!contacts.network || !contacts.relationship))) {
               ui.notifications?.warn(game.i18n.localize("SYMBAROUMHUD.CharacterCreator.Personality.Required"));
               return null;
             }
@@ -1278,20 +1233,35 @@ export class CharacterCreatorService {
               name: characterName,
               ...Object.fromEntries(Object.entries(biography).map(([field, value]) => [
                 `system.bio.${field}`, value
-              ]))
+              ])),
+              "system.bio.shadow": shadow,
+              ...(preparesContacts ? { "system.notes": contactsNotes(actor.system?.notes, contacts) } : {})
             });
+            if (preparesContacts) await updateContactsTraitName(actor, contacts);
             const previous = actor.getFlag?.(MODULE_ID, STATE_FLAG) ?? {};
             await actor.setFlag(MODULE_ID, STATE_FLAG, {
                 ...previous,
+                ...clearCreatorStepDraftPatch(previous, "personality"),
                 version: 1,
                 step: furthestCreatorProgress(previous.step, PERSONALITY_STEP_COMPLETE),
                 completedSteps: markCreatorStepComplete(previous, "personality"),
-                personality: { characterName, ...biography }
+                personality: { characterName, ...biography },
+                shadow,
+                shadowPrinciple,
+                ...(preparesContacts ? { contacts } : {})
             });
+            if (preparesContacts) {
+              Hooks.callAll(`${MODULE_ID}.characterCreatorTraitPrepared`, actor, {
+                trait: "contacts", contacts
+              });
+            }
             Hooks.callAll(`${MODULE_ID}.characterCreatorStepCompleted`, actor, {
-              step: "personality", personality: { characterName, ...biography }
+              step: "personality", personality: { characterName, ...biography },
+              shadow, shadowPrinciple,
+              ...(preparesContacts ? { contacts } : {})
             });
-            return { characterName, ...biography };
+            return { characterName, ...biography, shadow, shadowPrinciple,
+              ...(preparesContacts ? { contacts } : {}) };
           }
         },
         ...creatorNavigationDialogButtons(actor, "personality")
@@ -1299,8 +1269,10 @@ export class CharacterCreatorService {
       close: () => null,
       rejectClose: false,
       render: (_event, dialog) => {
-        bindCreatorStepNavigation(dialog.element);
+        bindCreatorDialogPlacement(dialog, placement);
+        bindCreatorStepNavigation(dialog.element, actor, "personality");
         bindPersonalityBook(dialog.element);
+        bindShadowBook(dialog.element);
         globalThis.setTimeout(() => {
           if (dialog.element?.isConnected) dialog.bringToFront?.();
         }, 0);
@@ -1308,7 +1280,7 @@ export class CharacterCreatorService {
     });
   }
 
-  static async #showFriendsBook(DialogV2, actor) {
+  static async #showFriendsBook(DialogV2, actor, placement) {
     return DialogV2.wait({
       classes: [
         "symbaroum-hud-character-creator-dialog",
@@ -1316,7 +1288,7 @@ export class CharacterCreatorService {
         "symbaroum-hud-friends-book-dialog"
       ],
       window: { title: game.i18n.localize("SYMBAROUMHUD.CharacterCreator.Friends.Title") },
-      position: { width: 1060, height: 690 },
+      position: creatorDialogPosition(placement, 1060, 690),
       content: friendsBookContent(actor),
       buttons: [
         {
@@ -1339,6 +1311,7 @@ export class CharacterCreatorService {
             const friendsGroup = { companions, group };
             await actor.setFlag(MODULE_ID, STATE_FLAG, {
                 ...previous,
+                ...clearCreatorStepDraftPatch(previous, "friends"),
                 version: 1,
                 step: furthestCreatorProgress(previous.step, FRIENDS_STEP_COMPLETE),
                 completedSteps: markCreatorStepComplete(previous, "friends"),
@@ -1355,7 +1328,8 @@ export class CharacterCreatorService {
       close: () => null,
       rejectClose: false,
       render: (_event, dialog) => {
-        bindCreatorStepNavigation(dialog.element);
+        bindCreatorDialogPlacement(dialog, placement);
+        bindCreatorStepNavigation(dialog.element, actor, "friends");
         bindFriendsBook(dialog.element);
         globalThis.setTimeout(() => {
           if (dialog.element?.isConnected) dialog.bringToFront?.();
@@ -1372,6 +1346,9 @@ function creatorStepIndex(step) {
 function completedCreatorSteps(state = {}) {
   if (Array.isArray(state.completedSteps)) {
     return state.completedSteps.filter((step) => creatorStepIndex(step) >= 0);
+  }
+  if (state.step === SHADOW_STEP_COMPLETE) {
+    return ["occupation", "attributes", "race", "abilities"];
   }
   const legacyProgress = creatorStepIndex(state.step);
   return legacyProgress < 0
@@ -1390,6 +1367,123 @@ function markCreatorStepComplete(state, step) {
   return CREATOR_STEPS.map((entry) => entry.id).filter((id) => completed.has(id));
 }
 
+function creatorStepViewState(actor, step) {
+  const state = actor?.getFlag?.(MODULE_ID, STATE_FLAG) ?? {};
+  const draft = state.drafts?.[step]?.state;
+  return draft && typeof draft === "object" ? { ...state, ...draft } : state;
+}
+
+function creatorStepDraftState(step, form) {
+  if (step === "occupation") {
+    const occupation = formValue(form, "occupation");
+    return {
+      occupation,
+      ...(occupation === "custom" ? { customOccupation: customOccupationFromForm(form) } : {})
+    };
+  }
+  if (step === "attributes") {
+    return {
+      attributeDistribution: formValue(form, "attributeDistributionMode"),
+      attributeTypicalValues: CORE_ATTRIBUTES.map((attribute) => formValue(form, `typical-${attribute.id}`)),
+      attributePointValues: CORE_ATTRIBUTES.map((attribute) => Number(formValue(form, `points-${attribute.id}`)) || ATTRIBUTE_MIN)
+    };
+  }
+  if (step === "race") {
+    const race = coreRace(formValue(form, "race"));
+    if (!race) return {};
+    const choice = formValue(form, `race-choice-${race.id}`);
+    const optional = race.optional.filter((id) => formChecked(form, `race-optional-${race.id}-${id}`));
+    return {
+      race: race.id,
+      raceTraits: [...race.required, ...(choice ? [choice] : []), ...optional],
+      abilityCostTraits: optional
+    };
+  }
+  if (step === "contacts") return { contacts: contactsFromForm(form) };
+  if (step === "abilities") {
+    return {
+      abilityDistribution: ABILITY_DISTRIBUTION_MODES.EXPERIENCE,
+      abilityExperienceBudget: Math.max(0, Number(formValue(form, "abilityExperienceBudget")) || 0),
+      abilities: parseAbilitySelections(formValue(form, "abilitySelections"))
+    };
+  }
+  if (step === "personality") {
+    return {
+      personality: personalityFromForm(form),
+      shadow: formValue(form, "shadow"),
+      shadowPrinciple: formValue(form, "shadow-principle"),
+      ...(form?.elements?.namedItem?.("contactsNetwork") || form?.elements?.contactsNetwork
+        ? { contacts: contactsFromForm(form) }
+        : {})
+    };
+  }
+  if (step === "friends") return { friendsGroup: friendsGroupFromForm(form) };
+  return {};
+}
+
+function creatorFormDraftFields(form) {
+  const fields = {};
+  const elements = form?.elements;
+  const controls = elements && typeof elements[Symbol.iterator] === "function"
+    ? Array.from(elements, (control) => ({ name: control?.name, control }))
+    : Object.entries(elements ?? {})
+      .filter(([name, control]) => name !== "namedItem" && control && typeof control === "object")
+      .map(([name, control]) => ({ name: control.name || name, control }));
+  for (const { name, control } of controls) {
+    if (!name || control.disabled) continue;
+    const type = String(control.type ?? "").toLowerCase();
+    if (["button", "submit", "reset", "file"].includes(type)) continue;
+    const checkable = type === "checkbox" || type === "radio";
+    const field = fields[name] ??= { checkable, values: [] };
+    if (checkable) {
+      if (control.checked) field.values.push(String(control.value ?? "on"));
+    } else {
+      field.values = [String(control.value ?? "")];
+    }
+  }
+  return fields;
+}
+
+async function saveCreatorStepDraft(actor, step, form) {
+  if (!actor?.setFlag || !form) return;
+  const previous = actor.getFlag?.(MODULE_ID, STATE_FLAG) ?? {};
+  await actor.setFlag(MODULE_ID, STATE_FLAG, {
+    ...previous,
+    version: 1,
+    drafts: {
+      ...(previous.drafts ?? {}),
+      [step]: {
+        state: creatorStepDraftState(step, form),
+        fields: creatorFormDraftFields(form)
+      }
+    }
+  });
+}
+
+function withoutCreatorStepDraft(state, step) {
+  const drafts = { ...(state?.drafts ?? {}) };
+  delete drafts[step];
+  return drafts;
+}
+
+function clearCreatorStepDraftPatch(state, step) {
+  return state?.drafts?.[step] ? { drafts: withoutCreatorStepDraft(state, step) } : {};
+}
+
+function restoreCreatorStepDraftFields(element, actor, step) {
+  const fields = actor?.getFlag?.(MODULE_ID, STATE_FLAG)?.drafts?.[step]?.fields;
+  if (!fields || !element?.querySelectorAll) return;
+  for (const control of element.querySelectorAll("[name]")) {
+    const field = fields[control.name];
+    if (!field || control.disabled) continue;
+    const type = String(control.type ?? "").toLowerCase();
+    if (field.checkable) control.checked = field.values.includes(String(control.value ?? "on"));
+    else if (!["button", "submit", "reset", "file"].includes(type)) control.value = field.values[0] ?? "";
+    control.dispatchEvent(new Event("input", { bubbles: true }));
+    control.dispatchEvent(new Event("change", { bubbles: true }));
+  }
+}
+
 function furthestCreatorProgress(previous, completed) {
   return creatorStepIndex(previous) > creatorStepIndex(completed) ? previous : completed;
 }
@@ -1400,7 +1494,6 @@ function isCreatorStepFilled(actor, step) {
     case "attributes": return isAttributesStepComplete(actor);
     case "race": return isRaceStepComplete(actor);
     case "abilities": return isAbilitiesStepComplete(actor);
-    case "shadow": return isShadowStepComplete(actor);
     case "equipment": return isEquipmentStepComplete(actor);
     case "personality": return isPersonalityStepComplete(actor);
     case "friends": return isFriendsStepComplete(actor);
@@ -1410,26 +1503,19 @@ function isCreatorStepFilled(actor, step) {
 
 function nextRequiredCreatorStep(actor, currentStep) {
   if (isAbilitiesStepComplete(actor) && !isAttributesStepComplete(actor)) return "attributes";
-  if (currentStep === "race" && isContactsPreparationRequired(actor)) return "contacts";
   if (currentStep === "contacts") return isAbilitiesStepComplete(actor) ? null : "abilities";
   const currentIndex = creatorStepIndex(currentStep);
   return CREATOR_STEPS.slice(currentIndex + 1).find((entry) => !isCreatorStepFilled(actor, entry.id))?.id ?? null;
 }
 
 function creatorNavigationTargets(actor, currentStep) {
-  const state = actor?.getFlag?.(MODULE_ID, STATE_FLAG) ?? {};
-  const hasContacts = Boolean(state.raceTraits?.includes("contacts"));
   if (currentStep === "contacts") {
     return { previous: "race", next: "abilities" };
   }
   const index = creatorStepIndex(currentStep);
-  const previous = currentStep === "abilities" && hasContacts
-    ? "contacts"
-    : index > 0 ? CREATOR_STEPS[index - 1].id : null;
+  const previous = index > 0 ? CREATOR_STEPS[index - 1].id : null;
   const nextEntry = CREATOR_STEPS[index + 1];
-  const next = currentStep === "race" && hasContacts
-    ? "contacts"
-    : nextEntry?.id ?? null;
+  const next = nextEntry?.id ?? null;
   return { previous, next };
 }
 
@@ -1439,14 +1525,66 @@ function creatorNavigationDialogButtons(actor, currentStep) {
     ...(targets.previous ? [{
       action: "creator-previous-step",
       label: game.i18n.localize("SYMBAROUMHUD.CharacterCreator.Guide.PreviousStep"),
-      callback: () => ({ creatorNavigation: true, step: targets.previous })
+      callback: async (_event, button) => {
+        await saveCreatorStepDraft(actor, currentStep, button.form);
+        return {
+          creatorNavigation: true,
+          step: creatorNavigationTargets(actor, currentStep).previous ?? targets.previous
+        };
+      }
     }] : []),
     ...(targets.next ? [{
       action: "creator-next-step",
       label: game.i18n.localize("SYMBAROUMHUD.CharacterCreator.Guide.NextStep"),
-      callback: () => ({ creatorNavigation: true, step: targets.next })
+      callback: async (_event, button) => {
+        await saveCreatorStepDraft(actor, currentStep, button.form);
+        return {
+          creatorNavigation: true,
+          step: creatorNavigationTargets(actor, currentStep).next ?? targets.next
+        };
+      }
     }] : [])
   ];
+}
+
+function creatorDialogPosition(placement, width, height) {
+  const position = { width, height };
+  if (!Number.isFinite(placement?.left) || !Number.isFinite(placement?.top)) return position;
+
+  const viewportWidth = Number(globalThis.innerWidth);
+  const viewportHeight = Number(globalThis.innerHeight);
+  const maximumLeft = Number.isFinite(viewportWidth)
+    ? Math.max(0, viewportWidth - Math.min(width, viewportWidth))
+    : placement.left;
+  const maximumTop = Number.isFinite(viewportHeight)
+    ? Math.max(0, viewportHeight - Math.min(height, viewportHeight))
+    : placement.top;
+  position.left = Math.min(Math.max(0, placement.left), maximumLeft);
+  position.top = Math.min(Math.max(0, placement.top), maximumTop);
+  return position;
+}
+
+function bindCreatorDialogPlacement(dialog, placement) {
+  const element = dialog?.element;
+  const header = element?.querySelector?.(".window-header");
+  if (!header || !placement) return;
+
+  const remember = () => {
+    globalThis.setTimeout(() => {
+      const bounds = element.getBoundingClientRect?.();
+      const left = Number(bounds?.left ?? dialog.position?.left);
+      const top = Number(bounds?.top ?? dialog.position?.top);
+      if (Number.isFinite(left)) placement.left = left;
+      if (Number.isFinite(top)) placement.top = top;
+    }, 0);
+  };
+  const rememberOnRelease = (eventName) => {
+    const ownerDocument = element.ownerDocument ?? globalThis.document;
+    ownerDocument?.addEventListener?.(eventName, remember, { once: true });
+  };
+  header.addEventListener("pointerdown", () => rememberOnRelease("pointerup"));
+  header.addEventListener("mousedown", () => rememberOnRelease("mouseup"));
+  header.addEventListener("mouseup", remember);
 }
 
 function isCreatorNavigationResult(result) {
@@ -1471,7 +1609,7 @@ function creatorStepNumber(actor, currentStep, progressKey) {
     </div>`;
 }
 
-function bindCreatorStepNavigation(element) {
+function bindCreatorStepNavigation(element, actor, currentStep) {
   for (const trigger of element.querySelectorAll("[data-creator-navigation]:not([disabled])")) {
     trigger.addEventListener("click", () => {
       const action = trigger.dataset.creatorNavigation === "previous"
@@ -1480,10 +1618,11 @@ function bindCreatorStepNavigation(element) {
       element.querySelector(`.form-footer button[data-action="${action}"], button[data-action="${action}"]`)?.click();
     });
   }
+  globalThis.setTimeout(() => restoreCreatorStepDraftFields(element, actor, currentStep), 0);
 }
 
 function occupationBookContent(actor) {
-  const creatorState = actor?.getFlag?.(MODULE_ID, STATE_FLAG) ?? {};
+  const creatorState = creatorStepViewState(actor, "occupation");
   const selectedId = creatorState.occupation === "custom" || coreOccupation(creatorState.occupation)
     ? creatorState.occupation
     : CORE_OCCUPATIONS[0].id;
@@ -1685,7 +1824,7 @@ function occupationAbilityDocument(id, actor = null, label = "") {
 }
 
 function raceBookContent(actor) {
-  const creatorState = actor?.getFlag?.(MODULE_ID, STATE_FLAG) ?? {};
+  const creatorState = creatorStepViewState(actor, "race");
   const selectedId = coreRace(creatorState.race)?.id ?? CORE_RACES[0].id;
   const selectedTraits = new Set(Array.isArray(creatorState.raceTraits) ? creatorState.raceTraits : []);
   const index = CORE_RACES.map((race) => `
@@ -1806,18 +1945,7 @@ function bindRaceBook(element, actor) {
 }
 
 function contactsBookContent(actor) {
-  const saved = actor.getFlag?.(MODULE_ID, STATE_FLAG)?.contacts ?? {};
-  const people = Array.from({ length: 4 }, (_, index) => saved.people?.[index] ?? {});
-  const contactField = (name, label, value = "", placeholder = "") => `
-    <label><span>${localizeEscaped(label)}</span>
-      <input type="text" name="${name}" value="${escapeHtml(value)}" placeholder="${localizeEscaped(placeholder)}"></label>`;
-  const peopleRows = people.map((contact, index) => `
-    <article class="symbaroum-hud-contact-row">
-      <span class="symbaroum-hud-contact-number">${index + 1}</span>
-      ${contactField(`contactName-${index}`, "SYMBAROUMHUD.CharacterCreator.Contacts.PersonName", contact.name, "SYMBAROUMHUD.CharacterCreator.Contacts.PersonNamePlaceholder")}
-      ${contactField(`contactRole-${index}`, "SYMBAROUMHUD.CharacterCreator.Contacts.PersonRole", contact.role, "SYMBAROUMHUD.CharacterCreator.Contacts.PersonRolePlaceholder")}
-      ${contactField(`contactLocation-${index}`, "SYMBAROUMHUD.CharacterCreator.Contacts.PersonLocation", contact.location, "SYMBAROUMHUD.CharacterCreator.Contacts.PersonLocationPlaceholder")}
-    </article>`).join("");
+  const saved = creatorStepViewState(actor, "contacts").contacts ?? {};
   return `
     <div class="symbaroum-hud-contacts-book">
       <header class="symbaroum-hud-creator-step-guide">
@@ -1848,6 +1976,25 @@ function contactsBookContent(actor) {
         <main class="symbaroum-hud-contacts-page">
           <header><span>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Contacts.RecordLabel")}</span>
             <h2>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Contacts.WhoAreThey")}</h2></header>
+          ${contactsFieldsContent(saved)}
+        </main>
+      </div>
+    </div>`;
+}
+
+function contactsFieldsContent(saved = {}) {
+  const people = Array.from({ length: 4 }, (_, index) => saved.people?.[index] ?? {});
+  const contactField = (name, label, value = "", placeholder = "") => `
+    <label><span>${localizeEscaped(label)}</span>
+      <input type="text" name="${name}" value="${escapeHtml(value)}" placeholder="${localizeEscaped(placeholder)}"></label>`;
+  const peopleRows = people.map((contact, index) => `
+    <article class="symbaroum-hud-contact-row">
+      <span class="symbaroum-hud-contact-number">${index + 1}</span>
+      ${contactField(`contactName-${index}`, "SYMBAROUMHUD.CharacterCreator.Contacts.PersonName", contact.name, "SYMBAROUMHUD.CharacterCreator.Contacts.PersonNamePlaceholder")}
+      ${contactField(`contactRole-${index}`, "SYMBAROUMHUD.CharacterCreator.Contacts.PersonRole", contact.role, "SYMBAROUMHUD.CharacterCreator.Contacts.PersonRolePlaceholder")}
+      ${contactField(`contactLocation-${index}`, "SYMBAROUMHUD.CharacterCreator.Contacts.PersonLocation", contact.location, "SYMBAROUMHUD.CharacterCreator.Contacts.PersonLocationPlaceholder")}
+    </article>`).join("");
+  return `
           <section class="symbaroum-hud-contacts-network">
             <label><span>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Contacts.Network")}<i class="fa-solid fa-asterisk" aria-hidden="true"></i></span>
               <input type="text" name="contactsNetwork" required value="${escapeHtml(saved.network ?? "")}" placeholder="${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Contacts.NetworkPlaceholder")}">
@@ -1865,10 +2012,7 @@ function contactsBookContent(actor) {
               <textarea name="contactsAccess" placeholder="${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Contacts.AccessPlaceholder")}">${escapeHtml(saved.access ?? "")}</textarea></label>
             <label><span>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Contacts.Complications")}</span>
               <textarea name="contactsComplications" placeholder="${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Contacts.ComplicationsPlaceholder")}">${escapeHtml(saved.complications ?? "")}</textarea></label>
-          </section>
-        </main>
-      </div>
-    </div>`;
+          </section>`;
 }
 
 function bindContactsBook(element) {
@@ -1901,6 +2045,16 @@ function contactsNotes(existingNotes, contacts) {
     : "";
   const block = `${CONTACTS_NOTES_START}<section class="symbaroum-hud-character-contacts"><h2>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Contacts.NotesHeading")}</h2>${detail("SYMBAROUMHUD.CharacterCreator.Contacts.Network", contacts.network)}${detail("SYMBAROUMHUD.CharacterCreator.Contacts.Relationship", contacts.relationship)}${people}${detail("SYMBAROUMHUD.CharacterCreator.Contacts.Access", contacts.access)}${detail("SYMBAROUMHUD.CharacterCreator.Contacts.Complications", contacts.complications)}</section>${CONTACTS_NOTES_END}`;
   return [withoutExisting, block].filter(Boolean).join("\n");
+}
+
+async function updateContactsTraitName(actor, contacts) {
+  const contactsTrait = actorItems(actor).find((item) =>
+    ["boon", "trait"].includes(item?.type)
+    && normalizeName(item.system?.reference || item.name).startsWith("contacts")
+  );
+  if (typeof contactsTrait?.update !== "function") return;
+  const traitName = game.i18n.localize("SYMBAROUMHUD.CharacterCreator.Race.Traits.contacts.Name");
+  await contactsTrait.update({ name: `${traitName} (${contacts.network})` });
 }
 
 function raceTraitDocument(actor, trait) {
@@ -1999,6 +2153,18 @@ function abilityIdentity(item) {
   return normalizeName(item?.system?.reference || item?.name);
 }
 
+function choiceIdentities(item) {
+  return [...new Set([item?.name, item?.system?.reference].map(normalizeName).filter(Boolean))];
+}
+
+function mysticalTraditionChoiceIdentities(tradition, kind) {
+  const key = kind === "ritual" ? tradition?.rituals : tradition?.powers;
+  return new Set(String(key ? game.i18n.localize(key) : "")
+    .split(/\s*,\s*|\s+(?:e|and)\s+/iu)
+    .map(normalizeName)
+    .filter(Boolean));
+}
+
 function racialAbilityCost(actor) {
   const state = actor?.getFlag?.(MODULE_ID, STATE_FLAG) ?? {};
   return Math.min(2, Math.max(0, Array.isArray(state.abilityCostTraits) ? state.abilityCostTraits.length : 0));
@@ -2020,13 +2186,13 @@ function racialFreeExperienceValue(actor) {
 
 async function abilitiesBookContent(actor, abilities, racialCost, mysticalPowers, rituals, options = {}) {
   const browserMode = Boolean(options.browserMode);
-  const state = actor?.getFlag?.(MODULE_ID, STATE_FLAG) ?? {};
+  const state = browserMode
+    ? (actor?.getFlag?.(MODULE_ID, STATE_FLAG) ?? {})
+    : creatorStepViewState(actor, "abilities");
   const savedSelections = browserMode
     ? []
     : parseAbilitySelections(JSON.stringify(state.abilities ?? []));
-  const savedMode = Object.values(ABILITY_DISTRIBUTION_MODES).includes(state.abilityDistribution)
-    ? state.abilityDistribution
-    : ABILITY_DISTRIBUTION_MODES.EXPERIENCE;
+  const savedMode = ABILITY_DISTRIBUTION_MODES.EXPERIENCE;
   const recommendation = occupationAbilityRecommendation(actor);
   const recommendationOrder = new Map((recommendation?.abilities ?? []).map((name, index) => [
     normalizeName(name.replace(/\s*\([^)]*\)\s*$/, "")), index
@@ -2043,6 +2209,32 @@ async function abilitiesBookContent(actor, abilities, racialCost, mysticalPowers
     if (leftRecommended) return recommendationIndex(left) - recommendationIndex(right);
     return left.name.localeCompare(right.name, game.i18n?.lang ?? "pt-BR", { sensitivity: "base" });
   });
+  characterCreatorOriginIndex ??= staticContentOriginIndex();
+  const originIndex = characterCreatorOriginIndex;
+  const browserSourceId = "world:Item";
+  const browserSourceLabel = game.i18n.localize("SYMBAROUMHUD.CompendiumBrowser.WorldItems");
+  const browserAbilities = orderedAbilities.map((ability) => {
+    const origin = resolveContentOrigin(ability, { index: originIndex, sourceId: browserSourceId });
+    return {
+      ability,
+      origin,
+      originLabel: game.i18n.localize(contentOriginDefinition(origin).label)
+    };
+  });
+  const originCounts = new Map();
+  const specialChoiceOrigins = [...mysticalPowers, ...rituals].map((item) => resolveContentOrigin(item, {
+    index: originIndex,
+    sourceId: browserSourceId
+  }));
+  for (const origin of [...browserAbilities.map((entry) => entry.origin), ...specialChoiceOrigins]) {
+    originCounts.set(origin, (originCounts.get(origin) ?? 0) + 1);
+  }
+  const browserOrigins = [...CONTENT_ORIGINS, contentOriginDefinition(UNKNOWN_CONTENT_ORIGIN)]
+    .map((origin) => ({
+      ...origin,
+      localizedLabel: game.i18n.localize(origin.label),
+      count: originCounts.get(origin.id) ?? 0
+    }));
   const firstId = orderedAbilities.some((ability) => ability.id === savedSelections[0]?.id)
     ? savedSelections[0].id
     : orderedAbilities[0]?.id ?? "";
@@ -2051,36 +2243,53 @@ async function abilitiesBookContent(actor, abilities, racialCost, mysticalPowers
     .map((id) => coreRaceTrait(id))
     .filter(Boolean)
     .map((trait) => game.i18n.localize(trait.name));
-  const index = orderedAbilities.map((ability) => `
-    <button type="button" class="symbaroum-hud-ability-index-entry"
-      data-creation-ability-id="${escapeHtml(ability.id)}"
-      data-search="${escapeHtml(normalizeName(`${ability.name} ${ability.system?.reference ?? ""} ${isRecommended(ability) ? recommendation?.name ?? "" : ""}`))}"
-      data-occupation-recommended="${isRecommended(ability)}"
-      data-active="${ability.id === firstId}" aria-pressed="${ability.id === firstId}">
-      <img src="${escapeHtml(ability.img || "icons/svg/book.svg")}" alt="">
-      <span class="symbaroum-hud-ability-index-label">
-        <span>${escapeHtml(ability.name)}</span>
-        ${isRecommended(ability) ? `<small><i class="fa-solid fa-compass" aria-hidden="true"></i>${escapeHtml(recommendation.name)}</small>` : ""}
-      </span>
-      <strong data-ability-entry-rank></strong>
-    </button>`).join("");
+  const index = browserAbilities.map(({ ability, origin, originLabel }, abilityOrder) => {
+    const traditionGateway = isMysticalPowerAbility(ability)
+      ? "power"
+      : isRitualistAbility(ability)
+        ? "ritual"
+        : "";
+    return `
+    <li data-ability-browser-result data-origin="${escapeHtml(origin)}" data-source="${browserSourceId}"
+      data-ability-default-order="${abilityOrder}">
+      <button type="button" class="symbaroum-hud-browser-entry-main symbaroum-hud-ability-index-entry"
+        data-creation-ability-id="${escapeHtml(ability.id)}"
+        data-search="${escapeHtml(normalizeName(`${ability.name} ${ability.system?.reference ?? ""} ${originLabel} ${isRecommended(ability) ? recommendation?.name ?? "" : ""}`))}"
+        data-occupation-recommended="${isRecommended(ability)}"
+        ${traditionGateway ? `data-tradition-gateway="${traditionGateway}" data-tradition-recommended="false"` : ""}
+        data-active="${ability.id === firstId}" aria-pressed="${ability.id === firstId}">
+        <img src="${escapeHtml(ability.img || "icons/svg/book.svg")}" alt="">
+        <span class="symbaroum-hud-browser-entry-details symbaroum-hud-ability-index-label">
+          <strong>${escapeHtml(ability.name)}</strong>
+          ${isRecommended(ability) ? `<small><i class="fa-solid fa-compass" aria-hidden="true"></i>${escapeHtml(recommendation.name)}</small>` : ""}
+          ${traditionGateway ? `<small class="symbaroum-hud-tradition-recommendation"
+            data-tradition-ability-recommendation hidden><i class="fa-solid fa-hat-wizard" aria-hidden="true"></i><span></span></small>` : ""}
+          <b class="symbaroum-hud-ability-browser-rank" data-ability-entry-rank></b>
+        </span>
+      </button>
+    </li>`;
+  }).join("");
   const pages = (await Promise.all(abilities.map(async (ability) => {
     const mysticalPowerAbility = isMysticalPowerAbility(ability);
     const ritualistAbility = isRitualistAbility(ability);
     const mysticalTradition = coreMysticalTradition(ability);
-    const nativeSheet = await renderCreationAbilitySheet(ability);
+    const sheetLoaded = ability.id === firstId;
+    const nativeSheet = sheetLoaded ? await renderCreationAbilitySheet(ability) : "";
     const mysticalPowerChoices = mysticalPowerAbility
-      ? await mysticalPowerChoiceContent(ability, mysticalPowers, costs)
+      ? await mysticalPowerChoiceContent(ability, mysticalPowers, costs, originIndex, browserSourceId)
       : "";
     const ritualChoices = ritualistAbility
-      ? await ritualChoiceContent(ability, rituals)
+      ? await ritualChoiceContent(ability, rituals, originIndex, browserSourceId)
       : "";
     return `
       <article class="symbaroum-hud-ability-page" data-creation-ability-page="${escapeHtml(ability.id)}"
         ${mysticalTradition ? `data-mystical-tradition="${escapeHtml(mysticalTradition.id)}"` : ""}
         ${ability.id === firstId ? "" : "hidden"}>
         ${mysticalTradition ? mysticalTraditionContent(mysticalTradition, ability) : ""}
-        <div class="symbaroum sheet item symbaroum-hud-native-ability-sheet">${nativeSheet}</div>
+        <div class="symbaroum sheet item symbaroum-hud-native-ability-sheet"
+          data-ability-sheet-host data-ability-sheet-loaded="${sheetLoaded}">
+          ${sheetLoaded ? nativeSheet : abilitySheetLoadingContent()}
+        </div>
         <div class="symbaroum-hud-native-ability-purchase" ${mysticalPowerAbility ? "hidden" : ""}>
           ${["novice", "adept", "master"].map((rank) => `<button type="button"
             data-select-ability="${escapeHtml(ability.id)}" data-rank="${rank}"
@@ -2113,14 +2322,22 @@ async function abilitiesBookContent(actor, abilities, racialCost, mysticalPowers
           ? "SYMBAROUMHUD.CharacterCreator.Abilities.BrowserIntroduction"
           : "SYMBAROUMHUD.CharacterCreator.Guide.StepFourText")}</p></div>
       </header>
-      ${browserMode ? "" : `<nav class="symbaroum-hud-ability-mode-tabs" aria-label="${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.DistributionMethod")}">
-        <button type="button" data-ability-mode="experience" data-active="${savedMode === "experience"}" aria-pressed="${savedMode === "experience"}"><i class="fa-solid fa-coins"></i>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.ExperiencePurchase")}</button>
-        <button type="button" data-ability-mode="five-novice" data-active="${savedMode === "five-novice"}" aria-pressed="${savedMode === "five-novice"}"><i class="fa-solid fa-hand-fist"></i>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.FiveNovice")}</button>
-        <button type="button" data-ability-mode="mixed" data-active="${savedMode === "mixed"}" aria-pressed="${savedMode === "mixed"}"><i class="fa-solid fa-crown"></i>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.Mixed")}</button>
-      </nav>`}
-      <div class="symbaroum-hud-ability-workspace">
-        <aside class="symbaroum-hud-ability-index">
-          <label><i class="fa-solid fa-magnifying-glass"></i><input type="search" data-ability-search placeholder="${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.SearchPlaceholder")}"></label>
+      <div class="symbaroum-hud-browser-shell symbaroum-hud-creator-ability-browser">
+        <aside class="symbaroum-hud-browser-sidebar symbaroum-hud-ability-index">
+          <div class="symbaroum-hud-ability-filter-toolbar">
+            <label class="symbaroum-hud-browser-search"><i class="fa-solid fa-magnifying-glass"></i>
+              <input type="search" data-ability-search placeholder="${localizeEscaped("SYMBAROUMHUD.CompendiumBrowser.Search")}">
+              <button type="button" data-clear-ability-search aria-label="${localizeEscaped("SYMBAROUMHUD.CompendiumBrowser.ClearSearch")}">
+                <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+              </button>
+            </label>
+            <button type="button" class="symbaroum-hud-ability-filter-toggle"
+              data-toggle-ability-filter-panel aria-expanded="false"
+              aria-label="${localizeEscaped("SYMBAROUMHUD.CompendiumBrowser.Filters")}"
+              title="${localizeEscaped("SYMBAROUMHUD.CompendiumBrowser.Filters")}">
+              <i class="fa-solid fa-filter" aria-hidden="true"></i>
+            </button>
+          </div>
           <section class="symbaroum-hud-ability-experience" data-ability-experience-panel>
             <header><span>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.ExperienceRemaining")}</span>
               <strong data-experience-remaining>${initialExperience}</strong></header>
@@ -2134,8 +2351,32 @@ async function abilitiesBookContent(actor, abilities, racialCost, mysticalPowers
             <span data-ability-slot="adept" hidden><b>0</b>/0 ${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.Adept")}</span>
           </div>
           ${racialCost ? `<p class="symbaroum-hud-ability-racial-cost"><i class="fa-solid fa-feather"></i>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.RacialCost")}<strong>${escapeHtml(racialTraits.join(", "))}</strong></p>` : ""}
-          <nav>${index || `<p class="symbaroum-hud-ability-empty">${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.Empty")}</p>`}</nav>
+          <div class="symbaroum-hud-ability-filter-popover" data-ability-filter-panel hidden>
+            <section class="symbaroum-hud-browser-origin-filter">
+              <header><h2>${localizeEscaped("SYMBAROUMHUD.CompendiumBrowser.Origin")}</h2>
+                <button type="button" data-toggle-ability-origins title="${localizeEscaped("SYMBAROUMHUD.CompendiumBrowser.ToggleOrigins")}">
+                  <i class="fa-solid fa-check-double" aria-hidden="true"></i>
+                </button>
+              </header>
+              <div>${browserOrigins.map((origin) => `<label data-empty="${origin.count === 0}">
+                <input type="checkbox" data-creation-browser-origin value="${escapeHtml(origin.id)}" checked>
+                <span>${escapeHtml(origin.localizedLabel)}</span><small>${origin.count}</small>
+              </label>`).join("")}</div>
+            </section>
+            <section class="symbaroum-hud-browser-source-filter">
+              <header><h2>${localizeEscaped("SYMBAROUMHUD.CompendiumBrowser.Sources")}</h2></header>
+              <div><label><input type="checkbox" data-creation-browser-source value="${browserSourceId}" checked>
+                <span>${escapeHtml(browserSourceLabel)}</span><small>${orderedAbilities.length}</small>
+              </label></div>
+            </section>
+          </div>
         </aside>
+        <section class="symbaroum-hud-browser-results symbaroum-hud-creator-ability-results">
+          <header><h2>${localizeEscaped("SYMBAROUMHUD.CompendiumBrowser.Results")}</h2>
+            <span><b data-ability-result-count>${orderedAbilities.length}</b> ${localizeEscaped("SYMBAROUMHUD.CompendiumBrowser.Found")}</span>
+          </header>
+          <ol>${index || `<li class="symbaroum-hud-browser-empty"><i class="fa-solid fa-book-open"></i><strong>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.Empty")}</strong></li>`}</ol>
+        </section>
         <main class="symbaroum-hud-ability-reading-page">${pages || `<p class="symbaroum-hud-ability-empty">${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.Empty")}</p>`}</main>
       </div>
     </div>`;
@@ -2156,8 +2397,11 @@ function occupationAbilityRecommendation(actor) {
   return abilities.length ? { name: game.i18n.localize(occupation.name), abilities } : null;
 }
 
-function shadowBookContent(actor) {
-  const creatorState = actor?.getFlag?.(MODULE_ID, STATE_FLAG) ?? {};
+function shadowBookContent(actor, { embedded = false } = {}) {
+  const legacyState = creatorStepViewState(actor, "shadow");
+  const creatorState = embedded
+    ? { ...legacyState, ...creatorStepViewState(actor, "personality") }
+    : legacyState;
   const principles = [
     {
       id: "nature",
@@ -2244,13 +2488,14 @@ function shadowBookContent(actor) {
   }).join("");
   const current = String(creatorState.shadow ?? actor.system?.bio?.shadow ?? "").trim();
   return `
-    <div class="symbaroum-hud-shadow-book">
+    <div class="symbaroum-hud-shadow-book${embedded ? " symbaroum-hud-shadow-book-embedded" : ""}"
+      ${embedded ? 'data-personality-section="shadow" hidden' : ""}>
       <input type="hidden" name="shadow-principle" value="${selectedId}">
-      <header class="symbaroum-hud-creator-step-guide">
+      ${embedded ? "" : `<header class="symbaroum-hud-creator-step-guide">
         ${creatorStepNumber(actor, "shadow", "SYMBAROUMHUD.CharacterCreator.Guide.ShadowProgress")}
         <div><h2>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Guide.StepFiveTitle")}</h2>
           <p>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Guide.StepFiveText")}</p></div>
-      </header>
+      </header>`}
       <aside class="symbaroum-hud-shadow-index">
         <header><h2>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Shadow.Index")}</h2>
           <p>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Shadow.IndexHint")}</p></header>
@@ -2620,7 +2865,7 @@ function creationEquipmentAbilitySource(grant) {
 }
 
 function equipmentBookContent(actor, grants, equipment, campingEquipment) {
-  const creatorState = actor?.getFlag?.(MODULE_ID, STATE_FLAG) ?? {};
+  const creatorState = creatorStepViewState(actor, "equipment");
   const savedEquipment = Array.isArray(creatorState.equipment) ? creatorState.equipment : [];
   const savedCombination = (category) => savedEquipment.find((entry) => entry.category === category)?.combination ?? "";
   const experience = creationExperienceTotal(actor);
@@ -2745,7 +2990,11 @@ function bindEquipmentBook(element, actor) {
 }
 
 function personalityBookContent(actor) {
-  const bio = actor.system?.bio ?? {};
+  const creatorState = creatorStepViewState(actor, "personality");
+  const draft = creatorState.personality ?? {};
+  const bio = { ...(actor.system?.bio ?? {}), ...draft };
+  const characterName = draft.characterName ?? actor.name;
+  const preparesContacts = creatorStepViewState(actor, "race").raceTraits?.includes("contacts");
   const textField = (name, label, value, placeholder = "", required = false) => `
     <label class="symbaroum-hud-personality-field">
       <span>${localizeEscaped(label)}${required ? `<i class="fa-solid fa-asterisk" aria-hidden="true"></i>` : ""}</span>
@@ -2764,7 +3013,17 @@ function personalityBookContent(actor) {
         <div><h2>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Guide.StepSevenTitle")}</h2>
           <p>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Guide.StepSevenText")}</p></div>
       </header>
-      <div class="symbaroum-hud-personality-workspace">
+      <nav class="symbaroum-hud-personality-section-tabs" aria-label="${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Personality.Sections")}">
+        <button type="button" data-personality-section-tab="history" data-active="true" aria-pressed="true">
+          <i class="fa-solid fa-feather-pointed" aria-hidden="true"></i>
+          ${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Personality.HistoryTab")}
+        </button>
+        <button type="button" data-personality-section-tab="shadow" data-active="false" aria-pressed="false">
+          <i class="fa-solid fa-eye" aria-hidden="true"></i>
+          ${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Personality.ShadowTab")}
+        </button>
+      </nav>
+      <div class="symbaroum-hud-personality-workspace" data-personality-section="history">
         <aside class="symbaroum-hud-personality-guide">
           <header><i class="fa-solid fa-feather-pointed" aria-hidden="true"></i>
             <div><span>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Personality.BookLabel")}</span>
@@ -2783,9 +3042,9 @@ function personalityBookContent(actor) {
         </aside>
         <main class="symbaroum-hud-personality-page">
           <header><span>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Personality.SheetLabel")}</span>
-            <h2>${escapeHtml(actor.name)}</h2></header>
+            <h2>${escapeHtml(characterName)}</h2></header>
           <section class="symbaroum-hud-personality-basics">
-            ${textField("personalityName", "SYMBAROUMHUD.CharacterCreator.Personality.Name", actor.name, "SYMBAROUMHUD.CharacterCreator.Personality.NamePlaceholder", true)}
+            ${textField("personalityName", "SYMBAROUMHUD.CharacterCreator.Personality.Name", characterName, "SYMBAROUMHUD.CharacterCreator.Personality.NamePlaceholder", true)}
             ${textField("personalityQuote", "SYMBAROUMHUD.CharacterCreator.Personality.Quote", bio.quote, "SYMBAROUMHUD.CharacterCreator.Personality.QuotePlaceholder")}
             ${textField("personalityAge", "SYMBAROUMHUD.CharacterCreator.Personality.Age", bio.age, "SYMBAROUMHUD.CharacterCreator.Personality.AgePlaceholder")}
             ${textField("personalityHeight", "SYMBAROUMHUD.CharacterCreator.Personality.Height", bio.height, "SYMBAROUMHUD.CharacterCreator.Personality.HeightPlaceholder")}
@@ -2796,23 +3055,51 @@ function personalityBookContent(actor) {
             ${writingField("personalityBackground", "SYMBAROUMHUD.CharacterCreator.Personality.Background", bio.background, "SYMBAROUMHUD.CharacterCreator.Personality.BackgroundPlaceholder", "SYMBAROUMHUD.CharacterCreator.Personality.BackgroundHint", true)}
             ${writingField("personalityGoal", "SYMBAROUMHUD.CharacterCreator.Personality.PersonalGoal", bio.personalGoal, "SYMBAROUMHUD.CharacterCreator.Personality.GoalPlaceholder", "SYMBAROUMHUD.CharacterCreator.Personality.PersonalGoalHint", true)}
           </section>
+          ${preparesContacts ? contactsBiographyContent(creatorState.contacts) : ""}
         </main>
       </div>
+      ${shadowBookContent(actor, { embedded: true })}
     </div>`;
+}
+
+function contactsBiographyContent(saved = {}) {
+  return `
+    <section class="symbaroum-hud-personality-contacts symbaroum-hud-contacts-page">
+      <header><span>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Contacts.TraitLabel")}</span>
+        <h2><i class="fa-solid fa-address-book" aria-hidden="true"></i>
+          ${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Contacts.WhoAreThey")}</h2></header>
+      <p class="symbaroum-hud-personality-contacts-introduction">
+        ${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Contacts.Introduction")}
+      </p>
+      <blockquote>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Contacts.Limits")}</blockquote>
+      ${contactsFieldsContent(saved)}
+    </section>`;
 }
 
 function bindPersonalityBook(element) {
   const required = Array.from(element.querySelectorAll("[required]"));
   const confirm = element.querySelector('[data-action="choose-personality"]');
+  const tabs = Array.from(element.querySelectorAll("[data-personality-section-tab]"));
+  const sections = Array.from(element.querySelectorAll("[data-personality-section]"));
+  const openSection = (id) => {
+    for (const tab of tabs) {
+      const active = tab.dataset.personalitySectionTab === id;
+      tab.dataset.active = String(active);
+      tab.setAttribute("aria-pressed", String(active));
+    }
+    for (const section of sections) section.hidden = section.dataset.personalitySection !== id;
+  };
   const refresh = () => {
     if (confirm) confirm.disabled = required.some((field) => !field.value.trim());
   };
+  for (const tab of tabs) tab.addEventListener("click", () => openSection(tab.dataset.personalitySectionTab));
   for (const field of required) field.addEventListener("input", refresh);
+  openSection("history");
   refresh();
 }
 
 function friendsBookContent(actor) {
-  const saved = actor.getFlag?.(MODULE_ID, STATE_FLAG)?.friendsGroup ?? {};
+  const saved = creatorStepViewState(actor, "friends").friendsGroup ?? {};
   const companions = Array.from({ length: 5 }, (_, index) => saved.companions?.[index] ?? {});
   const group = saved.group ?? {};
   const field = (name, label, value = "") => `
@@ -2883,6 +3170,20 @@ function creationEquipmentData(source, quantity = 1) {
   return data;
 }
 
+function abilitySheetLoadingContent() {
+  return `<div class="symbaroum-hud-ability-sheet-loading">
+    <i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i>
+    <span>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.LoadingSheet")}</span>
+  </div>`;
+}
+
+function abilitySheetUnavailableContent() {
+  return `<div class="symbaroum-hud-ability-sheet-loading" data-error="true">
+    <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
+    <span>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.Unavailable")}</span>
+  </div>`;
+}
+
 async function renderCreationAbilitySheet(ability) {
   const sheet = ability?.sheet;
   const renderTemplate = foundry?.applications?.handlebars?.renderTemplate;
@@ -2900,13 +3201,18 @@ async function renderCreationAbilitySheet(ability) {
     .replace(/<(input|select|textarea)\b/gi, "<$1 disabled");
 }
 
-async function mysticalPowerChoiceContent(ability, mysticalPowers, costs) {
+async function mysticalPowerChoiceContent(ability, mysticalPowers, costs, originIndex, sourceId) {
   if (!mysticalPowers.length) {
     return `<p class="symbaroum-hud-ability-special-empty">${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.NoMysticalPowers")}</p>`;
   }
-  const cards = await Promise.all(mysticalPowers.map(async (power) => {
+  const cards = await Promise.all(mysticalPowers.map(async (power, choiceOrder) => {
+    const origin = resolveContentOrigin(power, { index: originIndex, sourceId });
+    const identities = choiceIdentities(power);
     return `
-      <article class="symbaroum-hud-ability-special-card" data-mystical-power-choice="${escapeHtml(power.id)}">
+      <article class="symbaroum-hud-ability-special-card" data-mystical-power-choice="${escapeHtml(power.id)}"
+        data-creation-choice-origin="${escapeHtml(origin)}" data-creation-choice-source="${escapeHtml(sourceId)}"
+        data-creation-choice-identities="${escapeHtml(identities.join(" "))}"
+        data-choice-default-order="${choiceOrder}" data-tradition-recommended="false">
         <header>
           <img src="${escapeHtml(power.img || "icons/svg/daze.svg")}" alt="">
           <div><button type="button" class="symbaroum-hud-ability-special-open"
@@ -2914,7 +3220,10 @@ async function mysticalPowerChoiceContent(ability, mysticalPowers, costs) {
             title="${formatEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.OpenMysticalPower", { name: power.name })}">
             <h4>${escapeHtml(power.name)}</h4>
           </button>
-          ${power.system?.reference ? `<small>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.Reference")}: ${escapeHtml(power.system.reference)}</small>` : ""}</div>
+          ${power.system?.reference ? `<small>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.Reference")}: ${escapeHtml(power.system.reference)}</small>` : ""}
+          <small class="symbaroum-hud-tradition-recommendation" data-tradition-choice-recommendation hidden>
+            <i class="fa-solid fa-hat-wizard" aria-hidden="true"></i><span></span>
+          </small></div>
         </header>
         <div class="symbaroum-hud-ability-special-ranks">
           ${["novice", "adept", "master"].map((rank) => `
@@ -2932,13 +3241,22 @@ async function mysticalPowerChoiceContent(ability, mysticalPowers, costs) {
       <header><div><h3>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.ChooseMysticalPower")}</h3>
         <p>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.MysticalPowerChoiceIntro")}</p></div></header>
       <div class="symbaroum-hud-ability-special-list">${cards.join("")}</div>
+      <p class="symbaroum-hud-ability-special-empty" data-mystical-power-filter-empty hidden>
+        ${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.NoFilteredMysticalPowers")}
+      </p>
     </section>`;
 }
 
-async function ritualChoiceContent(ability, rituals) {
-  const cards = rituals.map((ritual) => `
+async function ritualChoiceContent(ability, rituals, originIndex, sourceId) {
+  const cards = rituals.map((ritual, choiceOrder) => {
+    const origin = resolveContentOrigin(ritual, { index: originIndex, sourceId });
+    const identities = choiceIdentities(ritual);
+    return `
       <article class="symbaroum-hud-ability-special-card symbaroum-hud-ritual-choice-card"
-        data-ritual-choice="${escapeHtml(ritual.id)}">
+        data-ritual-choice="${escapeHtml(ritual.id)}"
+        data-creation-choice-origin="${escapeHtml(origin)}" data-creation-choice-source="${escapeHtml(sourceId)}"
+        data-creation-choice-identities="${escapeHtml(identities.join(" "))}"
+        data-choice-default-order="${choiceOrder}" data-tradition-recommended="false">
         <header>
           <img src="${escapeHtml(ritual.img || "icons/svg/book.svg")}" alt="">
           <div><button type="button" class="symbaroum-hud-ability-special-open"
@@ -2946,7 +3264,10 @@ async function ritualChoiceContent(ability, rituals) {
             title="${formatEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.OpenRitual", { name: ritual.name })}">
             <h4>${escapeHtml(ritual.name)}</h4>
           </button>
-          ${ritual.system?.reference ? `<small>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.Reference")}: ${escapeHtml(ritual.system.reference)}</small>` : ""}</div>
+          ${ritual.system?.reference ? `<small>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.Reference")}: ${escapeHtml(ritual.system.reference)}</small>` : ""}
+          <small class="symbaroum-hud-tradition-recommendation" data-tradition-choice-recommendation hidden>
+            <i class="fa-solid fa-hat-wizard" aria-hidden="true"></i><span></span>
+          </small></div>
           <button type="button" class="symbaroum-hud-ritual-select"
             data-select-ritual="${escapeHtml(ritual.id)}"
             data-ritualist-ability="${escapeHtml(ability.id)}" aria-pressed="false" disabled
@@ -2955,7 +3276,8 @@ async function ritualChoiceContent(ability, rituals) {
             <span>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.SelectRitualLabel")}</span>
           </button>
         </header>
-      </article>`);
+      </article>`;
+  });
   return `
     <section class="symbaroum-hud-ability-special-picker symbaroum-hud-ritual-picker"
       data-ritual-picker="${escapeHtml(ability.id)}">
@@ -2963,7 +3285,10 @@ async function ritualChoiceContent(ability, rituals) {
         <p>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.RitualChoiceIntro")}</p></div>
         <strong><b data-ritual-count>0</b>/<b data-ritual-required>0</b></strong></header>
       ${cards.length
-        ? `<div class="symbaroum-hud-ability-special-list">${cards.join("")}</div>`
+        ? `<div class="symbaroum-hud-ability-special-list">${cards.join("")}</div>
+          <p class="symbaroum-hud-ability-special-empty" data-ritual-filter-empty hidden>
+            ${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.NoFilteredRituals")}
+          </p>`
         : `<p class="symbaroum-hud-ability-special-empty">${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.NoRituals")}</p>`}
     </section>`;
 }
@@ -2978,6 +3303,7 @@ function bindAbilitiesBook(element, racialCost, {
   const costs = abilityExperienceCosts();
   const entries = [...element.querySelectorAll("[data-creation-ability-id]")];
   const pages = [...element.querySelectorAll("[data-creation-ability-page]")];
+  const specialChoiceCards = [...element.querySelectorAll("[data-creation-choice-identities]")];
   const selections = new Map();
   const selectionKey = (id, choiceId = "") => choiceId ? `${id}:${choiceId}` : id;
   for (const selection of parseAbilitySelections(selectionsInput?.value ?? "[]")) {
@@ -2992,19 +3318,138 @@ function bindAbilitiesBook(element, racialCost, {
     if (image.complete && image.naturalWidth === 0) useFallback();
   }
   const selectionValues = (source = selections) => [...source.values()];
+  const updateTraditionRecommendations = (values) => {
+    const traditions = [];
+    const seen = new Set();
+    for (const selection of values) {
+      const tradition = coreMysticalTradition(availableWorldItem(selection.id));
+      if (!tradition || seen.has(tradition.id)) continue;
+      seen.add(tradition.id);
+      traditions.push({
+        definition: tradition,
+        name: game.i18n.localize(tradition.name),
+        powers: mysticalTraditionChoiceIdentities(tradition, "power"),
+        rituals: mysticalTraditionChoiceIdentities(tradition, "ritual")
+      });
+    }
+    const traditionNames = traditions.map((tradition) => tradition.name);
+    for (const entry of entries) {
+      const recommended = Boolean(entry.dataset.traditionGateway && traditions.length);
+      entry.dataset.traditionRecommended = String(recommended);
+      const tag = entry.querySelector("[data-tradition-ability-recommendation]");
+      if (!tag) continue;
+      tag.hidden = !recommended;
+      const label = tag.querySelector("span");
+      if (label) label.textContent = traditionNames.join(", ");
+    }
+    const resultList = entries[0]?.closest("ol");
+    if (resultList) {
+      [...entries].sort((left, right) => {
+        const priority = (entry) => entry.dataset.occupationRecommended === "true"
+          ? 0
+          : entry.dataset.traditionRecommended === "true"
+            ? 1
+            : 2;
+        const priorityDifference = priority(left) - priority(right);
+        if (priorityDifference) return priorityDifference;
+        return Number(left.closest("[data-ability-default-order]")?.dataset.abilityDefaultOrder ?? 0)
+          - Number(right.closest("[data-ability-default-order]")?.dataset.abilityDefaultOrder ?? 0);
+      }).forEach((entry) => resultList.append(entry.closest("[data-ability-browser-result]")));
+    }
+    for (const card of specialChoiceCards) {
+      const identities = new Set(String(card.dataset.creationChoiceIdentities ?? "").split(" ").filter(Boolean));
+      const kind = card.matches("[data-ritual-choice]") ? "rituals" : "powers";
+      const matching = traditions.filter((tradition) => [...identities].some((identity) => tradition[kind].has(identity)));
+      const recommended = matching.length > 0;
+      card.dataset.traditionRecommended = String(recommended);
+      const tag = card.querySelector("[data-tradition-choice-recommendation]");
+      if (tag) {
+        tag.hidden = !recommended;
+        const label = tag.querySelector("span");
+        if (label) label.textContent = matching.map((tradition) => tradition.name).join(", ");
+      }
+    }
+    for (const list of element.querySelectorAll(".symbaroum-hud-ability-special-list")) {
+      [...list.querySelectorAll("[data-choice-default-order]")].sort((left, right) => {
+        const recommendationDifference = Number(right.dataset.traditionRecommended === "true")
+          - Number(left.dataset.traditionRecommended === "true");
+        if (recommendationDifference) return recommendationDifference;
+        return Number(left.dataset.choiceDefaultOrder ?? 0) - Number(right.dataset.choiceDefaultOrder ?? 0);
+      }).forEach((card) => list.append(card));
+    }
+  };
+  const bindNativeAbilitySheetTabs = (page) => {
+    const host = page?.querySelector("[data-ability-sheet-host]");
+    if (!host || host.dataset.abilityTabsBound === "true") return;
+    const tabs = [...host.querySelectorAll(".sheet-tabs [data-tab]")];
+    const panels = [...host.querySelectorAll(".sheet-body > .tab[data-tab]")];
+    if (!tabs.length) return;
+    host.dataset.abilityTabsBound = "true";
+    const activateTab = (tab) => {
+      for (const candidate of tabs) {
+        const active = candidate === tab;
+        candidate.classList.toggle("active", active);
+        candidate.setAttribute("aria-pressed", String(active));
+      }
+      for (const panel of panels) {
+        const active = panel.dataset.tab === tab.dataset.tab;
+        panel.classList.toggle("active", active);
+        panel.hidden = !active;
+      }
+    };
+    for (const tab of tabs) {
+      tab.setAttribute("role", "button");
+      tab.setAttribute("tabindex", "0");
+      tab.addEventListener("click", () => activateTab(tab));
+      tab.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" || event.key === " ") activateTab(tab);
+      });
+    }
+    activateTab(tabs[0]);
+  };
+  const loadAbilityPageSheet = async (page) => {
+    const host = page?.querySelector("[data-ability-sheet-host]");
+    if (!host || host.dataset.abilitySheetLoaded === "true" || host.dataset.abilitySheetLoading === "true") {
+      bindNativeAbilitySheetTabs(page);
+      return;
+    }
+    const ability = availableWorldItem(page.dataset.creationAbilityPage);
+    if (!ability) return;
+    host.dataset.abilitySheetLoading = "true";
+    host.setAttribute("aria-busy", "true");
+    try {
+      const rendered = await renderCreationAbilitySheet(ability);
+      host.innerHTML = rendered || abilitySheetUnavailableContent();
+      host.dataset.abilitySheetLoaded = "true";
+      bindNativeAbilitySheetTabs(page);
+    } catch (error) {
+      console.warn(`${MODULE_ID} | Could not lazily render Ability ${ability.name}.`, error);
+      host.innerHTML = abilitySheetUnavailableContent();
+    } finally {
+      delete host.dataset.abilitySheetLoading;
+      host.removeAttribute("aria-busy");
+    }
+  };
   const openPage = (id) => {
     for (const entry of entries) {
       const active = entry.dataset.creationAbilityId === id;
       entry.dataset.active = String(active);
       entry.setAttribute("aria-pressed", String(active));
     }
-    for (const page of pages) page.hidden = page.dataset.creationAbilityPage !== id;
+    let activePage = null;
+    for (const page of pages) {
+      const active = page.dataset.creationAbilityPage === id;
+      page.hidden = !active;
+      if (active) activePage = page;
+    }
+    if (activePage) void loadAbilityPageSheet(activePage);
   };
   const refresh = () => {
     const mode = modeInput.value;
     const limits = abilitySelectionLimits(mode, racialCost);
     const counts = { novice: 0, adept: 0, master: 0 };
     const values = selectionValues();
+    updateTraditionRecommendations(values);
     for (const selection of values) counts[selection.rank]++;
     selectionsInput.value = JSON.stringify(values);
     const experienceMode = mode === ABILITY_DISTRIBUTION_MODES.EXPERIENCE;
@@ -3076,31 +3521,7 @@ function bindAbilitiesBook(element, racialCost, {
     );
   };
   for (const entry of entries) entry.addEventListener("click", () => openPage(entry.dataset.creationAbilityId));
-  for (const page of pages) {
-    const tabs = [...page.querySelectorAll(".symbaroum-hud-native-ability-sheet .sheet-tabs [data-tab]")];
-    const panels = [...page.querySelectorAll(".symbaroum-hud-native-ability-sheet .sheet-body > .tab[data-tab]")];
-    const activateTab = (tab) => {
-      for (const candidate of tabs) {
-        const active = candidate === tab;
-        candidate.classList.toggle("active", active);
-        candidate.setAttribute("aria-pressed", String(active));
-      }
-      for (const panel of panels) {
-        const active = panel.dataset.tab === tab.dataset.tab;
-        panel.classList.toggle("active", active);
-        panel.hidden = !active;
-      }
-    };
-    for (const tab of tabs) {
-      tab.setAttribute("role", "button");
-      tab.setAttribute("tabindex", "0");
-      tab.addEventListener("click", () => activateTab(tab));
-      tab.addEventListener("keydown", (event) => {
-        if (event.key === "Enter" || event.key === " ") activateTab(tab);
-      });
-    }
-    if (tabs[0]) activateTab(tabs[0]);
-  }
+  for (const page of pages) bindNativeAbilitySheetTabs(page);
   for (const button of element.querySelectorAll("[data-open-creation-item]")) button.addEventListener("click", () => {
     const item = availableWorldItem(button.dataset.openCreationItem);
     const observerLevel = globalThis.CONST?.DOCUMENT_OWNERSHIP_LEVELS?.OBSERVER ?? "OBSERVER";
@@ -3109,16 +3530,6 @@ function bindAbilitiesBook(element, racialCost, {
       return;
     }
     openCreationItemSheet(item);
-  });
-  for (const tab of element.querySelectorAll("[data-ability-mode]")) tab.addEventListener("click", () => {
-    modeInput.value = tab.dataset.abilityMode;
-    selections.clear();
-    for (const candidate of element.querySelectorAll("[data-ability-mode]")) {
-      const active = candidate === tab;
-      candidate.dataset.active = String(active);
-      candidate.setAttribute("aria-pressed", String(active));
-    }
-    refresh();
   });
   for (const button of element.querySelectorAll("[data-select-ability]")) button.addEventListener("click", () => {
     const { selectAbility: id, rank, choiceId = "", choiceType = "" } = button.dataset;
@@ -3178,14 +3589,78 @@ function bindAbilitiesBook(element, racialCost, {
     refresh();
   });
   const search = element.querySelector("[data-ability-search]");
-  search?.addEventListener("input", () => {
-    const query = normalizeName(search.value);
-    for (const entry of entries) entry.hidden = Boolean(query && !entry.dataset.search.includes(query));
+  const filterPanel = element.querySelector("[data-ability-filter-panel]");
+  const filterToggle = element.querySelector("[data-toggle-ability-filter-panel]");
+  const originFilters = [...element.querySelectorAll("[data-creation-browser-origin]")];
+  const sourceFilters = [...element.querySelectorAll("[data-creation-browser-source]")];
+  const setFilterPanelOpen = (open) => {
+    if (!filterPanel || !filterToggle) return;
+    filterPanel.hidden = !open;
+    filterToggle.dataset.active = String(open);
+    filterToggle.setAttribute("aria-expanded", String(open));
+  };
+  const refreshBrowserFilters = () => {
+    const query = normalizeName(search?.value);
+    const origins = new Set(originFilters.filter((input) => input.checked).map((input) => input.value));
+    const sources = new Set(sourceFilters.filter((input) => input.checked).map((input) => input.value));
+    let visibleCount = 0;
+    for (const entry of entries) {
+      const result = entry.closest("[data-ability-browser-result]");
+      const visible = (!query || entry.dataset.search.includes(query))
+        && origins.has(result?.dataset.origin)
+        && sources.has(result?.dataset.source);
+      entry.hidden = !visible;
+      if (result) result.hidden = !visible;
+      if (visible) visibleCount++;
+    }
+    let visibleMysticalPowers = 0;
+    let visibleRituals = 0;
+    for (const card of specialChoiceCards) {
+      const visible = origins.has(card.dataset.creationChoiceOrigin)
+        && sources.has(card.dataset.creationChoiceSource);
+      card.hidden = !visible;
+      if (!visible) continue;
+      if (card.matches("[data-mystical-power-choice]")) visibleMysticalPowers++;
+      if (card.matches("[data-ritual-choice]")) visibleRituals++;
+    }
+    const emptyPowers = element.querySelector("[data-mystical-power-filter-empty]");
+    const emptyRituals = element.querySelector("[data-ritual-filter-empty]");
+    if (emptyPowers) emptyPowers.hidden = visibleMysticalPowers > 0;
+    if (emptyRituals) emptyRituals.hidden = visibleRituals > 0;
+    const count = element.querySelector("[data-ability-result-count]");
+    if (count) count.textContent = String(visibleCount);
     const active = entries.find((entry) => entry.dataset.active === "true" && !entry.hidden);
-    if (!active) openPage(entries.find((entry) => !entry.hidden)?.dataset.creationAbilityId ?? "");
+    const orderedEntries = [...element.querySelectorAll("[data-creation-ability-id]")];
+    if (!active) openPage(orderedEntries.find((entry) => !entry.hidden)?.dataset.creationAbilityId ?? "");
+  };
+  search?.addEventListener("input", refreshBrowserFilters);
+  element.querySelector("[data-clear-ability-search]")?.addEventListener("click", () => {
+    search.value = "";
+    search.focus();
+    refreshBrowserFilters();
+  });
+  filterToggle?.addEventListener("click", () => setFilterPanelOpen(filterPanel?.hidden !== false));
+  element.addEventListener("click", (event) => {
+    if (filterPanel?.hidden !== false) return;
+    if (event.target.closest("[data-ability-filter-panel], [data-toggle-ability-filter-panel]")) return;
+    setFilterPanelOpen(false);
+  });
+  element.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape" || filterPanel?.hidden !== false) return;
+    setFilterPanelOpen(false);
+    filterToggle?.focus();
+  });
+  for (const input of [...originFilters, ...sourceFilters]) {
+    input.addEventListener("change", refreshBrowserFilters);
+  }
+  element.querySelector("[data-toggle-ability-origins]")?.addEventListener("click", () => {
+    const check = originFilters.some((input) => !input.checked);
+    for (const input of originFilters) input.checked = check;
+    refreshBrowserFilters();
   });
   experienceInput?.addEventListener("input", refresh);
   refresh();
+  refreshBrowserFilters();
 }
 
 function availableWorldItem(id) {
@@ -3364,12 +3839,12 @@ function fallbackTraitData(trait) {
 }
 
 function attributesBookContent(actor) {
-  const creatorState = actor?.getFlag?.(MODULE_ID, STATE_FLAG) ?? {};
+  const creatorState = creatorStepViewState(actor, "attributes");
   const selectedMode = Object.values(ATTRIBUTE_DISTRIBUTION_MODES).includes(creatorState.attributeDistribution)
     ? creatorState.attributeDistribution
     : ATTRIBUTE_DISTRIBUTION_MODES.TYPICAL;
-  const typicalValues = typicalDistribution(actor);
-  const pointValues = pointBuyDistribution(actor);
+  const typicalValues = typicalDistribution(actor, creatorState);
+  const pointValues = pointBuyDistribution(actor, creatorState);
   const occupationRecommendation = occupationAttributeRecommendation(actor);
   const occupationRecommendationContent = occupationRecommendation ? `
     <aside class="symbaroum-hud-attribute-occupation-recommendation">
@@ -3592,8 +4067,11 @@ function updatePointBuyStatus(element, pointInputs) {
   }
 }
 
-function typicalDistribution(actor) {
-  const saved = actor?.getFlag?.(MODULE_ID, STATE_FLAG)?.attributes ?? {};
+function typicalDistribution(actor, state = actor?.getFlag?.(MODULE_ID, STATE_FLAG) ?? {}) {
+  if (Array.isArray(state.attributeTypicalValues)) {
+    return CORE_ATTRIBUTES.map((_, index) => state.attributeTypicalValues[index] ?? "");
+  }
+  const saved = state.attributes ?? {};
   const savedValues = CORE_ATTRIBUTES.map((attribute) => Number(saved[attribute.id]));
   if (isValidTypicalDistribution(savedValues)) return savedValues;
   const current = CORE_ATTRIBUTES.map((attribute) =>
@@ -3603,8 +4081,11 @@ function typicalDistribution(actor) {
   return CORE_ATTRIBUTES.map(() => "");
 }
 
-function pointBuyDistribution(actor) {
-  const saved = actor?.getFlag?.(MODULE_ID, STATE_FLAG)?.attributes ?? {};
+function pointBuyDistribution(actor, state = actor?.getFlag?.(MODULE_ID, STATE_FLAG) ?? {}) {
+  if (Array.isArray(state.attributePointValues)) {
+    return CORE_ATTRIBUTES.map((_, index) => Number(state.attributePointValues[index]) || ATTRIBUTE_MIN);
+  }
+  const saved = state.attributes ?? {};
   const savedValues = CORE_ATTRIBUTES.map((attribute) => Number(saved[attribute.id]));
   if (isValidPointBuyDistribution(savedValues)) return savedValues;
   return CORE_ATTRIBUTES.map(() => ATTRIBUTE_MIN);
@@ -3613,6 +4094,48 @@ function pointBuyDistribution(actor) {
 function attributeValuesFromForm(form, mode) {
   const prefix = mode === ATTRIBUTE_DISTRIBUTION_MODES.TYPICAL ? "typical" : "points";
   return CORE_ATTRIBUTES.map((attribute) => Number(formValue(form, `${prefix}-${attribute.id}`)));
+}
+
+function contactsFromForm(form) {
+  return {
+    network: formValue(form, "contactsNetwork").trim(),
+    people: Array.from({ length: 4 }, (_, index) => ({
+      name: formValue(form, `contactName-${index}`).trim(),
+      role: formValue(form, `contactRole-${index}`).trim(),
+      location: formValue(form, `contactLocation-${index}`).trim()
+    })).filter((contact) => Object.values(contact).some(Boolean)),
+    relationship: formValue(form, "contactsRelationship").trim(),
+    access: formValue(form, "contactsAccess").trim(),
+    complications: formValue(form, "contactsComplications").trim()
+  };
+}
+
+function personalityFromForm(form) {
+  return {
+    characterName: formValue(form, "personalityName"),
+    quote: formValue(form, "personalityQuote"),
+    age: formValue(form, "personalityAge"),
+    height: formValue(form, "personalityHeight"),
+    weight: formValue(form, "personalityWeight"),
+    appearance: formValue(form, "personalityAppearance"),
+    background: formValue(form, "personalityBackground"),
+    personalGoal: formValue(form, "personalityGoal")
+  };
+}
+
+function friendsGroupFromForm(form) {
+  return {
+    companions: Array.from({ length: 5 }, (_, index) => ({
+      name: formValue(form, `friendName-${index}`),
+      race: formValue(form, `friendRace-${index}`),
+      occupation: formValue(form, `friendOccupation-${index}`),
+      player: formValue(form, `friendPlayer-${index}`)
+    })).filter((friend) => Object.values(friend).some((value) => value.trim())),
+    group: {
+      name: formValue(form, "groupName"),
+      goal: formValue(form, "groupGoal")
+    }
+  };
 }
 
 function formValue(form, name) {
@@ -3643,8 +4166,41 @@ function characterCreatorChoiceContent() {
       <h2>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Heading")}</h2>
       <p>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Description")}</p>
       <small>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.DecisionHint")}</small>
+      <label class="symbaroum-hud-character-creator-dismiss">
+        <input type="checkbox" data-character-creator-dismiss>
+        <span>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.DoNotShowAgain")}</span>
+      </label>
     </div>
   `;
+}
+
+function hasDismissedCharacterCreator(actor, user = game.user) {
+  const userId = user?.id;
+  if (!userId) return false;
+  const dismissedUsers = actor?.getFlag?.(MODULE_ID, DISMISSED_USERS_FLAG);
+  return Array.isArray(dismissedUsers) && dismissedUsers.includes(userId);
+}
+
+async function setCharacterCreatorDismissed(actor, user = game.user, dismissed = true) {
+  const userId = user?.id;
+  if (!userId || !actor?.setFlag) return;
+  const dismissedUsers = new Set(
+    Array.isArray(actor.getFlag?.(MODULE_ID, DISMISSED_USERS_FLAG))
+      ? actor.getFlag(MODULE_ID, DISMISSED_USERS_FLAG)
+      : []
+  );
+  if (dismissed) dismissedUsers.add(userId);
+  else dismissedUsers.delete(userId);
+  await actor.setFlag(MODULE_ID, DISMISSED_USERS_FLAG, [...dismissedUsers]);
+}
+
+function bindCharacterCreatorDismissal(element, actor) {
+  const control = element?.querySelector?.("[data-character-creator-dismiss]");
+  if (!control) return;
+  control.checked = hasDismissedCharacterCreator(actor, game.user);
+  control.addEventListener("change", () => {
+    void setCharacterCreatorDismissed(actor, game.user, control.checked);
+  });
 }
 
 function actorItems(actor) {

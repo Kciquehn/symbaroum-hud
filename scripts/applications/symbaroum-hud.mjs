@@ -3,6 +3,7 @@ import {
   SETTINGS,
   STORAGE_VIEW_MODES
 } from "../constants.mjs";
+import { SymbaroumCompendiumBrowser } from "./compendium-browser.mjs";
 import { refreshHotbarShortcuts } from "../integrations/hotbar-shortcuts.mjs";
 import { IndResourcesIntegration } from "../integrations/ind-resources.mjs";
 import {
@@ -418,6 +419,30 @@ export class SymbaroumHud extends ApplicationV2 {
       void this.#onAction(actionElement, event);
     }, { signal });
 
+    root.addEventListener("change", (event) => {
+      const input = event.target.closest?.('[data-storage-quantity="true"]');
+      if (!input || !root.contains(input)) return;
+      event.preventDefault();
+      const actor = this.#actor;
+      if (!actor) return;
+      void IndResourcesIntegration.setStorageItemQuantity(
+        actor,
+        input.dataset.containerId || null,
+        input.dataset.itemId,
+        input.value
+      ).then(() => this.render()).catch((error) => {
+        console.error(`${MODULE_ID} | Storage quantity update failed.`, error);
+        ui.notifications?.error(game.i18n.localize("SYMBAROUMHUD.Notifications.ActionFailed"));
+      });
+    }, { signal });
+
+    root.addEventListener("keydown", (event) => {
+      const input = event.target.closest?.('[data-storage-quantity="true"]');
+      if (!input || !root.contains(input) || event.key !== "Enter") return;
+      event.preventDefault();
+      input.blur();
+    }, { signal });
+
     root.addEventListener("contextmenu", (event) => {
       const storageElement = event.target.closest("[data-storage-delete-container]");
       if (!storageElement || !root.contains(storageElement)) return;
@@ -523,7 +548,8 @@ export class SymbaroumHud extends ApplicationV2 {
         return;
       }
 
-      const source = itemElement.dataset.containerId ? "stored" : "inventory";
+      const source = itemElement.dataset.storageSource
+        || (itemElement.dataset.containerId ? "stored" : "inventory");
       const documentData = { type: "Item", uuid: item.uuid };
       const containerData = {
         actorId: actor.id,
@@ -1689,6 +1715,16 @@ export class SymbaroumHud extends ApplicationV2 {
         await game.settings.set(MODULE_ID, SETTINGS.STORAGE_VIEW_MODE, nextMode);
         return this.render();
       }
+      if (action === "open-shop") {
+        return SymbaroumCompendiumBrowser.openShop({ actor });
+      }
+      if (action === "open-weapon-shop") {
+        return SymbaroumCompendiumBrowser.openShop({
+          actor,
+          category: "weapon",
+          lockCategory: true
+        });
+      }
       if (action === "select-storage-container") {
         this.#abilitiesOpen = false;
         this.#attacksOpen = false;
@@ -1705,6 +1741,23 @@ export class SymbaroumHud extends ApplicationV2 {
           element.dataset.containerId,
           element.dataset.itemId
         );
+      }
+      if (action === "change-storage-quantity") {
+        await IndResourcesIntegration.changeStorageItemQuantity(
+          actor,
+          element.dataset.containerId || null,
+          element.dataset.itemId,
+          element.dataset.quantityDelta
+        );
+        return this.render();
+      }
+      if (action === "toggle-storage-item-state") {
+        await IndResourcesIntegration.toggleStorageItemState(
+          actor,
+          element.dataset.containerId || null,
+          element.dataset.itemId
+        );
+        return this.render();
       }
       if (action === "delete-storage-item") {
         return IndResourcesIntegration.deleteStorageItem(

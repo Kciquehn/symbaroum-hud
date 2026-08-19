@@ -217,6 +217,7 @@
           aria-label="{{localize 'SYMBAROUMHUD.Storage.Weight'}}: {{#if info.load}}{{info.load.current}}/{{info.load.capacity}}{{else}}—{{/if}}">
           <i class="fa-solid fa-weight-hanging" aria-hidden="true"></i>
           <strong>{{#if info.load}}{{info.load.current}}/{{info.load.capacity}}{{else}}—{{/if}}</strong>
+          <small aria-hidden="true"></small>
         </div>
       </section>
       {{/if}}
@@ -266,12 +267,20 @@
               <i class="fa-solid fa-sword" aria-hidden="true"></i>
               <strong>{{localize "SYMBAROUMHUD.Sections.Attacks"}}</strong>
             </span>
-            <button type="button" class="symbaroum-hud-storage-close symbaroum-hud-attacks-close"
-              data-action="close-attacks"
-              data-tooltip="{{localize 'SYMBAROUMHUD.Actions.CloseAttacks'}}"
-              aria-label="{{localize 'SYMBAROUMHUD.Actions.CloseAttacks'}}">
-              <i class="fa-solid fa-xmark" aria-hidden="true"></i>
-            </button>
+            <span class="symbaroum-hud-storage-header-actions">
+              <button type="button" class="symbaroum-hud-storage-shop symbaroum-hud-attacks-shop"
+                data-action="open-weapon-shop"
+                data-tooltip="{{localize 'SYMBAROUMHUD.Attacks.OpenWeaponShop'}}"
+                aria-label="{{localize 'SYMBAROUMHUD.Attacks.OpenWeaponShop'}}">
+                <i class="fa-solid fa-shop" aria-hidden="true"></i>
+              </button>
+              <button type="button" class="symbaroum-hud-storage-close symbaroum-hud-attacks-close"
+                data-action="close-attacks"
+                data-tooltip="{{localize 'SYMBAROUMHUD.Actions.CloseAttacks'}}"
+                aria-label="{{localize 'SYMBAROUMHUD.Actions.CloseAttacks'}}">
+                <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+              </button>
+            </span>
           </header>
 
           <ul class="symbaroum-hud-attacks-body"
@@ -325,7 +334,7 @@
                 {{#if storage.quiverSelected}}
                   <img class="symbaroum-hud-storage-title-img" src="{{storage.img}}" alt="">
                 {{else}}
-                  <i class="fa-solid {{#if storage.containerSelected}}fa-backpack{{else}}fa-boxes-stacked{{/if}}"
+                  <i class="fa-solid {{#if storage.armorSelected}}fa-shield-halved{{else}}{{#if storage.containerSelected}}fa-backpack{{else}}fa-boxes-stacked{{/if}}{{/if}}"
                     aria-hidden="true"></i>
                 {{/if}}
                 <strong>{{storage.name}}</strong>
@@ -354,6 +363,14 @@
                 {{/if}}
               </span>
               <span class="symbaroum-hud-storage-header-actions">
+                <button type="button" class="symbaroum-hud-storage-shop"
+                  data-action="open-shop"
+                  data-tooltip="{{localize 'SYMBAROUMHUD.CompendiumBrowser.Shop.OpenButton'}}"
+                  aria-label="{{localize 'SYMBAROUMHUD.CompendiumBrowser.Shop.OpenButton'}}">
+                  <i class="fa-solid fa-shop" aria-hidden="true"></i>
+                </button>
+
+                {{#if storage.quiverSelected}}
                 <button type="button" class="symbaroum-hud-storage-view-toggle"
                   data-action="toggle-storage-view"
                   data-view-mode="{{storage.viewMode}}"
@@ -362,6 +379,7 @@
                   <i class="fa-solid {{#if storage.listView}}fa-table-cells-large{{else}}fa-list{{/if}}"
                     aria-hidden="true"></i>
                 </button>
+                {{/if}}
                 <button type="button" class="symbaroum-hud-storage-close"
                   data-action="close-storage"
                   data-tooltip="{{localize 'SYMBAROUMHUD.Storage.Close'}}"
@@ -385,6 +403,16 @@
                   {{#if storage.pockets}}
                     <small>{{localize "SYMBAROUMHUD.Storage.Pockets"}}</small>
                   {{/if}}
+                </button>
+
+                <button type="button" data-action="select-storage-container"
+                  data-container-id="__armor" data-active="{{storage.armorSelected}}"
+                  aria-pressed="{{storage.armorSelected}}"
+                  data-tooltip="{{localize 'SYMBAROUMHUD.Storage.Armors'}}"
+                  aria-label="{{localize 'SYMBAROUMHUD.Storage.Armors'}}">
+                  <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
+                  <span>{{localize "SYMBAROUMHUD.Storage.Armors"}}</span>
+                  <small>{{storage.armorCount}}</small>
                 </button>
 
                 {{#each storage.quivers}}
@@ -503,25 +531,60 @@
                   </section>
                 </div>
               {{else}}
-              <div class="symbaroum-hud-storage-items" data-view-mode="{{storage.viewMode}}"
+              <div class="symbaroum-hud-storage-equipment"
                 {{#if storage.containerSelected}}data-storage-drop-container="{{storage.id}}"{{/if}}
                 data-storage-inventory-drop="{{storage.inventoryActive}}">
+                <div class="symbaroum-hud-storage-equipment-header" aria-hidden="true">
+                  <span>{{localize "SYMBAROUMHUD.Storage.Name"}}</span>
+                  <span>{{localize "SYMBAROUMHUD.Storage.QuantityShort"}}</span>
+                  <span>{{localize "SYMBAROUMHUD.Storage.State"}}</span>
+                </div>
+                <div class="symbaroum-hud-storage-equipment-list">
                 {{#if storage.items}}
                   {{#each storage.items}}
-                    <div class="symbaroum-hud-storage-item"
+                    <div class="symbaroum-hud-storage-equipment-row"
                       data-container-id="{{containerId}}" data-item-id="{{id}}"
                       data-item-uuid="{{uuid}}" data-storage-draggable="{{draggable}}"
+                      {{#if source}}data-storage-source="{{source}}"{{/if}}
                       {{#if draggable}}draggable="true"{{/if}}>
-                      <button type="button" class="symbaroum-hud-storage-item-main"
+                      <button type="button" class="symbaroum-hud-storage-equipment-name"
                         data-action="open-storage-item"
                         data-container-id="{{containerId}}" data-item-id="{{id}}"
                         data-item-uuid="{{uuid}}"
                         {{#if virtual}}disabled{{/if}}
                         data-tooltip="{{localize 'SYMBAROUMHUD.Storage.OpenItem'}}: {{name}}"
                         aria-label="{{localize 'SYMBAROUMHUD.Storage.OpenItem'}}: {{name}}">
-                      <img src="{{img}}" alt="">
-                      <span>{{name}}</span>
-                      <small>×{{quantity}}</small>
+                        <img src="{{img}}" alt="">
+                        <span>{{name}}</span>
+                      </button>
+                      <div class="symbaroum-hud-storage-quantity" aria-label="{{localize 'SYMBAROUMHUD.Storage.Quantity'}}">
+                        <button type="button" data-action="change-storage-quantity"
+                          data-container-id="{{containerId}}" data-item-id="{{id}}"
+                          data-quantity-delta="-1" {{#unless editable}}disabled{{/unless}}
+                          data-tooltip="{{localize 'SYMBAROUMHUD.Storage.DecreaseQuantity'}}"
+                          aria-label="{{localize 'SYMBAROUMHUD.Storage.DecreaseQuantity'}}: {{name}}">
+                          <i class="fa-solid fa-minus" aria-hidden="true"></i>
+                        </button>
+                        <input type="number" min="0" step="1" value="{{quantity}}"
+                          data-storage-quantity="true" data-container-id="{{containerId}}"
+                          data-item-id="{{id}}" {{#unless editable}}disabled{{/unless}}
+                          aria-label="{{localize 'SYMBAROUMHUD.Storage.Quantity'}}: {{name}}">
+                        <button type="button" data-action="change-storage-quantity"
+                          data-container-id="{{containerId}}" data-item-id="{{id}}"
+                          data-quantity-delta="1" {{#unless editable}}disabled{{/unless}}
+                          data-tooltip="{{localize 'SYMBAROUMHUD.Storage.IncreaseQuantity'}}"
+                          aria-label="{{localize 'SYMBAROUMHUD.Storage.IncreaseQuantity'}}: {{name}}">
+                          <i class="fa-solid fa-plus" aria-hidden="true"></i>
+                        </button>
+                      </div>
+                      <button type="button" class="symbaroum-hud-storage-state"
+                        data-action="toggle-storage-item-state"
+                        data-container-id="{{containerId}}" data-item-id="{{id}}"
+                        data-state="{{state}}" {{#unless editable}}disabled{{/unless}}
+                        data-tooltip="{{stateLabel}}"
+                        aria-label="{{stateLabel}}: {{name}}">
+                        <i class="fa-solid {{stateIcon}}" aria-hidden="true"></i>
+                        <span>{{stateLabel}}</span>
                       </button>
                       {{#unless virtual}}
                         <button type="button" class="symbaroum-hud-storage-item-delete"
@@ -544,6 +607,7 @@
                     {{/if}}
                   </span>
                 {{/if}}
+                </div>
               </div>
               {{/if}}
             </div>
