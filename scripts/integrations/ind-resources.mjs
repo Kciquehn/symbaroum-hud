@@ -6,7 +6,7 @@ const ARMOR_STORAGE_ID = "__armor";
 
 export class IndResourcesIntegration {
   static get active() {
-    return Boolean(game.modules.get(IND_RESOURCES_ID)?.active && game.tenebreResources);
+    return Boolean(game.modules?.get?.(IND_RESOURCES_ID)?.active && game.tenebreResources);
   }
 
   static get api() {
@@ -163,6 +163,24 @@ export class IndResourcesIntegration {
     const result = await updateActorItem(actor, item, { "system.number": nextQuantity });
     await recordManualQuantityChange(this.api, { actor, item, previousQuantity, nextQuantity });
     return result;
+  }
+
+  static async recordAbilityActiveChange(actor, item, level, previousActive, active) {
+    const record = this.api?.gmLog?.recordAbilityActiveChange;
+    if (typeof record !== "function" || !actor || !item) return null;
+
+    try {
+      return await record.call(this.api.gmLog, {
+        actor,
+        item,
+        level,
+        previousActive: Boolean(previousActive),
+        active: Boolean(active)
+      });
+    } catch (error) {
+      console.warn("symbaroum-hud | Could not register the Ability state change in the GM log.", error);
+      return null;
+    }
   }
 
   static async toggleStorageItemState(actor, containerId, itemId) {

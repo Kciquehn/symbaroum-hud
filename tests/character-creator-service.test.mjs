@@ -402,6 +402,8 @@ test("the core occupation book contains all fifteen occupations in three archety
     assert.match(occupation.quote, /\.Quote$/);
     assert.match(occupation.attributes, /\.Attributes$/);
     assert.match(occupation.races, /\.Races$/);
+    assert.ok(occupation.suggestedRaces.length > 0);
+    assert.ok(occupation.suggestedRaces.every((id) => CORE_RACES.some((race) => race.id === id)));
     assert.match(occupation.abilities, /\.Abilities$/);
   }
 });
@@ -715,6 +717,11 @@ test("the third creator step presents all core races and their trait rules", asy
   assert.doesNotMatch(content, /Guide\.Title/);
   assert.doesNotMatch(content, /\.Family/);
   assert.equal((content.match(/data-race-id=/g) ?? []).length, 5);
+  assert.equal((content.match(/data-occupation-recommended="true"/g) ?? []).length, 1);
+  assert.match(content, /symbaroum-hud-race-occupation-recommendation/);
+  assert.match(content, /Occupations\.wizard\.Races/);
+  assert.match(content, /Race\.RecommendedTag/);
+  assert.ok(content.indexOf('data-race-id="ambrian"') < content.indexOf('data-race-id="barbarian"'));
   assert.equal((content.match(/class="symbaroum-hud-race-art"/g) ?? []).length, 5);
   assert.equal((content.match(/data-race-lore="history"/g) ?? []).length, 5);
   assert.ok(content.indexOf("Entries.ambrian.Lore.history.Paragraph1") < content.indexOf("name=\"race-choice-ambrian\""));
@@ -930,7 +937,7 @@ test("the fourth creator step provides the compendium navigator with XP purchase
   assert.match(content, /data-creation-browser-origin/);
   assert.match(content, /data-creation-browser-source/);
   assert.match(content, /data-ability-search/);
-  assert.doesNotMatch(content, /SYMBAROUMHUD\.CompendiumBrowser\.Types\.Ability/);
+  assert.doesNotMatch(content, /SYMBAROUMHUD\.CompendiumBrowser\.CategoryLabels\.Ability/);
   assert.doesNotMatch(content, /symbaroum-hud-browser-entry-source/);
   assert.equal((content.match(/data-creation-ability-id=/g) ?? []).length, 2);
   assert.equal((content.match(/data-creation-ability-page=/g) ?? []).length, 2);
@@ -1442,6 +1449,7 @@ test("step arrows navigate through every creator page without requiring prior co
   assert.match(opened[5].content, /symbaroum-hud-shadow-book/);
   assert.match(opened[6].content, /symbaroum-hud-friends-book/);
   assert.match(opened[7].content, /symbaroum-hud-personality-book/);
+  assert.equal(opened.every((config) => config.window.resizable === true), true);
   assert.deepEqual(blank.flag("characterCreatorState").completedSteps, undefined);
   assert.equal(isOccupationStepComplete(blank), false);
   assert.equal(isAttributesStepComplete(blank), false);
@@ -1453,7 +1461,7 @@ test("step arrows navigate through every creator page without requiring prior co
   assert.equal(isFriendsStepComplete(blank), false);
 });
 
-test("creator steps keep the position chosen by the user", async () => {
+test("creator steps keep the position and size chosen by the user", async () => {
   const blank = actor({ id: "creator-position", uuid: "Actor.creator-position" });
   await blank.setFlag("symbaroum-hud", "characterCreationMode", "creator");
   const firstDialog = dialogConfigs.length;
@@ -1461,7 +1469,7 @@ test("creator steps keep the position chosen by the user", async () => {
     {
       action: "creator-next-step",
       form: { occupation: "wizard" },
-      renderPosition: { left: 72, top: 34, width: 1060, height: 680 }
+      renderPosition: { left: 72, top: 34, width: 930, height: 610 }
     },
     "close"
   );
@@ -1471,8 +1479,8 @@ test("creator steps keep the position chosen by the user", async () => {
   const opened = dialogConfigs.slice(firstDialog);
   assert.deepEqual(opened[0].position, { width: 1060, height: 680 });
   assert.deepEqual(opened[1].position, {
-    width: 1060,
-    height: 680,
+    width: 930,
+    height: 610,
     left: 72,
     top: 34
   });
@@ -1739,7 +1747,7 @@ test("reviewing Shadows and Equipment restores the selected page, text and weapo
   const opened = dialogConfigs.slice(firstDialog);
   const shadow = opened[1].content;
   const equipment = opened[2].content;
-  assert.match(equipment, /value="bow" required data-equipment-grant checked/);
+  assert.match(equipment, /value="bow" data-equipment-grant[\s\S]*?checked/);
   assert.match(shadow, /name="shadow-principle" value="darkness"/);
   assert.match(shadow, /data-shadow-page-id="darkness" data-active="true"/);
   assert.match(shadow, /data-shadow-page="darkness"\s*>/);
@@ -1838,11 +1846,57 @@ test("Privileged replaces the normal starting-money calculation with exactly fif
   }
 
   assert.match(dialogConfigs[equipmentDialog].content, /symbaroum-hud-equipment-privileged-money/);
-  assert.match(dialogConfigs[equipmentDialog].content, /<strong>50<\/strong>/);
-  assert.deepEqual(blank.updates.at(-1), { "system.money.thaler": 50 });
+  assert.match(dialogConfigs[equipmentDialog].content, /data-equipment-balance-thaler>50<\/strong>/);
+  assert.deepEqual(blank.updates.at(-1), {
+    "system.money.thaler": 50,
+    "system.money.shilling": 0,
+    "system.money.orteg": 0
+  });
   assert.equal(blank.flag("characterCreatorState").startingThalerBase, 5);
   assert.equal(blank.flag("characterCreatorState").startingThalerOverride, 50);
   assert.equal(blank.flag("characterCreatorState").startingThaler, 50);
+});
+
+test("Pariah replaces the normal starting-money calculation with only five shillings", async () => {
+  const blank = actor({ id: "pariah-money", uuid: "Actor.pariah-money" });
+  await blank.setFlag("symbaroum-hud", "characterCreationMode", "creator");
+  await blank.setFlag("symbaroum-hud", "characterCreatorState", {
+    version: 1,
+    step: "shadow-complete",
+    race: "goblin",
+    raceTraits: ["shortLived", "pariah"],
+    abilityExperienceBudget: 50,
+    shadow: "Verde pálida, quase apagada."
+  });
+  const previous = game.items;
+  game.items = [
+    worldEquipment("staff", "Bordão", "weapon", { reference: "long" }),
+    worldEquipment("dagger", "Adaga", "weapon", { reference: "short" }),
+    worldEquipment("light-armor", "Armadura Leve", "armor", { reference: "lightarmor", baseProtection: "1d4" }),
+    worldEquipment("camp", "Equipamento de Acampar", "equipment", { reference: "campingEquipment" })
+  ];
+  const equipmentDialog = dialogConfigs.length;
+  dialogChoices.push({ action: "choose-equipment", form: {
+    "equipmentGrant-basicweapon-0": "staff"
+  } });
+  try {
+    await CharacterCreatorService.openEquipmentStep(blank);
+  } finally {
+    game.items = previous;
+  }
+
+  assert.match(dialogConfigs[equipmentDialog].content, /symbaroum-hud-equipment-pariah-money/);
+  assert.match(dialogConfigs[equipmentDialog].content, /data-equipment-balance-thaler>0<\/strong>/);
+  assert.match(dialogConfigs[equipmentDialog].content, /data-equipment-balance-shilling>5<\/strong>/);
+  assert.deepEqual(blank.updates.at(-1), {
+    "system.money.thaler": 0,
+    "system.money.shilling": 5,
+    "system.money.orteg": 0
+  });
+  assert.equal(blank.flag("characterCreatorState").startingThalerBase, 5);
+  assert.equal(blank.flag("characterCreatorState").startingThalerOverride, null);
+  assert.equal(blank.flag("characterCreatorState").startingShillingOverride, 5);
+  assert.equal(blank.flag("characterCreatorState").startingThaler, 0.5);
 });
 
 test("the fifth creator step maps learned Abilities to compatible accessible equipment", async () => {
@@ -1882,11 +1936,11 @@ test("the fifth creator step maps learned Abilities to compatible accessible equ
   const content = dialogConfigs.at(-1).content;
   assert.match(content, /symbaroum-hud-equipment-book/);
   assert.match(content, /Passo 6|EquipmentProgress/);
-  assert.match(content, /symbaroum-hud-equipment-official-text/);
+  assert.match(content, /symbaroum-hud-creator-equipment-shop/);
   assert.match(content, /OfficialIntroductionBeforeCamp/);
-  assert.match(content, /symbaroum-hud-equipment-ability-rewards/);
-  assert.match(content, /AbilityGrantLead/);
-  assert.match(content, /GrantedByAbility/);
+  assert.match(content, /symbaroum-hud-shop-cart/);
+  assert.match(content, /AbilityGrantReason/);
+  assert.doesNotMatch(content, /symbaroum-hud-creator-shop-free-price" title=/);
   assert.match(content, /Espada/);
   assert.match(content, /Besta/);
   assert.match(content, /Arco/);
@@ -1895,16 +1949,16 @@ test("the fifth creator step maps learned Abilities to compatible accessible equ
   assert.match(content, /name="equipmentGrant-marksman-0" value="crossbow"/);
   assert.match(content, /name="equipmentGrant-marksman-0" value="bow"/);
   assert.match(content, /Armadura Leve/);
-  assert.match(content, /×2/);
-  assert.match(content, /data-open-equipment-item="camp"/);
-  assert.match(content, /data-open-equipment-item="sword"/);
-  assert.match(content, /data-open-equipment-item="light-armor"/);
+  assert.match(content, /"quantity":2/);
+  assert.match(content, /"itemId":"camp"/);
+  assert.match(content, /"itemId":"sword"/);
+  assert.match(content, /"itemId":"light-armor"/);
   assert.doesNotMatch(content, /symbaroum-hud-equipment-automatic-grant/);
   assert.doesNotMatch(content, /symbaroum-hud-equipment-camping/);
   assert.doesNotMatch(content, /symbaroum-hud-equipment-starting-rules/);
   assert.doesNotMatch(content, /<select[^>]+equipmentGrant-/);
   assert.match(content, /Equipamento de Acampar/);
-  assert.match(content, />7<\/strong>/);
+  assert.match(content, /data-equipment-balance-thaler>7<\/strong>/);
   assert.doesNotMatch(content, /Arco oculto/);
   assert.equal(permissions.includes(2), true);
   assert.equal(isShadowStepComplete(blank), true);
@@ -1941,9 +1995,8 @@ test("an Ability-granted armor identifies its source and replaces the basic Ligh
 
   const content = dialogConfigs[firstDialog].content;
   assert.match(content, /Armadura Média/);
-  assert.match(content, /GrantedByAbility/);
-  assert.match(content, /ArmorAlreadyGranted/);
-  assert.doesNotMatch(content, /data-open-equipment-item="light-armor"/);
+  assert.match(content, /AbilityGrantReason/);
+  assert.doesNotMatch(content, /"itemId":"light-armor"/);
   assert.ok(blank.items.find((item) => item.name === "Armadura Média"));
   assert.equal(blank.items.some((item) => item.name === "Armadura Leve"), false);
 });
@@ -2027,7 +2080,11 @@ test("Marksman imports the chosen Bow plus a quiver and ten arrows or bolts", as
   assert.equal(blank.items.some((item) => item.name === "Adaga"), false);
   assert.equal(createdCamp.system.description, "Contém: Corda");
   assert.equal(createdCamp.flags["symbaroum-ind-resources"].isContainer, true);
-  assert.deepEqual(blank.updates.at(-1), { "system.money.thaler": 7 });
+  assert.deepEqual(blank.updates.at(-1), {
+    "system.money.thaler": 7,
+    "system.money.shilling": 0,
+    "system.money.orteg": 0
+  });
   assert.equal(blank.flag("characterCreatorState").step, "equipment-complete");
   assert.equal(blank.flag("characterCreatorState").startingExperience, 70);
   assert.equal(blank.flag("characterCreatorState").startingThaler, 7);
@@ -2090,7 +2147,11 @@ test("existing camping equipment is not duplicated when the equipment step is co
     game.items = previous;
   }
   assert.equal(blank.items.filter((item) => item.name === "Equipamento de Acampar").length, 1);
-  assert.deepEqual(blank.updates.at(-1), { "system.money.thaler": 5 });
+  assert.deepEqual(blank.updates.at(-1), {
+    "system.money.thaler": 5,
+    "system.money.shilling": 0,
+    "system.money.orteg": 0
+  });
 });
 
 test("a character without weapon or armor grants chooses an official weapon combination and light armor", async () => {
@@ -2136,6 +2197,46 @@ test("a character without weapon or armor grants chooses an official weapon comb
   assert.equal(arrows.flags["symbaroum-ind-resources"].isAmmo, true);
 });
 
+test("the Equipment step embeds the shop and charges only the optional cart", async () => {
+  const blank = actor({ id: "equipment-shop", uuid: "Actor.equipment-shop" });
+  await blank.setFlag("symbaroum-hud", "characterCreationMode", "creator");
+  await blank.setFlag("symbaroum-hud", "characterCreatorState", {
+    version: 1, step: "shadow-complete", abilityExperienceBudget: 50
+  });
+  const previous = game.items;
+  game.items = [
+    worldEquipment("staff", "Bordão", "weapon", { reference: "long" }),
+    worldEquipment("dagger", "Adaga", "weapon", { reference: "short" }),
+    worldEquipment("light-armor", "Armadura Leve", "armor", { reference: "lightarmor", baseProtection: "1d4" }),
+    worldEquipment("camp", "Equipamento de Acampar", "equipment", { reference: "campingEquipment" }),
+    worldEquipment("rope", "Corda", "equipment", { reference: "rope", cost: "2 xelins", number: 1 })
+  ];
+  const firstDialog = dialogConfigs.length;
+  dialogChoices.push({ action: "choose-equipment", form: {
+    "equipmentGrant-basicweapon-0": "staff",
+    equipmentShopCart: JSON.stringify([{ itemId: "rope", amount: 2, quantity: 1 }])
+  } });
+  try {
+    await CharacterCreatorService.openEquipmentStep(blank);
+  } finally {
+    game.items = previous;
+  }
+
+  const content = dialogConfigs[firstDialog].content;
+  assert.match(content, /symbaroum-hud-creator-equipment-shop/);
+  assert.match(content, /symbaroum-hud-shop-cart/);
+  assert.match(content, /data-equipment-shop-add="rope"/);
+  assert.ok(blank.items.find((item) => item.name === "Corda"));
+  assert.deepEqual(blank.updates.at(-1), {
+    "system.money.thaler": 4,
+    "system.money.shilling": 8,
+    "system.money.orteg": 0
+  });
+  assert.deepEqual(blank.flag("characterCreatorState").equipmentPurchases, [{
+    itemId: "rope", itemName: "Corda", amount: 2, quantity: 1
+  }]);
+});
+
 test("the Bow combination recognizes the official regular arrows and bolts item name", async () => {
   const blank = actor({ id: "regular-ammo-equipment", uuid: "Actor.regular-ammo-equipment" });
   await blank.setFlag("symbaroum-hud", "characterCreationMode", "creator");
@@ -2159,7 +2260,7 @@ test("the Bow combination recognizes the official regular arrows and bolts item 
     game.items = previous;
   }
   const content = dialogConfigs[firstDialog].content;
-  assert.match(content, /value="bow" required data-equipment-grant >/);
+  assert.match(content, /value="bow" data-equipment-grant/);
   assert.ok(blank.items.find((item) => item.name === "Arco"));
   assert.ok(blank.items.find((item) => item.name === "Aljava"));
   assert.equal(blank.items.find((item) => item.name === "Flechas/Virotes - Regulares")?.system.number, 10);

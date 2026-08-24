@@ -34,6 +34,18 @@ import {
   resolveContentOrigin,
   staticContentOriginIndex
 } from "./content-origin-service.mjs";
+import { resolveItemTaxonomy } from "./item-taxonomy-service.mjs";
+import {
+  activateEmbeddedItemSheetTabs,
+  renderEmbeddedItemSheet
+} from "./native-item-sheet-service.mjs";
+import {
+  moneyFromOrtegs,
+  moneyToOrtegs,
+  parseShopPrice,
+  selectShopPrice,
+  ShopService
+} from "./shop-service.mjs";
 
 const MODE_FLAG = "characterCreationMode";
 const STATE_FLAG = "characterCreatorState";
@@ -47,6 +59,7 @@ const EQUIPMENT_STEP_COMPLETE = "equipment-complete";
 const PERSONALITY_STEP_COMPLETE = "personality-complete";
 const FRIENDS_STEP_COMPLETE = "friends-complete";
 const PRIVILEGED_STARTING_THALER = 50;
+const PARIAH_STARTING_SHILLING = 5;
 const CREATOR_STEPS = Object.freeze([
   Object.freeze({ id: "occupation", complete: OCCUPATION_STEP_COMPLETE }),
   Object.freeze({ id: "attributes", complete: ATTRIBUTES_STEP_COMPLETE }),
@@ -256,7 +269,8 @@ export class CharacterCreatorService {
           "symbaroum-hud-character-creator-choice-dialog"
         ],
         window: {
-          title: game.i18n.localize("SYMBAROUMHUD.CharacterCreator.Title")
+          title: game.i18n.localize("SYMBAROUMHUD.CharacterCreator.Title"),
+          resizable: true
         },
         content: characterCreatorChoiceContent(),
         buttons: [
@@ -417,7 +431,10 @@ export class CharacterCreatorService {
           "symbaroum-hud-abilities-book-dialog",
           "symbaroum-hud-ability-browser-dialog"
         ],
-        window: { title: game.i18n.localize("SYMBAROUMHUD.CharacterCreator.Abilities.BrowserTitle") },
+        window: {
+          title: game.i18n.localize("SYMBAROUMHUD.CharacterCreator.Abilities.BrowserTitle"),
+          resizable: true
+        },
         position: { width: 1140, height: 700 },
         content: await abilitiesBookContent(actor, abilities, 0, mysticalPowers, rituals, {
           browserMode: true,
@@ -639,7 +656,8 @@ export class CharacterCreatorService {
         "symbaroum-hud-occupation-book-dialog"
       ],
       window: {
-        title: game.i18n.localize("SYMBAROUMHUD.CharacterCreator.Occupation.Title")
+        title: game.i18n.localize("SYMBAROUMHUD.CharacterCreator.Occupation.Title"),
+        resizable: true
       },
       position: creatorDialogPosition(placement, 1060, 680),
       content: occupationBookContent(actor),
@@ -710,7 +728,8 @@ export class CharacterCreatorService {
         "symbaroum-hud-attributes-book-dialog"
       ],
       window: {
-        title: game.i18n.localize("SYMBAROUMHUD.CharacterCreator.Attributes.Title")
+        title: game.i18n.localize("SYMBAROUMHUD.CharacterCreator.Attributes.Title"),
+        resizable: true
       },
       position: creatorDialogPosition(placement, 1060, 680),
       content: attributesBookContent(actor),
@@ -803,7 +822,10 @@ export class CharacterCreatorService {
         "symbaroum-hud-occupation-book-dialog",
         "symbaroum-hud-race-book-dialog"
       ],
-      window: { title: game.i18n.localize("SYMBAROUMHUD.CharacterCreator.Race.Title") },
+      window: {
+        title: game.i18n.localize("SYMBAROUMHUD.CharacterCreator.Race.Title"),
+        resizable: true
+      },
       position: creatorDialogPosition(placement, 1060, 680),
       content: raceBookContent(actor),
       buttons: [
@@ -886,7 +908,10 @@ export class CharacterCreatorService {
         "symbaroum-hud-occupation-book-dialog",
         "symbaroum-hud-abilities-book-dialog"
       ],
-      window: { title: game.i18n.localize("SYMBAROUMHUD.CharacterCreator.Abilities.Title") },
+      window: {
+        title: game.i18n.localize("SYMBAROUMHUD.CharacterCreator.Abilities.Title"),
+        resizable: true
+      },
       position: creatorDialogPosition(placement, 1140, 700),
       content: await abilitiesBookContent(actor, abilities, racialCost, mysticalPowers, rituals),
       buttons: [
@@ -1021,7 +1046,10 @@ export class CharacterCreatorService {
         "symbaroum-hud-occupation-book-dialog",
         "symbaroum-hud-contacts-book-dialog"
       ],
-      window: { title: game.i18n.localize("SYMBAROUMHUD.CharacterCreator.Contacts.Title") },
+      window: {
+        title: game.i18n.localize("SYMBAROUMHUD.CharacterCreator.Contacts.Title"),
+        resizable: true
+      },
       position: creatorDialogPosition(placement, 1060, 680),
       content: contactsBookContent(actor),
       buttons: [
@@ -1086,7 +1114,10 @@ export class CharacterCreatorService {
         "symbaroum-hud-occupation-book-dialog",
         "symbaroum-hud-equipment-book-dialog"
       ],
-      window: { title: game.i18n.localize("SYMBAROUMHUD.CharacterCreator.Equipment.Title") },
+      window: {
+        title: game.i18n.localize("SYMBAROUMHUD.CharacterCreator.Equipment.Title"),
+        resizable: true
+      },
       position: creatorDialogPosition(placement, 1060, 690),
       content: equipmentBookContent(actor, grants, equipment, campingEquipment),
       buttons: [
@@ -1098,41 +1129,8 @@ export class CharacterCreatorService {
           callback: async (_event, button) => {
             const currentGrants = creationEquipmentGrants(actor);
             const currentEquipment = availableCreationEquipment(actor);
-            const selections = [];
-            for (const grant of currentGrants) {
-              if (grant.category === "marksman-choice") {
-                const choice = formValue(button.form, equipmentGrantField(grant, 0));
-                const marksmanEquipment = resolveMarksmanEquipment(currentEquipment, choice);
-                if (!marksmanEquipment) {
-                  ui.notifications?.warn(game.i18n.localize("SYMBAROUMHUD.CharacterCreator.Equipment.MarksmanRequired"));
-                  return null;
-                }
-                selections.push(...marksmanEquipment.items.map(({ item, quantity }) => ({
-                  grant, item, quantity, combination: marksmanEquipment.choice
-                })));
-                continue;
-              }
-              if (grant.category === "starting-combination") {
-                const combinationId = formValue(button.form, equipmentGrantField(grant, 0));
-                const combination = resolveStartingCombination(currentEquipment, combinationId);
-                if (!combination) {
-                  ui.notifications?.warn(game.i18n.localize("SYMBAROUMHUD.CharacterCreator.Equipment.Required"));
-                  return null;
-                }
-                selections.push(...combination.items.map(({ item, quantity = 1 }) => ({
-                  grant, item, quantity, combination: combination.id
-                })));
-                continue;
-              }
-              const item = findGenericEquipment(currentEquipment, grant.category);
-              if (!item) {
-                ui.notifications?.warn(game.i18n.localize("SYMBAROUMHUD.CharacterCreator.Equipment.NoMatchingItems"));
-                return null;
-              }
-              for (let index = 0; index < grant.quantity; index += 1) {
-                selections.push({ grant, item, quantity: 1 });
-              }
-            }
+            const selections = equipmentSelectionsFromForm(button.form, currentGrants, currentEquipment);
+            if (!selections) return null;
 
             const camp = findCampingEquipment(actor, currentEquipment);
             const alreadyHasCamp = actorItems(actor).some(isCampingEquipment);
@@ -1141,14 +1139,50 @@ export class CharacterCreatorService {
               return null;
             }
 
-            const documents = selections.map(({ item, quantity }) => creationEquipmentData(item, quantity));
-            if (!alreadyHasCamp) documents.push(creationEquipmentData(camp));
-            const created = await createMissingEmbeddedItems(actor, documents);
             const experience = creationExperienceTotal(actor);
             const baseThaler = startingThalerForExperience(experience);
             const privilegedThaler = privilegedStartingThaler(actor);
-            const thaler = privilegedThaler ?? baseThaler;
-            await actor.update({ "system.money.thaler": thaler });
+            const pariahShilling = pariahStartingShilling(actor);
+            const startingMoneyOrtegs = pariahShilling !== null
+              ? pariahShilling * 10
+              : (privilegedThaler ?? baseThaler) * 100;
+            const paidCart = equipmentShopCartFromForm(button.form, currentEquipment);
+            if (!paidCart) return null;
+            const complimentary = missingCreationEquipmentSelections(actor, [
+              ...selections.map(({ grant, item, quantity }) => ({
+                source: item,
+                quantity,
+                reason: equipmentGrantReason(grant)
+              })),
+              ...(!alreadyHasCamp ? [{
+                source: camp,
+                quantity: 1,
+                reason: game.i18n.localize("SYMBAROUMHUD.CharacterCreator.Equipment.CampingGrantReason")
+              }] : [])
+            ]);
+            const alreadyCompleted = hasCompletedCreatorStep(actor, "equipment");
+            let checkout;
+            if (paidCart.length || complimentary.length) {
+              checkout = await ShopService.purchaseCart(actor, paidCart, {
+                balanceOverride: alreadyCompleted ? null : startingMoneyOrtegs,
+                complimentary
+              });
+            } else {
+              if (!alreadyCompleted) {
+                const startingMoney = moneyFromOrtegs(startingMoneyOrtegs);
+                await actor.update({
+                  "system.money.thaler": startingMoney.thaler,
+                  "system.money.shilling": startingMoney.shilling,
+                  "system.money.orteg": startingMoney.orteg
+                });
+              }
+              checkout = { ok: true, items: [], balance: ShopService.balance(actor) };
+            }
+            if (!checkout.ok) {
+              notifyEquipmentShopFailure(checkout.reason);
+              return null;
+            }
+            const created = checkout.items ?? [];
 
             const previous = actor.getFlag?.(MODULE_ID, STATE_FLAG) ?? {};
             const saved = selections.map(({ grant, item, quantity, combination }) => ({
@@ -1167,15 +1201,22 @@ export class CharacterCreatorService {
                 completedSteps: markCreatorStepComplete(previous, "equipment"),
                 equipment: saved,
               campingEquipment: camp?.name ?? actorItems(actor).find(isCampingEquipment)?.name ?? "",
-              startingThaler: thaler,
+              startingThaler: startingMoneyOrtegs / 100,
               startingThalerBase: baseThaler,
               startingThalerOverride: privilegedThaler,
-              startingExperience: experience
+              startingShillingOverride: pariahShilling,
+              startingExperience: experience,
+              equipmentPurchases: paidCart.map(({ source, amount, quantity }) => ({
+                itemId: source.id,
+                itemName: source.name,
+                amount,
+                quantity
+              }))
             });
             Hooks.callAll(`${MODULE_ID}.characterCreatorStepCompleted`, actor, {
-              step: "equipment", equipment: saved, thaler, created
+              step: "equipment", equipment: saved, thaler: startingMoneyOrtegs / 100, created
             });
-            return { equipment: saved, thaler, created };
+            return { equipment: saved, thaler: startingMoneyOrtegs / 100, created };
           }
         },
         ...creatorNavigationDialogButtons(actor, "equipment")
@@ -1200,7 +1241,10 @@ export class CharacterCreatorService {
         "symbaroum-hud-occupation-book-dialog",
         "symbaroum-hud-personality-book-dialog"
       ],
-      window: { title: game.i18n.localize("SYMBAROUMHUD.CharacterCreator.Personality.Title") },
+      window: {
+        title: game.i18n.localize("SYMBAROUMHUD.CharacterCreator.Personality.Title"),
+        resizable: true
+      },
       position: creatorDialogPosition(placement, 1060, 700),
       content: personalityBookContent(actor),
       buttons: [
@@ -1287,7 +1331,10 @@ export class CharacterCreatorService {
         "symbaroum-hud-occupation-book-dialog",
         "symbaroum-hud-friends-book-dialog"
       ],
-      window: { title: game.i18n.localize("SYMBAROUMHUD.CharacterCreator.Friends.Title") },
+      window: {
+        title: game.i18n.localize("SYMBAROUMHUD.CharacterCreator.Friends.Title"),
+        resizable: true
+      },
       position: creatorDialogPosition(placement, 1060, 690),
       content: friendsBookContent(actor),
       buttons: [
@@ -1406,6 +1453,16 @@ function creatorStepDraftState(step, form) {
       abilityExperienceBudget: Math.max(0, Number(formValue(form, "abilityExperienceBudget")) || 0),
       abilities: parseAbilitySelections(formValue(form, "abilitySelections"))
     };
+  }
+  if (step === "equipment") {
+    let equipmentShopCart = [];
+    try {
+      const parsed = JSON.parse(formValue(form, "equipmentShopCart") || "[]");
+      if (Array.isArray(parsed)) equipmentShopCart = parsed;
+    } catch (_error) {
+      equipmentShopCart = [];
+    }
+    return { equipmentShopCart };
   }
   if (step === "personality") {
     return {
@@ -1548,16 +1605,18 @@ function creatorNavigationDialogButtons(actor, currentStep) {
 }
 
 function creatorDialogPosition(placement, width, height) {
-  const position = { width, height };
+  const resolvedWidth = Number.isFinite(placement?.width) ? placement.width : width;
+  const resolvedHeight = Number.isFinite(placement?.height) ? placement.height : height;
+  const position = { width: resolvedWidth, height: resolvedHeight };
   if (!Number.isFinite(placement?.left) || !Number.isFinite(placement?.top)) return position;
 
   const viewportWidth = Number(globalThis.innerWidth);
   const viewportHeight = Number(globalThis.innerHeight);
   const maximumLeft = Number.isFinite(viewportWidth)
-    ? Math.max(0, viewportWidth - Math.min(width, viewportWidth))
+    ? Math.max(0, viewportWidth - Math.min(resolvedWidth, viewportWidth))
     : placement.left;
   const maximumTop = Number.isFinite(viewportHeight)
-    ? Math.max(0, viewportHeight - Math.min(height, viewportHeight))
+    ? Math.max(0, viewportHeight - Math.min(resolvedHeight, viewportHeight))
     : placement.top;
   position.left = Math.min(Math.max(0, placement.left), maximumLeft);
   position.top = Math.min(Math.max(0, placement.top), maximumTop);
@@ -1569,13 +1628,19 @@ function bindCreatorDialogPlacement(dialog, placement) {
   const header = element?.querySelector?.(".window-header");
   if (!header || !placement) return;
 
+  element.addEventListener?.("pointerdown", () => dialog.bringToFront?.());
+
   const remember = () => {
     globalThis.setTimeout(() => {
       const bounds = element.getBoundingClientRect?.();
       const left = Number(bounds?.left ?? dialog.position?.left);
       const top = Number(bounds?.top ?? dialog.position?.top);
+      const width = Number(bounds?.width ?? dialog.position?.width);
+      const height = Number(bounds?.height ?? dialog.position?.height);
       if (Number.isFinite(left)) placement.left = left;
       if (Number.isFinite(top)) placement.top = top;
+      if (Number.isFinite(width) && width > 0) placement.width = width;
+      if (Number.isFinite(height) && height > 0) placement.height = height;
     }, 0);
   };
   const rememberOnRelease = (eventName) => {
@@ -1585,6 +1650,10 @@ function bindCreatorDialogPlacement(dialog, placement) {
   header.addEventListener("pointerdown", () => rememberOnRelease("pointerup"));
   header.addEventListener("mousedown", () => rememberOnRelease("mouseup"));
   header.addEventListener("mouseup", remember);
+  const resizeHandle = element.querySelector?.(".window-resize-handle, [data-resize-handle]");
+  resizeHandle?.addEventListener?.("pointerdown", () => rememberOnRelease("pointerup"));
+  resizeHandle?.addEventListener?.("mousedown", () => rememberOnRelease("mouseup"));
+  resizeHandle?.addEventListener?.("mouseup", remember);
 }
 
 function isCreatorNavigationResult(result) {
@@ -1827,14 +1896,34 @@ function raceBookContent(actor) {
   const creatorState = creatorStepViewState(actor, "race");
   const selectedId = coreRace(creatorState.race)?.id ?? CORE_RACES[0].id;
   const selectedTraits = new Set(Array.isArray(creatorState.raceTraits) ? creatorState.raceTraits : []);
-  const index = CORE_RACES.map((race) => `
+  const occupationRecommendation = occupationRaceRecommendation(actor);
+  const recommendedRaceIds = occupationRecommendation?.raceIds ?? [];
+  const recommendationOrder = new Map(recommendedRaceIds.map((id, index) => [id, index]));
+  const orderedRaces = [...CORE_RACES].sort((left, right) => {
+    const leftOrder = recommendationOrder.get(left.id) ?? Number.MAX_SAFE_INTEGER;
+    const rightOrder = recommendationOrder.get(right.id) ?? Number.MAX_SAFE_INTEGER;
+    return leftOrder - rightOrder;
+  });
+  const recommendationContent = occupationRecommendation ? `
+    <aside class="symbaroum-hud-race-occupation-recommendation">
+      <header><i class="fa-solid fa-compass" aria-hidden="true"></i>
+        <span>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Race.OccupationRecommendation")}</span></header>
+      <strong>${escapeHtml(occupationRecommendation.name)}</strong>
+      <p>${escapeHtml(occupationRecommendation.races)}</p>
+    </aside>` : "";
+  const index = orderedRaces.map((race) => {
+    const recommended = recommendationOrder.has(race.id);
+    return `
     <button type="button" class="symbaroum-hud-race-index-entry"
       data-race-id="${race.id}" data-active="${race.id === selectedId}"
+      data-occupation-recommended="${recommended}"
       aria-pressed="${race.id === selectedId}">
       <i class="fa-solid ${race.icon}" aria-hidden="true"></i>
-      <span>${localizeEscaped(race.name)}</span>
+      <span>${localizeEscaped(race.name)}${recommended ? `
+        <small><i class="fa-solid fa-compass" aria-hidden="true"></i>${formatEscaped("SYMBAROUMHUD.CharacterCreator.Race.RecommendedTag", { occupation: occupationRecommendation.name })}</small>` : ""}</span>
     </button>
-  `).join("");
+  `;
+  }).join("");
 
   const pages = CORE_RACES.map((race) => {
     const required = race.required.map((id) => traitCard(actor, id, "required", race.id, selectedTraits.has(id))).join("");
@@ -1874,6 +1963,7 @@ function raceBookContent(actor) {
       </header>
       <aside class="symbaroum-hud-race-index">
         <header><h2>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Race.Index")}</h2><p>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Race.IndexHint")}</p></header>
+        ${recommendationContent}
         <nav aria-label="${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Race.Index")}">${index}</nav>
       </aside>
       <main class="symbaroum-hud-race-reading-page">
@@ -1980,6 +2070,33 @@ function contactsBookContent(actor) {
         </main>
       </div>
     </div>`;
+}
+
+function occupationRaceRecommendation(actor) {
+  const state = actor?.getFlag?.(MODULE_ID, STATE_FLAG) ?? {};
+  if (state.occupation === "custom") {
+    const name = String(state.customOccupation?.name ?? actor?.system?.bio?.occupation ?? "").trim();
+    const races = String(state.customOccupation?.races ?? "").trim();
+    return name && races ? { name, races, raceIds: raceIdsMentionedBy(races) } : null;
+  }
+  const occupation = coreOccupation(state.occupation);
+  if (!occupation) return null;
+  return {
+    name: game.i18n.localize(occupation.name),
+    races: game.i18n.localize(occupation.races),
+    raceIds: occupation.suggestedRaces ?? []
+  };
+}
+
+function raceIdsMentionedBy(text) {
+  const normalized = normalizeName(text);
+  const ids = CORE_RACES
+    .filter((race) => normalized.includes(normalizeName(game.i18n.localize(race.name))))
+    .map((race) => race.id);
+  if (normalized.includes("humano") || normalized.includes("human")) {
+    for (const id of ["ambrian", "barbarian"]) if (!ids.includes(id)) ids.push(id);
+  }
+  return ids;
 }
 
 function contactsFieldsContent(saved = {}) {
@@ -2598,20 +2715,28 @@ export function startingThalerForExperience(experience) {
 }
 
 function privilegedStartingThaler(actor) {
+  return hasCreationTrait(actor, "privileged", ["trait", "boon"])
+    ? PRIVILEGED_STARTING_THALER
+    : null;
+}
+
+function pariahStartingShilling(actor) {
+  return hasCreationTrait(actor, "pariah", ["trait", "burden"])
+    ? PARIAH_STARTING_SHILLING
+    : null;
+}
+
+function hasCreationTrait(actor, traitId, itemTypes) {
   const state = actor?.getFlag?.(MODULE_ID, STATE_FLAG) ?? {};
-  if (Array.isArray(state.raceTraits) && state.raceTraits.includes("privileged")) {
-    return PRIVILEGED_STARTING_THALER;
-  }
-  const trait = coreRaceTrait("privileged");
+  if (Array.isArray(state.raceTraits) && state.raceTraits.includes(traitId)) return true;
+  const trait = coreRaceTrait(traitId);
   const aliases = new Set([
     trait?.id,
     trait?.name ? game.i18n.localize(trait.name) : "",
     ...(trait?.aliases ?? [])
   ].map(normalizeName).filter(Boolean));
-  return actorItems(actor).some((item) => ["trait", "boon"].includes(item?.type)
-    && aliases.has(normalizeName(item.system?.reference || item.name)))
-    ? PRIVILEGED_STARTING_THALER
-    : null;
+  return actorItems(actor).some((item) => itemTypes.includes(item?.type)
+    && aliases.has(normalizeName(item.system?.reference || item.name)));
 }
 
 function creationExperienceTotal(actor) {
@@ -2847,6 +2972,90 @@ function equipmentGrantField(grant, index) {
   return `equipmentGrant-${grant.ability}-${index}`;
 }
 
+function equipmentSelectionsFromForm(form, grants, equipment) {
+  const selections = [];
+  for (const grant of grants) {
+    if (grant.category === "marksman-choice") {
+      const choice = formValue(form, equipmentGrantField(grant, 0));
+      const resolved = resolveMarksmanEquipment(equipment, choice);
+      if (!resolved) {
+        ui.notifications?.warn(game.i18n.localize("SYMBAROUMHUD.CharacterCreator.Equipment.MarksmanRequired"));
+        return null;
+      }
+      selections.push(...resolved.items.map(({ item, quantity }) => ({
+        grant, item, quantity, combination: resolved.choice
+      })));
+      continue;
+    }
+    if (grant.category === "starting-combination") {
+      const combinationId = formValue(form, equipmentGrantField(grant, 0));
+      const resolved = resolveStartingCombination(equipment, combinationId);
+      if (!resolved) {
+        ui.notifications?.warn(game.i18n.localize("SYMBAROUMHUD.CharacterCreator.Equipment.Required"));
+        return null;
+      }
+      selections.push(...resolved.items.map(({ item, quantity = 1 }) => ({
+        grant, item, quantity, combination: resolved.id
+      })));
+      continue;
+    }
+    const item = findGenericEquipment(equipment, grant.category);
+    if (!item) {
+      ui.notifications?.warn(game.i18n.localize("SYMBAROUMHUD.CharacterCreator.Equipment.NoMatchingItems"));
+      return null;
+    }
+    selections.push({ grant, item, quantity: grant.quantity });
+  }
+  return selections;
+}
+
+function equipmentShopCartFromForm(form, equipment) {
+  let lines;
+  try {
+    lines = JSON.parse(formValue(form, "equipmentShopCart") || "[]");
+  } catch (_error) {
+    lines = null;
+  }
+  if (!Array.isArray(lines)) {
+    ui.notifications?.warn(game.i18n.localize("SYMBAROUMHUD.CompendiumBrowser.Shop.Failed"));
+    return null;
+  }
+  const purchases = [];
+  for (const line of lines) {
+    const source = equipment.find((item) => item.id === line.itemId);
+    const quantity = Number(line.quantity);
+    const price = selectShopPrice(parseShopPrice(source?.system?.cost), line.amount);
+    if (!source || !price || !Number.isSafeInteger(quantity) || quantity < 1 || quantity > 999) {
+      ui.notifications?.warn(game.i18n.localize("SYMBAROUMHUD.CompendiumBrowser.Shop.Failed"));
+      return null;
+    }
+    purchases.push({ source, amount: price.amount, quantity });
+  }
+  return purchases;
+}
+
+function missingCreationEquipmentSelections(actor, selections) {
+  const existing = new Set(actorItems(actor).map(equipmentIdentity));
+  return selections.filter(({ source }) => {
+    const identity = equipmentIdentity(source);
+    if (existing.has(identity)) return false;
+    existing.add(identity);
+    return true;
+  });
+}
+
+function notifyEquipmentShopFailure(reason) {
+  const key = {
+    permission: "SYMBAROUMHUD.CompendiumBrowser.Shop.NoPermission",
+    unavailable: "SYMBAROUMHUD.CompendiumBrowser.Shop.Unavailable",
+    invalidPrice: "SYMBAROUMHUD.CompendiumBrowser.Shop.InvalidPrice",
+    invalidQuantity: "SYMBAROUMHUD.CompendiumBrowser.Shop.InvalidQuantity",
+    insufficient: "SYMBAROUMHUD.CompendiumBrowser.Shop.Insufficient",
+    failed: "SYMBAROUMHUD.CompendiumBrowser.Shop.Failed"
+  }[reason] ?? "SYMBAROUMHUD.CompendiumBrowser.Shop.Failed";
+  ui.notifications?.warn(game.i18n.localize(key));
+}
+
 function creationEquipmentItemLink(item, quantity = 1) {
   if (!item) return `<span class="symbaroum-hud-equipment-unavailable">${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Equipment.NoMatchingItems")}</span>`;
   return `<button type="button" class="symbaroum-hud-equipment-item-link"
@@ -2864,6 +3073,118 @@ function creationEquipmentAbilitySource(grant) {
   )}</span>`;
 }
 
+function equipmentGrantReason(grant) {
+  if (grant?.source === "ability") {
+    return game.i18n.format("SYMBAROUMHUD.CharacterCreator.Equipment.AbilityGrantReason", {
+      ability: grant.abilityName
+    });
+  }
+  if (grant?.category === "light-armor") {
+    return game.i18n.localize("SYMBAROUMHUD.CharacterCreator.Equipment.LightArmorGrantReason");
+  }
+  return game.i18n.localize("SYMBAROUMHUD.CharacterCreator.Equipment.BasicGrantReason");
+}
+
+function equipmentShopMoneyLabel(value) {
+  const money = moneyFromOrtegs(value);
+  const parts = [];
+  if (money.thaler) parts.push(`${money.thaler} ${game.i18n.localize("MONEY.THALER")}`);
+  if (money.shilling) parts.push(`${money.shilling} ${game.i18n.localize("MONEY.SHILLING")}`);
+  if (money.orteg || !parts.length) parts.push(`${money.orteg} ${game.i18n.localize("MONEY.ORTEG")}`);
+  return parts.join(" · ");
+}
+
+function equipmentShopItemPayload(item, quantity = 1, reason = "", free = false) {
+  return {
+    itemId: item?.id ?? "",
+    uuid: item?.uuid ?? `Item.${item?.id ?? ""}`,
+    name: item?.name ?? "",
+    img: item?.img || "icons/svg/item-bag.svg",
+    quantity,
+    reason,
+    free
+  };
+}
+
+function equipmentShopFreeLineContent(line) {
+  if (!line?.itemId) return "";
+  return `<article class="symbaroum-hud-shop-cart-item symbaroum-hud-creator-shop-grant" data-free-item="${escapeHtml(line.itemId)}">
+    <img src="${escapeHtml(line.img)}" alt="">
+    <span class="symbaroum-hud-shop-cart-item-name">
+      <strong>${escapeHtml(line.name)}</strong>
+      <small>${line.quantity > 1 ? `×${line.quantity}` : localizeEscaped("SYMBAROUMHUD.CharacterCreator.Equipment.Automatic")}</small>
+    </span>
+    <span class="symbaroum-hud-creator-shop-free-price" data-tooltip="${escapeHtml(line.reason)}">
+      <strong>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Equipment.Free")}</strong>
+      <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+    </span>
+  </article>`;
+}
+
+function equipmentShopEntryContent(item, originIndex) {
+  const price = parseShopPrice(item?.system?.cost);
+  if (!price) return "";
+  const sourceId = "world:Item";
+  const origin = resolveContentOrigin(item, { index: originIndex, sourceId });
+  const originLabel = game.i18n.localize(contentOriginDefinition(origin).label);
+  const category = resolveItemTaxonomy(item).primary;
+  const categoryLabel = game.i18n.localize(`SYMBAROUMHUD.ItemTaxonomy.Categories.${category}`);
+  return `<li data-equipment-shop-entry data-item-id="${escapeHtml(item.id)}"
+    data-item-name="${escapeHtml(item.name)}" data-item-type="${escapeHtml(item.type)}"
+    data-item-origin="${escapeHtml(origin)}" data-item-price="${escapeHtml(price.raw)}">
+    <button type="button" class="symbaroum-hud-browser-entry-main" data-open-equipment-item="${escapeHtml(item.id)}" aria-label="${escapeHtml(item.name)}">
+      <img src="${escapeHtml(item.img || "icons/svg/item-bag.svg")}" alt="">
+      <span class="symbaroum-hud-browser-entry-details"><strong>${escapeHtml(item.name)}</strong><small>${escapeHtml(categoryLabel)}</small></span>
+      <span class="symbaroum-hud-browser-entry-source">
+        <span class="symbaroum-hud-browser-entry-source-label">${localizeEscaped("SYMBAROUMHUD.CompendiumBrowser.WorldItems")}</span>
+        <em class="symbaroum-hud-browser-entry-origin" data-origin="${escapeHtml(origin)}"><i class="fa-solid fa-bookmark" aria-hidden="true"></i>${escapeHtml(originLabel)}</em>
+      </span>
+    </button>
+    <span class="symbaroum-hud-browser-entry-controls">
+      <button type="button" class="symbaroum-hud-shop-buy" data-equipment-shop-add="${escapeHtml(item.id)}"
+        aria-label="${localizeEscaped("SYMBAROUMHUD.CompendiumBrowser.Shop.AddToCart")} ${escapeHtml(item.name)} — ${escapeHtml(price.raw)}">
+        <span>${escapeHtml(price.raw)}</span><i class="fa-solid fa-cart-shopping" aria-hidden="true"></i>
+        <em data-equipment-shop-badge hidden></em>
+      </button>
+    </span>
+  </li>`;
+}
+
+function equipmentShopChoiceContent({ marksmanGrant, marksmanChoices, combinationGrant, combinations, savedCombination }) {
+  if (marksmanGrant) {
+    return `<fieldset class="symbaroum-hud-creator-shop-choice">
+      <legend><i class="fa-solid fa-gift" aria-hidden="true"></i>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Equipment.MarksmanChoice")}</legend>
+      <div>${marksmanChoices.map(({ choice, item, resolved }) => {
+        const extra = resolved?.items?.map(({ item: resolvedItem, quantity }) => equipmentShopItemPayload(
+          resolvedItem, quantity, equipmentGrantReason(marksmanGrant), true
+        )) ?? [];
+        return `<label data-available="${Boolean(resolved)}">
+          <input type="radio" name="${equipmentGrantField(marksmanGrant, 0)}" value="${choice}" data-equipment-grant
+            data-free-cart='${escapeHtml(JSON.stringify(extra))}'${savedCombination("marksman-choice") === choice ? " checked" : ""}${resolved ? "" : " disabled"}>
+          <span></span><img src="${escapeHtml(item?.img || "icons/svg/item-bag.svg")}" alt="">
+          <strong>${escapeHtml(item?.name || game.i18n.localize(`SYMBAROUMHUD.CharacterCreator.Equipment.${choice === "crossbow" ? "Crossbow" : "Bow"}`))}</strong>
+        </label>`;
+      }).join("")}</div>
+    </fieldset>`;
+  }
+  if (combinationGrant) {
+    return `<fieldset class="symbaroum-hud-creator-shop-choice">
+      <legend><i class="fa-solid fa-gift" aria-hidden="true"></i>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Equipment.NoAbilityGrantLead")}</legend>
+      <div>${combinations.map(({ combination, resolved }) => {
+        const extra = resolved?.items?.map(({ item, quantity = 1 }) => equipmentShopItemPayload(
+          item, quantity, equipmentGrantReason(combinationGrant), true
+        )) ?? [];
+        return `<label data-available="${Boolean(resolved)}">
+          <input type="radio" name="${equipmentGrantField(combinationGrant, 0)}" value="${combination.id}" data-equipment-grant
+            data-free-cart='${escapeHtml(JSON.stringify(extra))}'${savedCombination("starting-combination") === combination.id ? " checked" : ""}${resolved ? "" : " disabled"}>
+          <span></span><strong>${localizeEscaped(`SYMBAROUMHUD.CharacterCreator.Equipment.${combination.label}`)}</strong>
+        </label>`;
+      }).join("")}</div>
+    </fieldset>`;
+  }
+  return "";
+}
+
 function equipmentBookContent(actor, grants, equipment, campingEquipment) {
   const creatorState = creatorStepViewState(actor, "equipment");
   const savedEquipment = Array.isArray(creatorState.equipment) ? creatorState.equipment : [];
@@ -2871,15 +3192,19 @@ function equipmentBookContent(actor, grants, equipment, campingEquipment) {
   const experience = creationExperienceTotal(actor);
   const baseThaler = startingThalerForExperience(experience);
   const privilegedThaler = privilegedStartingThaler(actor);
-  const thaler = privilegedThaler ?? baseThaler;
+  const pariahShilling = pariahStartingShilling(actor);
+  const initialMoneyOrtegs = pariahShilling !== null
+    ? pariahShilling * 10
+    : (privilegedThaler ?? baseThaler) * 100;
+  const alreadyCompleted = hasCompletedCreatorStep(actor, "equipment");
+  const startingBalance = alreadyCompleted ? moneyToOrtegs(actor.system?.money ?? {}) : initialMoneyOrtegs;
+  const balance = moneyFromOrtegs(startingBalance);
   const alreadyHasCamp = actorItems(actor).some(isCampingEquipment);
   const campItem = alreadyHasCamp ? actorItems(actor).find(isCampingEquipment) : campingEquipment;
   const abilityGrants = grants.filter((grant) => grant.source === "ability");
-  const abilityArmorGrant = abilityGrants.find((grant) => isArmorEquipmentCategory(grant.category));
   const combinationGrant = grants.find((grant) => grant.category === "starting-combination");
   const lightArmorGrant = grants.find((grant) => grant.category === "light-armor" && grant.source === "basic");
   const lightArmor = lightArmorGrant ? findGenericEquipment(equipment, "light-armor") : null;
-  const abilityNames = [...new Set(abilityGrants.map((grant) => grant.abilityName))];
   const abilityItems = abilityGrants
     .filter((grant) => grant.category !== "marksman-choice")
     .map((grant) => ({ grant, item: findGenericEquipment(equipment, grant.category) }));
@@ -2889,84 +3214,115 @@ function equipmentBookContent(actor, grants, equipment, campingEquipment) {
     item: findMarksmanWeapon(equipment, choice),
     resolved: resolveMarksmanEquipment(equipment, choice)
   })) : [];
-  const marksmanQuiver = marksmanGrant ? findConfiguredStartingItem(equipment, "quiver") : null;
-  const marksmanAmmunition = marksmanGrant ? findConfiguredStartingItem(equipment, "ammunition") : null;
   const combinations = combinationGrant ? STARTING_EQUIPMENT_COMBINATIONS.map((combination) => ({
     combination,
     resolved: resolveStartingCombination(equipment, combination.id)
   })) : [];
-  const automaticReady = [
-    ...abilityItems.map(({ item }) => Boolean(item)),
-    !marksmanGrant || marksmanChoices.some(({ resolved }) => Boolean(resolved)),
-    !lightArmorGrant || Boolean(lightArmor)
-  ].every(Boolean);
+  const fixedFreeItems = [
+    ...abilityItems.filter(({ item }) => Boolean(item)).map(({ grant, item }) => equipmentShopItemPayload(
+      item, grant.quantity, equipmentGrantReason(grant), true
+    )),
+    ...(lightArmor ? [equipmentShopItemPayload(lightArmor, 1, equipmentGrantReason(lightArmorGrant), true)] : []),
+    ...(campItem ? [equipmentShopItemPayload(
+      campItem, 1, game.i18n.localize("SYMBAROUMHUD.CharacterCreator.Equipment.CampingGrantReason"), true
+    )] : [])
+  ];
+  const shopItems = equipment.filter((item) => Boolean(parseShopPrice(item?.system?.cost)));
+  characterCreatorOriginIndex ??= staticContentOriginIndex();
+  const origins = new Map();
+  for (const item of shopItems) {
+    const origin = resolveContentOrigin(item, { index: characterCreatorOriginIndex, sourceId: "world:Item" });
+    origins.set(origin, game.i18n.localize(contentOriginDefinition(origin).label));
+  }
+  const savedCart = Array.isArray(creatorState.equipmentShopCart)
+    ? creatorState.equipmentShopCart.filter((line) => shopItems.some((item) => item.id === line.itemId))
+    : [];
+  const choices = equipmentShopChoiceContent({
+    marksmanGrant, marksmanChoices, combinationGrant, combinations, savedCombination
+  });
+  const automaticReady = Boolean(campItem)
+    && abilityItems.every(({ item }) => Boolean(item))
+    && (!marksmanGrant || marksmanChoices.some(({ resolved }) => Boolean(resolved)))
+    && (!lightArmorGrant || Boolean(lightArmor));
 
-  return `
-    <div class="symbaroum-hud-equipment-book" data-camping-ready="${Boolean(campItem)}" data-equipment-ready="${automaticReady}">
-      <header class="symbaroum-hud-creator-step-guide">
-        ${creatorStepNumber(actor, "equipment", "SYMBAROUMHUD.CharacterCreator.Guide.EquipmentProgress")}
-        <div><h2>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Guide.StepSixTitle")}</h2>
-          <p>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Guide.StepSixText")}</p></div>
+  return `<div class="symbaroum-hud-equipment-book symbaroum-hud-creator-shop-book"
+      data-camping-ready="${Boolean(campItem)}" data-equipment-ready="${automaticReady}"
+      data-starting-balance="${startingBalance}" data-fixed-free-cart='${escapeHtml(JSON.stringify(fixedFreeItems))}'>
+    <header class="symbaroum-hud-creator-step-guide">
+      ${creatorStepNumber(actor, "equipment", "SYMBAROUMHUD.CharacterCreator.Guide.EquipmentProgress")}
+      <div><h2>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Guide.StepSixTitle")}</h2>
+        <p>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Guide.StepSixText")}</p></div>
+    </header>
+    <input type="hidden" name="equipmentShopCart" value="${escapeHtml(JSON.stringify(savedCart))}" data-equipment-shop-cart>
+    <div class="symbaroum-hud-browser-shell symbaroum-hud-creator-equipment-shop" data-browser-mode="shop">
+      <header class="symbaroum-hud-browser-heading">
+        <div><i class="fa-solid fa-shop" aria-hidden="true"></i><span>
+          <strong>${localizeEscaped("SYMBAROUMHUD.CompendiumBrowser.Shop.Title")}</strong>
+          <small>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Equipment.ShopSubtitle")}</small>
+        </span></div>
+        <button type="button" data-equipment-rules-toggle title="${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Equipment.ShowRules")}">
+          <i class="fa-solid fa-book-open" aria-hidden="true"></i>
+        </button>
       </header>
-      <div class="symbaroum-hud-equipment-workspace">
-        <aside class="symbaroum-hud-equipment-summary">
-          <section class="symbaroum-hud-equipment-money">
-            <i class="fa-solid fa-coins" aria-hidden="true"></i>
-            <div><span>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Equipment.StartingMoney")}</span>
-              <strong>${thaler}</strong><small>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Equipment.Thaler")}</small></div>
-            <p>${formatEscaped("SYMBAROUMHUD.CharacterCreator.Equipment.MoneyFormula", { experience, thaler: baseThaler })}</p>
-            ${privilegedThaler !== null ? `<p class="symbaroum-hud-equipment-privileged-money"><i class="fa-solid fa-crown" aria-hidden="true"></i>${formatEscaped(
-              "SYMBAROUMHUD.CharacterCreator.Equipment.PrivilegedStartingMoney",
-              { total: privilegedThaler }
-            )}</p>` : ""}
+      <nav class="symbaroum-hud-browser-tabs" aria-label="${localizeEscaped("SYMBAROUMHUD.CompendiumBrowser.CategoriesLabel")}">
+        ${[
+          ["all", "fa-book-open", "All"], ["weapon", "fa-sword", "Weapons"],
+          ["armor", "fa-shield-halved", "Armors"], ["equipment", "fa-backpack", "Equipment"]
+        ].map(([id, icon, label], index) => `<button type="button" data-equipment-shop-category="${id}" data-active="${index === 0}" aria-pressed="${index === 0}"
+          title="${localizeEscaped(`SYMBAROUMHUD.CompendiumBrowser.Categories.${label}`)}"><i class="fa-solid ${icon}" aria-hidden="true"></i></button>`).join("")}
+      </nav>
+      <aside class="symbaroum-hud-browser-sidebar">
+        <div class="symbaroum-hud-browser-filter-toolbar">
+          <label class="symbaroum-hud-browser-search"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+            <input type="search" data-equipment-shop-search placeholder="${localizeEscaped("SYMBAROUMHUD.CompendiumBrowser.Search")}">
+            <button type="button" data-equipment-shop-clear hidden aria-label="${localizeEscaped("SYMBAROUMHUD.CompendiumBrowser.ClearSearch")}"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+          </label>
+          <button type="button" class="symbaroum-hud-browser-filter-toggle" data-equipment-shop-filter-toggle
+            title="${localizeEscaped("SYMBAROUMHUD.CompendiumBrowser.Filters")}"><i class="fa-solid fa-filter" aria-hidden="true"></i></button>
+        </div>
+        <section class="symbaroum-hud-shop-balance">
+          <header><h2><i class="fa-solid fa-coins" aria-hidden="true"></i>${localizeEscaped("SYMBAROUMHUD.CompendiumBrowser.Shop.Balance")}</h2></header>
+          <div>
+            <span><strong data-equipment-balance-thaler>${balance.thaler}</strong><small>${localizeEscaped("MONEY.THALER")}</small></span>
+            <span><strong data-equipment-balance-shilling>${balance.shilling}</strong><small>${localizeEscaped("MONEY.SHILLING")}</small></span>
+            <span><strong data-equipment-balance-orteg>${balance.orteg}</strong><small>${localizeEscaped("MONEY.ORTEG")}</small></span>
+          </div>
+          ${pariahShilling !== null ? `<p class="symbaroum-hud-equipment-pariah-money"><i class="fa-solid fa-person-circle-xmark" aria-hidden="true"></i>${formatEscaped(
+            "SYMBAROUMHUD.CharacterCreator.Equipment.PariahStartingMoney", { total: pariahShilling }
+          )}</p>` : privilegedThaler !== null ? `<p class="symbaroum-hud-equipment-privileged-money"><i class="fa-solid fa-crown" aria-hidden="true"></i>${formatEscaped(
+            "SYMBAROUMHUD.CharacterCreator.Equipment.PrivilegedStartingMoney", { total: privilegedThaler }
+          )}</p>` : ""}
+        </section>
+        <section class="symbaroum-hud-shop-cart">
+          <header><h2><i class="fa-solid fa-basket-shopping" aria-hidden="true"></i>${localizeEscaped("SYMBAROUMHUD.CompendiumBrowser.Shop.CartTitle")}<small data-equipment-cart-count>0</small></h2>
+            <button type="button" data-equipment-cart-clear title="${localizeEscaped("SYMBAROUMHUD.CompendiumBrowser.Shop.CartClear")}"><i class="fa-solid fa-trash-can" aria-hidden="true"></i></button>
+          </header>
+          <div class="symbaroum-hud-shop-cart-items" data-equipment-cart-items></div>
+          <footer><div><span>${localizeEscaped("SYMBAROUMHUD.CompendiumBrowser.Shop.CartTotal")}</span><strong data-equipment-cart-total>${equipmentShopMoneyLabel(0)}</strong>
+            <small data-equipment-cart-remaining></small></div></footer>
+        </section>
+        <div class="symbaroum-hud-browser-filter-popover" data-equipment-shop-filter-panel hidden>
+          <section class="symbaroum-hud-browser-origin-filter"><header><h2>${localizeEscaped("SYMBAROUMHUD.CompendiumBrowser.Origin")}</h2></header><div>
+            ${[...origins].sort((a, b) => a[1].localeCompare(b[1], game.i18n.lang)).map(([id, label]) => `<label><input type="checkbox" data-equipment-shop-origin value="${escapeHtml(id)}" checked><span>${escapeHtml(label)}</span></label>`).join("")}
+          </div></section>
+        </div>
+      </aside>
+      <main class="symbaroum-hud-browser-results symbaroum-hud-creator-shop-results">
+        <header><h2>${localizeEscaped("SYMBAROUMHUD.CompendiumBrowser.Shop.AvailableItems")}</h2><span><b data-equipment-result-count>${shopItems.length}</b> ${localizeEscaped("SYMBAROUMHUD.CompendiumBrowser.Found")}</span></header>
+        <div class="symbaroum-hud-creator-shop-options">
+          <section class="symbaroum-hud-creator-shop-rules" hidden>
+            <h3>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Equipment.BookLabel")}</h3>
+            <p>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Equipment.OfficialIntroductionBeforeCamp")}${campItem ? escapeHtml(campItem.name) : localizeEscaped("SYMBAROUMHUD.CharacterCreator.Equipment.CampingMissing")}${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Equipment.OfficialIntroductionAfterCamp")}</p>
+            <p>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Equipment.StartingRulesArmor")}</p>
           </section>
-        </aside>
-        <main class="symbaroum-hud-equipment-page">
-          <section class="symbaroum-hud-equipment-official-text">
-            <h2>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Equipment.BookLabel")}</h2>
-            <p>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Equipment.OfficialIntroductionBeforeCamp")}
-              ${creationEquipmentItemLink(campItem)}${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Equipment.OfficialIntroductionAfterCamp")}</p>
-          </section>
-          ${abilityGrants.length ? `<section class="symbaroum-hud-equipment-ability-rewards">
-            <h3>${formatEscaped("SYMBAROUMHUD.CharacterCreator.Equipment.AbilityGrantLead", { abilities: abilityNames.join(", ") })}</h3>
-            <ul>${abilityItems.map(({ grant, item }) => `<li><i class="fa-solid fa-circle-check" aria-hidden="true"></i>${creationEquipmentItemLink(item, grant.quantity)}${creationEquipmentAbilitySource(grant)}</li>`).join("")}</ul>
-            ${marksmanGrant ? `<fieldset class="symbaroum-hud-equipment-choice-group symbaroum-hud-equipment-marksman-choice">
-              <legend>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Equipment.MarksmanChoice")}</legend>
-              <div class="symbaroum-hud-equipment-choice-list">
-                ${marksmanChoices.map(({ choice, item, resolved }) => `<label class="symbaroum-hud-equipment-choice" data-available="${Boolean(resolved)}">
-                  <input type="radio" name="${equipmentGrantField(marksmanGrant, 0)}" value="${choice}" required data-equipment-grant${savedCombination("marksman-choice") === choice ? " checked" : ""}${resolved ? " " : " disabled"}>
-                  <span class="symbaroum-hud-equipment-choice-marker" aria-hidden="true"></span>
-                  <img src="${escapeHtml(item?.img || "icons/svg/item-bag.svg")}" alt="">
-                  <span class="symbaroum-hud-equipment-choice-name"><strong>${escapeHtml(item?.name || game.i18n.localize(`SYMBAROUMHUD.CharacterCreator.Equipment.${choice === "crossbow" ? "Crossbow" : "Bow"}`))}</strong>${creationEquipmentAbilitySource(marksmanGrant)}</span>
-                </label>`).join("")}
-              </div>
-              <p>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Equipment.MarksmanAlsoReceives")}
-                ${creationEquipmentItemLink(marksmanQuiver)} ${creationEquipmentAbilitySource(marksmanGrant)}
-                ${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Equipment.And")}
-                ${creationEquipmentItemLink(marksmanAmmunition, 10)} ${creationEquipmentAbilitySource(marksmanGrant)}.</p>
-            </fieldset>` : ""}
-          </section>` : `<section class="symbaroum-hud-equipment-basic-choice">
-            <h3>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Equipment.NoAbilityGrantLead")}</h3>
-            <fieldset class="symbaroum-hud-equipment-choice-group">
-              <div class="symbaroum-hud-equipment-choice-list symbaroum-hud-equipment-combination-list">
-                ${combinations.map(({ combination, resolved }) => `<label class="symbaroum-hud-equipment-choice symbaroum-hud-equipment-combination-choice" data-available="${Boolean(resolved)}">
-                  <input type="radio" name="${equipmentGrantField(combinationGrant, 0)}" value="${combination.id}" required data-equipment-grant${savedCombination("starting-combination") === combination.id ? " checked" : ""}${resolved ? " " : " disabled"}>
-                  <span class="symbaroum-hud-equipment-choice-marker" aria-hidden="true"></span>
-                  <span class="symbaroum-hud-equipment-choice-name"><strong>${localizeEscaped(`SYMBAROUMHUD.CharacterCreator.Equipment.${combination.label}`)}</strong></span>
-                </label>`).join("")}
-              </div>
-              ${combinations.some(({ resolved }) => resolved) ? "" : `<small class="symbaroum-hud-equipment-missing">${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Equipment.NoMatchingItems")}</small>`}
-            </fieldset>
-          </section>`}
-          <section class="symbaroum-hud-equipment-armor-rule">
-            ${abilityArmorGrant
-              ? `<p>${formatEscaped("SYMBAROUMHUD.CharacterCreator.Equipment.ArmorAlreadyGranted", { ability: abilityArmorGrant.abilityName })}</p>`
-              : `<p>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Equipment.ArmorIntroductionBefore")}
-                ${creationEquipmentItemLink(lightArmor)}${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Equipment.ArmorIntroductionAfter")}</p>`}
-          </section>
-        </main>
-      </div>
-    </div>`;
+          ${choices}
+        </div>
+        <ol>${shopItems.map((item) => equipmentShopEntryContent(item, characterCreatorOriginIndex)).join("")}
+          <li class="symbaroum-hud-browser-empty" data-equipment-shop-empty hidden><i class="fa-solid fa-store-slash" aria-hidden="true"></i><strong>${localizeEscaped("SYMBAROUMHUD.CompendiumBrowser.Shop.Empty")}</strong></li>
+        </ol>
+      </main>
+    </div>
+  </div>`;
 }
 
 function bindEquipmentBook(element, actor) {
@@ -2974,11 +3330,116 @@ function bindEquipmentBook(element, actor) {
   const choices = Array.from(element.querySelectorAll("[data-equipment-grant]"));
   const groups = [...new Set(choices.map((choice) => choice.name))];
   const confirm = element.querySelector('[data-action="choose-equipment"]');
+  const cartField = element.querySelector("[data-equipment-shop-cart]");
+  const cartItems = element.querySelector("[data-equipment-cart-items]");
+  const startingBalance = Number(book?.dataset.startingBalance) || 0;
+  const parseJson = (value, fallback = []) => {
+    try {
+      const parsed = JSON.parse(value || "[]");
+      return Array.isArray(parsed) ? parsed : fallback;
+    } catch (_error) {
+      return fallback;
+    }
+  };
+  const fixedFree = parseJson(book?.dataset.fixedFreeCart);
+  const paidCart = new Map(parseJson(cartField?.value).map((line) => [line.itemId, {
+    itemId: line.itemId,
+    amount: Number(line.amount),
+    quantity: Math.max(1, Number(line.quantity) || 1)
+  }]));
+  let activeCategory = "all";
+  let choosingInitialEquipment = false;
+
+  const entryFor = (itemId) => element.querySelector(`[data-equipment-shop-entry][data-item-id="${globalThis.CSS?.escape?.(itemId) ?? itemId}"]`);
+  const selectedFree = () => choices.filter((choice) => choice.checked)
+    .flatMap((choice) => parseJson(choice.dataset.freeCart));
+  const paidTotal = () => [...paidCart.values()].reduce((total, line) => {
+    const entry = entryFor(line.itemId);
+    const parsed = parseShopPrice(entry?.dataset.itemPrice);
+    const price = selectShopPrice(parsed, line.amount);
+    return total + (price?.ortegs ?? Number.MAX_SAFE_INTEGER) * line.quantity;
+  }, 0);
+  const saveCart = () => {
+    if (cartField) cartField.value = JSON.stringify([...paidCart.values()]);
+  };
+  const paidCartLineContent = (line) => {
+    const entry = entryFor(line.itemId);
+    const price = selectShopPrice(parseShopPrice(entry?.dataset.itemPrice), line.amount);
+    if (!entry || !price) return "";
+    const quantity = Math.max(1, Number(line.quantity) || 1);
+    return `<article class="symbaroum-hud-shop-cart-item" data-paid-item="${escapeHtml(line.itemId)}">
+      <img src="${escapeHtml(entry.querySelector("img")?.getAttribute("src") || "icons/svg/item-bag.svg")}" alt="">
+      <span class="symbaroum-hud-shop-cart-item-name"><strong>${escapeHtml(entry.dataset.itemName)}</strong><small>${escapeHtml(price.raw)}</small></span>
+      <span class="symbaroum-hud-shop-cart-quantity">
+        <button type="button" data-equipment-cart-change="-1" data-item-id="${escapeHtml(line.itemId)}"><i class="fa-solid fa-minus" aria-hidden="true"></i></button>
+        <strong>${quantity}</strong>
+        <button type="button" data-equipment-cart-change="1" data-item-id="${escapeHtml(line.itemId)}"><i class="fa-solid fa-plus" aria-hidden="true"></i></button>
+      </span>
+      <small class="symbaroum-hud-shop-cart-subtotal">${escapeHtml(equipmentShopMoneyLabel(price.ortegs * quantity))}</small>
+      <button type="button" class="symbaroum-hud-shop-cart-remove" data-equipment-cart-remove="${escapeHtml(line.itemId)}"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+    </article>`;
+  };
+
   const refresh = () => {
+    const freeLines = [...fixedFree, ...selectedFree()];
+    const paidLines = [...paidCart.values()];
+    if (cartItems) cartItems.innerHTML = [
+      ...freeLines.map(equipmentShopFreeLineContent),
+      ...paidLines.map(paidCartLineContent)
+    ].join("");
+    const total = paidTotal();
+    const remaining = Math.max(0, startingBalance - total);
+    const money = moneyFromOrtegs(remaining);
+    const count = [...freeLines, ...paidLines].reduce((sum, line) => sum + (Number(line.quantity) || 1), 0);
+    const countNode = element.querySelector("[data-equipment-cart-count]");
+    const totalNode = element.querySelector("[data-equipment-cart-total]");
+    const remainingNode = element.querySelector("[data-equipment-cart-remaining]");
+    if (countNode) countNode.textContent = String(count);
+    if (totalNode) totalNode.textContent = equipmentShopMoneyLabel(total);
+    if (remainingNode) remainingNode.textContent = `${game.i18n.localize("SYMBAROUMHUD.CompendiumBrowser.Shop.CartRemaining")}: ${equipmentShopMoneyLabel(remaining)}`;
+    for (const [denomination, value] of Object.entries(money)) {
+      const node = element.querySelector(`[data-equipment-balance-${denomination}]`);
+      if (node) node.textContent = String(value);
+    }
+    const clear = element.querySelector("[data-equipment-cart-clear]");
+    if (clear) clear.hidden = paidCart.size === 0;
+    for (const entry of element.querySelectorAll("[data-equipment-shop-entry]")) {
+      const line = paidCart.get(entry.dataset.itemId);
+      const price = line
+        ? selectShopPrice(parseShopPrice(entry.dataset.itemPrice), line.amount)
+        : parseShopPrice(entry.dataset.itemPrice);
+      const button = entry.querySelector("[data-equipment-shop-add]");
+      const badge = entry.querySelector("[data-equipment-shop-badge]");
+      const affordable = Boolean(price) && remaining >= price.ortegs;
+      if (button) button.disabled = !affordable;
+      if (badge) {
+        badge.hidden = !line;
+        badge.textContent = line ? String(line.quantity) : "";
+      }
+    }
+    saveCart();
     if (confirm) confirm.disabled = book?.dataset.campingReady !== "true"
       || book?.dataset.equipmentReady !== "true"
-      || groups.some((name) => !choices.some((choice) => choice.name === name && choice.checked));
+      || total > startingBalance;
   };
+  confirm?.addEventListener("click", (event) => {
+    const missingGroup = groups.find((name) => !choices.some((choice) => choice.name === name && choice.checked));
+    if (!missingGroup) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    if (choosingInitialEquipment) return;
+    const missingChoice = choices.find((choice) => choice.name === missingGroup);
+    const fieldset = missingChoice?.closest(".symbaroum-hud-creator-shop-choice");
+    choosingInitialEquipment = true;
+    void promptInitialEquipmentChoice(fieldset, missingGroup).then((value) => {
+      if (!value) return;
+      const selected = choices.find((choice) => choice.name === missingGroup && choice.value === value);
+      if (!selected) return;
+      selected.checked = true;
+      selected.dispatchEvent(new Event("change", { bubbles: true }));
+      globalThis.setTimeout(() => confirm.click(), 0);
+    }).finally(() => { choosingInitialEquipment = false; });
+  });
   for (const choice of choices) choice.addEventListener("change", refresh);
   for (const button of element.querySelectorAll("[data-open-equipment-item]")) button.addEventListener("click", () => {
     const item = actorItems(actor).find((candidate) => candidate.id === button.dataset.openEquipmentItem)
@@ -2986,7 +3447,166 @@ function bindEquipmentBook(element, actor) {
     if (!item) return;
     openCreationItemSheet(item);
   });
+  for (const button of element.querySelectorAll("[data-equipment-shop-add]")) button.addEventListener("click", async () => {
+    const entry = entryFor(button.dataset.equipmentShopAdd);
+    const parsed = parseShopPrice(entry?.dataset.itemPrice);
+    if (!entry || !parsed) return;
+    const existing = paidCart.get(entry.dataset.itemId);
+    let selected = existing ? selectShopPrice(parsed, existing.amount) : selectShopPrice(parsed);
+    if (!selected && parsed.ranged) {
+      const remaining = Math.max(0, startingBalance - paidTotal());
+      const unitValue = parsed.ortegs / parsed.amount;
+      const maximum = Math.min(parsed.maximumAmount, Math.floor(remaining / unitValue));
+      const DialogV2 = dialogClass();
+      selected = await DialogV2?.wait?.({
+        classes: ["symbaroum-hud-shop-dialog"],
+        window: { title: game.i18n.localize("SYMBAROUMHUD.CompendiumBrowser.Shop.CartPriceTitle") },
+        position: { width: 430 },
+        content: `<form class="symbaroum-hud-shop-confirm"><img src="${escapeHtml(entry.querySelector("img")?.getAttribute("src") || "icons/svg/item-bag.svg")}" alt="">
+          <p>${formatEscaped("SYMBAROUMHUD.CompendiumBrowser.Shop.CartPriceText", { item: entry.dataset.itemName, price: parsed.raw })}</p>
+          <label class="symbaroum-hud-shop-price-choice"><span>${localizeEscaped("SYMBAROUMHUD.CompendiumBrowser.Shop.ChoosePrice")}</span>
+            <span class="symbaroum-hud-shop-price-input"><input type="number" name="price" min="${parsed.amount}" max="${maximum}" value="${parsed.amount}" step="1" required></span></label></form>`,
+        buttons: [{ action: "add", icon: "fa-solid fa-cart-shopping", default: true,
+          label: game.i18n.localize("SYMBAROUMHUD.CompendiumBrowser.Shop.AddToCart"),
+          callback: (_event, dialogButton) => selectShopPrice(parsed, formValue(dialogButton.form, "price")) },
+        { action: "cancel", label: game.i18n.localize("Cancel"), callback: () => null }],
+        rejectClose: false
+      });
+    }
+    if (!selected) return;
+    if (paidTotal() + selected.ortegs > startingBalance) {
+      ui.notifications?.warn(game.i18n.localize("SYMBAROUMHUD.CompendiumBrowser.Shop.Insufficient"));
+      return;
+    }
+    paidCart.set(entry.dataset.itemId, {
+      itemId: entry.dataset.itemId,
+      amount: selected.amount,
+      quantity: (existing?.quantity ?? 0) + 1
+    });
+    refresh();
+  });
+  cartItems?.addEventListener("click", (event) => {
+    const change = event.target.closest("[data-equipment-cart-change]");
+    const remove = event.target.closest("[data-equipment-cart-remove]");
+    if (remove) paidCart.delete(remove.dataset.equipmentCartRemove);
+    else if (change) {
+      const line = paidCart.get(change.dataset.itemId);
+      if (!line) return;
+      const quantity = line.quantity + Number(change.dataset.equipmentCartChange);
+      if (quantity <= 0) paidCart.delete(line.itemId);
+      else if (quantity <= 999) {
+        const price = selectShopPrice(parseShopPrice(entryFor(line.itemId)?.dataset.itemPrice), line.amount);
+        if (Number(change.dataset.equipmentCartChange) < 0 || paidTotal() + (price?.ortegs ?? Infinity) <= startingBalance) {
+          paidCart.set(line.itemId, { ...line, quantity });
+        }
+      }
+    } else return;
+    refresh();
+  });
+  element.querySelector("[data-equipment-cart-clear]")?.addEventListener("click", () => {
+    paidCart.clear();
+    refresh();
+  });
+
+  const applyFilters = () => {
+    const query = normalizeName(element.querySelector("[data-equipment-shop-search]")?.value);
+    const enabledOrigins = new Set(Array.from(element.querySelectorAll("[data-equipment-shop-origin]:checked"), (input) => input.value));
+    let visible = 0;
+    for (const entry of element.querySelectorAll("[data-equipment-shop-entry]")) {
+      const matches = (activeCategory === "all" || entry.dataset.itemType === activeCategory)
+        && (!query || normalizeName(entry.dataset.itemName).includes(query))
+        && enabledOrigins.has(entry.dataset.itemOrigin);
+      entry.hidden = !matches;
+      if (matches) visible += 1;
+    }
+    const count = element.querySelector("[data-equipment-result-count]");
+    const empty = element.querySelector("[data-equipment-shop-empty]");
+    if (count) count.textContent = String(visible);
+    if (empty) empty.hidden = visible > 0;
+  };
+  const search = element.querySelector("[data-equipment-shop-search]");
+  const clearSearch = element.querySelector("[data-equipment-shop-clear]");
+  search?.addEventListener("input", () => {
+    if (clearSearch) clearSearch.hidden = !search.value;
+    applyFilters();
+  });
+  clearSearch?.addEventListener("click", () => {
+    search.value = "";
+    clearSearch.hidden = true;
+    applyFilters();
+    search.focus();
+  });
+  for (const tab of element.querySelectorAll("[data-equipment-shop-category]")) tab.addEventListener("click", () => {
+    activeCategory = tab.dataset.equipmentShopCategory;
+    for (const candidate of element.querySelectorAll("[data-equipment-shop-category]")) {
+      const active = candidate === tab;
+      candidate.dataset.active = String(active);
+      candidate.setAttribute("aria-pressed", String(active));
+    }
+    applyFilters();
+  });
+  for (const origin of element.querySelectorAll("[data-equipment-shop-origin]")) origin.addEventListener("change", applyFilters);
+  element.querySelector("[data-equipment-shop-filter-toggle]")?.addEventListener("click", () => {
+    const panel = element.querySelector("[data-equipment-shop-filter-panel]");
+    if (panel) panel.hidden = !panel.hidden;
+  });
+  element.querySelector("[data-equipment-rules-toggle]")?.addEventListener("click", () => {
+    const rules = element.querySelector(".symbaroum-hud-creator-shop-rules");
+    if (rules) rules.hidden = !rules.hidden;
+  });
   refresh();
+  applyFilters();
+  globalThis.setTimeout(refresh, 0);
+}
+
+async function promptInitialEquipmentChoice(fieldset, groupName) {
+  if (!fieldset || !groupName) return null;
+  const DialogV2 = dialogClass();
+  if (!DialogV2) return null;
+  const choice = fieldset.cloneNode(true);
+  choice.removeAttribute("data-attention");
+  for (const input of choice.querySelectorAll("input")) input.checked = false;
+  return DialogV2.wait({
+    classes: [
+      "symbaroum-hud-character-creator-dialog",
+      "symbaroum-hud-initial-equipment-dialog"
+    ],
+    window: {
+      title: game.i18n.localize("SYMBAROUMHUD.CharacterCreator.Equipment.InitialChoiceTitle")
+    },
+    position: { width: 700 },
+    content: `<div class="symbaroum-hud-initial-equipment-choice">
+      <header><i class="fa-solid fa-shield-halved" aria-hidden="true"></i><div>
+        <h2>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Equipment.InitialChoiceTitle")}</h2>
+        <p>${localizeEscaped(groupName.includes("marksman")
+          ? "SYMBAROUMHUD.CharacterCreator.Equipment.MarksmanRequired"
+          : "SYMBAROUMHUD.CharacterCreator.Equipment.StartingRulesWeapons")}</p>
+      </div></header>
+      <p>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Equipment.StartingChoiceHint")}</p>
+      ${choice.outerHTML}
+    </div>`,
+    buttons: [{
+      action: "choose",
+      icon: "fa-solid fa-check",
+      label: game.i18n.localize("SYMBAROUMHUD.CharacterCreator.Equipment.ConfirmInitialChoice"),
+      default: true,
+      callback: (_event, button) => formValue(button.form, groupName) || null
+    }, {
+      action: "cancel",
+      label: game.i18n.localize("Cancel"),
+      callback: () => null
+    }],
+    rejectClose: false,
+    render: (_event, dialog) => {
+      const inputs = Array.from(dialog.element?.querySelectorAll(`input[name="${globalThis.CSS?.escape?.(groupName) ?? groupName}"]`) ?? []);
+      const confirmChoice = dialog.element?.querySelector('[data-action="choose"]');
+      const refreshChoice = () => {
+        if (confirmChoice) confirmChoice.disabled = !inputs.some((input) => input.checked);
+      };
+      for (const input of inputs) input.addEventListener("change", refreshChoice);
+      refreshChoice();
+    }
+  });
 }
 
 function personalityBookContent(actor) {
@@ -3161,15 +3781,6 @@ function bindFriendsBook(element) {
   if (confirm) confirm.disabled = false;
 }
 
-function creationEquipmentData(source, quantity = 1) {
-  const clone = globalThis.foundry?.utils?.deepClone ?? ((value) => structuredClone(value));
-  const data = clone(source.toObject ? source.toObject() : source);
-  delete data._id;
-  data.system ??= {};
-  data.system.number = quantity;
-  return data;
-}
-
 function abilitySheetLoadingContent() {
   return `<div class="symbaroum-hud-ability-sheet-loading">
     <i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i>
@@ -3185,20 +3796,7 @@ function abilitySheetUnavailableContent() {
 }
 
 async function renderCreationAbilitySheet(ability) {
-  const sheet = ability?.sheet;
-  const renderTemplate = foundry?.applications?.handlebars?.renderTemplate;
-  if (!sheet?.getData || !renderTemplate) return "";
-  const data = await sheet.getData();
-  data.owner = false;
-  data.editable = false;
-  data.isOwned = false;
-  data.cssClass = "locked";
-  const template = sheet.options?.template ?? "systems/symbaroum/template/sheet/ability.hbs";
-  const rendered = await renderTemplate(template, data);
-  return String(rendered)
-    .replace(/^\s*<form\b[^>]*>/i, "")
-    .replace(/<\/form>\s*$/i, "")
-    .replace(/<(input|select|textarea)\b/gi, "<$1 disabled");
+  return renderEmbeddedItemSheet(ability);
 }
 
 async function mysticalPowerChoiceContent(ability, mysticalPowers, costs, originIndex, sourceId) {
@@ -3381,31 +3979,7 @@ function bindAbilitiesBook(element, racialCost, {
   const bindNativeAbilitySheetTabs = (page) => {
     const host = page?.querySelector("[data-ability-sheet-host]");
     if (!host || host.dataset.abilityTabsBound === "true") return;
-    const tabs = [...host.querySelectorAll(".sheet-tabs [data-tab]")];
-    const panels = [...host.querySelectorAll(".sheet-body > .tab[data-tab]")];
-    if (!tabs.length) return;
-    host.dataset.abilityTabsBound = "true";
-    const activateTab = (tab) => {
-      for (const candidate of tabs) {
-        const active = candidate === tab;
-        candidate.classList.toggle("active", active);
-        candidate.setAttribute("aria-pressed", String(active));
-      }
-      for (const panel of panels) {
-        const active = panel.dataset.tab === tab.dataset.tab;
-        panel.classList.toggle("active", active);
-        panel.hidden = !active;
-      }
-    };
-    for (const tab of tabs) {
-      tab.setAttribute("role", "button");
-      tab.setAttribute("tabindex", "0");
-      tab.addEventListener("click", () => activateTab(tab));
-      tab.addEventListener("keydown", (event) => {
-        if (event.key === "Enter" || event.key === " ") activateTab(tab);
-      });
-    }
-    activateTab(tabs[0]);
+    if (activateEmbeddedItemSheetTabs(host)) host.dataset.abilityTabsBound = "true";
   };
   const loadAbilityPageSheet = async (page) => {
     const host = page?.querySelector("[data-ability-sheet-host]");

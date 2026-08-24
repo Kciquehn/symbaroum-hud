@@ -440,7 +440,7 @@
   display: grid;
   height: 100%;
   min-height: 0;
-  grid-template-columns: minmax(390px, 1.18fr) minmax(250px, 0.82fr);
+  grid-template-columns: minmax(360px, 1.12fr) minmax(270px, 0.88fr);
   align-items: stretch;
   gap: 12px;
 }
@@ -449,9 +449,9 @@
   position: relative;
   align-self: center;
   width: 100%;
-  min-height: 300px;
-  max-height: 440px;
-  padding: 20px 22px 18px;
+  min-height: 0;
+  max-height: 410px;
+  padding: 16px 18px 14px;
   overflow-y: auto;
   border: 5px double #171713;
   border-radius: 24px;
@@ -468,7 +468,7 @@
   margin: 0;
   color: #24211c;
   font-family: var(--font-text, "Philosopher"), serif;
-  font-size: 1.22rem;
+  font-size: 1.1rem;
   font-weight: 700;
   letter-spacing: 0.035em;
   text-transform: uppercase;
@@ -476,7 +476,7 @@
 
 .symbaroum-hud-occupation-journal-card hr {
   height: 1px;
-  margin: 12px 0 13px;
+  margin: 9px 0 10px;
   border: 0;
   background: rgb(255 255 255 / 78%);
   box-shadow: 0 1px 0 rgb(73 53 31 / 28%);
@@ -491,33 +491,33 @@
 }
 
 .symbaroum-hud-occupation-page .symbaroum-hud-occupation-summary {
-  font-size: 0.86rem;
-  line-height: 1.42;
+  font-size: 0.77rem;
+  line-height: 1.37;
   text-align: left;
 }
 
 .symbaroum-hud-occupation-journal-card blockquote {
-  margin: 9px 4px 0;
+  margin: 8px 4px 0;
   padding: 0;
   border: 0;
   color: #4f473e;
   font-family: var(--font-serif, serif);
-  font-size: 0.8rem;
+  font-size: 0.74rem;
   font-style: italic;
   line-height: 1.3;
 }
 
 .symbaroum-hud-occupation-facts {
-  margin: 13px 0 0;
-  padding-left: 20px;
+  margin: 10px 0 0;
+  padding-left: 18px;
   font-family: var(--font-serif, serif);
-  font-size: 0.8rem;
-  line-height: 1.34;
+  font-size: 0.74rem;
+  line-height: 1.28;
 }
 
 .symbaroum-hud-occupation-facts li {
-  margin-bottom: 4px;
-  padding-left: 3px;
+  margin-bottom: 3px;
+  padding-left: 2px;
 }
 
 .symbaroum-hud-occupation-facts strong,
@@ -979,6 +979,41 @@
   text-align: center;
 }
 
+.symbaroum-hud-race-occupation-recommendation {
+  margin: 0 0 9px;
+  padding: 7px 8px;
+  border: 1px solid rgb(198 177 117 / 46%);
+  color: #eee4c8;
+  background: rgb(0 0 0 / 30%);
+  box-shadow: inset 0 0 6px rgb(0 0 0 / 62%);
+}
+
+.symbaroum-hud-race-occupation-recommendation header {
+  display: flex;
+  padding-bottom: 4px;
+  align-items: center;
+  gap: 5px;
+  border-bottom: 1px solid rgb(198 177 117 / 28%);
+  color: #c9a849;
+  font-family: "Symbaroum HUD Primitive", "Philosopher", serif;
+  font-size: 0.62rem;
+}
+
+.symbaroum-hud-race-occupation-recommendation > strong {
+  display: block;
+  margin-top: 5px;
+  color: #fff;
+  font-family: "Symbaroum HUD Primitive", "Philosopher", serif;
+  font-size: 0.72rem;
+}
+
+.symbaroum-hud-race-occupation-recommendation > p {
+  margin: 2px 0 0;
+  color: #e4d6af;
+  font-size: 0.67rem;
+  line-height: 1.3;
+}
+
 .symbaroum-hud-race-index h2 {
   margin: 0;
   color: #f3e6c5;
@@ -1020,8 +1055,31 @@
 }
 
 .symbaroum-hud-race-index-entry > span {
+  display: grid;
+  min-width: 0;
+  gap: 1px;
   font-family: "Symbaroum HUD Primitive", "Philosopher", serif;
   font-size: 0.8rem;
+}
+
+.symbaroum-hud-race-index-entry > span > small {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 4px;
+  overflow: hidden;
+  color: #b8c98b;
+  font-family: "Signika", sans-serif;
+  font-size: 0.55rem;
+  font-weight: 600;
+  line-height: 1.15;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.symbaroum-hud-race-index button.symbaroum-hud-race-index-entry[data-occupation-recommended="true"] {
+  border-left: 3px solid #829b51;
+  background: linear-gradient(90deg, rgb(70 91 47 / 34%), rgb(0 0 0 / 20%));
 }
 
 .symbaroum-hud-race-index button.symbaroum-hud-race-index-entry:hover,
@@ -1591,6 +1649,44 @@ button.symbaroum-hud-ability-index-entry[hidden] { display: none; }
 .symbaroum-hud-ability-index-entry[data-tradition-recommended="true"] {
   min-height: 48px;
   border-left: 2px solid #a38b3c;
+}
+
+/* Categoria automática exibida como o último campo da aba Bônus da ficha original. */
+.symbaroum.sheet.item .bonus .symbaroum-hud-item-category input[readonly] {
+  cursor: default;
+  font-weight: 700;
+  text-overflow: ellipsis;
+}
+
+.symbaroum.sheet.item .bonus .symbaroum-hud-item-category button[data-symbaroum-hud-item-category-edit] {
+  width: 100%;
+  min-width: 0;
+  height: auto;
+  margin: 0;
+  padding: 2px 8px;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-left: 0;
+  border-radius: 0;
+  color: var(--color-text);
+  background: var(--box-editable) repeat;
+  box-shadow: inset 0 0 6px black;
+  font-family: var(--font-text);
+  font-size: 14px;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.symbaroum.sheet.item .bonus .symbaroum-hud-item-category button[data-symbaroum-hud-item-category-edit]:hover,
+.symbaroum.sheet.item .bonus .symbaroum-hud-item-category button[data-symbaroum-hud-item-category-edit]:focus-visible {
+  color: #fff1b8;
+  text-shadow: 0 0 5px #000;
+}
+
+.symbaroum.sheet.item .bonus .symbaroum-hud-item-category input[readonly]:focus {
+  box-shadow: inset 0 0 6px black;
 }
 .symbaroum-hud-ability-index-entry strong { color: #aeca75; font-size: 0.52rem; text-transform: uppercase; }
 button.symbaroum-hud-ability-index-entry:hover,
@@ -2843,7 +2939,7 @@ button.symbaroum-hud-shadow-example { font-size: 0.56rem; }
   min-height: 178px;
   margin: 0;
   padding: 0;
-  overflow: hidden;
+  overflow: visible;
   border: 2px solid #050505;
   border-radius: 2px;
   color: var(--color-light-1, #f7f3e8);
@@ -2902,6 +2998,7 @@ button.symbaroum-hud-shadow-example { font-size: 0.56rem; }
   padding: 0;
   border: 0;
   border-radius: 0;
+  overflow: hidden;
   background: #050505;
   box-shadow: none;
 }
@@ -2939,7 +3036,7 @@ button.symbaroum-hud-shadow-example { font-size: 0.56rem; }
   padding: 2px;
   grid-template-columns: 21px minmax(0, 1fr) 21px;
   align-items: center;
-  overflow: hidden;
+  overflow: visible;
   border-bottom: 1px solid rgb(255 255 255 / 16%);
   font-size: var(--font-size-13, 0.8125rem);
   font-weight: bold;
@@ -3025,6 +3122,75 @@ button.symbaroum-hud-shadow-example { font-size: 0.56rem; }
   box-shadow: none !important;
   opacity: 0;
   pointer-events: none;
+}
+
+#symbaroum-hud .symbaroum-hud-owned-actor-picker {
+  position: absolute;
+  z-index: 40;
+  top: calc(100% + 3px);
+  left: -2px;
+  display: grid;
+  width: 220px;
+  max-height: 230px;
+  padding: 4px;
+  overflow-y: auto;
+  border: 1px solid #a98b35;
+  gap: 3px;
+  color: #eee4c8;
+  background:
+    linear-gradient(rgb(3 5 4 / 76%), rgb(3 5 4 / 90%)),
+    var(--symbaroum-hud-title) repeat;
+  box-shadow: 0 5px 14px rgb(0 0 0 / 82%), inset 0 0 8px #000;
+  scrollbar-color: #8e2d25 #17120f;
+  scrollbar-width: thin;
+  text-align: left;
+}
+
+#symbaroum-hud .symbaroum-hud-owned-actor-picker[hidden] {
+  display: none !important;
+}
+
+#symbaroum-hud .symbaroum-hud-owned-actor-picker > button {
+  display: grid;
+  width: 100%;
+  min-height: 38px;
+  margin: 0;
+  padding: 4px 6px;
+  grid-template-columns: 30px minmax(0, 1fr) 16px;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid rgb(198 177 117 / 25%);
+  border-radius: 0;
+  color: #eee4c8;
+  background: rgb(0 0 0 / 38%);
+  box-shadow: inset 0 0 5px rgb(0 0 0 / 65%);
+  font: 0.72rem "Symbaroum HUD Primitive", "Philosopher", serif;
+  text-align: left;
+}
+
+#symbaroum-hud .symbaroum-hud-owned-actor-picker > button:is(:hover, :focus-visible, [data-active="true"]) {
+  border-color: #c5a83f;
+  color: #fff3c7;
+  background: linear-gradient(90deg, rgb(91 37 27 / 86%), rgb(28 22 16 / 78%));
+  outline: none;
+}
+
+#symbaroum-hud .symbaroum-hud-owned-actor-picker img {
+  width: 30px;
+  height: 30px;
+  border: 1px solid #8f742b;
+  object-fit: cover;
+}
+
+#symbaroum-hud .symbaroum-hud-owned-actor-picker span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#symbaroum-hud .symbaroum-hud-owned-actor-picker i {
+  color: #d8ba45;
+  text-align: center;
 }
 
 #symbaroum-hud .symbaroum-hud-character-resources {
@@ -3151,6 +3317,11 @@ button.symbaroum-hud-shadow-example { font-size: 0.56rem; }
 }
 
 #symbaroum-hud .symbaroum-hud-card-row[data-hud-collapsed="true"]
+  > .symbaroum-hud-character-card {
+  margin-left: 6px;
+}
+
+#symbaroum-hud .symbaroum-hud-card-row[data-hud-collapsed="true"]
   > button.symbaroum-hud-collapse-toggle {
   position: static;
   right: auto;
@@ -3167,6 +3338,17 @@ button.symbaroum-hud-shadow-example { font-size: 0.56rem; }
 }
 
 #symbaroum-hud:has(.symbaroum-hud-card-row[data-hud-collapsed="true"]) .symbaroum-hud-status-summary {
+  left: 30px;
+  width: 150px;
+  max-width: 150px;
+}
+
+#symbaroum-hud:has(.symbaroum-hud-card-row[data-hud-collapsed="true"]) .symbaroum-hud-effects {
+  width: 150px;
+  max-width: 150px;
+}
+
+#symbaroum-hud:has(.symbaroum-hud-card-row[data-hud-collapsed="true"]) .symbaroum-hud-tactics {
   display: none;
 }
 
@@ -7674,6 +7856,225 @@ body:has(#symbaroum-hud .symbaroum-hud-ammo-recovery-slot) > #tenebre-ammo-hud-l
   color: #fff3c5;
 }
 
+#symbaroum-hud .symbaroum-hud-services-page {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  min-width: 0;
+  min-height: 0;
+  padding: 10px;
+  overflow: hidden;
+  background:
+    linear-gradient(rgb(9 11 9 / 82%), rgb(9 11 9 / 82%)),
+    var(--symbaroum-hud-browser-results) repeat;
+}
+
+#symbaroum-hud .symbaroum-hud-services-intro {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 9px 11px;
+  border: 1px solid #6d5920;
+  border-bottom: 2px solid #ad8d2d;
+  background: #080a08 var(--symbaroum-hud-title) repeat;
+}
+
+#symbaroum-hud .symbaroum-hud-services-intro > span {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
+  place-items: center;
+  border: 1px solid #8a7024;
+  color: #e0bd47;
+  background: rgb(0 0 0 / 72%);
+  font-size: 1.1rem;
+}
+
+#symbaroum-hud .symbaroum-hud-services-intro h3,
+#symbaroum-hud .symbaroum-hud-services-intro p {
+  margin: 0;
+}
+
+#symbaroum-hud .symbaroum-hud-services-intro h3 {
+  color: #f4e4b5;
+  font-family: "Symbaroum HUD Primitive", "Philosopher", serif;
+  font-size: 1.15rem;
+}
+
+#symbaroum-hud .symbaroum-hud-services-intro p {
+  margin-top: 2px;
+  color: #bdb39c;
+  font-size: 0.75rem;
+}
+
+#symbaroum-hud .symbaroum-hud-services-list {
+  min-height: 0;
+  overflow-y: auto;
+  border: 1px solid #66551f;
+  border-top: 0;
+  scrollbar-color: #8d7325 #080a08;
+}
+
+#symbaroum-hud .symbaroum-hud-service-record {
+  display: grid;
+  grid-template-columns: 54px minmax(0, 1fr) auto;
+  gap: 10px;
+  min-height: 78px;
+  padding: 9px;
+  align-items: start;
+  border-bottom: 1px dotted rgb(181 157 76 / 44%);
+  background: var(--symbaroum-hud-browser-row);
+}
+
+#symbaroum-hud .symbaroum-hud-service-record:nth-child(even) {
+  background: var(--symbaroum-hud-browser-row-alt);
+}
+
+#symbaroum-hud .symbaroum-hud-service-record[data-status="expired"],
+#symbaroum-hud .symbaroum-hud-service-record[data-status="completed"] {
+  opacity: 0.68;
+}
+
+#symbaroum-hud .symbaroum-hud-service-record > img {
+  width: 50px;
+  height: 50px;
+  border: 1px solid #2d2417;
+  object-fit: cover;
+  background: #080a08;
+  box-shadow: 0 0 0 2px #a98b35;
+}
+
+#symbaroum-hud .symbaroum-hud-service-record-main {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+#symbaroum-hud .symbaroum-hud-service-record-main > header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+#symbaroum-hud .symbaroum-hud-service-record-main > header > span {
+  display: grid;
+  min-width: 0;
+}
+
+#symbaroum-hud .symbaroum-hud-service-record-main strong {
+  overflow: hidden;
+  color: #f3e7c8;
+  font-family: "Symbaroum HUD Primitive", "Philosopher", serif;
+  font-size: 0.98rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#symbaroum-hud .symbaroum-hud-service-record-main small {
+  color: #c4ab62;
+  font-size: 0.68rem;
+}
+
+#symbaroum-hud .symbaroum-hud-service-record-main > header em {
+  display: inline-flex;
+  padding: 3px 6px;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid #647d32;
+  color: #ddeb98;
+  background: rgb(43 61 18 / 48%);
+  font-size: 0.64rem;
+  font-style: normal;
+  white-space: nowrap;
+}
+
+#symbaroum-hud .symbaroum-hud-service-record-main > header em[data-status="expired"],
+#symbaroum-hud .symbaroum-hud-service-record-main > header em[data-status="completed"] {
+  border-color: #6f5d43;
+  color: #c4b69f;
+  background: rgb(49 39 29 / 62%);
+}
+
+#symbaroum-hud .symbaroum-hud-service-record-main > p {
+  margin: 0;
+  color: #cdc4b1;
+  font-size: 0.74rem;
+  line-height: 1.32;
+}
+
+#symbaroum-hud .symbaroum-hud-service-record-main dl {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin: 0;
+  color: #bdb39c;
+  font-size: 0.66rem;
+}
+
+#symbaroum-hud .symbaroum-hud-service-record-main dl > div {
+  display: inline-flex;
+  gap: 4px;
+}
+
+#symbaroum-hud .symbaroum-hud-service-record-main dt {
+  color: #9e8849;
+  font-weight: 700;
+}
+
+#symbaroum-hud .symbaroum-hud-service-record-main dd { margin: 0; }
+
+#symbaroum-hud .symbaroum-hud-service-record-actions {
+  display: grid;
+  gap: 5px;
+  align-self: center;
+}
+
+#symbaroum-hud .symbaroum-hud-service-record-actions > button {
+  display: inline-flex;
+  min-width: 34px;
+  min-height: 30px;
+  margin: 0;
+  padding: 0 8px;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  border: 1px solid #806925;
+  border-radius: 0;
+  color: #ead57f;
+  background: rgb(7 9 7 / 88%);
+  font-size: 0.68rem;
+}
+
+#symbaroum-hud .symbaroum-hud-service-record-actions > button:hover,
+#symbaroum-hud .symbaroum-hud-service-record-actions > button:focus-visible {
+  border-color: #d1aa35;
+  color: #fff1aa;
+  box-shadow: 0 0 5px rgb(209 170 53 / 38%);
+}
+
+#symbaroum-hud .symbaroum-hud-service-record-actions > button.symbaroum-hud-service-record-remove {
+  color: #c99583;
+}
+
+#symbaroum-hud .symbaroum-hud-services-empty {
+  display: grid;
+  min-height: 220px;
+  padding: 28px;
+  place-items: center;
+  align-content: center;
+  color: #a99d84;
+  text-align: center;
+}
+
+#symbaroum-hud .symbaroum-hud-services-empty > i {
+  margin-bottom: 10px;
+  color: #8e762b;
+  font-size: 2rem;
+}
+
+#symbaroum-hud .symbaroum-hud-services-empty > p { margin: 5px 0 0; font-size: 0.76rem; }
+
 #symbaroum-hud .symbaroum-hud-storage-quantity,
 #symbaroum-hud button.symbaroum-hud-storage-state {
   border-color: rgb(181 157 76 / 22%);
@@ -8019,4 +8420,469 @@ body:has(#symbaroum-hud .symbaroum-hud-ammo-recovery-slot) > #tenebre-ammo-hud-l
   box-shadow:
     inset 3px 0 #d2aa35,
     0 0 5px rgb(201 164 58 / 32%);
+}
+
+/* Compact HUD Ability browser backed by the real Symbaroum Item sheet. */
+#symbaroum-hud #symbaroum-hud-abilities-panel,
+#symbaroum-hud #symbaroum-hud-traits-panel {
+  width: min(760px, calc(100vw - 16px));
+  height: min(460px, calc(100vh - 190px));
+  min-height: 310px;
+}
+
+#symbaroum-hud #symbaroum-hud-abilities-panel .symbaroum-hud-abilities-body,
+#symbaroum-hud #symbaroum-hud-traits-panel .symbaroum-hud-abilities-body {
+  grid-template-columns: 190px minmax(0, 1fr);
+}
+
+#symbaroum-hud #symbaroum-hud-abilities-panel .symbaroum-hud-abilities-sidebar,
+#symbaroum-hud #symbaroum-hud-traits-panel .symbaroum-hud-abilities-sidebar {
+  padding: 6px;
+  gap: 4px;
+}
+
+#symbaroum-hud #symbaroum-hud-abilities-panel .symbaroum-hud-native-ability-detail {
+  display: grid;
+  padding: 7px;
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: 6px;
+  overflow: hidden;
+  background:
+    linear-gradient(rgb(6 9 7 / 72%), rgb(6 9 7 / 72%)),
+    var(--symbaroum-hud-browser-results) repeat;
+}
+
+#symbaroum-hud #symbaroum-hud-abilities-panel .symbaroum-hud-native-ability-sheet--hud {
+  position: relative;
+  z-index: 1;
+  box-sizing: border-box;
+  height: 100%;
+  min-height: 0;
+  padding: 6px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  border: 1px solid #181a14;
+  outline: 1px solid #897329;
+  outline-offset: -3px;
+  background: var(--color-charBG, #526247);
+  box-shadow:
+    inset 0 0 14px rgb(0 0 0 / 42%),
+    0 2px 5px rgb(0 0 0 / 52%);
+  scrollbar-color: #8f7426 #11150f;
+  scrollbar-width: thin;
+}
+
+#symbaroum-hud #symbaroum-hud-abilities-panel .symbaroum-hud-native-ability-sheet--hud .sheet-header {
+  position: relative;
+  z-index: 1;
+}
+
+#symbaroum-hud #symbaroum-hud-abilities-panel .symbaroum-hud-native-ability-sheet--hud .sheet-tabs {
+  position: sticky;
+  top: -6px;
+  z-index: 4;
+}
+
+#symbaroum-hud #symbaroum-hud-abilities-panel .symbaroum-hud-native-ability-sheet--hud input[name$=".isActive"] {
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+#symbaroum-hud #symbaroum-hud-abilities-panel .symbaroum-hud-native-ability-actions {
+  position: relative;
+  z-index: 6;
+  display: flex;
+  min-height: 34px;
+  padding: 4px 5px;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 5px;
+  border: 1px solid #67541e;
+  background:
+    linear-gradient(rgb(4 7 5 / 72%), rgb(4 7 5 / 72%)),
+    var(--symbaroum-hud-title) repeat;
+  box-shadow: inset 0 0 7px rgb(0 0 0 / 58%);
+}
+
+#symbaroum-hud #symbaroum-hud-abilities-panel .symbaroum-hud-native-ability-actions button {
+  margin: 0;
+}
+
+@media (max-width: 760px) {
+  #symbaroum-hud #symbaroum-hud-abilities-panel,
+  #symbaroum-hud #symbaroum-hud-traits-panel {
+    width: calc(100vw - 12px);
+    height: min(430px, calc(100vh - 170px));
+  }
+
+  #symbaroum-hud #symbaroum-hud-abilities-panel .symbaroum-hud-abilities-body,
+  #symbaroum-hud #symbaroum-hud-traits-panel .symbaroum-hud-abilities-body {
+    grid-template-columns: 156px minmax(0, 1fr);
+  }
+}
+
+/*
+ * HUD skin for the embedded native Ability sheet.
+ * The markup and data still come from Symbaroum's real Item sheet; these rules
+ * only make that sheet match the established HUD ability browser.
+ */
+#symbaroum-hud #symbaroum-hud-abilities-panel .symbaroum-hud-native-ability-detail {
+  position: relative;
+  padding: 7px;
+  grid-template-rows: minmax(0, 1fr);
+  gap: 0;
+  border-left: 1px solid #846b24;
+}
+
+#symbaroum-hud #symbaroum-hud-abilities-panel .symbaroum-hud-native-ability-sheet--hud {
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid #94762a;
+  outline: 1px solid rgb(0 0 0 / 82%);
+  outline-offset: -3px;
+  color: #e8e0cc;
+  background: rgb(5 7 6 / 94%);
+}
+
+#symbaroum-hud #symbaroum-hud-abilities-panel .symbaroum-hud-native-ability-sheet--hud .ability {
+  display: grid;
+  height: 100%;
+  grid-template-rows: 94px 42px minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
+  align-content: stretch;
+}
+
+#symbaroum-hud #symbaroum-hud-abilities-panel .symbaroum-hud-native-ability-sheet--hud .sheet-header {
+  position: relative;
+  min-height: 0;
+  margin: 0;
+  padding: 8px 172px 8px 8px;
+  border: 0;
+  border-bottom: 1px solid #95792a;
+  align-items: center;
+  background:
+    linear-gradient(90deg, rgb(5 10 7 / 36%), rgb(3 6 4 / 70%)),
+    var(--symbaroum-hud-green-ornament) center / cover;
+  box-shadow: inset 0 0 16px rgb(0 0 0 / 62%);
+}
+
+#symbaroum-hud #symbaroum-hud-abilities-panel .symbaroum-hud-native-ability-sheet--hud .sheet-header .avatar {
+  width: 76px;
+  height: 76px;
+  margin: 0 10px 0 0;
+  padding: 3px;
+  border: 1px solid #b6922c;
+  background: #080a08;
+  box-shadow:
+    inset 0 0 0 2px #151a13,
+    0 0 7px rgb(0 0 0 / 65%);
+}
+
+#symbaroum-hud #symbaroum-hud-abilities-panel .symbaroum-hud-native-ability-sheet--hud .sheet-header .avatar img,
+#symbaroum-hud #symbaroum-hud-abilities-panel .symbaroum-hud-native-ability-sheet--hud .sheet-header .avatar button {
+  width: 68px;
+  height: 68px;
+  object-fit: cover;
+}
+
+#symbaroum-hud #symbaroum-hud-abilities-panel .symbaroum-hud-native-ability-sheet--hud .sheet-header .wrapper-column {
+  min-width: 0;
+  margin: 0;
+  justify-content: center;
+}
+
+#symbaroum-hud #symbaroum-hud-abilities-panel .symbaroum-hud-native-ability-sheet--hud .sheet-header .name {
+  min-height: 0;
+  margin: 0;
+  align-items: flex-start;
+}
+
+#symbaroum-hud #symbaroum-hud-abilities-panel .symbaroum-hud-native-ability-sheet--hud .sheet-header .name label {
+  display: none;
+}
+
+#symbaroum-hud #symbaroum-hud-abilities-panel .symbaroum-hud-native-ability-sheet--hud .sheet-header .name input,
+#symbaroum-hud #symbaroum-hud-abilities-panel .symbaroum-hud-native-ability-sheet--hud .sheet-header .name input:disabled {
+  width: 100%;
+  height: auto;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  color: #f3ead0;
+  background: transparent;
+  box-shadow: none;
+  opacity: 1;
+  text-align: left;
+  text-overflow: ellipsis;
+  -webkit-text-fill-color: currentColor;
+}
+
+#symbaroum-hud #symbaroum-hud-abilities-panel .symbaroum-hud-native-ability-sheet--hud .sheet-header .name:first-child input {
+  font-family: var(--font-text, serif);
+  font-size: 1.55rem;
+  font-weight: 700;
+  line-height: 1.15;
+  text-shadow: 0 2px 2px #000;
+}
+
+#symbaroum-hud #symbaroum-hud-abilities-panel .symbaroum-hud-native-ability-sheet--hud .sheet-header .name:nth-child(2) {
+  position: relative;
+  margin-top: 5px;
+  padding-left: 11px;
+}
+
+#symbaroum-hud #symbaroum-hud-abilities-panel .symbaroum-hud-native-ability-sheet--hud .sheet-header .name:nth-child(2)::before {
+  position: absolute;
+  inset: 1px auto 1px 0;
+  width: 2px;
+  content: "";
+  background: #b7952f;
+}
+
+#symbaroum-hud #symbaroum-hud-abilities-panel .symbaroum-hud-native-ability-sheet--hud .sheet-header .name:nth-child(2) input {
+  color: #bdb59e;
+  font-size: 0.65rem;
+  font-weight: 500;
+}
+
+#symbaroum-hud #symbaroum-hud-abilities-panel .symbaroum-hud-native-ability-sheet--hud .sheet-tabs {
+  position: relative;
+  top: auto;
+  z-index: 3;
+  min-height: 0;
+  height: 42px;
+  margin: 0;
+  padding: 0;
+  border-bottom: 1px solid #9c7c27;
+  align-items: stretch;
+  background: rgb(5 7 6 / 97%);
+  box-shadow: inset 0 -5px 10px rgb(0 0 0 / 42%);
+}
+
+#symbaroum-hud #symbaroum-hud-abilities-panel .symbaroum-hud-native-ability-sheet--hud .sheet-tabs .item {
+  display: flex;
+  margin: 0;
+  border-right: 1px solid #765f20;
+  align-items: center;
+  justify-content: center;
+  color: #d2cab5;
+  background: rgb(8 10 8 / 38%);
+  font-size: 0.66rem;
+  font-weight: 700;
+  text-shadow: 0 1px 2px #000;
+}
+
+#symbaroum-hud #symbaroum-hud-abilities-panel .symbaroum-hud-native-ability-sheet--hud .sheet-tabs .item:last-child {
+  border-right: 0;
+}
+
+#symbaroum-hud #symbaroum-hud-abilities-panel .symbaroum-hud-native-ability-sheet--hud .sheet-tabs .item:is(:hover, :focus-visible) {
+  color: #fff1ae;
+  background: rgb(157 125 36 / 14%);
+  text-shadow: 0 0 5px rgb(213 177 66 / 42%);
+}
+
+#symbaroum-hud #symbaroum-hud-abilities-panel .symbaroum-hud-native-ability-sheet--hud .sheet-tabs .item.active {
+  color: #f3db71;
+  background:
+    linear-gradient(rgb(134 103 23 / 20%), rgb(24 21 12 / 46%)),
+    var(--symbaroum-hud-title) center / cover;
+  box-shadow: inset 3px 0 #c49d2f;
+  text-shadow: 0 0 5px rgb(215 175 53 / 50%);
+}
+
+#symbaroum-hud #symbaroum-hud-abilities-panel .symbaroum-hud-native-ability-sheet--hud .ability:has(.sheet-body [data-tab="novice"] input[name$=".isActive"]:checked) .sheet-tabs [data-tab="novice"]::before,
+#symbaroum-hud #symbaroum-hud-abilities-panel .symbaroum-hud-native-ability-sheet--hud .ability:has(.sheet-body [data-tab="adept"] input[name$=".isActive"]:checked) .sheet-tabs [data-tab="adept"]::before,
+#symbaroum-hud #symbaroum-hud-abilities-panel .symbaroum-hud-native-ability-sheet--hud .ability:has(.sheet-body [data-tab="master"] input[name$=".isActive"]:checked) .sheet-tabs [data-tab="master"]::before {
+  margin-right: 4px;
+  content: "\2713";
+  color: #d7c451;
+}
+
+#symbaroum-hud #symbaroum-hud-abilities-panel .symbaroum-hud-native-ability-sheet--hud .sheet-body {
+  min-height: 0;
+  height: 100%;
+  margin: 0;
+  padding: 8px;
+  overflow: hidden;
+  background:
+    linear-gradient(rgb(5 7 6 / 90%), rgb(5 7 6 / 90%)),
+    var(--symbaroum-hud-browser-results) repeat;
+}
+
+#symbaroum-hud #symbaroum-hud-abilities-panel .symbaroum-hud-native-ability-sheet--hud .sheet-body > .tab.active,
+#symbaroum-hud #symbaroum-hud-abilities-panel .symbaroum-hud-native-ability-sheet--hud .sheet-body > .tab.active > :is(.description, .novice, .adept, .master, .bonus) {
+  height: 100%;
+  min-height: 0;
+}
+
+#symbaroum-hud #symbaroum-hud-abilities-panel .symbaroum-hud-native-ability-sheet--hud .ability :is(.description, .novice, .adept, .master, .bonus) {
+  position: relative;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  padding: 7px;
+  border: 1px solid #856b23;
+  color: #e8e0cc;
+  background: rgb(6 8 7 / 88%);
+  box-shadow: inset 0 0 14px rgb(0 0 0 / 72%);
+}
+
+#symbaroum-hud #symbaroum-hud-abilities-panel .symbaroum-hud-native-ability-sheet--hud .ability :is(.novice, .adept, .master) {
+  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-columns: max-content max-content minmax(0, 1fr);
+  column-gap: 6px;
+}
+
+#symbaroum-hud #symbaroum-hud-abilities-panel .symbaroum-hud-native-ability-sheet--hud .ability :is(.novice, .adept, .master) .editor {
+  grid-column: 1 / -1;
+}
+
+#symbaroum-hud #symbaroum-hud-abilities-panel .symbaroum-hud-native-ability-sheet--hud .ability .description > h1 {
+  height: 34px;
+  margin: 0;
+  border-bottom: 1px solid #69551e;
+  color: #eee2bf;
+  background: transparent;
+  font-size: 0.9rem;
+  line-height: 31px;
+  text-shadow: 0 2px 2px #000;
+}
+
+#symbaroum-hud #symbaroum-hud-abilities-panel .symbaroum-hud-native-ability-sheet--hud .editor {
+  width: 100%;
+  height: 100% !important;
+  max-height: none;
+  margin: 0;
+  border: 0;
+  overflow-y: auto;
+  color: #e8e0cc;
+  background: transparent;
+  box-shadow: none;
+  scrollbar-color: #9b7b25 #11150f;
+  scrollbar-width: thin;
+}
+
+#symbaroum-hud #symbaroum-hud-abilities-panel .symbaroum-hud-native-ability-sheet--hud .editor-content {
+  padding: 15px 18px;
+  color: #e8e0cc !important;
+  background: transparent;
+  box-shadow: none;
+  font-size: 0.73rem;
+  line-height: 1.65;
+}
+
+#symbaroum-hud #symbaroum-hud-abilities-panel .symbaroum-hud-native-ability-sheet--hud .editor-content :is(p, span, strong, em, li) {
+  color: inherit !important;
+}
+
+#symbaroum-hud #symbaroum-hud-abilities-panel .symbaroum-hud-native-ability-sheet--hud .ability .tab :is(.action, .active) {
+  width: max-content;
+  min-height: 32px;
+  margin: 0 0 6px;
+  border: 1px solid #97772a;
+  align-items: center;
+  color: #eee4ca;
+  background: rgb(8 10 8 / 88%);
+  box-shadow:
+    inset 0 0 6px rgb(0 0 0 / 72%),
+    0 0 0 1px rgb(0 0 0 / 58%);
+}
+
+#symbaroum-hud #symbaroum-hud-abilities-panel .symbaroum-hud-native-ability-sheet--hud .ability .tab :is(.action, .active) label {
+  display: flex;
+  width: auto;
+  min-width: 0;
+  padding: 5px 8px;
+  align-items: center;
+  justify-content: center;
+  color: #eee4ca;
+  background: transparent;
+  font-size: 0.61rem;
+  line-height: 1;
+}
+
+#symbaroum-hud #symbaroum-hud-abilities-panel .symbaroum-hud-native-ability-sheet--hud .ability .tab :is(.action, .active) :is(select, input) {
+  width: auto;
+  height: 30px;
+  min-width: 0;
+  border: 0;
+  color: #ddd4bf;
+  background: transparent;
+  box-shadow: none;
+}
+
+#symbaroum-hud #symbaroum-hud-abilities-panel .symbaroum-hud-native-ability-sheet--hud .ability .tab .action label {
+  display: none;
+}
+
+#symbaroum-hud #symbaroum-hud-abilities-panel .symbaroum-hud-native-ability-sheet--hud .ability .tab .action select {
+  width: 86px;
+  padding: 4px 8px;
+  opacity: 1;
+  text-align: center;
+  text-align-last: center;
+  -webkit-text-fill-color: currentColor;
+}
+
+#symbaroum-hud #symbaroum-hud-abilities-panel .symbaroum-hud-native-ability-sheet--hud .ability .tab .active.symbaroum-hud-native-active-control {
+  width: max-content;
+  height: auto;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  color: inherit;
+  background: transparent;
+  box-shadow: none;
+}
+
+#symbaroum-hud #symbaroum-hud-abilities-panel .symbaroum-hud-native-ability-sheet--hud .ability .tab .active.symbaroum-hud-native-active-control > :is(label, input) {
+  display: none !important;
+}
+
+#symbaroum-hud #symbaroum-hud-abilities-panel .symbaroum-hud-native-ability-sheet--hud .ability .tab .active.symbaroum-hud-native-active-control > button.symbaroum-hud-ability-active-toggle {
+  margin: 0;
+}
+
+#symbaroum-hud #symbaroum-hud-abilities-panel .symbaroum-hud-native-ability-actions {
+  position: absolute;
+  z-index: 8;
+  top: 25px;
+  right: 17px;
+  min-height: 34px;
+  padding: 0;
+  border: 0;
+  gap: 5px;
+  background: transparent;
+  box-shadow: none;
+}
+
+#symbaroum-hud #symbaroum-hud-abilities-panel .symbaroum-hud-native-ability-actions button {
+  min-height: 34px;
+  padding: 5px 10px;
+  border: 1px solid #a1812b;
+  color: #eee3c5;
+  background:
+    linear-gradient(rgb(82 27 20 / 62%), rgb(43 16 12 / 74%)),
+    var(--symbaroum-hud-paper) center / cover;
+  box-shadow: inset 0 0 7px rgb(0 0 0 / 52%);
+}
+
+#symbaroum-hud #symbaroum-hud-abilities-panel .symbaroum-hud-native-ability-actions button:is(:hover, :focus-visible) {
+  border-color: #d3ac3c;
+  color: #fff3b6;
+  background: rgb(137 87 30 / 78%);
+}
+
+@media (max-width: 760px) {
+  #symbaroum-hud #symbaroum-hud-abilities-panel .symbaroum-hud-native-ability-sheet--hud .sheet-header {
+    padding-right: 110px;
+  }
+
+  #symbaroum-hud #symbaroum-hud-abilities-panel .symbaroum-hud-native-ability-sheet--hud .sheet-header .name:first-child input {
+    font-size: 1.15rem;
+  }
+
+  #symbaroum-hud #symbaroum-hud-abilities-panel .symbaroum-hud-native-ability-actions button > span {
+    display: none;
+  }
 }

@@ -12,6 +12,7 @@ const warnings = [];
 const recoveredAmmo = [];
 const drawnWeapons = [];
 const inventoryQuantityLog = [];
+const abilityActivityLog = [];
 let confirmations = 0;
 
 globalThis.game = {
@@ -34,7 +35,8 @@ globalThis.game = {
   ]),
   tenebreResources: {
     gmLog: {
-      recordItemQuantityChange: async (entry) => inventoryQuantityLog.push(entry)
+      recordItemQuantityChange: async (entry) => inventoryQuantityLog.push(entry),
+      recordAbilityActiveChange: async (entry) => abilityActivityLog.push(entry)
     },
     rations: {
       getState: () => ({ quantity: 3, usesRemaining: 2, usesPerUnit: 4 }),
@@ -158,6 +160,27 @@ globalThis.canvas = {
 };
 
 const { IndResourcesIntegration } = await import("../scripts/integrations/ind-resources.mjs");
+
+test("delegates Ability activation changes to the GM-only log API", async () => {
+  const actor = { id: "actor", name: "Hero" };
+  const item = { id: "ability", name: "Alquimia" };
+
+  await IndResourcesIntegration.recordAbilityActiveChange(
+    actor,
+    item,
+    "novice",
+    false,
+    true
+  );
+
+  assert.deepEqual(abilityActivityLog.at(-1), {
+    actor,
+    item,
+    level: "novice",
+    previousActive: false,
+    active: true
+  });
+});
 
 test("normalizes the public Ind Resources API into HUD context", () => {
   const backpack = {

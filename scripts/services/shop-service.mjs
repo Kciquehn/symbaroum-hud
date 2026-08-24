@@ -1,5 +1,10 @@
 import { ActorService } from "./actor-service.mjs";
 import { MODULE_ID } from "../constants.mjs";
+import {
+  createPurchasedServiceRecords,
+  isServiceDefinition,
+  normalizeServiceRecords
+} from "./service-contract-service.mjs";
 
 export const SHOP_ITEM_TYPES = new Set(["weapon", "armor", "equipment"]);
 
@@ -10,6 +15,7 @@ export const SHOP_MONEY_VALUES = Object.freeze({
 });
 
 const PURCHASE_LOCKS = new Map();
+const MAX_CART_QUANTITY = 999;
 const PRICE_UNITS = Object.freeze({
   taler: "thaler",
   taleres: "thaler",
@@ -91,10 +97,11 @@ export function moneyFromOrtegs(value) {
 }
 
 export function isPurchasableShopEntry(entry) {
+  const negotiatedService = isServiceDefinition(entry) && entry?.priceMode === "negotiated";
   return Boolean(
-    entry?.documentClass === "Item"
-    && SHOP_ITEM_TYPES.has(entry.type)
-    && parseShopPrice(entry.cost)
+    ((entry?.documentClass === "Item" && SHOP_ITEM_TYPES.has(entry.type))
+      || isServiceDefinition(entry))
+    && (negotiatedService || parseShopPrice(entry.cost ?? entry.system?.cost))
   );
 }
 
@@ -105,39 +112,88 @@ export class ShopService {
   }
 
   static async purchase(actor, source, { amount = null } = {}) {
+    const result = await this.purchaseCart(actor, [{ source, amount, quantity: 1 }]);
+    if (!result.ok) return result;
+    return Object.freeze({
+      ...result,
+      item: result.items[0] ?? null,
+      price: result.lines[0].price
+    });
+  }
+
+  static async purchaseCart(actor, purchases = [], {
+    balanceOverride = null,
+    complimentary = [],
+    storeName = ""
+  } = {}) {
     if (!actor || !ActorService.canUpdate(actor)) return purchaseFailure("permission");
-    if (!source || source.documentName !== "Item" || !SHOP_ITEM_TYPES.has(source.type)) {
+    const normalized = normalizeCartPurchases(purchases, { allowEmpty: complimentary.length > 0 });
+    if (!normalized.ok) return purchaseFailure(normalized.reason);
+    const normalizedComplimentary = normalizeComplimentaryItems(complimentary);
+    if (!normalizedComplimentary.ok) return purchaseFailure(normalizedComplimentary.reason);
+    if (!normalized.lines.length && !normalizedComplimentary.lines.length) {
       return purchaseFailure("unavailable");
     }
-
-    const price = selectShopPrice(parseShopPrice(source.system?.cost), amount);
-    if (!price) return purchaseFailure("invalidPrice");
     const lockKey = actor.uuid ?? actor.id;
     if (!lockKey) return purchaseFailure("unavailable");
 
     return enqueuePurchase(lockKey, async () => {
-      const currentTotal = moneyToOrtegs(actor.system?.money ?? {});
-      if (currentTotal < price.ortegs) {
-        return purchaseFailure("insufficient", { price, balance: moneyFromOrtegs(currentTotal) });
+      const originalTotal = moneyToOrtegs(actor.system?.money ?? {});
+      const currentTotal = balanceOverride == null
+        ? originalTotal
+        : nonNegativeInteger(balanceOverride);
+      if (currentTotal < normalized.totalOrtegs) {
+        return purchaseFailure("insufficient", {
+          totalOrtegs: normalized.totalOrtegs,
+          balance: moneyFromOrtegs(currentTotal)
+        });
       }
 
-      const nextTotal = currentTotal - price.ortegs;
-      const originalMoney = moneyFromOrtegs(currentTotal);
+      const nextTotal = currentTotal - normalized.totalOrtegs;
+      const originalMoney = moneyFromOrtegs(originalTotal);
       const nextMoney = moneyFromOrtegs(nextTotal);
-      await actor.update(actorMoneyUpdate(nextMoney));
+      const existingServices = normalizeServiceRecords(
+        actor?.getFlag?.(MODULE_ID, "services") ?? actor?.flags?.[MODULE_ID]?.services
+      );
+      const serviceLines = normalized.lines.filter(({ kind }) => kind === "service");
+      const purchasedServices = createPurchasedServiceRecords(serviceLines, { storeName });
+      const actorUpdate = actorMoneyUpdate(nextMoney);
+      if (purchasedServices.length) {
+        actorUpdate[`flags.${MODULE_ID}.services`] = [...existingServices, ...purchasedServices].slice(-200);
+      }
+      await actor.update(actorUpdate);
 
       try {
-        const created = await actor.createEmbeddedDocuments("Item", [purchasedItemData(source, price)]);
+        const itemLines = normalized.lines.filter(({ kind }) => kind === "item");
+        const itemData = [
+          ...normalizedComplimentary.lines.map(({ source, quantity, reason }) => (
+            complimentaryItemData(source, quantity, reason)
+          )),
+          ...itemLines.map(({ source, price, quantity }) => (
+            purchasedItemData(source, price, quantity)
+          ))
+        ];
+        const created = itemData.length
+          ? await actor.createEmbeddedDocuments("Item", itemData)
+          : [];
         return Object.freeze({
           ok: true,
           reason: null,
-          item: created?.[0] ?? null,
-          price,
+          items: Object.freeze(Array.from(created ?? [])),
+          services: Object.freeze(purchasedServices),
+          lines: normalized.lines,
+          complimentary: normalizedComplimentary.lines,
+          totalOrtegs: normalized.totalOrtegs,
           balance: nextMoney
         });
       } catch (error) {
         try {
-          await actor.update(actorMoneyUpdate(originalMoney));
+          await actor.update({
+            ...actorMoneyUpdate(originalMoney),
+            ...(purchasedServices.length
+              ? { [`flags.${MODULE_ID}.services`]: existingServices }
+              : {})
+          });
         } catch (rollbackError) {
           console.error("symbaroum-hud | Shop purchase rollback failed.", rollbackError);
         }
@@ -147,7 +203,100 @@ export class ShopService {
   }
 }
 
-function purchasedItemData(source, price) {
+function normalizeCartPurchases(purchases, { allowEmpty = false } = {}) {
+  const entries = Array.from(purchases ?? []);
+  if (!entries.length && !allowEmpty) return { ok: false, reason: "unavailable" };
+
+  const lines = [];
+  let totalOrtegs = 0;
+  for (const purchase of entries) {
+    const source = purchase?.source;
+    const service = isServiceDefinition(source);
+    const item = Boolean(
+      source
+      && (!source.documentName || source.documentName === "Item")
+      && source.documentClass !== "Service"
+      && SHOP_ITEM_TYPES.has(source.type)
+    );
+    if (!service && !item) {
+      return { ok: false, reason: "unavailable" };
+    }
+    const quantity = Number(purchase.quantity ?? 1);
+    if (!Number.isSafeInteger(quantity) || quantity < 1 || quantity > MAX_CART_QUANTITY) {
+      return { ok: false, reason: "invalidQuantity" };
+    }
+    const negotiated = service && source.priceMode === "negotiated";
+    if (negotiated && !globalThis.game?.user?.isGM) {
+      return { ok: false, reason: "permission" };
+    }
+    const sourcePrice = negotiated
+      ? null
+      : selectShopPrice(
+        parseShopPrice(service ? source.cost : source.system?.cost),
+        purchase.amount
+      );
+    if (!negotiated && !sourcePrice) return { ok: false, reason: "invalidPrice" };
+    const price = normalizePriceOverride(purchase.priceOverride, sourcePrice, {
+      allowZero: negotiated,
+      sourceRaw: service ? source.cost : source.system?.cost
+    });
+    if (!price) return { ok: false, reason: "invalidPrice" };
+    const subtotalOrtegs = price.ortegs * quantity;
+    if (!Number.isSafeInteger(subtotalOrtegs) || subtotalOrtegs < 0
+      || (!negotiated && subtotalOrtegs === 0)) {
+      return { ok: false, reason: "invalidPrice" };
+    }
+    totalOrtegs += subtotalOrtegs;
+    if (!Number.isSafeInteger(totalOrtegs)) return { ok: false, reason: "invalidPrice" };
+    lines.push(Object.freeze({
+      source,
+      price,
+      quantity,
+      subtotalOrtegs,
+      kind: service ? "service" : "item"
+    }));
+  }
+
+  return Object.freeze({
+    ok: true,
+    reason: null,
+    lines: Object.freeze(lines),
+    totalOrtegs
+  });
+}
+
+function normalizePriceOverride(value, sourcePrice, { allowZero = false, sourceRaw = "" } = {}) {
+  if (value == null) return sourcePrice;
+  const ortegs = Number(value?.ortegs);
+  if (!Number.isSafeInteger(ortegs) || ortegs < (allowZero ? 0 : 1)) return null;
+  const modifier = Number(value?.modifier);
+  return Object.freeze({
+    raw: String(value?.raw ?? `${ortegs} ortegas`).trim() || `${ortegs} ortegas`,
+    amount: ortegs,
+    denomination: "orteg",
+    ortegs,
+    sourceRaw: sourcePrice?.sourceRaw ?? sourcePrice?.raw ?? String(sourceRaw ?? ""),
+    ...(Number.isFinite(modifier) ? { modifier } : {})
+  });
+}
+
+function normalizeComplimentaryItems(items) {
+  const lines = [];
+  for (const entry of Array.from(items ?? [])) {
+    const source = entry?.source;
+    if (!source || (source.documentName && source.documentName !== "Item") || !SHOP_ITEM_TYPES.has(source.type)) {
+      return { ok: false, reason: "unavailable" };
+    }
+    const quantity = Number(entry.quantity ?? 1);
+    if (!Number.isSafeInteger(quantity) || quantity < 1 || quantity > MAX_CART_QUANTITY) {
+      return { ok: false, reason: "invalidQuantity" };
+    }
+    lines.push(Object.freeze({ source, quantity, reason: String(entry.reason ?? "") }));
+  }
+  return Object.freeze({ ok: true, reason: null, lines: Object.freeze(lines) });
+}
+
+function purchasedItemData(source, price, quantity = 1) {
   const data = source.toObject();
   delete data._id;
   delete data.folder;
@@ -162,10 +311,31 @@ function purchasedItemData(source, price) {
     price: price.raw,
     amount: price.amount,
     denomination: price.denomination,
-    sourcePrice: price.sourceRaw
+    sourcePrice: price.sourceRaw,
+    ...(Number.isFinite(price.modifier) ? { modifier: price.modifier } : {})
   };
+  if (quantity > 1) data.flags[MODULE_ID].shopPurchase.quantity = quantity;
   data.system ??= {};
   data.system.cost = price.raw;
+  const sourceQuantity = Math.max(1, nonNegativeInteger(source.system?.number ?? data.system.number ?? 1));
+  data.system.number = Math.min(Number.MAX_SAFE_INTEGER, sourceQuantity * quantity);
+  return data;
+}
+
+function complimentaryItemData(source, quantity = 1, reason = "") {
+  const data = source.toObject();
+  delete data._id;
+  delete data.folder;
+  delete data.ownership;
+  delete data.sort;
+  delete data._stats;
+  data.flags ??= {};
+  data.flags.core ??= {};
+  data.flags.core.sourceId ??= source.uuid;
+  data.flags[MODULE_ID] ??= {};
+  data.flags[MODULE_ID].characterCreatorGrant = { quantity, reason };
+  data.system ??= {};
+  data.system.number = quantity;
   return data;
 }
 

@@ -204,6 +204,24 @@ test("players continue to follow the configured selection mode", () => {
   }
 });
 
+test("owned actor choices exclude characters available only as Observer", () => {
+  const owned = actor({ owner: true });
+  owned.id = "owned";
+  owned.uuid = "Actor.owned";
+  const observed = actor({ owner: false });
+  observed.id = "observed";
+  observed.uuid = "Actor.observed";
+  const previous = game.actors;
+  game.actors = [observed, owned];
+
+  try {
+    assert.deepEqual(ActorService.ownedActors().map((entry) => entry.id), ["owned"]);
+    assert.deepEqual(ActorService.accessibleActors().map((entry) => entry.id), ["observed", "owned"]);
+  } finally {
+    game.actors = previous;
+  }
+});
+
 test("owned actor actions delegate to the native Symbaroum methods", async () => {
   const owned = actor();
   await ActorService.rollAttribute(owned, "strong");
@@ -237,11 +255,37 @@ test("effect removal delegates to the embedded Active Effect document", async ()
 
 test("ability level activation updates the embedded item document", async () => {
   const owned = actor();
-  await ActorService.setAbilityLevelActive(owned, "power", "novice", true);
+  await ActorService.setAbilityLevelActive(owned, "power", "novice", false);
 
   assert.deepEqual(owned.calls, [
-    ["item-update", { "system.novice.isActive": true }]
+    ["item-update", { "system.novice.isActive": false }]
   ]);
+});
+
+test("ability level activation is recorded through Ind Resources for players and GMs", async () => {
+  const owned = actor();
+  const entries = [];
+  const previousModules = game.modules;
+  const previousApi = game.tenebreResources;
+  game.modules = new Map([["symbaroum-ind-resources", { active: true }]]);
+  game.tenebreResources = {
+    gmLog: {
+      recordAbilityActiveChange: async (entry) => entries.push(entry)
+    }
+  };
+
+  try {
+    await ActorService.setAbilityLevelActive(owned, "power", "novice", false);
+    assert.equal(entries.length, 1);
+    assert.equal(entries[0].actor, owned);
+    assert.equal(entries[0].item.id, "power");
+    assert.equal(entries[0].level, "novice");
+    assert.equal(entries[0].previousActive, true);
+    assert.equal(entries[0].active, false);
+  } finally {
+    game.modules = previousModules;
+    game.tenebreResources = previousApi;
+  }
 });
 
 test("trait-like items can be used but cannot be activated as ability levels", async () => {

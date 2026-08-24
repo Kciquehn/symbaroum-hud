@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.1.67
+
+- Expande a Loja para múltiplos comerciantes, locais comerciais e catálogos oficiais, com disponibilidade independente, estoque próprio, grade de seleção e carrinho de compras.
+- Adiciona serviços e bens sem Item físico, incluindo contratos, hospedagem, transportes, animais, tarifas e a Licença de Explorador, preservando no HUD os serviços que precisam ser lembrados.
+- Adiciona gerador de estoque por Categoria, itens essenciais, chance e quantidade por mercadoria, variação arredondada de preços e modelos de estabelecimentos oficiais de Symbaroum.
+- Adiciona gerenciamento global das Categorias dos Itens e bens oficiais, aplicado ao Navegador, às lojas, aos filtros e à geração de estoque.
+- Unifica **Itens de Sobrevivência** e **Equipamentos de Expedição** na categoria **Itens de Sobrevivência e Expedição**, migrando automaticamente configurações antigas.
+- Integra o Navegador de Compêndios ao diretório de Itens, ao Criador de Fichas e aos painéis do HUD, com configuração de fontes, livros, pastas e propriedade de Observador.
+- Reconstrói os painéis de Habilidades e Traços do HUD usando a ficha nativa do sistema, mantendo uso, níveis, ação e ativação sincronizados com o Ator.
+- Melhora o Criador de Fichas com recomendações de raça, compra de equipamentos pela Loja, histórico mais legível, escolha separada de equipamento inicial e preservação integral da navegação.
+- Corrige posicionamento, dimensionamento e sobreposição de janelas, imagens, filtros, listas, inventário, HUD recolhido e fichas abertas sobre a Loja.
+- Amplia a suíte automatizada para 317 testes.
+
 ## 0.1.66
 
 - Adiciona o **Navegador de Compêndios** para documentos importados no mundo, com pesquisa contínua, categorias, fontes e filtros por livro de origem.

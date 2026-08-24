@@ -1,5 +1,6 @@
 import { SELECTION_MODES, SUPPORTED_ACTOR_TYPES } from "../constants.mjs";
 import { SymbaroumIntegration } from "../integrations/symbaroum.mjs";
+import { IndResourcesIntegration } from "../integrations/ind-resources.mjs";
 
 const TRAIT_LIKE_ITEM_TYPES = new Set(["trait", "boon", "burden"]);
 const USABLE_POWER_ACTIONS = new Set(["A", "F", "M", "R", "S", "T"]);
@@ -93,6 +94,10 @@ export class ActorService {
     });
   }
 
+  static ownedActors(current = null) {
+    return this.accessibleActors(current).filter((actor) => this.canUpdate(actor));
+  }
+
   static weapon(actor, id) {
     if (!actor || !id) return null;
     return (actor.system?.weapons ?? []).find((weapon) => weapon.id === id) ?? null;
@@ -159,7 +164,19 @@ export class ActorService {
       return;
     }
 
-    return item.update({ [`system.${level}.isActive`]: Boolean(active) });
+    const previousActive = Boolean(item.system?.[level]?.isActive);
+    const nextActive = Boolean(active);
+    if (previousActive === nextActive) return item;
+
+    const result = await item.update({ [`system.${level}.isActive`]: nextActive });
+    await IndResourcesIntegration.recordAbilityActiveChange(
+      actor,
+      item,
+      level,
+      previousActive,
+      nextActive
+    );
+    return result;
   }
 
   static availableWorldAbilities(actor) {

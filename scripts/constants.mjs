@@ -10,7 +10,13 @@ export const SETTINGS = Object.freeze({
   HIDE_PLAYERS: "hidePlayers",
   COLLAPSED: "collapsed",
   STORAGE_VIEW_MODE: "storageViewMode",
-  COMPENDIUM_BROWSER_SOURCES: "compendiumBrowserSources"
+  SHOP_DEFINITIONS: "shopDefinitions",
+  SERVICE_DEFINITIONS: "serviceDefinitions",
+  SHOP_PRICE_MODIFIERS: "shopPriceModifiers",
+  SHOP_STOCK_RULES: "shopStockRules",
+  GENERAL_STORE_OPEN: "generalStoreOpen",
+  COMPENDIUM_BROWSER_SOURCES: "compendiumBrowserSources",
+  COMPENDIUM_BROWSER_FOLDER_ACCESS: "compendiumBrowserFolderAccess"
 });
 
 export const SELECTION_MODES = Object.freeze({

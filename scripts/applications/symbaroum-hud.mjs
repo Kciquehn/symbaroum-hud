@@ -21,15 +21,26 @@ import { CharacterCreatorService } from "../services/character-creator-service.m
 import { defenseDisplayValue } from "../services/defense-service.mjs";
 import { ritualistProgress } from "../services/ritual-service.mjs";
 import {
+  activateEmbeddedItemSheetActiveControls,
+  activateEmbeddedItemSheetTabs,
+  renderEmbeddedItemSheet
+} from "../services/native-item-sheet-service.mjs";
+import {
   parseVitalityDelta,
   shouldShowDangerTint,
   vitalityState
 } from "../services/vitality-service.mjs";
+import {
+  actorServiceRecords,
+  removeActorService,
+  useActorService
+} from "../services/service-contract-service.mjs";
 
 const ApplicationV2 = foundry.applications.api.ApplicationV2;
 const HOTBAR_CONTROL_ACTIONS = new Set(["mute", "menu"]);
 const CONTROL_TOOLTIP_DELAY_MS = 800;
 const IND_RESOURCES_CONTAINER_DRAG_TYPE = "application/x-tenebre-container-item";
+const SERVICE_STORAGE_ID = "__services";
 const ATTRIBUTE_ORDER = [
   "accurate",
   "cunning",
@@ -80,6 +91,7 @@ export class SymbaroumHud extends ApplicationV2 {
   #hotbarAnchor = null;
   #listenerAbortController = null;
   #manualActorKey = null;
+  #actorPickerOpen = false;
   #mysticalPowersOpen = false;
   #resolvedActorKey = null;
   #selectedAbilityId = null;
@@ -127,6 +139,7 @@ export class SymbaroumHud extends ApplicationV2 {
     if (resolvedKey !== this.#resolvedActorKey) {
       this.#resolvedActorKey = resolvedKey;
       this.#manualActorKey = null;
+      this.#actorPickerOpen = false;
       this.#mysticalPowersOpen = false;
       this.#abilitiesOpen = false;
       this.#attacksOpen = false;
@@ -163,6 +176,9 @@ export class SymbaroumHud extends ApplicationV2 {
 
   async _prepareContext() {
     const actor = this.#actor;
+    const ownedActorChoices = !game.user?.isGM
+      ? ActorService.ownedActors(actor)
+      : [];
     const toughness = actor?.system?.health?.toughness ?? {};
     const corruption = actor?.system?.health?.corruption ?? {};
     const vitalityValue = number(toughness.value);
@@ -188,22 +204,36 @@ export class SymbaroumHud extends ApplicationV2 {
       actor,
       this.#selectedAbilityId,
       this.#selectedAbilityTab,
-      { traits: false }
+      {
+        includeDetails: this.#abilitiesOpen,
+        traits: false,
+        nativeSheet: this.#abilitiesOpen,
+        nativeSheetInteractive: canRollActor
+      }
     );
     const mysticalPowers = await abilityContext(
       actor,
       this.#selectedMysticalPowerId,
       this.#selectedMysticalPowerTab,
-      { mysticalPowers: true }
+      {
+        includeDetails: this.#mysticalPowersOpen,
+        mysticalPowers: true
+      }
     );
     const traits = await abilityContext(
       actor,
       this.#selectedTraitId,
       this.#selectedTraitTab,
-      { traits: true }
+      {
+        includeDetails: this.#traitsOpen,
+        traits: true
+      }
     );
-    const rituals = await ritualContext(actor, this.#selectedRitualId);
+    const rituals = await ritualContext(actor, this.#selectedRitualId, {
+      includeDetails: this.#ritualsOpen
+    });
     const effects = activeEffectContext(actor);
+    const services = actorServiceRecords(actor);
     const tacticsHtml = game.user?.isGM && actor?.type === "monster"
       ? await enrichDescription(actor.system?.bio?.tactics, actor)
       : "";
@@ -220,6 +250,14 @@ export class SymbaroumHud extends ApplicationV2 {
     return {
       hasActor: Boolean(actor),
       canCycleActor: ActorService.accessibleActors(actor).length > 1,
+      canChooseOwnedActor: ownedActorChoices.length > 1,
+      actorPickerOpen: this.#actorPickerOpen,
+      ownedActors: ownedActorChoices.map((choice) => ({
+        id: actorKey(choice),
+        name: choice.name,
+        img: choice.img || "icons/svg/mystery-man.svg",
+        active: actorKey(choice) === actorKey(actor)
+      })),
       knowledge: {
         available: showPlayerResources || knowledgeButtons > 0,
         columns: knowledgeButtons > 2 ? 2 : 1,
@@ -292,14 +330,15 @@ export class SymbaroumHud extends ApplicationV2 {
       effects,
       tactics: tacticsHtml ? { html: tacticsHtml, collapsed: this.#tacticsCollapsed } : null,
       hasStatusSummary: Boolean(tacticsHtml || effects.length),
-      storage: indResources.storage
-        ? {
-            ...indResources.storage,
+      storage: actor
+        ? storageWithServices(indResources.storage, services, {
+            selectedId: this.#storageContainerId,
+            editable: canRollActor,
+            canRemove: Boolean(game.user?.isGM),
             load: indResources.load,
             open: this.#storageOpen,
-            viewMode: storageViewMode,
-            listView: storageViewMode === STORAGE_VIEW_MODES.LIST
-          }
+            viewMode: storageViewMode
+          })
         : null,
       info: {
         defense: defenseDisplayValue(actor),
@@ -388,6 +427,7 @@ export class SymbaroumHud extends ApplicationV2 {
     this.#collapseAnimationRunning = false;
     this.#collapseTransition = null;
     this.#manualActorKey = null;
+    this.#actorPickerOpen = false;
     this.#mysticalPowersOpen = false;
     this.#resolvedActorKey = null;
     this.#selectedAbilityId = null;
@@ -412,6 +452,14 @@ export class SymbaroumHud extends ApplicationV2 {
     const signal = this.#listenerAbortController.signal;
     this.#clearDelayedTooltip();
 
+    const nativeAbilitySheet = root.querySelector("[data-hud-ability-sheet]");
+    activateEmbeddedItemSheetTabs(nativeAbilitySheet, {
+      selectedTab: this.#selectedAbilityTab,
+      signal,
+      onSelect: (tabId) => { this.#selectedAbilityTab = tabId; }
+    });
+    activateEmbeddedItemSheetActiveControls(nativeAbilitySheet, { signal });
+
     root.addEventListener("click", (event) => {
       const actionElement = event.target.closest("[data-action]");
       if (!actionElement || !root.contains(actionElement) || actionElement.closest("#hotbar")) return;
@@ -419,7 +467,34 @@ export class SymbaroumHud extends ApplicationV2 {
       void this.#onAction(actionElement, event);
     }, { signal });
 
+    if (this.#actorPickerOpen) {
+      document.addEventListener("pointerdown", (event) => {
+        if (event.target.closest?.(".symbaroum-hud-character-name")) return;
+        this.#closeActorPicker(root);
+      }, { capture: true, signal });
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") this.#closeActorPicker(root);
+      }, { signal });
+    }
+
     root.addEventListener("change", (event) => {
+      const activeLevel = event.target.closest?.(
+        '[data-hud-ability-sheet] input[name^="system."][name$=".isActive"]'
+      );
+      if (activeLevel && root.contains(activeLevel)) {
+        event.preventDefault();
+        const level = activeLevel.name.match(/^system\.(novice|adept|master)\.isActive$/)?.[1];
+        const itemId = activeLevel.closest("[data-hud-ability-sheet]")?.dataset.itemId;
+        const actor = this.#actor;
+        if (!actor || !level || !itemId) return;
+        void ActorService.setAbilityLevelActive(actor, itemId, level, activeLevel.checked)
+          .then(() => this.render())
+          .catch((error) => {
+            console.error(`${MODULE_ID} | Ability level update failed.`, error);
+            ui.notifications?.error(game.i18n.localize("SYMBAROUMHUD.Notifications.ActionFailed"));
+          });
+        return;
+      }
       const input = event.target.closest?.('[data-storage-quantity="true"]');
       if (!input || !root.contains(input)) return;
       event.preventDefault();
@@ -1438,7 +1513,7 @@ export class SymbaroumHud extends ApplicationV2 {
     if (globalThis.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches) return;
     const root = this.element;
     const targets = [
-      root?.querySelector?.(".symbaroum-hud-status-summary"),
+      root?.querySelector?.(".symbaroum-hud-tactics"),
       root?.querySelector?.(".symbaroum-hud-main-column")
     ].filter((element) => typeof element?.animate === "function");
     if (!targets.length) return;
@@ -1526,6 +1601,18 @@ export class SymbaroumHud extends ApplicationV2 {
       const actor = this.#actor;
       if (!actor) return;
 
+      if (action === "toggle-actor-picker") {
+        const choices = game.user?.isGM ? [] : ActorService.ownedActors(actor);
+        if (choices.length < 2) return actor.sheet?.render(true);
+        this.#actorPickerOpen = !this.#actorPickerOpen;
+        return this.render();
+      }
+      if (action === "select-owned-actor") {
+        const selected = ActorService.ownedActors(actor)
+          .find((candidate) => actorKey(candidate) === element.dataset.actorId);
+        if (!selected) return;
+        return this.#activateManualActor(selected);
+      }
       if (action === "previous-actor") return this.#cycleActor(-1);
       if (action === "next-actor") return this.#cycleActor(1);
       if (action === "open-actor") return actor.sheet?.render(true);
@@ -1765,6 +1852,20 @@ export class SymbaroumHud extends ApplicationV2 {
           element.dataset.containerId,
           element.dataset.itemId
         );
+      }
+      if (action === "use-service-record") {
+        const record = await useActorService(actor, element.dataset.serviceRecordId);
+        if (record) ui.notifications?.info(game.i18n.format("SYMBAROUMHUD.Services.UsedNotice", {
+          service: record.name,
+          actor: actor.name
+        }));
+        return this.render();
+      }
+      if (action === "remove-service-record") {
+        if (!game.user?.isGM) return null;
+        const removed = await removeActorService(actor, element.dataset.serviceRecordId);
+        if (removed) ui.notifications?.info(game.i18n.localize("SYMBAROUMHUD.Services.RemovedNotice"));
+        return this.render();
       }
       if (action === "reload-quiver") {
         return IndResourcesIntegration.reloadQuiver(actor, element.dataset.quiverId);
@@ -2241,8 +2342,20 @@ export class SymbaroumHud extends ApplicationV2 {
       actors.findIndex((actor) => actorKey(actor) === currentKey)
     );
     const nextIndex = (currentIndex + direction + actors.length) % actors.length;
-    this.#actor = actors[nextIndex];
+    return this.#activateManualActor(actors[nextIndex]);
+  }
+
+  #closeActorPicker(root = this.element) {
+    this.#actorPickerOpen = false;
+    const picker = root?.querySelector?.("[data-owned-actor-picker]");
+    if (picker) picker.hidden = true;
+    root?.querySelector?.('[data-action="toggle-actor-picker"]')?.setAttribute("aria-expanded", "false");
+  }
+
+  async #activateManualActor(actor) {
+    this.#actor = actor;
     this.#manualActorKey = actorKey(this.#actor);
+    this.#actorPickerOpen = false;
     this.#abilitiesOpen = false;
     this.#attacksOpen = false;
     this.#mysticalPowersOpen = false;
@@ -2358,7 +2471,13 @@ async function abilityContext(
   actor,
   selectedAbilityId = null,
   selectedAbilityTab = DEFAULT_ABILITY_TAB,
-  { mysticalPowers = false, traits = false } = {}
+  {
+    includeDetails = true,
+    mysticalPowers = false,
+    nativeSheet = false,
+    nativeSheetInteractive = false,
+    traits = false
+  } = {}
 ) {
   const items = Array.from(actor?.items?.values?.() ?? actor?.items ?? [])
     .filter((item) => Boolean(item?.system?.isPower))
@@ -2370,6 +2489,18 @@ async function abilityContext(
     ?? items[0]
     ?? null;
 
+  const selected = includeDetails && selectedItem
+    ? await abilityDetailContext(selectedItem, selectedAbilityTab)
+    : null;
+  if (selected && nativeSheet) {
+    selected.nativeSheet = await renderEmbeddedItemSheet(selectedItem, {
+      enabledFields: nativeSheetInteractive
+        ? ABILITY_LEVELS.map(({ id }) => `system.${id}.isActive`)
+        : [],
+      isOwned: true
+    });
+  }
+
   return {
     available: items.length > 0,
     items: items.map((item) => ({
@@ -2379,13 +2510,11 @@ async function abilityContext(
       uuid: item.uuid,
       active: item.id === selectedItem?.id
     })),
-    selected: selectedItem
-      ? await abilityDetailContext(selectedItem, selectedAbilityTab)
-      : null
+    selected
   };
 }
 
-async function ritualContext(actor, selectedRitualId = null) {
+async function ritualContext(actor, selectedRitualId = null, { includeDetails = true } = {}) {
   const items = Array.from(actor?.items?.values?.() ?? actor?.items ?? [])
     .filter(isRitualItem)
     .sort((left, right) => left.name.localeCompare(right.name, game.i18n.lang));
@@ -2426,7 +2555,7 @@ async function ritualContext(actor, selectedRitualId = null) {
       action: firstText(item.system?.actions) ?? game.i18n.localize("SYMBAROUMHUD.Rituals.Ritual"),
       active: item.id === selectedItem?.id
     })),
-    selected: selectedItem
+    selected: includeDetails && selectedItem
       ? await ritualDetailContext(selectedItem)
       : null
   };
@@ -2693,6 +2822,85 @@ function normalizeText(value) {
     .replace(/[\u0300-\u036f]/g, "")
     .toLocaleLowerCase()
     .trim();
+}
+
+function storageWithServices(storage, services, {
+  selectedId = null,
+  editable = false,
+  canRemove = false,
+  load = null,
+  open = false,
+  viewMode = STORAGE_VIEW_MODES.GRID
+} = {}) {
+  const serviceSelected = selectedId === SERVICE_STORAGE_ID;
+  const base = storage ?? {
+    mode: "inventory",
+    containerSelected: false,
+    quiverSelected: false,
+    armorSelected: false,
+    inventoryActive: true,
+    armorCount: 0,
+    hasContainers: false,
+    hasQuiver: false,
+    pockets: true,
+    id: null,
+    name: game.i18n.localize("SYMBAROUMHUD.Storage.Inventory"),
+    img: null,
+    capacity: null,
+    quiver: null,
+    quivers: [],
+    items: [],
+    containers: []
+  };
+  const records = Array.from(services ?? []).map((record) => ({
+    ...record,
+    canUse: Boolean(editable && record.canUse),
+    canRemove: Boolean(canRemove),
+    useLabel: game.i18n.localize(record.fulfillment === "consumable"
+      ? "SYMBAROUMHUD.Services.MarkUsed"
+      : "SYMBAROUMHUD.Services.Complete"),
+    quantityLabel: record.quantity > 1
+      ? `${record.quantity} × ${record.unitLabel}`
+      : record.unitLabel,
+    statusIcon: record.status === "active"
+      ? "fa-circle-check"
+      : record.status === "expired"
+        ? "fa-clock-rotate-left"
+        : "fa-circle-check",
+    categoryIcon: serviceCategoryIcon(record.category)
+  }));
+  return {
+    ...base,
+    mode: serviceSelected ? "services" : base.mode,
+    serviceSelected,
+    inventoryActive: serviceSelected ? false : base.inventoryActive,
+    containerSelected: serviceSelected ? false : base.containerSelected,
+    quiverSelected: serviceSelected ? false : base.quiverSelected,
+    armorSelected: serviceSelected ? false : base.armorSelected,
+    id: serviceSelected ? SERVICE_STORAGE_ID : base.id,
+    name: serviceSelected
+      ? game.i18n.localize("SYMBAROUMHUD.Services.Title")
+      : base.name,
+    services: records,
+    serviceCount: records.filter(({ status }) => status === "active").length,
+    hasServices: records.length > 0,
+    load,
+    open,
+    viewMode,
+    listView: viewMode === STORAGE_VIEW_MODES.LIST
+  };
+}
+
+function serviceCategoryIcon(category) {
+  return ({
+    hospitality: "fa-bed",
+    travel: "fa-route",
+    professionals: "fa-user-tie",
+    contracts: "fa-file-signature",
+    permits: "fa-scroll",
+    fees: "fa-receipt",
+    information: "fa-book-open-reader"
+  })[category] ?? "fa-bell-concierge";
 }
 
 function activeEffectContext(actor) {
