@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.68
+
+- Pergunta o tamanho desejado antes de gerar o estoque de uma loja.
+- Adiciona as opções **Pequeno** (até 8 produtos), **Médio** (até 18) e **Grande** (até 35).
+- Mantém os itens essenciais garantidos mesmo quando o mestre escolhe um estoque pequeno.
+- Aplica o limite tanto às lojas oficiais quanto à geração personalizada por Categorias.
+- Mantém a geração determinística para o mesmo identificador de reposição.
+- Amplia a suíte automatizada para 318 testes.
+
 ## 0.1.67
 
 - Expande a Loja para múltiplos comerciantes, locais comerciais e catálogos oficiais, com disponibilidade independente, estoque próprio, grade de seleção e carrinho de compras.

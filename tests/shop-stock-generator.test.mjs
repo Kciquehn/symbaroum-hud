@@ -12,6 +12,7 @@ import {
   generateShopStockByCategories,
   matchesShopStockCategories,
   matchesShopStockPool,
+  normalizeShopStockSize,
   normalizeShopStockRules,
   resolveShopStockRule,
   seededRandom
@@ -115,6 +116,46 @@ test("custom stock generation only includes the selected Categories", () => {
   assert.deepEqual(first, second);
   assert.deepEqual(new Set(first.map(({ uuid }) => uuid)), new Set(["Item.sword", "Item.armor"]));
   assert.ok(first.every(({ quantity }) => quantity >= 1 && quantity <= 2));
+});
+
+test("stock size limits custom generation without changing its deterministic result", () => {
+  const manyItems = Array.from({ length: 60 }, (_, index) => entry(
+    `Item.supply-${index}`,
+    `Suprimento ${index}`,
+    "equipment",
+    ["equipment", "survival-items"]
+  ));
+  const itemRules = {
+    items: Object.fromEntries(manyItems.map(({ uuid }) => [uuid, {
+      chance: 100,
+      minimum: 1,
+      maximum: 2
+    }]))
+  };
+  const small = generateShopStockByCategories(manyItems, ["survival-items"], {
+    seed: "tamanho-fixo",
+    itemRules,
+    stockSize: "small"
+  });
+  const medium = generateShopStockByCategories(manyItems, ["survival-items"], {
+    seed: "tamanho-fixo",
+    itemRules,
+    stockSize: "medium"
+  });
+  const large = generateShopStockByCategories(manyItems, ["survival-items"], {
+    seed: "tamanho-fixo",
+    itemRules,
+    stockSize: "large"
+  });
+  assert.equal(small.length, 8);
+  assert.equal(medium.length, 18);
+  assert.equal(large.length, 35);
+  assert.deepEqual(small, generateShopStockByCategories(manyItems, ["survival-items"], {
+    seed: "tamanho-fixo",
+    itemRules,
+    stockSize: "small"
+  }));
+  assert.equal(normalizeShopStockSize("invalid").id, "medium");
 });
 
 test("different seeds can produce different stock rotations", () => {

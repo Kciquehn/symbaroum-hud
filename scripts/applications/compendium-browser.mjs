@@ -27,6 +27,7 @@ import {
   defaultShopStockRule,
   generateOfficialShopStock,
   generateShopStockByCategories,
+  normalizeShopStockSize,
   matchesShopStockCategories,
   normalizeShopStockRules,
   resolveShopStockRule
@@ -205,6 +206,11 @@ const DEFAULT_SHOP_PRICE_MODIFIER = Object.freeze({
   purchase: 100,
   useCategoryModifiers: false,
   categories: Object.freeze({})
+});
+const SHOP_STOCK_SIZE_I18N_SUFFIX = Object.freeze({
+  small: "Small",
+  medium: "Medium",
+  large: "Large"
 });
 
 const CATEGORY_LABELS = Object.freeze({
@@ -1926,6 +1932,15 @@ export class SymbaroumCompendiumBrowser extends ApplicationV2 {
           <input type="text" name="seed" value="${escapeHtml(shopGenerationSeed())}" maxlength="120" required>
           <small>${escapeHtml(game.i18n.localize("SYMBAROUMHUD.CompendiumBrowser.Shop.GenerationSeedHint"))}</small>
         </label>
+        <label>
+          <span>${escapeHtml(game.i18n.localize("SYMBAROUMHUD.CompendiumBrowser.Shop.StockSizeTitle"))}</span>
+          <select name="stockSize">
+            <option value="small">${escapeHtml(game.i18n.localize("SYMBAROUMHUD.CompendiumBrowser.Shop.StockSizeSmall"))}</option>
+            <option value="medium" selected>${escapeHtml(game.i18n.localize("SYMBAROUMHUD.CompendiumBrowser.Shop.StockSizeMedium"))}</option>
+            <option value="large">${escapeHtml(game.i18n.localize("SYMBAROUMHUD.CompendiumBrowser.Shop.StockSizeLarge"))}</option>
+          </select>
+          <small>${escapeHtml(game.i18n.localize("SYMBAROUMHUD.CompendiumBrowser.Shop.StockSizeHint"))}</small>
+        </label>
         <label class="symbaroum-hud-shop-generator-check">
           <input type="checkbox" name="replace" checked>
           <span>${escapeHtml(game.i18n.localize("SYMBAROUMHUD.CompendiumBrowser.Shop.ReplaceStock"))}</span>
@@ -1949,6 +1964,7 @@ export class SymbaroumCompendiumBrowser extends ApplicationV2 {
             callback: (_event, button) => ({
               presetId: button.form.elements.preset.value,
               seed: button.form.elements.seed.value,
+              stockSize: button.form.elements.stockSize.value,
               replace: button.form.elements.replace.checked,
               applyIdentity: button.form.elements.applyIdentity.checked
             })
@@ -1961,6 +1977,12 @@ export class SymbaroumCompendiumBrowser extends ApplicationV2 {
     }
     if (!choice || typeof choice !== "object") return null;
 
+    if (!choice.stockSize) {
+      const stockSize = await this.#requestShopStockSize();
+      if (!stockSize) return null;
+      choice = { ...choice, stockSize };
+    }
+
     const entries = await this.#shopGeneratorEntries();
     if (Array.isArray(choice.categories)) {
       const categories = [...new Set(choice.categories)].filter(Boolean);
@@ -1972,7 +1994,8 @@ export class SymbaroumCompendiumBrowser extends ApplicationV2 {
       }
       const stock = generateShopStockByCategories(entries, categories, {
         seed: choice.seed,
-        itemRules: configuredShopStockRules()
+        itemRules: configuredShopStockRules(),
+        stockSize: choice.stockSize
       });
       if (!stock.length) {
         ui.notifications?.warn(game.i18n.localize("SYMBAROUMHUD.CompendiumBrowser.Shop.StockGenerationEmpty"));
@@ -1994,7 +2017,8 @@ export class SymbaroumCompendiumBrowser extends ApplicationV2 {
     }
     const result = generateOfficialShopStock(entries, choice.presetId, {
       seed: choice.seed,
-      itemRules: configuredShopStockRules()
+      itemRules: configuredShopStockRules(),
+      stockSize: choice.stockSize
     });
     if (!result.preset || !result.stock.length) {
       ui.notifications?.warn(game.i18n.localize("SYMBAROUMHUD.CompendiumBrowser.Shop.StockGenerationEmpty"));
@@ -2029,6 +2053,33 @@ export class SymbaroumCompendiumBrowser extends ApplicationV2 {
       missing
     }));
     return this.render({ force: true });
+  }
+
+  async #requestShopStockSize() {
+    const options = ["small", "medium", "large"];
+    const content = `<section class="symbaroum-hud-shop-stock-size-dialog">
+      <p>${escapeHtml(game.i18n.localize("SYMBAROUMHUD.CompendiumBrowser.Shop.StockSizeHint"))}</p>
+      <div>${options.map((id) => `<article>
+        <strong>${escapeHtml(game.i18n.localize(`SYMBAROUMHUD.CompendiumBrowser.Shop.StockSize${SHOP_STOCK_SIZE_I18N_SUFFIX[id]}`))}</strong>
+        <small>${escapeHtml(game.i18n.localize(`SYMBAROUMHUD.CompendiumBrowser.Shop.StockSize${SHOP_STOCK_SIZE_I18N_SUFFIX[id]}Hint`))}</small>
+      </article>`).join("")}</div>
+    </section>`;
+    const selected = await DialogV2.wait({
+      classes: ["symbaroum-hud-shop-stock-size-window"],
+      window: { title: game.i18n.localize("SYMBAROUMHUD.CompendiumBrowser.Shop.StockSizeTitle") },
+      position: { width: 520 },
+      content,
+      buttons: options.map((id) => ({
+        action: id,
+        icon: id === "small" ? "fa-solid fa-basket-shopping" : id === "large" ? "fa-solid fa-warehouse" : "fa-solid fa-store",
+        label: game.i18n.localize(`SYMBAROUMHUD.CompendiumBrowser.Shop.StockSize${SHOP_STOCK_SIZE_I18N_SUFFIX[id]}`),
+        default: id === "medium",
+        callback: () => id
+      })),
+      close: () => null,
+      rejectClose: false
+    });
+    return selected ? normalizeShopStockSize(selected).id : null;
   }
 
   async #shopGeneratorEntries() {

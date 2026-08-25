@@ -1,10 +1,22 @@
 import { OFFICIAL_SHOP_PRESET_BY_ID } from "../data/official-shop-presets.mjs";
 import { canonicalTaxonomyCategoryId } from "../data/item-taxonomy-categories.mjs";
 
+export const SHOP_STOCK_SIZES = Object.freeze({
+  small: Object.freeze({ id: "small", maximumItems: 8 }),
+  medium: Object.freeze({ id: "medium", maximumItems: 18 }),
+  large: Object.freeze({ id: "large", maximumItems: 35 })
+});
+
+export function normalizeShopStockSize(value) {
+  const id = String(value ?? "").trim().toLowerCase();
+  return SHOP_STOCK_SIZES[id] ?? SHOP_STOCK_SIZES.medium;
+}
+
 export function generateOfficialShopStock(entries, presetOrId, {
   seed = `${Date.now()}`,
   random = null,
-  itemRules = null
+  itemRules = null,
+  stockSize = "medium"
 } = {}) {
   const preset = typeof presetOrId === "string"
     ? OFFICIAL_SHOP_PRESET_BY_ID.get(presetOrId)
@@ -88,10 +100,16 @@ export function generateOfficialShopStock(entries, presetOrId, {
     }
   }
 
+  const size = normalizeShopStockSize(stockSize);
+  const generatedStock = [...stock.values()];
+  const essentialCount = generatedStock.filter(({ pool }) => String(pool).startsWith("essential:"))
+    .length;
+  const limitedStock = generatedStock.slice(0, Math.max(size.maximumItems, essentialCount));
   return Object.freeze({
     preset,
     seed: String(seed),
-    stock: Object.freeze([...stock.values()].sort((left, right) => left.uuid.localeCompare(right.uuid))),
+    stockSize: size.id,
+    stock: Object.freeze(limitedStock.sort((left, right) => left.uuid.localeCompare(right.uuid))),
     missingPools: Object.freeze(missingPools),
     missingEssentials: Object.freeze(missingEssentials)
   });
@@ -101,7 +119,8 @@ export function generateShopStockByCategories(entries, categories = [], {
   seed = `${Date.now()}`,
   random = null,
   itemRules = null,
-  price = [95, 105]
+  price = [95, 105],
+  stockSize = "medium"
 } = {}) {
   const selectedCategories = [...new Set(Array.isArray(categories) ? categories : [])]
     .map((category) => canonicalTaxonomyCategoryId(category))
@@ -109,10 +128,14 @@ export function generateShopStockByCategories(entries, categories = [], {
   if (!selectedCategories.length) return Object.freeze([]);
   const rng = typeof random === "function" ? random : seededRandom(seed);
   const configuredRules = normalizeShopStockRules(itemRules);
-  const stock = normalizeGeneratorEntries(entries)
+  const candidates = normalizeGeneratorEntries(entries)
     .filter((entry) => matchesShopStockCategories(entry, selectedCategories))
     .map((entry) => ({ ...entry, stockRule: resolveShopStockRule(entry, configuredRules) }))
-    .filter((entry) => rng() <= entry.stockRule.chance / 100)
+    .filter((entry) => rng() <= entry.stockRule.chance / 100);
+  shuffleInPlace(candidates, rng);
+  const size = normalizeShopStockSize(stockSize);
+  const stock = candidates
+    .slice(0, size.maximumItems)
     .map((entry) => ({
       uuid: entry.uuid,
       quantity: generatedQuantity(entry, [1, 1], rng),
@@ -312,6 +335,14 @@ function randomInteger(minimum, maximum, rng) {
   const min = Math.max(0, Math.trunc(Number(minimum) || 0));
   const max = Math.max(min, Math.trunc(Number(maximum) || min));
   return min + Math.floor(rng() * (max - min + 1));
+}
+
+function shuffleInPlace(values, rng) {
+  for (let index = values.length - 1; index > 0; index -= 1) {
+    const target = Math.floor(rng() * (index + 1));
+    [values[index], values[target]] = [values[target], values[index]];
+  }
+  return values;
 }
 
 function triangularInteger(minimum, maximum, rng) {

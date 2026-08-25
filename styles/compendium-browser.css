@@ -4733,6 +4733,49 @@
   gap: 8px;
 }
 
+.symbaroum-hud-shop-stock-size-window .window-content,
+.application:has(.symbaroum-hud-shop-stock-size-dialog) .window-content {
+  color: #dfd4bc;
+  background:
+    linear-gradient(rgb(0 0 0 / 72%), rgb(0 0 0 / 78%)),
+    url("/systems/symbaroum/asset/image/background/green_flower_dark.webp") repeat,
+    #09100c;
+}
+
+.symbaroum-hud-shop-stock-size-dialog > p {
+  margin: 0 0 10px;
+  color: #c9bea5;
+  line-height: 1.35;
+}
+
+.symbaroum-hud-shop-stock-size-dialog > div {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.symbaroum-hud-shop-stock-size-dialog article {
+  display: grid;
+  align-content: start;
+  gap: 5px;
+  min-height: 84px;
+  padding: 9px;
+  border: 1px solid #66531c;
+  background: rgb(3 6 4 / 68%);
+}
+
+.symbaroum-hud-shop-stock-size-dialog article strong {
+  color: #f2d563;
+  font-family: "Primitive", "Signika", sans-serif;
+  font-size: 1rem;
+}
+
+.symbaroum-hud-shop-stock-size-dialog article small {
+  color: #bdb29a;
+  font-size: 0.73rem;
+  line-height: 1.3;
+}
+
 .symbaroum-hud-shop-stock-rules-dialog .window-content,
 .application:has(.symbaroum-hud-shop-stock-rules-form) .window-content {
   display: flex;
