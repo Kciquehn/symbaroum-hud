@@ -107,6 +107,19 @@ test("official Thistle Hold and Karvosti tariffs keep exact duration-specific of
   }
 });
 
+test("the Court and Harp suites are exact nightly services scoped to their inn", () => {
+  for (const id of [
+    "court-harp-korinthia-suite", "court-harp-seldonio-suite", "court-harp-esmerelda-suite"
+  ]) {
+    const definition = findServiceDefinition(serviceUuid(id));
+    assert.equal(definition.cost, "1 táler");
+    assert.equal(definition.unit, "night");
+    assert.equal(definition.fulfillment, "temporary");
+    assert.deepEqual(definition.shopIds, ["court-and-harp"]);
+    assert.ok(definition.itemCategories.includes("expenses"));
+  }
+});
+
 test("official lodging, banquet, campaign and fee offers also belong to expenses", () => {
   const expenseIds = [
     "rural-lodging", "city-lodging", "rural-barn-lodging",

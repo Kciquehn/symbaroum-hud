@@ -64,6 +64,9 @@ export function normalizeServiceDefinition(value, { official = false } = {}) {
     unit,
     fulfillment,
     offerKind: value?.offerKind === "asset" ? "asset" : "service",
+    shopIds: Object.freeze([...new Set((Array.isArray(value?.shopIds) ? value.shopIds : [])
+      .map((shopId) => cleanId(shopId))
+      .filter(Boolean))]),
     itemCategories: Object.freeze(normalizeItemCategories(value?.itemCategories)),
     origin: cleanText(value?.origin, 100) || "unknown",
     source: cleanText(value?.source, 240),

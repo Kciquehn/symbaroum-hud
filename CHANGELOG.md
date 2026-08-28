@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.70
+
+- Especializa a **Taverna do Triunfo de Afadir** com seu cardápio oficial, pratos refinados rotativos, preços exatos para as especialidades e a história pública do envenenamento do ano 18.
+- Especializa **A Corte e a Harpa** com três suítes reais exclusivas, diárias oficiais, cuidados de hospedaria e alimentação refinada, sem expor seus quartos em outras lojas.
+- Mantém as táticas das criaturas recolhidas inicialmente no HUD, deixando a consulta disponível sob demanda.
+- Amplia a área de descrição das lojas e permite que textos maiores usem rolagem sem comprimir o restante da interface.
+- Amplia a suíte automatizada para 345 testes.
+
 ## 0.1.69
 
 - Completa a etapa de Ocupações com as 10 opções iniciais do Guia Avançado do Jogador, incluindo Caçador de Monstros, e identifica o livro de origem, Dádivas e Fardos sugeridos de cada escolha.

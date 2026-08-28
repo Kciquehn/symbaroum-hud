@@ -36,6 +36,7 @@ export function generateOfficialShopStock(entries, presetOrId, {
   const configuredRules = rulesEnabled ? normalizeShopStockRules(itemRules) : null;
   const documents = normalizeGeneratorEntries(entries)
     .filter((entry) => matchesShopStockCategories(entry, preset.categories))
+    .filter((entry) => !entry.shopIds.length || entry.shopIds.includes(preset.id))
     .map((entry) => ({
       ...entry,
       stockRule: rulesEnabled ? resolveShopStockRule(entry, configuredRules) : null
@@ -69,7 +70,12 @@ export function generateOfficialShopStock(entries, presetOrId, {
     stock.set(choice.uuid, {
       uuid: choice.uuid,
       quantity: generatedQuantity(choice, essential.quantity, rng),
-      priceModifier: steppedInteger(preset.price?.[0], preset.price?.[1], 5, rng),
+      priceModifier: steppedInteger(
+        essential.price?.[0] ?? preset.price?.[0],
+        essential.price?.[1] ?? preset.price?.[1],
+        5,
+        rng
+      ),
       pool: `essential:${essential.id}`
     });
   }
@@ -90,7 +96,12 @@ export function generateOfficialShopStock(entries, presetOrId, {
       if (!choice) break;
       selected.add(choice.uuid);
       const quantity = generatedQuantity(choice, pool.quantity, rng);
-      const priceModifier = steppedInteger(preset.price?.[0], preset.price?.[1], 5, rng);
+      const priceModifier = steppedInteger(
+        pool.price?.[0] ?? preset.price?.[0],
+        pool.price?.[1] ?? preset.price?.[1],
+        5,
+        rng
+      );
       stock.set(choice.uuid, {
         uuid: choice.uuid,
         quantity,
@@ -231,6 +242,9 @@ function normalizeGeneratorEntry(entry) {
     name: String(entry?.name ?? "").trim(),
     reference: String(entry?.reference ?? "").trim(),
     type: String(entry?.type ?? "").trim(),
+    shopIds: [...new Set((Array.isArray(entry?.shopIds) ? entry.shopIds : [])
+      .map((shopId) => String(shopId ?? "").trim())
+      .filter(Boolean))],
     taxonomyTags: [...new Set((Array.isArray(entry?.taxonomyTags) ? entry.taxonomyTags : [])
       .map((category) => canonicalTaxonomyCategoryId(category)))]
   };

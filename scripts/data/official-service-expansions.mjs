@@ -7,6 +7,7 @@ function service(id, name, {
   origin = "core-rulebook",
   source,
   itemCategories = [],
+  shopIds = [],
   priceMode = "fixed",
   pricingNote = ""
 }) {
@@ -25,6 +26,7 @@ function service(id, name, {
     source,
     official: true,
     offerKind: "service",
+    shopIds: Object.freeze([...new Set(shopIds)]),
     itemCategories: Object.freeze([...new Set(["services", ...itemCategories])])
   });
 }
@@ -238,6 +240,24 @@ export const OFFICIAL_SERVICE_EXPANSIONS = Object.freeze([
     category: "hospitality", cost: "1 táler", unit: "night", fulfillment: "temporary",
     origin: "wrath-of-the-warden", source: WARDEN_PRICES,
     itemCategories: EXPENSE_ITEM_CATEGORIES
+  }),
+  service("court-harp-korinthia-suite", "Suíte de Korinthia — Corte e Harpa", {
+    description: "Quarto de luxo inspirado em relatos confiáveis sobre os aposentos privados da Rainha Korinthia. A diária está sujeita às regras de vestimenta e conduta de Aragina.",
+    category: "hospitality", cost: "1 táler", unit: "night", fulfillment: "temporary",
+    origin: "wrath-of-the-warden", source: "A Ira do Guardião — Forte do Cardo, A Corte e a Harpa",
+    itemCategories: EXPENSE_ITEM_CATEGORIES, shopIds: ["court-and-harp"]
+  }),
+  service("court-harp-seldonio-suite", "Suíte de Seldonio — Corte e Harpa", {
+    description: "Quarto de luxo decorado para reproduzir a atmosfera atribuída aos aposentos do Grão-Mestre Seldonio. A diária está sujeita às regras de vestimenta e conduta de Aragina.",
+    category: "hospitality", cost: "1 táler", unit: "night", fulfillment: "temporary",
+    origin: "wrath-of-the-warden", source: "A Ira do Guardião — Forte do Cardo, A Corte e a Harpa",
+    itemCategories: EXPENSE_ITEM_CATEGORIES, shopIds: ["court-and-harp"]
+  }),
+  service("court-harp-esmerelda-suite", "Suíte de Esmerelda — Corte e Harpa", {
+    description: "Quarto de luxo inspirado nos aposentos atribuídos à Grã-Duquesa Esmerelda. A diária está sujeita às regras de vestimenta e conduta de Aragina.",
+    category: "hospitality", cost: "1 táler", unit: "night", fulfillment: "temporary",
+    origin: "wrath-of-the-warden", source: "A Ira do Guardião — Forte do Cardo, A Corte e a Harpa",
+    itemCategories: EXPENSE_ITEM_CATEGORIES, shopIds: ["court-and-harp"]
   }),
   service("thistle-good-lodging", "Boa hospedagem em Forte do Cardo", {
     description: "Boa hospedagem: 2 xelins por noite, 1 táler por semana ou 4 táleres por mês.",

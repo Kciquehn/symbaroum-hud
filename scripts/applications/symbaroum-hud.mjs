@@ -104,7 +104,7 @@ export class SymbaroumHud extends ApplicationV2 {
   #storageContainerId = null;
   #storageDragData = null;
   #storageOpen = false;
-  #tacticsCollapsed = false;
+  #tacticsCollapsed = true;
   #tooltipElement = null;
   #tooltipTimeout = null;
   #ritualsOpen = false;
@@ -152,7 +152,7 @@ export class SymbaroumHud extends ApplicationV2 {
       this.#selectedTraitTab = DEFAULT_ABILITY_TAB;
       this.#storageContainerId = null;
       this.#storageOpen = false;
-      this.#tacticsCollapsed = false;
+      this.#tacticsCollapsed = true;
       this.#ritualsOpen = false;
       this.#traitsOpen = false;
       if (resolvedActor) this.#actor = resolvedActor;
@@ -440,7 +440,7 @@ export class SymbaroumHud extends ApplicationV2 {
     this.#storageContainerId = null;
     this.#storageDragData = null;
     this.#storageOpen = false;
-    this.#tacticsCollapsed = false;
+    this.#tacticsCollapsed = true;
     this.#ritualsOpen = false;
     this.#traitsOpen = false;
     return super._onClose(options);

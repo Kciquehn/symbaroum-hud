@@ -2385,9 +2385,9 @@
 
 .symbaroum-hud-shop-description-field > textarea {
   width: 100%;
-  height: clamp(88px, 13vh, 120px) !important;
-  min-height: 88px;
-  max-height: 120px;
+  height: clamp(120px, 22vh, 220px) !important;
+  min-height: 120px;
+  max-height: 220px;
   margin: 0;
   padding: 10px;
   resize: none;
@@ -2408,9 +2408,9 @@
 }
 
 .symbaroum-hud-shop-description-static > p {
-  height: clamp(88px, 13vh, 120px);
-  min-height: 88px;
-  max-height: 120px;
+  height: auto;
+  min-height: 120px;
+  max-height: clamp(120px, 22vh, 220px);
   margin: 0;
   padding: 10px;
   overflow-y: auto;

@@ -6,7 +6,8 @@ function pool(id, {
   picks = [1, 1],
   quantity = [1, 1],
   chance = 1,
-  weight = 1
+  weight = 1,
+  price = null
 } = {}) {
   return Object.freeze({
     id,
@@ -17,7 +18,8 @@ function pool(id, {
     picks: Object.freeze(picks),
     quantity: Object.freeze(quantity),
     chance,
-    weight
+    weight,
+    price: Array.isArray(price) ? Object.freeze(price) : null
   });
 }
 
@@ -27,7 +29,8 @@ function essential(id, {
   categories = [],
   anyTags = [],
   quantity = [1, 1],
-  random = false
+  random = false,
+  price = null
 } = {}) {
   return Object.freeze({
     id,
@@ -36,7 +39,8 @@ function essential(id, {
     categories: Object.freeze(categories),
     anyTags: Object.freeze(anyTags),
     quantity: Object.freeze(quantity),
-    random
+    random,
+    price: Array.isArray(price) ? Object.freeze(price) : null
   });
 }
 
@@ -113,8 +117,9 @@ const OFFICIAL_SHOP_DETAILS = Object.freeze({
   ],
   "afadirs-triumph": [
     "Afadir tenta recriar a culinária de Alberetor com substitutos locais: truta no lugar do salmão, bagas roka no lugar da pimenta-do-sul e mel no lugar do açúcar.",
-    "É uma casa cara, voltada a clientes com saudade do sul; reservas são recomendadas.",
-    "Depois de um envenenamento coletivo no ano 18, Afadir pagou multas elevadas e prometeu reforçar o cuidado com substituições de ingredientes."
+    "É uma casa cara, voltada a clientes abastados com saudade do sul; reservas são recomendadas e o bife macio de veado está entre suas especialidades mais celebradas.",
+    "No verão do ano 18, um ajudante confundiu o cerefólio dos nabos amanteigados com uma planta local venenosa: mais de vinte clientes adoeceram e quatro morreram. O ajudante, imune à toxina, foi condenado ao pelourinho e depois enforcado.",
+    "Afadir pagou multas elevadas à cidade e jurou em nome de Prios que jamais permitiria outra substituição descuidada em suas cozinhas."
   ],
   "halls-of-symbaroum": [
     "Ordelia Felisselvagem reuniu em um só estabelecimento comida, bebida, jogos, espetáculos e outras diversões que normalmente estariam espalhadas pela cidade.",
@@ -132,8 +137,10 @@ const OFFICIAL_SHOP_DETAILS = Object.freeze({
     "Doença, violência, banimento e desespero fazem a ocupação mudar continuamente."
   ],
   "court-and-harp": [
-    "Os quartos alegam reproduzir aposentos de celebridades, incluindo a Rainha Korinthia, o Grão-Mestre Seldonio e a Grã-Duquesa Esmerelda.",
-    "A proprietária Aragina exige aparência e comportamento respeitáveis e não tolera hóspedes sujos ou grosseiros.",
+    "Na Praça Antiga, seus quartos alegam reproduzir aposentos privados da Rainha Korinthia, do Grão-Mestre Seldonio e da Grã-Duquesa Esmerelda a partir de relatos considerados confiáveis.",
+    "Representantes da Coroa e membros das casas nobres fazem dela uma de suas hospedarias favoritas durante passagens por Forte do Cardo.",
+    "Aragina, viúva e proprietária, exige vestimenta adequada, extrema decência e bons modos; dinheiro sozinho não garante admissão, e sujeira ou grosseria não são toleradas.",
+    "Funcionários podem tornar deliberadamente desagradável a estadia de hóspedes indesejados. Rumores mais graves sobre agressões nas redondezas não foram comprovados.",
     "É uma hospedaria exclusiva: a tabela oficial fixa uma noite em 1 táler."
   ],
   "witch-and-familiar": [
@@ -352,9 +359,85 @@ const FINE_DINING_ESSENTIALS = Object.freeze([
   ...TAVERN_ESSENTIALS
 ]);
 
+const AFADIR_ESSENTIALS = Object.freeze([
+  essential("trout-pudding", {
+    names: [
+      "Pudim de truta com nabos", "Pudim de truta com nabos amanteigados",
+      "Trout Pudding with Turnips", "Trout Pudding with Buttered Turnips"
+    ],
+    quantity: [4, 12], categories: ["equipment"], price: [100, 100]
+  }),
+  essential("roka-sausage", {
+    names: [
+      "Salsicha roka com purê de beterraba", "Roka Sausage with Mashed Beats",
+      "Roka Sausage with Beetroot Mash"
+    ],
+    quantity: [4, 12], categories: ["equipment"], price: [100, 100]
+  }),
+  essential("honey-roasted-sorrel", {
+    names: ["Azedinha assada com mel", "Honey-roasted Sorrel"],
+    quantity: [6, 18], categories: ["equipment"], price: [100, 100]
+  }),
+  essential("kuruns-honor", {
+    names: [
+      "Caneca de Honra de Kurun", "Caneca da Honra de Kurun",
+      "Tankard of Kurun’s Honor", "Tankard of Kurun's Honor", "Tankard Kurun's Honor"
+    ],
+    quantity: [8, 24], categories: ["equipment"], price: [100, 100]
+  }),
+  essential("argona", {
+    names: ["Caneca de Argona", "Caneca de Argona (stut fino)", "Tankard Argona (fine stut)"],
+    quantity: [8, 24], categories: ["equipment"], price: [100, 100]
+  }),
+  essential("salty-sweet-needles", {
+    names: ["Agulhas salgadas-doces", "Agulhas salgadas", "Salty-sweet Needles", "Salted Needles"],
+    quantity: [10, 30], categories: ["equipment"], price: [100, 100]
+  }),
+  essential("venison-steak", {
+    names: [
+      "Bife macio de veado", "Bife do rei em molho", "Tender Back Steak",
+      "Prime Rib", "King’s Steak in Gravy", "King's Steak in Gravy", "King's steak in sauce"
+    ],
+    quantity: [4, 12], categories: ["equipment"], price: [100, 100]
+  }),
+  essential("southern-slopes", {
+    names: ["Garrafa das Encostas do Sul (de Alberetor)", "Bottle of Southern Slopes (from Alberetor)"],
+    quantity: [2, 8], categories: ["equipment"], price: [100, 100]
+  })
+]);
+
 const FINE_INN_ESSENTIALS = Object.freeze([
   ...FINE_DINING_ESSENTIALS,
   essential("lodging", { anyTags: ["expenses", "service-hospitality"], quantity: [3, 12], random: true })
+]);
+
+const COURT_HARP_ESSENTIALS = Object.freeze([
+  essential("korinthia-suite", {
+    names: ["Suíte de Korinthia — Corte e Harpa"], categories: ["service"],
+    quantity: [2, 6], price: [100, 100]
+  }),
+  essential("seldonio-suite", {
+    names: ["Suíte de Seldonio — Corte e Harpa"], categories: ["service"],
+    quantity: [2, 6], price: [100, 100]
+  }),
+  essential("esmerelda-suite", {
+    names: ["Suíte de Esmerelda — Corte e Harpa"], categories: ["service"],
+    quantity: [2, 6], price: [100, 100]
+  }),
+  essential("inn-bath", {
+    names: ["Banho em estalagem"], categories: ["service"], quantity: [4, 12], price: [100, 100]
+  }),
+  essential("laundry", {
+    names: ["Lavanderia"], categories: ["service"], quantity: [4, 12], price: [100, 100]
+  }),
+  essential("southern-slopes", {
+    names: ["Garrafa das Encostas do Sul (de Alberetor)", "Bottle of Southern Slopes (from Alberetor)"],
+    quantity: [2, 8], categories: ["equipment"]
+  }),
+  essential("kings-steak", {
+    names: ["Bife do rei em molho", "King’s Steak in Gravy", "King's Steak in Gravy"],
+    quantity: [4, 12], categories: ["equipment"]
+  })
 ]);
 
 const CHEAP_INN_ESSENTIALS = Object.freeze([
@@ -551,13 +634,26 @@ export const OFFICIAL_SHOP_PRESETS = Object.freeze([
     ]
   }),
 
-  shop("afadirs-triumph", "Taverna Triunfo de Afadir", "Forte do Cardo", {
+  shop("afadirs-triumph", "Taverna do Triunfo de Afadir", "Forte do Cardo", {
     book: CORE, section: "Afadir’s Triumph Tavern"
-  }, "Taverna cara que tenta recriar a culinária de Alberetor com ingredientes locais.", [
-    pool("meals", { anyTags: ["food-and-drink"], excludeTags: ["ingredient"], picks: [6, 13], quantity: [2, 12], weight: 4 }),
-    pool("drinks", { anyTags: ["beverages", "teas"], picks: [3, 8], quantity: [3, 15] })
+  }, "Restaurante sofisticado próximo à Praça do Sapo, famoso por recriar a alta culinária de Alberetor com ingredientes de Ambria e da Davokar.", [
+    pool("fine-meat", {
+      anyTags: ["meat"], excludeTags: ["stews", "soups", "pies", "ingredient"],
+      picks: [3, 7], quantity: [2, 10], weight: 5, price: [125, 170]
+    }),
+    pool("fine-fish", {
+      anyTags: ["fish"], excludeTags: ["stews", "soups", "pies", "ingredient"],
+      picks: [2, 5], quantity: [2, 10], weight: 4, price: [125, 170]
+    }),
+    pool("desserts", {
+      anyTags: ["desserts"], excludeTags: ["ingredient"],
+      picks: [3, 7], quantity: [3, 12], weight: 4, price: [120, 160]
+    }),
+    pool("fine-teas", {
+      anyTags: ["teas"], picks: [1, 4], quantity: [3, 12], chance: 0.8, price: [115, 145]
+    })
   ], {
-    price: [120, 170], icon: "fa-utensils", essentials: FINE_DINING_ESSENTIALS,
+    price: [120, 170], icon: "fa-utensils", essentials: AFADIR_ESSENTIALS,
     categories: ["food-and-drink"]
   }),
 
@@ -595,13 +691,25 @@ export const OFFICIAL_SHOP_PRESETS = Object.freeze([
 
   shop("court-and-harp", "A Corte e a Harpa", "Forte do Cardo", {
     book: WRATH_OF_THE_WARDEN, section: "The Court and Harp"
-  }, "Estalagem luxuosa da Praça Antiga, com quartos inspirados nas câmaras de celebridades e atendimento voltado à elite.", [
-    pool("lodging", { anyTags: ["service-hospitality", "expenses"], picks: [3, 6], quantity: [1, 8], weight: 4 }),
-    pool("fine-food", { anyTags: ["food-and-drink"], picks: [5, 10], quantity: [2, 10] }),
-    pool("tobacco", { anyTags: ["tobacco-types", "tobacco-utensils"], picks: [1, 3], quantity: [1, 4], chance: 0.55 })
+  }, "Hospedaria de elite da Praça Antiga, administrada pela severa Aragina e frequentada por representantes da Coroa e da nobreza.", [
+    pool("fine-meat", {
+      anyTags: ["meat"], excludeTags: ["stews", "soups", "pies", "ingredient"],
+      picks: [2, 5], quantity: [2, 8], weight: 4, price: [155, 220]
+    }),
+    pool("fine-fish", {
+      anyTags: ["fish"], excludeTags: ["stews", "soups", "pies", "ingredient"],
+      picks: [1, 4], quantity: [2, 8], weight: 3, price: [155, 220]
+    }),
+    pool("desserts", {
+      anyTags: ["desserts"], excludeTags: ["ingredient"],
+      picks: [2, 5], quantity: [2, 10], weight: 4, price: [150, 210]
+    }),
+    pool("fine-teas", {
+      anyTags: ["teas"], picks: [1, 3], quantity: [3, 10], chance: 0.8, price: [145, 185]
+    })
   ], {
-    price: [140, 210], icon: "fa-crown", essentials: FINE_INN_ESSENTIALS,
-    categories: ["food-and-drink", "service-hospitality", "tobacco-types", "tobacco-utensils"]
+    price: [150, 220], icon: "fa-crown", essentials: COURT_HARP_ESSENTIALS,
+    categories: ["food-and-drink", "service-hospitality"]
   }),
 
   shop("witch-and-familiar", "A Bruxa e o Familiar", "Forte do Cardo", {

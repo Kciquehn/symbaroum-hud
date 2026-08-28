@@ -65,6 +65,70 @@ test("official shop catalog has unique, auditable presets", () => {
   }
 });
 
+test("Afadir stocks its official menu at exact prices and rotates only refined food", () => {
+  const afadirEntries = [
+    entry("Item.trout-pudding", "Pudim de truta com nabos", "equipment", ["equipment", "food-and-drink", "fish", "desserts"]),
+    entry("Item.roka-sausage", "Salsicha roka com purê de beterraba", "equipment", ["equipment", "food-and-drink", "meat"]),
+    entry("Item.sorrel", "Azedinha assada com mel", "equipment", ["equipment", "food-and-drink"]),
+    entry("Item.kurun", "Caneca de Honra de Kurun", "equipment", ["equipment", "food-and-drink", "beverages", "alcoholic"]),
+    entry("Item.argona", "Caneca de Argona (stut fino)", "equipment", ["equipment", "food-and-drink", "beverages", "alcoholic"]),
+    entry("Item.needles", "Agulhas salgadas-doces", "equipment", ["equipment", "food-and-drink", "desserts"]),
+    entry("Item.venison", "Bife macio de veado", "equipment", ["equipment", "food-and-drink", "meat"]),
+    entry("Item.southern-slopes", "Garrafa das Encostas do Sul (de Alberetor)", "equipment", ["equipment", "food-and-drink", "beverages", "alcoholic"]),
+    entry("Item.fricassee", "Fricassê de frango com nabos", "equipment", ["equipment", "food-and-drink", "meat"]),
+    entry("Item.sorbet", "Sorvete de frutas", "equipment", ["equipment", "food-and-drink", "desserts"]),
+    entry("Item.tea", "Chá de especiarias", "equipment", ["equipment", "food-and-drink", "teas"]),
+    entry("Item.common-stew", "Ensopado misto", "equipment", ["equipment", "food-and-drink", "stews"]),
+    entry("Item.table-ale", "Ale de mesa (stut regada)", "equipment", ["equipment", "food-and-drink", "beverages", "alcoholic"])
+  ];
+  const result = generateOfficialShopStock(afadirEntries, "afadirs-triumph", {
+    seed: "verao-ano-21",
+    stockSize: "large"
+  });
+  const stock = new Map(result.stock.map((line) => [line.uuid, line]));
+
+  for (const uuid of [
+    "Item.trout-pudding", "Item.roka-sausage", "Item.sorrel", "Item.kurun",
+    "Item.argona", "Item.needles", "Item.venison", "Item.southern-slopes"
+  ]) {
+    assert.match(stock.get(uuid)?.pool ?? "", /^essential:/);
+    assert.equal(stock.get(uuid)?.priceModifier, 100);
+  }
+  assert.ok(stock.get("Item.fricassee")?.priceModifier >= 125);
+  assert.ok(stock.get("Item.sorbet")?.priceModifier >= 120);
+  assert.ok(stock.get("Item.tea")?.priceModifier >= 115);
+  assert.equal(stock.has("Item.common-stew"), false);
+  assert.equal(stock.has("Item.table-ale"), false);
+});
+
+test("the Court and Harp guarantees its suites without leaking them into other inns", () => {
+  const suites = [
+    { ...entry("SymbaroumHudService.court-harp-korinthia-suite", "Suíte de Korinthia — Corte e Harpa", "service", ["services", "service-hospitality", "expenses"]), shopIds: ["court-and-harp"] },
+    { ...entry("SymbaroumHudService.court-harp-seldonio-suite", "Suíte de Seldonio — Corte e Harpa", "service", ["services", "service-hospitality", "expenses"]), shopIds: ["court-and-harp"] },
+    { ...entry("SymbaroumHudService.court-harp-esmerelda-suite", "Suíte de Esmerelda — Corte e Harpa", "service", ["services", "service-hospitality", "expenses"]), shopIds: ["court-and-harp"] }
+  ];
+  const candidates = [
+    ...suites,
+    entry("SymbaroumHudService.inn-bath", "Banho em estalagem", "service", ["services", "service-hospitality"]),
+    entry("SymbaroumHudService.laundry", "Lavanderia", "service", ["services", "service-hospitality"]),
+    entry("Item.wine", "Garrafa das Encostas do Sul (de Alberetor)", "equipment", ["equipment", "food-and-drink", "beverages"]),
+    entry("Item.steak", "Bife do rei em molho", "equipment", ["equipment", "food-and-drink", "meat"])
+  ];
+  const court = generateOfficialShopStock(candidates, "court-and-harp", {
+    seed: "visita-da-coroa", stockSize: "large"
+  });
+  const wingedLadle = generateOfficialShopStock(candidates, "winged-ladle", {
+    seed: "visita-da-coroa", stockSize: "large"
+  });
+
+  for (const suite of suites) {
+    const line = court.stock.find(({ uuid }) => uuid === suite.uuid);
+    assert.match(line?.pool ?? "", /^essential:/);
+    assert.equal(line?.priceModifier, 100);
+    assert.equal(wingedLadle.stock.some(({ uuid }) => uuid === suite.uuid), false);
+  }
+});
+
 test("expedition stores always stock their available essential items before rotating stock", () => {
   const result = generateOfficialShopStock(entries, "marvaloms", { seed: "estoque-essencial" });
   const rope = result.stock.find(({ uuid }) => uuid === "Item.rope");
