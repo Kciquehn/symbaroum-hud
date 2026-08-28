@@ -47,9 +47,30 @@
 }
 
 .symbaroum-hud-character-creator-dialog .window-content { padding: 0; }
+.symbaroum-hud-character-creator-dialog.symbaroum-hud-occupation-book-dialog .window-content {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+.symbaroum-hud-character-creator-dialog.symbaroum-hud-occupation-book-dialog .dialog-form {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
 .symbaroum-hud-character-creator-dialog .dialog-content {
   min-height: 0;
   overflow: hidden;
+}
+.symbaroum-hud-character-creator-dialog.symbaroum-hud-occupation-book-dialog .dialog-content {
+  flex: 1 1 0;
+  width: 100%;
+  height: 0;
+  min-height: 0;
 }
 .symbaroum-hud-character-creator-dialog .dialog-form {
   min-height: 0;
@@ -254,7 +275,8 @@
 .symbaroum-hud-contacts-page > header h2,
 .symbaroum-hud-contact-people h3 { margin: 2px 0; color: #511f19; font: 1.05rem "Primitive", "Symbaroum HUD Primitive", serif; }
 .symbaroum-hud-contacts-network,
-.symbaroum-hud-contacts-details { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 9px 0; }
+.symbaroum-hud-contacts-details { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.symbaroum-hud-contacts-network { padding: 9px 0 7px; }
 .symbaroum-hud-contacts-page label { display: grid; gap: 3px; }
 .symbaroum-hud-contacts-page label > span { color: #511f19; font: 0.68rem "Primitive", "Symbaroum HUD Primitive", serif; }
 .symbaroum-hud-contacts-page label > span i { margin-left: 4px; color: #9a3026; font-size: 0.43rem; vertical-align: top; }
@@ -268,10 +290,41 @@
 }
 .symbaroum-hud-contacts-page input { height: 29px; padding: 3px 6px; }
 .symbaroum-hud-contacts-page textarea { min-height: 58px; padding: 6px; resize: vertical; line-height: 1.35; }
-.symbaroum-hud-contacts-page small,
-.symbaroum-hud-contact-people > header p { margin: 0; color: #5d5142; font-size: 0.59rem; }
-.symbaroum-hud-contact-people { padding: 8px 0; border-block: 1px solid #9d8a63; }
-.symbaroum-hud-contact-people h3 { font-size: 0.82rem; }
+.symbaroum-hud-contacts-page small { margin: 0; color: #5d5142; font-size: 0.59rem; }
+.symbaroum-hud-contact-fold {
+  margin-top: 5px;
+  border-top: 1px solid #9d8a63;
+}
+.symbaroum-hud-contact-fold > summary {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 7px 3px;
+  color: #511f19;
+  cursor: pointer;
+  list-style: none;
+  font: 0.76rem "Primitive", "Symbaroum HUD Primitive", serif;
+}
+.symbaroum-hud-contact-fold > summary::-webkit-details-marker { display: none; }
+.symbaroum-hud-contact-fold > summary::after {
+  content: "";
+  width: 7px;
+  height: 7px;
+  margin: -3px 3px 0 4px;
+  border-right: 1px solid #8b6927;
+  border-bottom: 1px solid #8b6927;
+  transform: rotate(45deg);
+  transition: transform 140ms ease;
+}
+.symbaroum-hud-contact-fold[open] > summary::after { transform: translateY(3px) rotate(225deg); }
+.symbaroum-hud-contact-fold > summary > span { display: inline-flex; gap: 6px; align-items: center; }
+.symbaroum-hud-contact-fold > summary > span i { color: #8b6927; }
+.symbaroum-hud-contact-fold > summary small {
+  margin-left: auto;
+  color: #796b58;
+  font: italic 0.58rem var(--font-text, "Philosopher"), serif;
+}
+.symbaroum-hud-contact-fold-content { padding: 0 3px 8px; }
 .symbaroum-hud-contact-row {
   display: grid;
   grid-template-columns: 24px 1fr 1fr 1fr;
@@ -438,6 +491,12 @@
   font-family: "Primitive", "Symbaroum HUD Primitive", serif;
 }
 
+.symbaroum-hud-character-creator-dialog.symbaroum-hud-occupation-book-dialog
+  .dialog-content .symbaroum-hud-occupation-profession-notice {
+  font-size: max(0.58rem, 10px);
+  line-height: 1.18;
+}
+
 .symbaroum-hud-occupation-ability-links {
   display: inline;
 }
@@ -558,7 +617,7 @@
   .symbaroum-hud-attribute-introduction h2,
   .symbaroum-hud-attribute-choice h3,
   .symbaroum-hud-race-heading h2,
-  .symbaroum-hud-race-trait-section h3,
+  .symbaroum-hud-race-trait-section h4,
   .symbaroum-hud-race-trait-open strong,
   .symbaroum-hud-ability-special-picker h3,
   .symbaroum-hud-ability-special-card h4
@@ -651,19 +710,14 @@
 
 /* Races */
 .symbaroum-hud-race-art {
-  border: 9px solid transparent;
-  border-image: var(--symba-creator-title) 20 / 9px;
-  background: #080807 var(--symba-creator-title) repeat;
-  box-shadow: 0 3px 10px rgb(0 0 0 / 55%);
+  border: 0;
+  border-image: none;
+  background: transparent;
+  box-shadow: none;
 }
 
 .symbaroum-hud-race-traits { border-top: 8px solid transparent; border-image: var(--symba-creator-title) 20 / 8px 0 0; }
-.symbaroum-hud-race-trait-section > header { border-bottom: 1px solid #171411; }
-.symbaroum-hud-race-trait-section > header span {
-  color: #fff;
-  background: #080807 var(--symba-creator-title) repeat;
-  font-family: "Primitive", "Symbaroum HUD Primitive", serif;
-}
+.symbaroum-hud-race-trait-section > h4 { border-bottom: 1px solid #171411; }
 .symbaroum-hud-race-trait-card:has(input:checked) {
   border-color: var(--symba-creator-gold);
   border-left-color: #69824f;
@@ -715,6 +769,132 @@
 }
 
 .symbaroum-hud-native-ability-purchase button small { color: inherit; opacity: 0.72; }
+
+.symbaroum-hud-advanced-rule-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #d9c46f;
+  font-size: 0.68rem;
+}
+
+.symbaroum-hud-advanced-rule-tag[data-locked="true"] { color: #c98273; }
+
+.symbaroum-hud-advanced-ability-rule {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 7px 8px;
+  padding: 8px 11px;
+  border: 1px solid #8d7629;
+  border-left: 4px solid #c5a52d;
+  color: #e9debd;
+  background: linear-gradient(90deg, rgb(95 83 29 / 46%), rgb(8 10 8 / 92%));
+}
+
+.symbaroum-hud-advanced-ability-rule[data-complete="true"] {
+  border-left-color: #7fa05a;
+  background: linear-gradient(90deg, rgb(67 96 47 / 48%), rgb(8 10 8 / 92%));
+}
+
+.symbaroum-hud-advanced-ability-rule[data-restricted="true"] {
+  border-color: #773c32;
+  border-left-color: #a65445;
+  background: linear-gradient(90deg, rgb(105 40 33 / 44%), rgb(8 10 8 / 92%));
+}
+
+.symbaroum-hud-advanced-ability-rule > i { color: var(--symba-creator-gold); font-size: 1.05rem; }
+.symbaroum-hud-advanced-ability-rule div { display: grid; gap: 2px; }
+.symbaroum-hud-advanced-ability-rule strong { color: #fff1c5; font-family: "Primitive", "Symbaroum HUD Primitive", serif; }
+.symbaroum-hud-advanced-ability-rule span { font-size: 0.76rem; line-height: 1.35; }
+
+.symbaroum-hud-native-ability-purchase button:disabled {
+  cursor: not-allowed;
+  filter: grayscale(0.72);
+  opacity: 0.48;
+}
+
+.symbaroum-hud-advanced-trait-catalogue {
+  margin: 0;
+}
+
+.symbaroum-hud-advanced-trait-catalogue > summary {
+  min-height: 42px;
+}
+
+.symbaroum-hud-advanced-trait-catalogue > summary b { color: #d8bd49; font-size: 0.7rem; }
+.symbaroum-hud-advanced-trait-catalogue > summary b[data-bonus="true"] { color: #9ec878; }
+.symbaroum-hud-advanced-trait-content { min-height: 0; overflow-y: auto; }
+.symbaroum-hud-advanced-trait-rules { padding: 8px 9px; border-top: 1px solid #5c4c19; font-size: 0.7rem; line-height: 1.35; }
+.symbaroum-hud-advanced-trait-rules :is(p, small) { display: block; margin: 0 0 4px; }
+.symbaroum-hud-advanced-trait-catalogue section > h4 {
+  display: flex;
+  margin: 0;
+  padding: 6px 9px;
+  align-items: center;
+  gap: 6px;
+  border-block: 1px solid #5c4c19;
+  color: #e5cd6e;
+  font-size: 0.76rem;
+}
+.symbaroum-hud-advanced-trait-catalogue section > h4 small { margin-left: auto; }
+.symbaroum-hud-advanced-trait-catalogue section > div { overflow: visible; }
+.symbaroum-hud-advanced-trait-catalogue article {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 28px;
+  align-items: stretch;
+  border-bottom: 1px dotted rgb(197 165 45 / 32%);
+}
+.symbaroum-hud-advanced-trait-catalogue article[data-selected="true"] { background: rgb(96 120 62 / 24%); }
+.symbaroum-hud-advanced-trait-catalogue article > button {
+  display: grid;
+  min-width: 0;
+  padding: 4px 6px;
+  grid-template-columns: 25px minmax(0, 1fr);
+  align-items: center;
+  gap: 6px;
+  border: 0;
+  color: #f0e7cf;
+  background: transparent;
+  text-align: left;
+}
+.symbaroum-hud-advanced-trait-catalogue article img { width: 25px; height: 25px; object-fit: contain; }
+.symbaroum-hud-advanced-trait-catalogue article span { overflow: hidden; font-size: 0.7rem; text-overflow: ellipsis; white-space: nowrap; }
+.symbaroum-hud-advanced-trait-catalogue article em { grid-column: 2; color: #cfb64e; font-size: 0.58rem; font-style: normal; }
+.symbaroum-hud-advanced-trait-catalogue article > label { display: grid; place-items: center; cursor: pointer; }
+.symbaroum-hud-advanced-trait-catalogue article > label input { position: absolute; opacity: 0; pointer-events: none; }
+.symbaroum-hud-advanced-trait-catalogue article > label i { color: #d5bd5d; }
+.symbaroum-hud-advanced-trait-catalogue article > label:has(input:disabled) { cursor: not-allowed; opacity: 0.42; }
+
+.symbaroum-hud-advanced-profession-catalogue {
+  margin-top: 8px;
+  border: 1px solid #5c4c19;
+  background: rgb(3 8 6 / 72%);
+}
+
+.symbaroum-hud-advanced-profession-catalogue > summary {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 34px;
+  padding: 6px 9px;
+  color: #eadb9b;
+  cursor: pointer;
+  font-family: var(--symbaroum-hud-display-font);
+  font-size: 0.78rem;
+  list-style: none;
+}
+
+.symbaroum-hud-advanced-profession-catalogue > summary::-webkit-details-marker { display: none; }
+.symbaroum-hud-advanced-profession-catalogue > summary i { color: #c7a92e; }
+.symbaroum-hud-advanced-profession-introduction { padding: 7px 9px; border-top: 1px solid #5c4c19; }
+.symbaroum-hud-advanced-profession-introduction p { margin: 0; color: #d8cfad; font-size: 0.67rem; line-height: 1.35; }
+.symbaroum-hud-advanced-profession-list { max-height: 190px; overflow-y: auto; }
+.symbaroum-hud-advanced-profession-list article { padding: 7px 9px; border-top: 1px dotted rgb(184 151 38 / 38%); }
+.symbaroum-hud-advanced-profession-list article header { display: flex; align-items: center; gap: 6px; color: #d7ba51; font-size: 0.71rem; }
+.symbaroum-hud-advanced-profession-list article p { margin: 3px 0 0 18px; color: #c7bea0; font-size: 0.62rem; line-height: 1.32; }
+.symbaroum-hud-ability-special-card[data-profession-restricted-choice] { border-color: rgb(143 68 59 / 72%); }
+.symbaroum-hud-ability-special-card[data-profession-restricted-choice] .symbaroum-hud-ability-special-ranks { opacity: 0.52; }
 
 /* Keep the native Action field visually separated from the rank tabs in the creator. */
 .symbaroum-hud-creator-ability-browser .symbaroum-hud-native-ability-sheet .ability .tab .action {
@@ -845,7 +1025,7 @@
 .symbaroum-hud-personality-writing-field small { color: #5d5142; font-size: 0.7rem; line-height: 1.35; }
 .symbaroum-hud-personality-contacts {
   margin-top: 14px;
-  padding: 12px 14px;
+  padding: 10px 14px;
   overflow: visible;
   border-width: 7px;
   border-image-width: 7px;
@@ -893,21 +1073,19 @@
   max-height: none;
   grid-template-rows: minmax(0, 1fr);
 }
-.symbaroum-hud-personality-contacts > header h2 i { margin-right: 6px; color: #8b6927; }
-.symbaroum-hud-personality-contacts-introduction {
-  margin: 8px 0 5px;
-  color: #3f352b;
-  font-size: 0.68rem;
-  line-height: 1.42;
+.symbaroum-hud-personality-contacts-header {
+  display: flex;
+  gap: 14px;
+  align-items: baseline;
+  padding-bottom: 7px;
 }
-.symbaroum-hud-personality-contacts > blockquote {
-  margin: 5px 0 8px;
-  padding: 7px 9px;
-  border-left: 3px solid #8b6927;
+.symbaroum-hud-personality-contacts-header h2 { flex: 0 0 auto; }
+.symbaroum-hud-personality-contacts-header h2 i { margin-right: 6px; color: #8b6927; }
+.symbaroum-hud-personality-contacts-header p {
+  margin: 0;
   color: #514535;
-  background: rgb(122 90 35 / 9%);
-  font-size: 0.63rem;
-  font-style: italic;
+  font-size: 0.65rem;
+  line-height: 1.3;
 }
 
 @media (max-width: 900px) {
@@ -1347,7 +1525,7 @@
   font-size: 0.72rem;
 }
 
-.symbaroum-hud-creator-shop-results {
+.symbaroum-hud-browser-results.symbaroum-hud-creator-shop-results {
   grid-template-rows: 42px auto minmax(0, 1fr);
 }
 
@@ -1357,6 +1535,15 @@
 
 .symbaroum-hud-creator-shop-options:empty {
   display: none;
+}
+
+.symbaroum-hud-creator-shop-options {
+  display: flex;
+  min-height: 0;
+  max-height: 180px;
+  flex-direction: column;
+  overflow-y: auto;
+  scrollbar-color: #80691f #080a08;
 }
 
 .symbaroum-hud-creator-shop-rules {
@@ -1406,14 +1593,15 @@
   box-shadow: 0 0 0 2px rgb(217 182 63 / 45%), 0 0 16px rgb(151 48 31 / 70%);
 }
 
-.symbaroum-hud-creator-shop-choice legend {
-  display: contents;
+.symbaroum-hud-creator-shop-choice > h3 {
+  margin: 0;
   color: #d7c46e;
   font-family: "Primitive", "Symbaroum HUD Primitive", serif;
   font-size: 0.72rem;
+  line-height: 1.25;
 }
 
-.symbaroum-hud-creator-shop-choice legend > i {
+.symbaroum-hud-creator-shop-choice > h3 > i {
   margin-right: 5px;
   color: #d8b83e;
 }
@@ -1481,17 +1669,75 @@
   white-space: nowrap;
 }
 
-.symbaroum-hud-initial-equipment-dialog .dialog-content {
-  overflow: visible;
-  background: #0b0d0b var(--symba-creator-green-dark) repeat;
-}
-
 .symbaroum-hud-initial-equipment-choice {
   padding: 16px;
   color: #eee4c8;
   background:
     linear-gradient(rgb(3 7 4 / 30%), rgb(0 0 0 / 48%)),
     var(--symba-creator-green-dark) repeat;
+}
+
+.symbaroum-hud-equipment-choice-stage {
+  min-width: 0;
+  min-height: 0;
+  padding: clamp(16px, 2.4vw, 30px);
+  overflow: auto;
+}
+
+.symbaroum-hud-equipment-choice-stage[hidden],
+.symbaroum-hud-creator-equipment-shop[hidden] {
+  display: none !important;
+}
+
+.symbaroum-hud-equipment-choice-stage-options {
+  display: grid;
+  width: min(100%, 980px);
+  margin: 0 auto;
+  gap: 12px;
+}
+
+.symbaroum-hud-equipment-choice-stage > footer {
+  display: flex;
+  width: min(100%, 980px);
+  margin: 18px auto 0;
+  padding-top: 14px;
+  justify-content: flex-end;
+  border-top: 1px solid #8e742a;
+}
+
+.symbaroum-hud-equipment-choice-stage > footer button {
+  display: inline-flex;
+  width: auto;
+  min-width: 265px;
+  min-height: 42px;
+  padding: 8px 18px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid #9b7f32;
+  border-radius: 0;
+  color: #fff0c4;
+  background: linear-gradient(#4d2119, #24100d);
+  box-shadow: inset 0 0 8px rgb(0 0 0 / 65%);
+  font: 0.82rem "Primitive", "Symbaroum HUD Primitive", serif;
+}
+
+.symbaroum-hud-equipment-choice-stage > footer button:hover,
+.symbaroum-hud-equipment-choice-stage > footer button:focus-visible {
+  border-color: #e0be43;
+  color: #fff8dc;
+  background: linear-gradient(#682b20, #341510);
+}
+
+.symbaroum-hud-equipment-choice-stage > footer button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.symbaroum-hud-equipment-shop-heading-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .symbaroum-hud-initial-equipment-choice > header {
@@ -1529,7 +1775,7 @@
   border-top: 1px solid #8e742a;
 }
 
-.symbaroum-hud-initial-equipment-choice .symbaroum-hud-creator-shop-choice legend {
+.symbaroum-hud-initial-equipment-choice .symbaroum-hud-creator-shop-choice > h3 {
   display: block;
   width: 100%;
   margin-bottom: 9px;

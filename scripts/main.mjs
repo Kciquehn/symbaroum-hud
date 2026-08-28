@@ -15,6 +15,10 @@ import { registerCharacterCreatorHooks } from "./services/character-creator-serv
 import { HotbarShortcutService } from "./services/hotbar-shortcut-service.mjs";
 import { synchronizeWorldItemTaxonomy } from "./services/item-taxonomy-service.mjs";
 import { registerItemTaxonomySheetHooks } from "./services/item-taxonomy-sheet-service.mjs";
+import {
+  CharacterPdfExportService,
+  registerCharacterPdfExportHooks
+} from "./services/character-pdf-export-service.mjs";
 
 let hud = null;
 
@@ -30,6 +34,7 @@ Hooks.once("setup", () => {
   HotbarShortcutService.setActorResolver(() => hud?.actor ?? null);
   registerHotbarShortcuts();
   registerCharacterCreatorHooks();
+  registerCharacterPdfExportHooks();
   registerCompendiumBrowserHooks();
   registerItemTaxonomySheetHooks();
   registerRefreshHooks(hud);
@@ -50,6 +55,7 @@ Hooks.once("setup", () => {
         actor: options.actor ?? hud?.actor ?? null
       }),
       synchronizeItemTaxonomy: () => synchronizeWorldItemTaxonomy(),
+      exportActorPdf: (actor = hud?.actor) => CharacterPdfExportService.export(actor),
       refresh: () => Hooks.callAll(`${MODULE_ID}.refresh`)
     });
   }

@@ -38,7 +38,7 @@ jobs:
         run: |
           mkdir -p dist/symbaroum-hud
           cp module.json LICENSE dist/symbaroum-hud/
-          cp -R assets languages scripts styles templates dist/symbaroum-hud/
+          cp -R assets languages scripts styles templates vendor dist/symbaroum-hud/
           cp module.json dist/module.json
           cd dist
           zip -r symbaroum-hud.zip symbaroum-hud

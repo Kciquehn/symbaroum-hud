@@ -170,6 +170,27 @@ export function registerSettings(onChange) {
     },
     onChange: () => Hooks.callAll(`${MODULE_ID}.browserFolderAccessChanged`)
   });
+
+  game.settings.register(MODULE_ID, SETTINGS.COMPENDIUM_BROWSER_ORIGIN_ACCESS, {
+    scope: "world",
+    config: false,
+    type: Object,
+    default: {
+      configured: false,
+      originIds: []
+    },
+    onChange: () => Hooks.callAll(`${MODULE_ID}.browserOriginAccessChanged`)
+  });
+
+  game.settings.register(MODULE_ID, SETTINGS.PDF_TEMPLATE_PATH, {
+    name: "SYMBAROUMHUD.Settings.PdfTemplatePath.Name",
+    hint: "SYMBAROUMHUD.Settings.PdfTemplatePath.Hint",
+    scope: "world",
+    config: true,
+    restricted: true,
+    type: String,
+    default: ""
+  });
 }
 
 export function getSetting(key) {

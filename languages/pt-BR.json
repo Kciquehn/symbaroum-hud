@@ -3,6 +3,36 @@
     "Title": "Symbaroum HUD",
     "Empty": "Selecione um token de personagem ou criatura.",
     "None": "Nenhum item disponível.",
+    "PdfExport": {
+      "Button": "Exportar PDF",
+      "Character": "Personagem",
+      "Types": {
+        "Ability": "Habilidade",
+        "MysticalPower": "Poder místico",
+        "Ritual": "Ritual"
+      },
+      "ConfigureTitle": "Configurar ficha PDF",
+      "ConfigureHeading": "Ficha editável oficial",
+      "ConfigureText": "Selecione a ficha editável de Symbaroum em PDF. O arquivo continua pertencendo ao Mestre e não será incluído no módulo.",
+      "TemplatePath": "Caminho do PDF no Foundry",
+      "Browse": "Procurar",
+      "CopyrightHint": "Envie sua cópia da ficha para o armazenamento do Foundry. Os campos preenchíveis e as caixas de seleção serão preservados.",
+      "SaveAndUse": "Salvar e exportar",
+      "MissingPlayerTemplate": "O Mestre ainda não configurou a ficha PDF editável.",
+      "InvalidTemplate": "Selecione um arquivo PDF válido.",
+      "Exporting": "Preenchendo a ficha PDF…",
+      "Success": "Ficha PDF exportada. Os campos permanecem editáveis.",
+      "Failed": "Não foi possível exportar a ficha PDF: {error}",
+      "OverflowEntry": "{section}: a ficha comporta {limit}, mas o personagem possui {count}; os demais não foram incluídos.",
+      "Sections": {
+        "abilities": "Habilidades, poderes e rituais",
+        "weapons": "Armas",
+        "armors": "Armaduras",
+        "equipment": "Equipamentos",
+        "friends": "Amigos",
+        "artifacts": "Artefatos"
+      }
+    },
     "ItemTaxonomy": {
       "Category": "Categoria",
       "AutomaticHint": "Categoria identificada automaticamente pelo Symbaroum HUD.",
@@ -90,6 +120,8 @@
       "SourceConfigHint": "Escolha quais tipos de diretório serão exibidos no seu navegador. Esta preferência é salva apenas para o seu usuário.",
       "PlayerFolderAccess": "Acesso dos jogadores por pasta",
       "PlayerFolderAccessHint": "Selecione as pastas do mundo que os jogadores poderão consultar. Ao salvar, o módulo concederá propriedade de Observador diretamente aos Itens e Atores dessas pastas. Selecionar uma pasta também inclui todas as suas subpastas.",
+      "PlayerOriginAccess": "Acesso dos jogadores por livro",
+      "PlayerOriginAccessHint": "Selecione os livros que os jogadores poderão consultar. Um documento só será exibido quando pertencer a um livro autorizado e também estiver em uma pasta liberada. Isso corrige conteúdos oficiais que foram importados em pastas de outro livro.",
       "GameMasterOnly": "Somente Mestre",
       "RootDocuments": "Documentos sem pasta",
       "NoWorldFolders": "Nenhuma pasta deste tipo foi encontrada no mundo.",
@@ -357,17 +389,25 @@
         "StepEightText": "Anote os outros personagens, o nome do grupo e o objetivo que todos compartilham. O objetivo coletivo oferece ao Mestre um ponto de partida para missões, encontros e aventuras."
       },
       "Archetypes": {
+        "Hunter": {
+          "Name": "Caçador",
+          "Summary": "Caçadores rastreiam presas com armas à distância, armadilhas, venenos e técnicas de caça.",
+          "Ability": "Instinto do Caçador"
+        },
         "Warrior": {
           "Name": "Guerreiro",
-          "Summary": "Guerreiros se destacam no campo de batalha, geralmente com armas e armaduras pesadas. Podem atuar como tropas de choque, protetores ou líderes capazes de comandar e auxiliar seus companheiros."
+          "Summary": "Guerreiros enfrentam o perigo de frente como combatentes, líderes, guardiões e especialistas em armas.",
+          "Ability": "Façanha de Força"
         },
         "Mystic": {
           "Name": "Místico",
-          "Summary": "Místicos alcançam fontes sobrenaturais por estudo, fé, pactos com a natureza ou contato com a Corrupção. Seus poderes podem devastar inimigos, proteger aliados e solucionar problemas através de magia e rituais."
+          "Summary": "Místicos controlam o mundo com tradições, poderes, rituais, fé ou pactos — sempre sob o risco da Corrupção.",
+          "Ability": "Dom Poderoso"
         },
         "Rogue": {
           "Name": "Ladino",
-          "Summary": "Ladinos vencem por agilidade, perspicácia e versatilidade. Podem lutar à distância ou corpo a corpo e são especialmente capazes diante de desafios práticos, sociais, furtivos ou de exploração."
+          "Summary": "Ladinos sobrevivem com astúcia e versatilidade, aproveitando oportunidades e reagindo rápido ao perigo.",
+          "Ability": "Reflexos Rápidos"
         }
       },
       "Occupation": {
@@ -375,10 +415,28 @@
         "Index": "Ocupações",
         "SelectLabel": "Arquétipo e ocupação",
         "ArchetypeLabel": "Sobre o arquétipo",
+        "ArchetypeSelectionTitle": "Escolha o arquétipo do personagem",
+        "ArchetypeSelectionText": "O arquétipo descreve o caminho geral do personagem e reúne ocupações com talentos e estilos semelhantes. Ele orienta a criação, mas não limita as escolhas futuras.",
+        "ArchetypeRuleTitle": "Habilidades arquetípicas",
+        "ArchetypeRuleText": "Pelas regras do Guia Avançado do Jogador, o personagem precisa possuir pelo menos três habilidades relacionadas ao arquétipo para poder adquirir sua habilidade arquetípica; o nível Novato é suficiente.",
+        "ArchetypeAbility": "Habilidade arquetípica",
+        "ChooseArchetype": "Ver ocupações",
+        "PreviousArchetype": "Arquétipo anterior",
+        "NextArchetype": "Próximo arquétipo",
+        "ChangeArchetype": "Trocar arquétipo",
+        "CustomFromArchetypes": "Criar uma ocupação personalizada",
         "OccupationLabel": "Ocupação",
         "ImportantAttributes": "Atributos importantes",
         "SuggestedRaces": "Raças sugeridas",
         "AppropriateAbilities": "Habilidades apropriadas",
+        "SuggestedGifts": "Dádivas sugeridas",
+        "SuggestedBurdens": "Fardos sugeridos",
+        "Source": "Fonte",
+        "Sources": {
+          "coreRulebook": "Livro Básico",
+          "advancedPlayersGuide": "Guia Avançado do Jogador"
+        },
+        "ProfessionNotice": "Profissões são opções de progressão, não de criação inicial.",
         "Choose": "Escolher esta ocupação",
         "SelectionHint": "A ocupação orienta seu conceito, mas não limita as escolhas futuras do personagem.",
         "CustomGroup": "Criação livre",
@@ -440,9 +498,9 @@
         "ChooseOne": "Escolha um traço",
         "FreeChoice": "Escolha racial",
         "ChoiceHint": "Selecione uma das duas opções culturais concedidas pela raça.",
-        "OptionalTraits": "Traço racial opcional",
-        "CostsAbility": "Custa 1 Habilidade",
-        "OptionalHint": "Você pode começar com este traço no nível Novato, mas ele consumirá uma escolha de Habilidade na próxima etapa.",
+        "OptionalTraits": "Opções raciais",
+        "CostsAbility": "Cada opção custa 1 Habilidade",
+        "OptionalHint": "Traços, Habilidades ou Poderes raciais opcionais começam no nível Novato e cada escolha consome uma Habilidade na próxima etapa.",
         "ChoiceRequired": "Escolha um dos traços oferecidos por esta raça.",
         "SelectTrait": "Selecionar este Traço racial",
         "OpenTrait": "Abrir ficha de {name}",
@@ -535,6 +593,61 @@
                 "examples": "Arruaceiro, Bauta, Bocaberta, Boi, Esquisito, Estranho, Feio, Grande Bruto, Imbecil, Nervoso, Pesado, Raiva."
               }
             }
+          },
+          "elf": {
+            "Name": "Elfo", "Summary": "Os elfos do Pacto de Ferro guardam Davokar e lutam para impedir que a escuridão sob suas raízes desperte.",
+            "Lore": {
+              "history": {
+                "Paragraph1": "Os elfos da Davokar pertencem ao Pacto de Ferro, uma ordem encarregada de impedir que o mal adormecido na floresta desperte. Muitos nasceram dentro da ordem e jamais conheceram as terras élficas do oeste.",
+                "Paragraph2": "Elfos de verão formam a espinha dorsal dos guardiões: caçadores vigilantes armados com lanças e arcos. A guerra contra abominações e violadores de tabus reduziu seus números e tornou alianças com humanos cada vez mais importantes.",
+                "Paragraph3": "Elfos são Vida Longa e Párias entre humanos. Sabedoria das Eras pode ser adquirida como uma Habilidade. Para personagens iniciantes, o livro recomenda um elfo de verão, pois elfos mais antigos são muito mais poderosos e experientes."
+              },
+              "names": { "Paragraph1": "Elfos da primavera e do verão recebem nomes duplos; depois de outras dormências podem encurtá-los ou trocá-los. Seus nomes costumam ter mais vogais que consoantes.", "male": "Alal-Roak, Dorael-Ri, Eloan-Eo, Elori, Godrai, Mearoel, Saran-Ri, TelKeriel, Kil-Ano.", "female": "Ahara-Vei, Eleanea, Leiána, Gaina-Anali, Keri-Las, Mael-Melian, Naelial, Tara-Kel, Teara-Téana." }
+            }
+          },
+          "dwarf": {
+            "Name": "Anão", "Summary": "Anões são ligados à família, à palavra falada e ao destino do próprio mundo, mantendo sua origem envolta em segredos.",
+            "Lore": {
+              "history": {
+                "Paragraph1": "A história dos anões é um mistério até para estudiosos. Em Yndaros, suas famílias vivem voltadas para o futuro e protegem uma cultura de códigos, duplos sentidos e lealdade absoluta aos parentes.",
+                "Paragraph2": "A moral anã distingue a família dos forasteiros: a vontade dos anciãos é superior à do indivíduo, e ações contra pessoas de fora são julgadas principalmente pelo efeito que causam à família.",
+                "Paragraph3": "Todo anão possui Herança Natural, Memória Absoluta e Pária. Retribuição pode ser adquirida como uma Habilidade; para anões, somente esse poder não gera Corrupção ao ser aprendido ou usado."
+              },
+              "names": { "Paragraph1": "Nomes anões usam muitas consoantes duras e não variam por gênero. O sobrenome da família precisa ser conquistado pelos mais jovens.", "examples": "Artek, Bolkor, Brana, Dobril, Dranek, Dusa, Jarok, Lazek, Margor, Mirek, Radmil, Stana, Vesnek, Vlador, Yaruk." }
+            }
+          },
+          "abductedHuman": {
+            "Name": "Humano Sequestrado", "Summary": "Criado entre elfos depois de ser levado ainda criança, o sequestrado conhece a floresta e vive entre dois povos.",
+            "Lore": {
+              "history": {
+                "Paragraph1": "Elfos sequestram crianças humanas por razões que mudaram com o tempo: primeiro para compreender a humanidade, depois para criar mediadores e, mais recentemente, para reforçar as fileiras do Pacto de Ferro.",
+                "Paragraph2": "Os sequestrados são aprendizes leais e muitos caçam ao lado de elfos de verão. Ainda assim, poucos elfos os consideram iguais, mesmo quando demonstram coragem e sabedoria.",
+                "Paragraph3": "Humanos sequestrados possuem Mateiro e falam Élfico. Só aprendem a escrever o idioma se adquirirem Mestre do Saber."
+              },
+              "names": { "Paragraph1": "Seus pais adotivos escolhem nomes curtos, fáceis de pronunciar e lembrar, normalmente tentando imitar o som de nomes humanos.", "examples": "Use um nome humano simples ou um nome curto escolhido pelos elfos adotivos." }
+            }
+          },
+          "troll": {
+            "Name": "Troll", "Summary": "Trolls pertencem a uma civilização subterrânea de artesãos, guerreiros e cantores, marcada por desafios e força coletiva.",
+            "Lore": {
+              "history": {
+                "Paragraph1": "Trolls, goblins e ogros compartilham uma origem. Alguns goblins que entram em crisálida nas profundezas sobrevivem e despertam como trolls; falhas nesse processo podem produzir os seres chamados ogros.",
+                "Paragraph2": "A sociedade troll mede cada pessoa pelo que oferece à comunidade. Competições físicas, artísticas e místicas são parte da vida social, e até disputas ritualizadas podem terminar em morte.",
+                "Paragraph3": "Trolls são Vida Longa e Párias. Armadurado, Arma Natural, Regeneração e Robusto podem ser adquiridos como Habilidades; escolha apenas o que puder pagar com a Experiência inicial."
+              },
+              "names": { "Paragraph1": "Nomes não variam por gênero e podem mudar várias vezes. A letra X aparece com frequência entre trolls mais velhos ou poderosos.", "examples": "Jovens: Aka, Aroha, Erula, Hibne, Ogmaka, Raham, Riomata, Skadal, Verhar. Velhos ou poderosos: Aravarx, Etaxa, Noxar, Ognyx, Rirbax, Vouax, Uhux." }
+            }
+          },
+          "undead": {
+            "Name": "Morto-Vivo", "Summary": "Uma pessoa morta cuja mente e vontade permanecem, obrigada a esconder sua natureza e alimentar um corpo que já não vive.",
+            "Lore": {
+              "history": {
+                "Paragraph1": "Um novo tipo de morto-vivo apareceu em Ambria: pessoas que deveriam ter morrido se levantam com a mente intacta, enquanto seus corpos frios decaem lentamente rumo à morte final.",
+                "Paragraph2": "Mortos-vivos não dormem, respiram ou se alimentam normalmente. Recuperam Vitalidade consumindo carne fresca ou sangue e precisam esconder sua condição de caçadores de bruxas, Mantos Negros e multidões.",
+                "Paragraph3": "O personagem começa completamente corrompido e com Morto-Vivo I. Frio da Tumba e Aterrorizar podem ser adquiridos como Habilidades opcionais. Esta raça muda regras centrais de cura, Corrupção e interação social."
+              },
+              "names": { "Paragraph1": "Mortos-vivos conservam normalmente o nome que tinham em vida, mas podem adotar uma identidade falsa para ocultar a própria morte.", "examples": "Use o nome de vida do personagem ou a identidade que ele construiu depois de retornar." }
+            }
           }
         },
         "Traits": {
@@ -546,7 +659,17 @@
           "pariah": { "Name": "Pária", "Description": "O personagem pertence a um povo tratado com suspeita e hostilidade pela sociedade dominante." },
           "shapeshifter": { "Name": "Metamorfo", "Description": "Permite alterar a aparência e, com domínio maior, assumir formas mais radicais." },
           "survivalInstinct": { "Name": "Instinto de Sobrevivência", "Description": "Um instinto racial aguçado ajuda o personagem a evitar golpes e sobreviver a ameaças." },
-          "robust": { "Name": "Robusto", "Description": "O personagem possui tamanho, força e resistência física muito acima do comum." }
+          "robust": { "Name": "Robusto", "Description": "O personagem possui tamanho, força e resistência física muito acima do comum." },
+          "wisdomOfAges": { "Name": "Sabedoria das Eras", "Description": "A memória coletiva dos elfos concede acesso temporário a conhecimentos de outras gerações, ao custo de Corrupção temporária." },
+          "naturalHeritage": { "Name": "Herança Natural", "Description": "A criatura está ligada à matéria do mundo, não possui alma e sofre dano físico no lugar da Corrupção." },
+          "absoluteMemory": { "Name": "Memória Absoluta", "Description": "O personagem treinou a memória para conservar informações com precisão extraordinária." },
+          "retribution": { "Name": "Retribuição", "Description": "Poder associado à voz e à herança anã. Para um anão, Retribuição não gera Corrupção ao ser adquirido nem utilizado." },
+          "armored": { "Name": "Armadurado", "Description": "A pele ou carapaça natural protege a criatura como uma armadura." },
+          "naturalWeapon": { "Name": "Arma Natural", "Description": "Garras, presas, chifres ou outra parte do corpo funcionam como uma arma natural." },
+          "regeneration": { "Name": "Regeneração", "Description": "O corpo recupera ferimentos de forma sobrenatural, embora certas fontes de dano possam impedir o efeito." },
+          "undead": { "Name": "Morto-Vivo", "Description": "O personagem não respira, dorme ou se cura normalmente e precisa consumir carne fresca ou sangue para recuperar Vitalidade." },
+          "tombCold": { "Name": "Frio da Tumba", "Description": "A presença gelada da morte afeta aqueles que se aproximam do morto-vivo." },
+          "terrify": { "Name": "Aterrorizar", "Description": "A criatura manifesta sua natureza monstruosa para espalhar medo entre seus inimigos." }
         }
       },
       "Contacts": {
@@ -574,12 +697,15 @@
         "Limits": "Contatos não é controle absoluto sobre NPCs nem uma fonte ilimitada de dinheiro, soldados ou equipamentos. Favores podem exigir tempo, discrição, reciprocidade ou colocar o personagem em dívida.",
         "RecordLabel": "Registro do personagem",
         "WhoAreThey": "Defina sua rede de Contatos",
+        "QuickHint": "Escolha a rede e explique sua ligação com ela. Os demais detalhes são opcionais.",
         "Network": "Região, organização ou grupo social",
         "NetworkPlaceholder": "Ex.: Igreja do Sol em Yndaros, Ordo Magica, clã Baiaga, Guilda dos Ladrões...",
         "NetworkHint": "Esta é a abrangência principal do traço. Prefira algo específico o bastante para criar histórias, mas amplo o bastante para incluir mais de uma pessoa.",
         "Relationship": "Como o personagem conhece essa rede?",
         "RelationshipPlaceholder": "Conte de onde surgiu a ligação, por que ainda confiam no personagem e como ele costuma pedir ajuda...",
         "PeopleHeading": "Pessoas importantes da rede",
+        "DetailsHeading": "Ajuda e contrapartidas",
+        "Optional": "Opcional",
         "PeopleHint": "Opcional. Registre NPCs existentes ou invente alguns agora. Eles não serão criados automaticamente como Atores; estes nomes servem de referência para o jogador e o Mestre.",
         "PersonName": "Nome",
         "PersonNamePlaceholder": "Nome ou apelido",
@@ -628,6 +754,7 @@
         "SlotFull": "Todas as vagas deste nível já estão preenchidas.",
         "NotEnoughExperience": "Não há XP suficiente para comprar esta Habilidade neste nível.",
         "ChooseMysticalPower": "Escolha o Poder Místico",
+        "SearchMysticalPowers": "Pesquisar Poder Místico…",
         "MysticalPowerChoiceIntro": "Cada poder conta como uma Habilidade. Escolha o poder e o nível que deseja aprender; você pode comprar mais de um poder.",
         "OpenMysticalPower": "Abrir ficha de {name}",
         "NoMysticalPowers": "Nenhum Poder Místico acessível está disponível no mundo.",
@@ -644,13 +771,39 @@
         "SelectRitualistRankFirst": "Escolha primeiro o nível de Ritualista.",
         "RitualCapacityFull": "Todas as vagas de Ritual deste nível já estão preenchidas.",
         "InvalidSpecialChoice": "Escolha todos os Poderes Místicos ou Rituais exigidos antes de continuar.",
+        "AdvancedRuleInvalid": "Uma Habilidade arquetípica ou de profissão não cumpre os requisitos do Guia Avançado.",
+        "ArchetypeRequirementTitle": "Habilidade arquetípica",
+        "ArchetypeRequirement": "Esta Habilidade exige pelo menos {count} outras Habilidades da lista do arquétipo.",
+        "ArchetypeRequirementShort": "Exige {count} do arquétipo",
+        "ArchetypeRequirementProgress": "Requisito do arquétipo: {current} de {count} Habilidades válidas.",
+        "ProfessionAbilityTitle": "Habilidade de profissão",
+        "ProfessionAbility": "Disponível apenas para membros da profissão {profession}. Profissões são metas de progressão e não ocupações iniciais.",
+        "ProfessionAbilityLocked": "Habilidade exclusiva de profissão; indisponível durante a criação inicial.",
+        "ProfessionChoiceLocked": "Poder ou Ritual exclusivo de profissão; indisponível durante a criação inicial.",
+        "Professions": {
+          "Title": "Profissões do Guia Avançado",
+          "Rules": "Profissões são metas de progressão. Para entrar em uma, o personagem precisa cumprir todos os requisitos e possuir pelo menos uma das Habilidades requeridas no nível Mestre. Capacidades exclusivas permanecem visíveis para consulta, mas não podem ser compradas durante a criação inicial."
+        },
+        "AdvancedTraits": {
+          "Title": "Dádivas e Fardos",
+          "Boons": "Dádivas",
+          "Burdens": "Fardos",
+          "Suggested": "Sugerido",
+          "Rules": "Regra opcional do Guia Avançado: cada Dádiva custa 5 XP e cada Fardo concede 5 XP adicionais para a criação.",
+          "Limits": "Recomendação do livro: até 2 ou 3 Dádivas e 1 ou 2 Fardos. O criador limita a 3 Dádivas e 2 Fardos. Clique no nome para abrir a ficha original."
+        },
         "Traditions": {
           "BookLabel": "Tradições Místicas",
+          "PracticeBookLabel": "Prática Mística",
           "PurchaseExplanation": "Para pertencer a esta tradição, o personagem deve comprar a Habilidade {ability}. Essa escolha representa seu treinamento, seus princípios e a forma como aprende a lidar com a Corrupção.",
+          "ProfessionPurchaseExplanation": "{ability} é uma Habilidade exclusiva de Profissão. Pelas regras do Guia Avançado, uma profissão é uma meta de progressão: o personagem precisa cumprir suas Habilidades requeridas e possuir pelo menos uma delas no nível Mestre.",
           "TraditionHeading": "A tradição",
+          "PracticeHeading": "A prática",
           "TitlesHeading": "Títulos e caminho",
           "PowersHeading": "Poderes associados",
+          "PracticeWorksHeading": "Artefatos que podem ser criados",
           "RitualsHeading": "Rituais associados",
+          "PracticeLimitsHeading": "Criação e limites",
           "CorruptionHeading": "Corrupção",
           "AbilityHeading": "A Habilidade {ability}",
           "witchcraft": {
@@ -688,6 +841,42 @@
             "Powers": "Anátema, Aura Sagrada, Escudo Abençoado, Forma Verdadeira, Herdar Ferimento, Imperceptível, Imposição de Mãos, Levitação, Luz Ardente de Prios e Martelo Bruxo.",
             "Rituals": "Comandar Confissão, Elos de Julgamento, Exorcismo, Fogo Purgante, Fumaça Sagrada, Oráculo, Rastro do Herege, Rito de Santificação e Santo Patrono.",
             "Corruption": "Os teurgos associam a Corrupção ao que cresce sem cultivo e controle. Ainda assim, todo devoto deve aceitar o risco da mácula e manter acesa sua chama interior ao enfrentar a escuridão."
+          },
+          "trollSinging": {
+            "Name": "Canto do Troll",
+            "Introduction": "Tão antigo quanto a memória coletiva dos trolls, o Canto do Troll preserva histórias, harmonias e verdades sobre o mundo anterior à Corrupção.",
+            "Doctrine": "As canções dos escaldos, o martelar dos ferreiros e as garras dos guerreiros compõem o grande hino da vida troll. Seus poderes influenciam sobretudo a mente e muitos funcionam como hinos mantidos enquanto o cantor realiza outras ações.",
+            "Titles": "Cantores Troll não usam títulos formais. Um cantor promissor aprende com um mestre, serve aos governantes quando está preparado e, mais tarde, transmite seu conhecimento a um novo aprendiz.",
+            "Powers": "Arma Dançante, Confusão, Hino de Combate, Hino de Enfraquecimento, Hino Heroico e Retribuição.",
+            "Rituals": "Restaurar e Recuperar. A tradição possui poucos rituais próprios, mas seus escaldos podem aprender rituais de outras tradições.",
+            "Corruption": "Aceitar a Corrupção de bom grado é impensável para a maioria dos cantores. Suas músicas lembram o mundo anterior à mácula e o dever dos trolls para com o Pacto de Ferro e a Davokar."
+          },
+          "staffMagic": {
+            "Name": "Magia do Cajado",
+            "Introduction": "Os Magistas do Cajado são monges guerreiros ascéticos que se consideram herdeiros da guarda do último imperador de Symbaroum e buscam reparar o fracasso que precedeu a queda do império.",
+            "Doctrine": "O cajado rúnico é extensão da alma e arma principal do magista. A ordem combate abominações, feiticeiros e o uso irresponsável da Corrupção enquanto procura o herdeiro legítimo do antigo imperador.",
+            "Titles": "A ordem distingue os Sem Cajado, aprendizes ainda sem arma própria; os Cajados Rúnicos, membros que receberam seu cajado; e os Mestres do Cajado.",
+            "Powers": "Arma Dançante, Anátema, Cajado Projétil, Esfera e Runas Protetivas.",
+            "Rituals": "Tempestade de Sangue e Tremor. Os rituais da tradição são tecidos e armazenados no cajado, que não pode receber outro poder ou ritual até a ativação; rituais de outras tradições funcionam normalmente.",
+            "Corruption": "A ordem trata a Corrupção como consequência do uso negligente do poder. Ela deve ser evitada porque pode ser usada pelo inimigo contra o magista e porque o exercício descuidado da magia também fere o mundo ao redor."
+          },
+          "symbolism": {
+            "Name": "Simbolismo",
+            "Introduction": "Trazido do leste pelos místicos que se estabeleceram no território do Clã Vajvod, o Simbolismo remodela o mundo por meio de runas, sinais e padrões carregados de poder.",
+            "Doctrine": "Os simbolistas pintam, escrevem e entalham símbolos. A proteção da tradição vem do tempo e do cuidado investidos na criação das runas, que podem ser traçadas em materiais perecíveis, esculpidas ou até escritas como luz no ar.",
+            "Titles": "Aprendizes são chamados Seguidores ou Carretéis; iniciados são Tecelões. Mestre Tecelão é um título honorário, e muitos membros assumem nomes como Entalhador de Sinais, Pintor do Destino ou Artífice de Poder.",
+            "Powers": "Glifo de Drenagem, Runas Protetivas, Selo de Banimento e Símbolo Cegante.",
+            "Rituals": "Armadilha de Feitiços, Escrita Distante, Esculpir Tatuagem Rúnica e Guardião Rúnico.",
+            "Corruption": "Simbolistas não sofrem Corrupção permanente ao aprender poderes da tradição ou elaborar símbolos. Cada símbolo ativado causa apenas 1 ponto de Corrupção temporária; seus rituais seguem as regras normais."
+          },
+          "artifactCrafting": {
+            "Name": "Criar Artefatos",
+            "Introduction": "A fabricação de artefatos é uma prática mística quase perdida, preservada sobretudo entre os trolls e recentemente transmitida a elfos, humanos sequestrados e estudiosos da Ordo Magica.",
+            "Doctrine": "Criadores de Artefatos unem conhecimento, trabalho artesanal e poder místico para infundir objetos com efeitos duradouros. A prática é uma Profissão e, portanto, representa uma meta de progressão, não uma opção normal para personagens iniciantes.",
+            "Titles": "O praticante precisa dominar Ferreiro, Mestre do Saber e Ritualista; Poder Místico é útil, mas opcional. Para ingressar na Profissão, todas as Habilidades requeridas devem estar presentes e pelo menos uma delas no nível Mestre.",
+            "Powers": "No nível Novato, o personagem cria artefatos menores de nível Novato; no Adepto, também cria artefatos de nível Adepto; no Mestre, alcança os artefatos menores de nível Mestre. As fichas originais dos artefatos continuam definindo seus custos, efeitos e exigências.",
+            "Rituals": "Cada criação exige materiais, tempo e um Teste de Astuto conforme o nível da Habilidade. Os segredos disponíveis podem depender da tradição do personagem quando o grupo utiliza a regra opcional Segredos das Tradições.",
+            "Corruption": "Criar e vincular poder a objetos continua sujeito às regras de Corrupção descritas pela própria Habilidade e pelos artefatos. O criador deve conferir a ficha original antes de realizar o processo."
           }
         }
       },
@@ -761,6 +950,9 @@
         "Required": "Escolha uma das combinações de armas iniciais.",
         "InitialChoiceTitle": "Escolha seu equipamento inicial",
         "ConfirmInitialChoice": "Confirmar equipamento inicial",
+        "ChoiceStageText": "Resolva primeiro as escolhas concedidas pelas Habilidades ou pela combinação inicial. Depois você poderá revisar os itens gratuitos e comprar equipamentos adicionais.",
+        "ContinueToShop": "Continuar para os Equipamentos",
+        "ReviewInitialChoices": "Revisar escolhas de equipamento inicial",
         "NoMatchingItems": "Nenhum item mundial compatível está acessível.",
         "StartingChoiceHint": "Escolha uma combinação. Os nomes descrevem a forma narrativa das armas; a ficha receberá os itens genéricos das categorias indicadas.",
         "AutomaticMarked": "Concedido automaticamente",
@@ -780,6 +972,9 @@
         "ArmorAlreadyGranted": "A habilidade {ability} já concede uma armadura ao personagem; por isso, ele não recebe também uma Armadura Leve.",
         "MarksmanChoice": "Atirador permite escolher uma das armas abaixo:",
         "MarksmanRequired": "Escolha entre uma Besta e um Arco para o benefício de Atirador.",
+        "AbilityChoiceLead": "A habilidade {ability} permite escolher um dos equipamentos abaixo:",
+        "AbilityChoiceRequired": "Escolha o equipamento inicial concedido pela habilidade {ability}.",
+        "AbilityChoiceHint": "Selecione o equipamento concedido pela habilidade antes de continuar.",
         "MarksmanAlsoReceives": "Independentemente da escolha, você também recebe",
         "And": "e",
         "Crossbow": "Besta",
@@ -891,7 +1086,17 @@
         "witchhunter": { "Name": "Caçador de Bruxas", "Quote": "Prefiro colocar um inocente no chão do que ter uma besta maculada andando sobre ele.", "Summary": "Você dedicou sua vida à luta contra bestas maculadas. Empunha aço, fogo e talvez rituais tomados de inimigos derrotados, aceitando até o risco de Corrupção para combater o mal com fervor fanático.", "Attributes": "Resoluto 13+, Astuto ou Preciso 11+", "Races": "Humano", "Abilities": "Atirador, Inabalável, Ritualista, Saber de Bestas" },
         "thug": { "Name": "Bandido", "Quote": "Seu dinheiro ou seu sangue — a escolha é sua!", "Summary": "Você cresceu onde gangues ensinam a lucrar com o trabalho alheio sob o nariz da guarda. Pode agir por conta própria ou servir a nobres como rufião e executor protegido pela influência de seus senhores.", "Attributes": "Rápido 13+, Astuto 11+", "Races": "Goblin, humano ou ogro", "Abilities": "Acrobacias, Ataque Gêmeo, Estrangulador, Veneficista" },
         "treasureHunter": { "Name": "Caçador de Tesouros", "Quote": "Este altar… me pergunto se é possível empurrá-lo de lado…", "Summary": "As profundezas da Davokar escondem os tesouros que sustentam sua vida. Você sonha com ruínas e templos submersos e desenvolveu um conjunto de perícias para sobreviver aos perigos da floresta.", "Attributes": "Astuto 13+, Rápido 11+", "Races": "Goblin, humano ou ogro", "Abilities": "Acrobacias, Alquimia, Arremessar Aço, Tático" },
-        "ranger": { "Name": "Patrulheiro", "Quote": "Qualquer coisa viva pode ser rastreada. E derrubada…", "Summary": "Seu lar são florestas profundas e vales montanhosos, onde caça por alimento, peles ou proteção dos viajantes. Você sabe permanecer fora do alcance dos inimigos enquanto suas flechas encontram o alvo.", "Attributes": "Vigilante 13+, Discreto 11+", "Races": "Bárbaro ou cambiante", "Abilities": "Acrobacias, Atirador, Saber de Bestas, Sexto Sentido" }
+        "ranger": { "Name": "Patrulheiro", "Quote": "Qualquer coisa viva pode ser rastreada. E derrubada…", "Summary": "Seu lar são florestas profundas e vales montanhosos, onde caça por alimento, peles ou proteção dos viajantes. Você sabe permanecer fora do alcance dos inimigos enquanto suas flechas encontram o alvo.", "Attributes": "Vigilante 13+, Discreto 11+", "Races": "Bárbaro ou cambiante", "Abilities": "Acrobacias, Atirador, Saber de Bestas, Sexto Sentido" },
+        "monsterHunter": { "Name": "Caçador de Monstros", "Quote": "Deixe-me lidar com seu… problema.", "Summary": "Você desenvolveu técnicas para rastrear e abater as criaturas que ameaçam os assentamentos da fronteira. Sociedades de caçadores competem e cooperam para manter povoados seguros, estudar monstros e negociar troféus valiosos.", "Attributes": "Astuto 13+, Preciso 11+", "Races": "Humano", "Abilities": "Armadilheiro, Atirador ou Maestria em Armas de Haste, Saber de Bestas", "Gifts": "Cão de Caça, Cartógrafo, Contatos, Mateiro, Privilegiado, Servo, Transportador", "Burdens": "Arqui-Inimigo, Vício" },
+        "bountyHunter": { "Name": "Caçador de Recompensas", "Quote": "Escória, eu? Claro, mas da escória você precisa, pelo que parece.", "Summary": "Você caça criminosos, desertores, cultistas e outros alvos procurados. Os fugitivos mais desesperados buscam refúgio em Davokar, obrigando caçadores de recompensas a combinar precisão, vigilância e técnicas de captura.", "Attributes": "Preciso 13+, Vigilante 11+", "Races": "Anão ou humano", "Abilities": "Atirador, Enredar, Golpe Baixo", "Gifts": "Cão de Caça, Contatos, Fofoqueiro, Marcha Duradoura, Mateiro, Transportador", "Burdens": "Código de Honra, Impulsivo" },
+        "runeSmith": { "Name": "Forjador Rúnico", "Quote": "O ritmo do mundo ecoa na batida do meu martelo.", "Summary": "Você une o ofício da forja à disciplina do combate, carregando armas e armaduras produzidas por suas próprias mãos. A tradição é especialmente forte entre trolls, mas também atrai sequestrados, ogros e outros artesãos guerreiros.", "Attributes": "Astuto 11+, Vigoroso 13+", "Races": "Humano sequestrado, ogro ou troll", "Abilities": "Ferreiro, Força da Empunhadura Dupla ou Passo do Martelo, Punho de Ferro", "Gifts": "Conhecimento Proibido, Contatos, Herança, Marcha Duradoura, Transportador", "Burdens": "Marca Mística, Protegido" },
+        "tattooedWarrior": { "Name": "Guerreiro Tatuado", "Quote": "Minha raiva queima no meu corpo; aproxime-se, sinta o calor!", "Summary": "Símbolos de poder cobrem seu corpo e transformam sua fúria em força de batalha. Entre os vajvods estes guerreiros servem a seus líderes; entre goblins e trolls formam uma elite temida.", "Attributes": "Rápido 11+, Vigoroso 13+", "Races": "Bárbaro, goblin ou troll", "Abilities": "Força da Empunhadura Dupla ou Maestria em Armas de Haste, Punho de Ferro, Tatuagem Rúnica", "Gifts": "Horripilante, Marcha Duradoura, Mateiro, Robusto", "Burdens": "Impulsivo, Segredo Sombrio" },
+        "weaponMaster": { "Name": "Mestre de Armas", "Quote": "Você quer viver, eu quero morrer e ser lembrado com admiração.", "Summary": "Você se dedica a dominar uma arma e a filosofia de combate ligada a ela. Pode seguir a senda do Artista do Machado, Dançarino da Lança, Espada Sagrada ou Mangualeiro.", "Attributes": "Preciso 13+, Rápido 11+", "Races": "Bárbaro, goblin, elfo, humano sequestrado, ambriano, cambiante, ogro ou troll", "Abilities": "Artista do Machado: Acrobacias, Artista do Machado, Ataque Gêmeo; Dançarino da Lança: Acrobacias, Luta de Cajado, Enredar ou Maestria em Armas de Haste; Espada Sagrada: Acrobacias, Espada Abençoada, Homem-de-Armas; Mangualeiro: Enredar, Força da Empunhadura Dupla, Mangualeiro", "Gifts": "Apostador, Contatos, Herança, Privilegiado, Robusto, Servo, Voz de Comando", "Burdens": "Arqui-Inimigo, Código de Honra" },
+        "formerCultist": { "Name": "Antigo Cultista", "Quote": "A palavra do meu Mestre era a lei, agora a sobrevivência é tudo.", "Summary": "Você abandonou um culto sombrio, mas carrega memórias, culpa e inimigos. Sobreviver exige conhecer venenos, corrupção e os métodos daqueles que agora o perseguem.", "Attributes": "Astuto 13+, Resoluto 11+", "Races": "Cambiante, humano ou morto-vivo", "Abilities": "Alquimia, Canalização, Veneficista", "Gifts": "Contatos, Dupla-Língua, Esconderijos, Identidade Falsa, Miragem, Vigarista", "Burdens": "Procurado, Vício" },
+        "guildThief": { "Name": "Ladrão de Guilda", "Quote": "O que você está fazendo no meu relvado?", "Summary": "Você pertence à tradição criminosa das cidades ambrianas. Astúcia, agilidade, discrição e o conhecimento de quem é intocável separam um verdadeiro membro da guilda de um ladrão comum.", "Attributes": "Astuto 13+, Rápido 11+", "Races": "Cambiante, humano ou goblin", "Abilities": "Armadilheiro, Dança da Adaga ou Golpe Baixo, Oportunista", "Gifts": "Contatos, Destro, Esconderijos, Gatuno, Trapaceiro, Vigarista", "Burdens": "Impulsivo, Protegido" },
+        "sapper": { "Name": "Sapador", "Quote": "Sua armadura e suas muralhas são minha câmara de combustão.", "Summary": "Treinado em cerco, fortificações e armas alquímicas, você derruba muralhas e posições inimigas. Alguns sapadores servem ao exército; outros levam seu conhecimento perigoso às expedições em Davokar.", "Attributes": "Astuto 13+, Preciso 11+", "Races": "Ambriano ou ogro", "Abilities": "Alquimia ou Ferreiro, Força da Empunhadura Dupla ou Homem-de-Armas, Perito em Cerco", "Gifts": "Conhecimento Proibido, Destro, Contatos, Marcha Duradoura, Transportador", "Burdens": "Lento, Vício" },
+        "trollSinger": { "Name": "Cantor Troll", "Quote": "Minha voz ecoa com a harmonia da criação.", "Summary": "Sua voz revela mistérios, inspira aliados e vence batalhas. Esta tradição de escaldos é mais poderosa entre trolls, elfos e anões, frequentemente unindo poesia, liderança e força física.", "Attributes": "Persuasivo 13+, Vigoroso 11+", "Races": "Anão, elfo, ogro ou troll", "Abilities": "Canto do Troll, Líder, Poder Místico (geralmente Hino de Combate)", "Gifts": "Arquivista, Contatos, Herança, Músico, Narrador, Voz de Comando", "Burdens": "Marca Mística, Segredo Sombrio" },
+        "symbolist": { "Name": "Simbolista", "Quote": "Eu traço e o mundo obedece.", "Summary": "Você constrói poder por meio de runas, sinais e símbolos. A tradição chegou do leste e é especialmente influente entre o Clã Vajvod, onde seus praticantes disputam autoridade com as bruxas.", "Attributes": "Astuto 11+, Resoluto 13+", "Races": "Bárbaro do Clã Vajvod, goblin ou troll", "Abilities": "Poder Místico (geralmente Runas Protetivas), Ritualista (geralmente Esculpir Tatuagem Rúnica), Simbolismo", "Gifts": "Áugure, Arquivista, Cartógrafo, Contatos, Herança", "Burdens": "Ancião, Marca Mística" }
       }
     },
     "ActorTypes": {
@@ -1086,6 +1291,10 @@
       "ActivateShortcut": "Ativar atalho {number} da hotbar"
     },
     "Settings": {
+      "PdfTemplatePath": {
+        "Name": "Ficha PDF editável",
+        "Hint": "Caminho da ficha editável oficial de Symbaroum enviada ao armazenamento do Foundry. Usada pelo botão Exportar PDF nas fichas de personagem."
+      },
       "ItemCategoryManager": {
         "Name": "Categorias dos itens",
         "Hint": "Permite ao Mestre consultar e alterar as categorias de todos os itens importados no mundo e dos ativos persistentes oficiais. As alterações são usadas pelo Navegador, pelas lojas e pelo gerador de estoque.",

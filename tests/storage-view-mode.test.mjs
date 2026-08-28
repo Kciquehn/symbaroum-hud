@@ -36,6 +36,32 @@ test("storage view mode is a hidden client preference with grid as its default",
   }
 });
 
+test("the editable PDF template is a restricted world setting", () => {
+  const originalGame = globalThis.game;
+  const registered = new Map();
+  globalThis.game = {
+    settings: {
+      register(moduleId, key, data) {
+        assert.equal(moduleId, MODULE_ID);
+        registered.set(key, data);
+      },
+      get: () => false
+    }
+  };
+
+  try {
+    registerSettings(() => {});
+    const setting = registered.get(SETTINGS.PDF_TEMPLATE_PATH);
+    assert.equal(setting.scope, "world");
+    assert.equal(setting.config, true);
+    assert.equal(setting.restricted, true);
+    assert.equal(setting.type, String);
+    assert.equal(setting.default, "");
+  } finally {
+    globalThis.game = originalGame;
+  }
+});
+
 test("the GM service catalog is registered as a restricted module menu", () => {
   const originalGame = globalThis.game;
   let menu = null;
@@ -178,6 +204,31 @@ test("compendium browser folder access is a hidden world setting controlled by t
     assert.equal(setting.config, false);
     assert.equal(setting.type, Object);
     assert.deepEqual(setting.default, { configured: false, folderIds: [] });
+  } finally {
+    globalThis.game = originalGame;
+  }
+});
+
+test("compendium browser book access is a hidden world setting controlled by the GM", () => {
+  const originalGame = globalThis.game;
+  const registered = new Map();
+  globalThis.game = {
+    settings: {
+      register(moduleId, key, data) {
+        assert.equal(moduleId, MODULE_ID);
+        registered.set(key, data);
+      },
+      get: () => false
+    }
+  };
+
+  try {
+    registerSettings(() => {});
+    const setting = registered.get(SETTINGS.COMPENDIUM_BROWSER_ORIGIN_ACCESS);
+    assert.equal(setting.scope, "world");
+    assert.equal(setting.config, false);
+    assert.equal(setting.type, Object);
+    assert.deepEqual(setting.default, { configured: false, originIds: [] });
   } finally {
     globalThis.game = originalGame;
   }

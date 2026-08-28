@@ -4,7 +4,19 @@ export const CORE_MYSTICAL_TRADITIONS = Object.freeze([
   tradition("witchcraft", "witch", "fa-leaf", "witch.webp", ["bruxaria"]),
   tradition("sorcery", "sorcerer", "fa-eye", "sorcerer-arch.webp", ["feiticaria"]),
   tradition("wizardry", "wizard", "fa-book-open", "wizard-arch.webp", ["magismo", "magia"]),
-  tradition("theurgy", "theurg", "fa-sun", "theurg-arch.webp", ["teurgia"])
+  tradition("theurgy", "theurg", "fa-sun", "theurg-arch.webp", ["teurgia"]),
+  tradition("trollSinging", "trollSinger", "fa-music", "back-troll.webp", [
+    "canto do troll", "canto troll", "troll singing", "trollsong"
+  ]),
+  tradition("staffMagic", "staffMage", "fa-staff-snake", "staff-of-power.webp", [
+    "magia do cajado", "magista do cajado", "staff magic"
+  ], { profession: true }),
+  tradition("symbolism", "symbolist", "fa-draw-polygon", "clan-zarek.webp", [
+    "simbolismo", "symbolism"
+  ]),
+  tradition("artifactCrafting", "artifactCreator", "fa-hammer", "mystic-explorer.webp", [
+    "criar artefatos", "criacao de artefatos", "artifact crafting", "artifact creation"
+  ], { kind: "practice", profession: true })
 ]);
 
 export function coreMysticalTradition(item) {
@@ -12,11 +24,13 @@ export function coreMysticalTradition(item) {
   return CORE_MYSTICAL_TRADITIONS.find((entry) => identities.some((identity) => entry.identities.includes(identity))) ?? null;
 }
 
-function tradition(id, occupation, icon, art, aliases = []) {
+function tradition(id, occupation, icon, art, aliases = [], options = {}) {
   const prefix = `SYMBAROUMHUD.CharacterCreator.Abilities.Traditions.${id}`;
   return Object.freeze({
     id,
     occupation,
+    kind: options.kind === "practice" ? "practice" : "tradition",
+    profession: Boolean(options.profession),
     icon,
     art: `modules/symbaroum-corerules/images/pictures/${art}`,
     fallbackArt: `${MODULE_PATH}/assets/shadows/darkness.webp`,

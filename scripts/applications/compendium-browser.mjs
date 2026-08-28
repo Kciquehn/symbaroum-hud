@@ -465,7 +465,11 @@ export class SymbaroumCompendiumBrowser extends ApplicationV2 {
     const serviceEntries = shopActive && !shopDirectoryActive
       ? serviceBrowserEntries(configuredServiceDefinitions()).map(prepareBrowserEntry)
       : [];
-    const entries = [...sourceEntries.flat(), ...serviceEntries];
+    const entries = filterEntriesByPlayerOriginAccess(
+      [...sourceEntries.flat(), ...serviceEntries],
+      game.user,
+      configuredOriginAccess()
+    );
     const shopConfiguration = shopActive
       ? configuredShopConfiguration()
       : normalizeShopConfiguration();
@@ -2925,6 +2929,8 @@ export class SymbaroumCompendiumBrowser extends ApplicationV2 {
     const sources = sourceDescriptors();
     const current = configuredSources();
     const folderAccess = configuredFolderAccess();
+    const originAccess = configuredOriginAccess();
+    const originOptions = [...CONTENT_ORIGINS, contentOriginDefinition(UNKNOWN_CONTENT_ORIGIN)];
     const folderGroups = browserFolderGroups();
     const canConfigurePlayers = Boolean(game.user?.isGM);
     const content = `<div class="symbaroum-hud-browser-source-config">
@@ -2937,7 +2943,22 @@ export class SymbaroumCompendiumBrowser extends ApplicationV2 {
           <small>${escapeHtml(game.i18n.localize("SYMBAROUMHUD.CompendiumBrowser.WorldSource"))}</small>
         </label>`).join("")}</div>
       </section>
-      ${canConfigurePlayers ? `<section class="symbaroum-hud-browser-folder-access">
+      ${canConfigurePlayers ? `<section class="symbaroum-hud-browser-origin-access">
+        <header>
+          <h3>${escapeHtml(game.i18n.localize("SYMBAROUMHUD.CompendiumBrowser.PlayerOriginAccess"))}</h3>
+          <span>${escapeHtml(game.i18n.localize("SYMBAROUMHUD.CompendiumBrowser.GameMasterOnly"))}</span>
+        </header>
+        <p>${escapeHtml(game.i18n.localize("SYMBAROUMHUD.CompendiumBrowser.PlayerOriginAccessHint"))}</p>
+        <div class="symbaroum-hud-browser-origin-access-list">
+          ${originOptions.map((origin) => `<label>
+            <input type="checkbox" name="originAccess" value="${escapeHtml(origin.id)}"
+              ${!originAccess.configured || originAccess.originIds.includes(origin.id) ? "checked" : ""}>
+            <i class="fa-solid fa-book-bookmark" aria-hidden="true"></i>
+            <span>${escapeHtml(game.i18n.localize(origin.label))}</span>
+          </label>`).join("")}
+        </div>
+      </section>
+      <section class="symbaroum-hud-browser-folder-access">
         <header>
           <h3>${escapeHtml(game.i18n.localize("SYMBAROUMHUD.CompendiumBrowser.PlayerFolderAccess"))}</h3>
           <span>${escapeHtml(game.i18n.localize("SYMBAROUMHUD.CompendiumBrowser.GameMasterOnly"))}</span>
@@ -2981,11 +3002,17 @@ export class SymbaroumCompendiumBrowser extends ApplicationV2 {
               .map((input) => input.value));
             const selectedFolders = [...button.form.querySelectorAll('input[name="folderAccess"]:checked')]
               .map((input) => input.value);
+            const selectedOrigins = [...button.form.querySelectorAll('input[name="originAccess"]:checked')]
+              .map((input) => input.value);
             return {
               sources: Object.fromEntries(sources.map((source) => [source.id, checked.has(source.id)])),
               folderAccess: canConfigurePlayers ? {
                 configured: true,
                 folderIds: selectedFolders
+              } : null,
+              originAccess: canConfigurePlayers ? {
+                configured: true,
+                originIds: selectedOrigins
               } : null
             };
           }
@@ -3002,12 +3029,16 @@ export class SymbaroumCompendiumBrowser extends ApplicationV2 {
     });
     if (!result) return;
     let ownershipChanges = null;
-    if (canConfigurePlayers && result.folderAccess) {
+    if (canConfigurePlayers && result.folderAccess && result.originAccess) {
       ui.notifications?.info(game.i18n.localize(
         "SYMBAROUMHUD.CompendiumBrowser.ApplyingFolderAccess"
       ));
       try {
-        ownershipChanges = await synchronizeBrowserObserverAccess(result.folderAccess);
+        ownershipChanges = await synchronizeBrowserObserverAccess(
+          result.folderAccess,
+          result.originAccess,
+          await this.#contentOriginIndex({ waitForFull: true })
+        );
       } catch (error) {
         console.error(`${MODULE_ID} | Could not synchronize browser Observer ownership.`, error);
         ui.notifications?.error(game.i18n.localize(
@@ -3019,6 +3050,7 @@ export class SymbaroumCompendiumBrowser extends ApplicationV2 {
     await game.settings.set(MODULE_ID, SETTINGS.COMPENDIUM_BROWSER_SOURCES, result.sources);
     if (canConfigurePlayers && result.folderAccess) {
       await game.settings.set(MODULE_ID, SETTINGS.COMPENDIUM_BROWSER_FOLDER_ACCESS, result.folderAccess);
+      await game.settings.set(MODULE_ID, SETTINGS.COMPENDIUM_BROWSER_ORIGIN_ACCESS, result.originAccess);
       ui.notifications?.info(game.i18n.format(
         "SYMBAROUMHUD.CompendiumBrowser.FolderAccessSaved",
         ownershipChanges
@@ -3148,6 +3180,11 @@ export function registerCompendiumBrowserHooks() {
     Hooks.on(hook, () => SymbaroumCompendiumBrowser.invalidate());
   }
   Hooks.on(`${MODULE_ID}.browserFolderAccessChanged`, () => {
+    SymbaroumCompendiumBrowser.invalidate({ origins: false });
+    ui.items?.render?.();
+    ui.actors?.render?.();
+  });
+  Hooks.on(`${MODULE_ID}.browserOriginAccessChanged`, () => {
     SymbaroumCompendiumBrowser.invalidate({ origins: false });
     ui.items?.render?.();
     ui.actors?.render?.();
@@ -3866,6 +3903,43 @@ function configuredFolderAccess() {
   }
 }
 
+function configuredOriginAccess() {
+  try {
+    return normalizeOriginAccess(getSetting(SETTINGS.COMPENDIUM_BROWSER_ORIGIN_ACCESS));
+  } catch (_error) {
+    return normalizeOriginAccess();
+  }
+}
+
+export function normalizeOriginAccess(value = null) {
+  const valid = new Set([...CONTENT_ORIGINS.map(({ id }) => id), UNKNOWN_CONTENT_ORIGIN]);
+  return {
+    configured: value?.configured === true,
+    originIds: [...new Set(Array.isArray(value?.originIds)
+      ? value.originIds.filter((id) => typeof id === "string" && valid.has(id))
+      : [])]
+  };
+}
+
+export function canBrowseContentOrigin(
+  origin,
+  user = game.user,
+  access = configuredOriginAccess()
+) {
+  if (user?.isGM) return true;
+  const normalized = normalizeOriginAccess(access);
+  return !normalized.configured || normalized.originIds.includes(origin || UNKNOWN_CONTENT_ORIGIN);
+}
+
+export function filterEntriesByPlayerOriginAccess(
+  entries,
+  user = game.user,
+  access = configuredOriginAccess()
+) {
+  return (Array.isArray(entries) ? entries : [])
+    .filter((entry) => canBrowseContentOrigin(entry?.origin, user, access));
+}
+
 export function normalizeFolderAccess(value = null) {
   return {
     configured: value?.configured === true,
@@ -3952,7 +4026,11 @@ export function browserObserverOwnershipUpdate(document, allowed, observerLevel 
   };
 }
 
-export async function synchronizeBrowserObserverAccess(access) {
+export async function synchronizeBrowserObserverAccess(
+  access,
+  originAccess = configuredOriginAccess(),
+  originIndex = staticContentOriginIndex()
+) {
   if (!game.user?.isGM) throw new Error("Only a Game Master can configure browser ownership.");
   const normalized = normalizeFolderAccess(access);
   const summary = { granted: 0, restored: 0 };
@@ -3963,6 +4041,10 @@ export async function synchronizeBrowserObserverAccess(access) {
         .map((document) => browserObserverOwnershipUpdate(
           document,
           canBrowseConfiguredFolder(document, normalized)
+            && canBrowseContentOrigin(resolveContentOrigin(document, {
+              index: originIndex,
+              sourceId: `world:${documentName}`
+            }), { isGM: false }, originAccess)
         ))
         .filter(Boolean);
       summary.granted += planned.filter(({ action }) => action === "granted").length;

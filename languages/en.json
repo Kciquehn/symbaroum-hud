@@ -3,6 +3,36 @@
     "Title": "Symbaroum HUD",
     "Empty": "Select a character or creature token.",
     "None": "No items available.",
+    "PdfExport": {
+      "Button": "Export PDF",
+      "Character": "Character",
+      "Types": {
+        "Ability": "Ability",
+        "MysticalPower": "Mystical power",
+        "Ritual": "Ritual"
+      },
+      "ConfigureTitle": "Configure PDF character sheet",
+      "ConfigureHeading": "Official editable character sheet",
+      "ConfigureText": "Select the editable Symbaroum PDF character sheet. The file remains the Game Master's copy and is not bundled with the module.",
+      "TemplatePath": "PDF path in Foundry",
+      "Browse": "Browse",
+      "CopyrightHint": "Upload your copy of the sheet to Foundry storage. Fillable fields and checkboxes will be preserved.",
+      "SaveAndUse": "Save and export",
+      "MissingPlayerTemplate": "The Game Master has not configured the editable PDF sheet yet.",
+      "InvalidTemplate": "Select a valid PDF file.",
+      "Exporting": "Filling the PDF character sheet…",
+      "Success": "PDF character sheet exported. Its fields remain editable.",
+      "Failed": "The PDF character sheet could not be exported: {error}",
+      "OverflowEntry": "{section}: the sheet supports {limit}, but the character has {count}; the remaining entries were not included.",
+      "Sections": {
+        "abilities": "Abilities, powers, and rituals",
+        "weapons": "Weapons",
+        "armors": "Armor",
+        "equipment": "Equipment",
+        "friends": "Friends",
+        "artifacts": "Artifacts"
+      }
+    },
     "ItemTaxonomy": {
       "Category": "Category",
       "AutomaticHint": "Category identified automatically by Symbaroum HUD.",
@@ -90,6 +120,8 @@
       "SourceConfigHint": "Choose which directory types are displayed in your browser. This preference is saved only for your user.",
       "PlayerFolderAccess": "Player access by folder",
       "PlayerFolderAccessHint": "Select the world folders players may browse. When saved, the module grants Observer ownership directly to the Items and Actors in those folders. Selecting a folder also includes all of its subfolders.",
+      "PlayerOriginAccess": "Player access by book",
+      "PlayerOriginAccessHint": "Select the books players may browse. A document is displayed only when it belongs to an allowed book and is also inside an allowed folder. This corrects official content imported into another book's folders.",
       "GameMasterOnly": "Game Master only",
       "RootDocuments": "Documents without a folder",
       "NoWorldFolders": "No world folders of this type were found.",
@@ -357,17 +389,25 @@
         "StepEightText": "Record the other characters, the group's name, and the goal everyone shares. The collective goal gives the Game Master a starting point for missions, encounters, and adventures."
       },
       "Archetypes": {
+        "Hunter": {
+          "Name": "Hunter",
+          "Summary": "Hunters track prey with ranged weapons, traps, poisons, and hunting techniques.",
+          "Ability": "Hunter's Instinct"
+        },
         "Warrior": {
           "Name": "Warrior",
-          "Summary": "Warriors excel on the battlefield, commonly using heavy weapons and armor. They may serve as shock troops, protectors, or leaders who command and support their companions."
+          "Summary": "Warriors face danger head-on as combatants, leaders, guardians, and weapon specialists.",
+          "Ability": "Feat of Strength"
         },
         "Mystic": {
           "Name": "Mystic",
-          "Summary": "Mystics reach supernatural sources through scholarship, faith, pacts with nature, or contact with Corruption. Their powers can devastate enemies, protect allies, and solve problems through magic and rituals."
+          "Summary": "Mystics control the world through traditions, powers, rituals, faith, or pacts—always under the risk of Corruption.",
+          "Ability": "Powerful Gift"
         },
         "Rogue": {
           "Name": "Rogue",
-          "Summary": "Rogues prevail through agility, cunning, and versatility. They may fight at range or in close combat and are particularly capable when facing practical, social, stealthy, or exploratory challenges."
+          "Summary": "Rogues survive through cunning and versatility, seizing opportunities and reacting quickly to danger.",
+          "Ability": "Rapid Reflexes"
         }
       },
       "Occupation": {
@@ -375,10 +415,28 @@
         "Index": "Occupations",
         "SelectLabel": "Archetype and occupation",
         "ArchetypeLabel": "About the archetype",
+        "ArchetypeSelectionTitle": "Choose the character's archetype",
+        "ArchetypeSelectionText": "The archetype describes the character's broad path and groups occupations with similar talents and styles. It guides creation but does not restrict later choices.",
+        "ArchetypeRuleTitle": "Archetypal Abilities",
+        "ArchetypeRuleText": "Under the Advanced Player's Guide rules, a character must possess at least three Abilities related to an archetype before acquiring its Archetypal Ability; Novice rank is sufficient.",
+        "ArchetypeAbility": "Archetypal Ability",
+        "ChooseArchetype": "View occupations",
+        "PreviousArchetype": "Previous archetype",
+        "NextArchetype": "Next archetype",
+        "ChangeArchetype": "Change archetype",
+        "CustomFromArchetypes": "Create a custom occupation",
         "OccupationLabel": "Occupation",
         "ImportantAttributes": "Important attributes",
         "SuggestedRaces": "Suggested races",
         "AppropriateAbilities": "Appropriate abilities",
+        "SuggestedGifts": "Suggested boons",
+        "SuggestedBurdens": "Suggested burdens",
+        "Source": "Source",
+        "Sources": {
+          "coreRulebook": "Core Rulebook",
+          "advancedPlayersGuide": "Advanced Player's Guide"
+        },
+        "ProfessionNotice": "Professions are advancement options, not initial creation choices.",
         "Choose": "Choose this occupation",
         "SelectionHint": "Your occupation guides your concept but does not restrict the character's future choices.",
         "CustomGroup": "Free creation",
@@ -440,9 +498,9 @@
         "ChooseOne": "Choose one trait",
         "FreeChoice": "Racial choice",
         "ChoiceHint": "Select one of the two cultural options granted by this race.",
-        "OptionalTraits": "Optional racial trait",
-        "CostsAbility": "Costs 1 Ability",
-        "OptionalHint": "You may start with this trait at Novice, but it will use one Ability choice in the next step.",
+        "OptionalTraits": "Racial options",
+        "CostsAbility": "Each option costs 1 Ability",
+        "OptionalHint": "Optional racial Traits, Abilities, or Powers begin at Novice and each choice uses one Ability in the next step.",
         "ChoiceRequired": "Choose one of the traits offered by this race.",
         "SelectTrait": "Select this racial Trait",
         "OpenTrait": "Open {name} sheet",
@@ -516,6 +574,61 @@
               },
               "names": { "Paragraph1": "Ogres seem to have no names of their own. Others give them nicknames based on size, appearance or temperament; Ordo Magica suspects the creature considers that sufficient.", "examples": "Bauta, Big Brute, Brawler, Bull, Calm, Heavy, Nervous, Odd, Rage, Strange, Ugly." }
             }
+          },
+          "elf": {
+            "Name": "Elf", "Summary": "The elves of the Iron Pact guard Davokar and fight to keep the darkness beneath its roots asleep.",
+            "Lore": {
+              "history": {
+                "Paragraph1": "Davokar's elves belong to the Iron Pact, an order charged with preventing the evil sleeping beneath the forest from awakening. Many were born into the order and have never seen the elven lands of the west.",
+                "Paragraph2": "Summer elves form the backbone of the guardians: vigilant hunters armed with spears and bows. War against abominations and taboo-breakers has reduced their numbers and made alliances with humans increasingly important.",
+                "Paragraph3": "Elves are Long-lived and Pariahs among humans. Wisdom of the Ages may be acquired as an Ability. The book recommends a summer elf for a starting character, as older elves are far more powerful and experienced."
+              },
+              "names": { "Paragraph1": "Spring and summer elves receive double names; after later dormancies they may shorten or replace them. Their names usually contain more vowels than consonants.", "male": "Alal-Roak, Dorael-Ri, Eloan-Eo, Elori, Godrai, Mearoel, Saran-Ri, TelKeriel, Kil-Ano.", "female": "Ahara-Vei, Eleanea, Leiana, Gaina-Anali, Keri-Las, Mael-Melian, Naelial, Tara-Kel, Teara-Teana." }
+            }
+          },
+          "dwarf": {
+            "Name": "Dwarf", "Summary": "Dwarves are bound to family, the spoken word, and the fate of the world itself, while keeping their origins shrouded in secrets.",
+            "Lore": {
+              "history": {
+                "Paragraph1": "Dwarven history is a mystery even to scholars. In Yndaros, their families look toward the future and protect a culture of codes, double meanings, and absolute loyalty to kin.",
+                "Paragraph2": "Dwarven morality distinguishes family from outsiders: the elders' will outweighs the individual's, and actions against outsiders are judged chiefly by how they affect the family.",
+                "Paragraph3": "Every dwarf has Natural Heritage, Absolute Memory, and Pariah. Retribution may be acquired as an Ability; for dwarves alone, that power causes no Corruption when learned or used."
+              },
+              "names": { "Paragraph1": "Dwarven names favor hard consonants and do not vary by gender. Younger dwarves must earn the right to use the family surname.", "examples": "Artek, Bolkor, Brana, Dobril, Dranek, Dusa, Jarok, Lazek, Margor, Mirek, Radmil, Stana, Vesnek, Vlador, Yaruk." }
+            }
+          },
+          "abductedHuman": {
+            "Name": "Abducted Human", "Summary": "Raised among elves after being taken as a child, the abductee knows the forest and lives between two peoples.",
+            "Lore": {
+              "history": {
+                "Paragraph1": "Elves abduct human children for reasons that changed over time: first to understand humanity, later to create mediators, and more recently to reinforce the Iron Pact's ranks.",
+                "Paragraph2": "Abductees are loyal students and many hunt beside summer elves. Even so, few elves regard them as equals, however much courage and wisdom they display.",
+                "Paragraph3": "Abducted humans have Bushcraft and speak Elvish. They can only write the language after acquiring Loremaster."
+              },
+              "names": { "Paragraph1": "Their foster parents choose short names that are easy to pronounce and remember, usually attempting to imitate human naming sounds.", "examples": "Use a simple human name or a short name chosen by the character's elven foster parents." }
+            }
+          },
+          "troll": {
+            "Name": "Troll", "Summary": "Trolls belong to a subterranean civilization of artisans, warriors, and singers shaped by challenges and collective strength.",
+            "Lore": {
+              "history": {
+                "Paragraph1": "Trolls, goblins, and ogres share an origin. Some goblins entering a chrysalis in the depths survive and awaken as trolls; failures in that process may produce the beings called ogres.",
+                "Paragraph2": "Troll society measures each person by what they contribute to the community. Physical, artistic, and mystical contests are part of social life, and even ritualized disputes can end in death.",
+                "Paragraph3": "Trolls are Long-lived and Pariahs. Armored, Natural Weapon, Regeneration, and Robust may be acquired as Abilities; choose only what the character can pay for with starting Experience."
+              },
+              "names": { "Paragraph1": "Names do not vary by gender and may change many times. The letter X is common among older or more powerful trolls.", "examples": "Young: Aka, Aroha, Erula, Hibne, Ogmaka, Raham, Riomata, Skadal, Verhar. Old or powerful: Aravarx, Etaxa, Noxar, Ognyx, Rirbax, Vouax, Uhux." }
+            }
+          },
+          "undead": {
+            "Name": "Undead", "Summary": "A dead person whose mind and will remain, forced to hide their nature and sustain a body that no longer lives.",
+            "Lore": {
+              "history": {
+                "Paragraph1": "A new kind of undead has appeared in Ambria: people who should have died rise with their minds intact while their cold bodies slowly decay toward final death.",
+                "Paragraph2": "Undead do not sleep, breathe, or eat normally. They recover Toughness by consuming fresh flesh or blood and must hide their condition from witchhunters, Black Cloaks, and angry mobs.",
+                "Paragraph3": "The character begins fully corrupted and with Undead I. Grave Cold and Terrify may be acquired as optional Abilities. This race changes central rules for healing, Corruption, and social interaction."
+              },
+              "names": { "Paragraph1": "Undead normally retain the name they had in life but may adopt a false identity to conceal their death.", "examples": "Use the character's living name or the identity they built after returning." }
+            }
           }
         },
         "Traits": {
@@ -527,7 +640,17 @@
           "pariah": { "Name": "Pariah", "Description": "The character belongs to a people treated with suspicion and hostility by dominant society." },
           "shapeshifter": { "Name": "Shapeshifter", "Description": "Allows changing appearance and, with greater mastery, assuming more radical forms." },
           "survivalInstinct": { "Name": "Survival Instinct", "Description": "A sharp racial instinct helps the character avoid blows and survive threats." },
-          "robust": { "Name": "Robust", "Description": "The character has size, strength and physical endurance far beyond the ordinary." }
+          "robust": { "Name": "Robust", "Description": "The character has size, strength and physical endurance far beyond the ordinary." },
+          "wisdomOfAges": { "Name": "Wisdom of the Ages", "Description": "The elves' collective memory grants temporary access to the knowledge of earlier generations at the cost of temporary Corruption." },
+          "naturalHeritage": { "Name": "Natural Heritage", "Description": "The creature is bound to the substance of the world, has no soul, and suffers physical damage instead of Corruption." },
+          "absoluteMemory": { "Name": "Absolute Memory", "Description": "The character has trained their memory to preserve information with extraordinary precision." },
+          "retribution": { "Name": "Retribution", "Description": "A power tied to dwarven speech and heritage. For a dwarf, Retribution causes no Corruption when acquired or used." },
+          "armored": { "Name": "Armored", "Description": "The creature's skin or natural shell protects it like armor." },
+          "naturalWeapon": { "Name": "Natural Weapon", "Description": "Claws, fangs, horns, or another body part function as a natural weapon." },
+          "regeneration": { "Name": "Regeneration", "Description": "The body recovers wounds supernaturally, though certain sources of damage may prevent the effect." },
+          "undead": { "Name": "Undead", "Description": "The character does not breathe, sleep, or heal normally and must consume fresh flesh or blood to recover Toughness." },
+          "tombCold": { "Name": "Grave Cold", "Description": "The chill presence of death affects those who draw near the undead." },
+          "terrify": { "Name": "Terrify", "Description": "The creature reveals its monstrous nature to spread fear among its enemies." }
         }
       },
       "Contacts": {
@@ -555,12 +678,15 @@
         "Limits": "Contacts is not absolute control over NPCs or an unlimited source of money, soldiers, or equipment. Favors may require time, discretion, reciprocity, or place the character in debt.",
         "RecordLabel": "Character record",
         "WhoAreThey": "Define your Contacts network",
+        "QuickHint": "Choose the network and explain your connection to it. All other details are optional.",
         "Network": "Region, organization, or social group",
         "NetworkPlaceholder": "E.g. Sun Church in Yndaros, Ordo Magica, clan Baiaga, Thieves' Guild...",
         "NetworkHint": "This is the trait's main scope. Make it specific enough to create stories, yet broad enough to include more than one person.",
         "Relationship": "How does the character know this network?",
         "RelationshipPlaceholder": "Describe how the connection began, why they still trust the character, and how help is usually requested...",
         "PeopleHeading": "Important people in the network",
+        "DetailsHeading": "Help and expectations",
+        "Optional": "Optional",
         "PeopleHint": "Optional. Record existing NPCs or invent some now. They are not automatically created as Actors; the names are references for the player and Game Master.",
         "PersonName": "Name",
         "PersonNamePlaceholder": "Name or nickname",
@@ -609,6 +735,7 @@
         "SlotFull": "Every slot at this level is already filled.",
         "NotEnoughExperience": "There is not enough XP to purchase this Ability at this level.",
         "ChooseMysticalPower": "Choose the Mystical Power",
+        "SearchMysticalPowers": "Search Mystical Powers…",
         "MysticalPowerChoiceIntro": "Each power counts as one Ability. Choose the power and rank to learn; you may purchase more than one power.",
         "OpenMysticalPower": "Open {name} sheet",
         "NoMysticalPowers": "No accessible Mystical Power is available in the world.",
@@ -625,13 +752,39 @@
         "SelectRitualistRankFirst": "Choose the Ritualist rank first.",
         "RitualCapacityFull": "Every Ritual slot at this rank is already filled.",
         "InvalidSpecialChoice": "Choose every required Mystical Power or Ritual before continuing.",
+        "AdvancedRuleInvalid": "An archetypal or profession Ability does not meet the Advanced Player's Guide requirements.",
+        "ArchetypeRequirementTitle": "Archetypal Ability",
+        "ArchetypeRequirement": "This Ability requires at least {count} other Abilities from the archetype's list.",
+        "ArchetypeRequirementShort": "Requires {count} archetype Abilities",
+        "ArchetypeRequirementProgress": "Archetype requirement: {current} of {count} valid Abilities.",
+        "ProfessionAbilityTitle": "Profession Ability",
+        "ProfessionAbility": "Available only to members of the {profession} profession. Professions are progression goals, not starting occupations.",
+        "ProfessionAbilityLocked": "Profession-exclusive Ability; unavailable during initial creation.",
+        "ProfessionChoiceLocked": "Profession-exclusive Power or Ritual; unavailable during initial creation.",
+        "Professions": {
+          "Title": "Advanced Guide Professions",
+          "Rules": "Professions are progression goals. To enter one, the character must meet every requirement and have at least one required Ability at Master rank. Exclusive capabilities remain visible for reference but cannot be purchased during initial creation."
+        },
+        "AdvancedTraits": {
+          "Title": "Boons and Burdens",
+          "Boons": "Boons",
+          "Burdens": "Burdens",
+          "Suggested": "Suggested",
+          "Rules": "Optional Advanced Player's Guide rule: each Boon costs 5 XP and each Burden grants 5 additional XP during creation.",
+          "Limits": "Book recommendation: no more than 2 or 3 Boons and 1 or 2 Burdens. The creator limits selections to 3 Boons and 2 Burdens. Click a name to open its original sheet."
+        },
         "Traditions": {
           "BookLabel": "Mystical Traditions",
+          "PracticeBookLabel": "Mystical Practice",
           "PurchaseExplanation": "To belong to this tradition, the character must purchase the {ability} Ability. This choice represents their training, principles, and way of handling Corruption.",
+          "ProfessionPurchaseExplanation": "{ability} is a Profession-exclusive Ability. Under the Advanced Player's Guide rules, a profession is a progression goal: the character must meet its required Abilities and have at least one of them at Master level.",
           "TraditionHeading": "The tradition",
+          "PracticeHeading": "The practice",
           "TitlesHeading": "Titles and path",
           "PowersHeading": "Associated powers",
+          "PracticeWorksHeading": "Artifacts that can be crafted",
           "RitualsHeading": "Associated rituals",
+          "PracticeLimitsHeading": "Crafting and limits",
           "CorruptionHeading": "Corruption",
           "AbilityHeading": "The {ability} Ability",
           "witchcraft": {
@@ -669,6 +822,42 @@
             "Powers": "Anathema, Blessed Shield, Inherit Wound, Lay on Hands, Levitate, Prios's Burning Glass, Sacred Aura, True Form, Unnoticeable, and Witch Hammer.",
             "Rituals": "Command Confession, Exorcism, Holy Smoke, Judgment Bonds, Oracle, Patron Saint, Purging Fire, Heretic's Trail, and Sanctifying Rite.",
             "Corruption": "Theurgs associate Corruption with what grows without cultivation and control. Even so, every devotee must accept the risk of taint and keep their inner flame alive when facing darkness."
+          },
+          "trollSinging": {
+            "Name": "Troll Singing",
+            "Introduction": "As old as the trolls' collective memory, Troll Singing preserves stories, harmonies, and truths about the world before Corruption.",
+            "Doctrine": "The skalds' songs, the smiths' hammering, and warriors' claws form the great hymn of troll life. Its powers chiefly influence the mind, and several are hymns maintained while the singer performs other actions.",
+            "Titles": "Troll Singers use no formal titles. A promising singer learns from a master, serves the rulers when ready, and later passes the tradition to a new apprentice.",
+            "Powers": "Dancing Weapon, Confusion, Battle Hymn, Hymn of Weakening, Heroic Hymn, and Retribution.",
+            "Rituals": "Restore and Retrieve. The tradition has few rituals of its own, but its skalds may learn rituals from other traditions.",
+            "Corruption": "Willingly accepting Corruption is unthinkable to most singers. Their songs recall the world before the taint and the trolls' duty to the Iron Pact and Davokar."
+          },
+          "staffMagic": {
+            "Name": "Staff Magic",
+            "Introduction": "Staff Mages are ascetic warrior monks who regard themselves as heirs to the last emperor of Symbaroum's guard and seek to repair the failure that preceded the empire's fall.",
+            "Doctrine": "The runestaff is an extension of the mage's soul and their principal weapon. The order fights abominations, sorcerers, and reckless use of Corruption while searching for the ancient emperor's rightful heir.",
+            "Titles": "The order distinguishes the Staffless, apprentices without their own weapon; Runestaffs, members who have received one; and Staff Masters.",
+            "Powers": "Dancing Weapon, Anathema, Staff Projectile, Sphere, and Protective Runes.",
+            "Rituals": "Blood Storm and Tremor. Its rituals are woven into and stored in the staff, which cannot receive another power or ritual until activation; rituals from other traditions work normally.",
+            "Corruption": "The order treats Corruption as a consequence of careless power. It must be avoided because enemies can turn it against the mage and because reckless magic also wounds the surrounding world."
+          },
+          "symbolism": {
+            "Name": "Symbolism",
+            "Introduction": "Brought from the east by mystics who settled in Clan Vajvod territory, Symbolism reshapes the world through runes, signs, and patterns charged with power.",
+            "Doctrine": "Symbolists paint, write, and carve symbols. Their protection comes from the time and care invested in creating runes, whether drawn on perishable materials, carved permanently, or written as light in the air.",
+            "Titles": "Apprentices are Followers or Spools; initiated members are Weavers. Master Weaver is honorary, and many members adopt names such as Sign Carver, Painter of Fate, or Artificer of Power.",
+            "Powers": "Draining Glyph, Protective Runes, Banishing Seal, and Blinding Symbol.",
+            "Rituals": "Spell Trap, Distant Writing, Carve Runic Tattoo, and Runic Guardian.",
+            "Corruption": "Symbolists suffer no permanent Corruption when learning the tradition's powers or crafting symbols. Each activated symbol causes only 1 point of temporary Corruption; rituals follow the normal rules."
+          },
+          "artifactCrafting": {
+            "Name": "Artifact Crafting",
+            "Introduction": "Artifact crafting is a nearly lost mystical practice preserved chiefly among trolls and recently passed to elves, abducted humans, and scholars of the Ordo Magica.",
+            "Doctrine": "Artifact Crafters combine knowledge, craftsmanship, and mystical power to infuse objects with lasting effects. The practice is a Profession and therefore a progression goal rather than a normal starting option.",
+            "Titles": "A practitioner must master Blacksmith, Loremaster, and Ritualist; Mystical Power is useful but optional. Joining the Profession requires every required Ability and at least one of them at Master level.",
+            "Powers": "At Novice, the character can make Novice lesser artifacts; at Adept, Adept lesser artifacts become available; at Master, the character reaches Master lesser artifacts. The original artifact sheets still define costs, effects, and requirements.",
+            "Rituals": "Each creation requires materials, time, and a Cunning test appropriate to the Ability rank. Available secrets may depend on the character's tradition when the group uses the optional Secrets of the Traditions rule.",
+            "Corruption": "Crafting and binding power into objects remains subject to the Corruption rules stated by the Ability and individual artifacts. The crafter should consult the original sheet before beginning the process."
           }
         }
       },
@@ -742,6 +931,9 @@
         "Required": "Choose one of the starting weapon combinations.",
         "InitialChoiceTitle": "Choose your starting equipment",
         "ConfirmInitialChoice": "Confirm starting equipment",
+        "ChoiceStageText": "Resolve the choices granted by Abilities or the starting combination first. You can then review free items and purchase additional equipment.",
+        "ContinueToShop": "Continue to Equipment",
+        "ReviewInitialChoices": "Review starting equipment choices",
         "NoMatchingItems": "No compatible accessible world item was found.",
         "StartingChoiceHint": "Choose one combination. The names describe the weapons narratively; the sheet receives the generic items for the indicated categories.",
         "AutomaticMarked": "Granted automatically",
@@ -761,6 +953,9 @@
         "ArmorAlreadyGranted": "The Ability {ability} already grants armor to the character, so they do not also receive Light Armor.",
         "MarksmanChoice": "Marksman lets you choose one of the weapons below:",
         "MarksmanRequired": "Choose either a Crossbow or a Bow for the Marksman benefit.",
+        "AbilityChoiceLead": "The {ability} Ability lets you choose one of the following items:",
+        "AbilityChoiceRequired": "Choose the starting equipment granted by the {ability} Ability.",
+        "AbilityChoiceHint": "Select the equipment granted by the Ability before continuing.",
         "MarksmanAlsoReceives": "Regardless of the choice, you also receive",
         "And": "and",
         "Crossbow": "Crossbow",
@@ -872,7 +1067,17 @@
         "witchhunter": { "Name": "Witchhunter", "Quote": "I would rather put down an innocent than let a blight beast walk over them.", "Summary": "You devoted your life to fighting blight beasts. You wield steel, fire, and perhaps rituals taken from defeated foes, accepting even the risk of Corruption to battle evil with fanatical fervor.", "Attributes": "Resolute 13+, Cunning or Accurate 11+", "Races": "Human", "Abilities": "Marksman, Steadfast, Ritualist, Beast Lore" },
         "thug": { "Name": "Thug", "Quote": "Your money or your blood — the choice is yours!", "Summary": "You grew up where gangs teach how to profit from others' work beneath the watch's nose. You may act alone or serve nobles as an enforcer protected by your master's influence.", "Attributes": "Quick 13+, Cunning 11+", "Races": "Goblin, human, or ogre", "Abilities": "Acrobatics, Twin Attack, Strangler, Poisoner" },
         "treasureHunter": { "Name": "Treasure-hunter", "Quote": "This altar… I wonder if it can be pushed aside…", "Summary": "The depths of Davokar hide the treasures that sustain you. You dream of ruins and sunken temples and have developed a broad set of skills to survive the forest's dangers.", "Attributes": "Cunning 13+, Quick 11+", "Races": "Goblin, human, or ogre", "Abilities": "Acrobatics, Alchemy, Steel Throw, Tactician" },
-        "ranger": { "Name": "Ranger", "Quote": "Anything alive can be tracked. And brought down…", "Summary": "Deep forests and mountain valleys are your home, where you hunt for food, hides, or the safety of travelers. You know how to stay beyond an enemy's reach while your arrows find their mark.", "Attributes": "Vigilant 13+, Discreet 11+", "Races": "Barbarian or changeling", "Abilities": "Acrobatics, Marksman, Beast Lore, Sixth Sense" }
+        "ranger": { "Name": "Ranger", "Quote": "Anything alive can be tracked. And brought down…", "Summary": "Deep forests and mountain valleys are your home, where you hunt for food, hides, or the safety of travelers. You know how to stay beyond an enemy's reach while your arrows find their mark.", "Attributes": "Vigilant 13+, Discreet 11+", "Races": "Barbarian or changeling", "Abilities": "Acrobatics, Marksman, Beast Lore, Sixth Sense" },
+        "monsterHunter": { "Name": "Monster Hunter", "Quote": "Let me deal with your… problem.", "Summary": "You have developed techniques for tracking and slaying creatures that threaten frontier settlements. Hunter societies compete and cooperate to keep settlements safe, study monsters, and trade valuable trophies.", "Attributes": "Cunning 13+, Accurate 11+", "Races": "Human", "Abilities": "Trapper, Marksman or Polearm Mastery, Beast Lore", "Gifts": "Hunting Dog, Cartographer, Contacts, Bushcraft, Privileged, Servant, Porter", "Burdens": "Arch Enemy, Addiction" },
+        "bountyHunter": { "Name": "Bounty Hunter", "Quote": "Scum, me? Sure, but scum is what you need, it seems.", "Summary": "You hunt criminals, deserters, cultists, and other wanted targets. The most desperate fugitives seek refuge in Davokar, forcing bounty hunters to combine accuracy, vigilance, and capture techniques.", "Attributes": "Accurate 13+, Vigilant 11+", "Races": "Dwarf or human", "Abilities": "Marksman, Entangling, Low Blow", "Gifts": "Hunting Dog, Contacts, Gossip, Enduring March, Bushcraft, Porter", "Burdens": "Code of Honor, Impulsive" },
+        "runeSmith": { "Name": "Rune Smith", "Quote": "The rhythm of the world echoes in the beat of my hammer.", "Summary": "You unite the craft of the forge with the discipline of combat, bearing arms and armor made by your own hands. The tradition is strongest among trolls but also attracts abductees, ogres, and other warrior-artisans.", "Attributes": "Cunning 11+, Strong 13+", "Races": "Abducted human, ogre, or troll", "Abilities": "Blacksmith, Two-handed Force or Hammer Step, Iron Fist", "Gifts": "Forbidden Knowledge, Contacts, Heirloom, Enduring March, Porter", "Burdens": "Mystical Mark, Protected" },
+        "tattooedWarrior": { "Name": "Tattooed Warrior", "Quote": "My rage burns in my body; come closer, feel the heat!", "Summary": "Symbols of power cover your body and turn fury into battlefield strength. Among the Vajvod these warriors serve their leaders; among goblins and trolls they form a feared elite.", "Attributes": "Quick 11+, Strong 13+", "Races": "Barbarian, goblin, or troll", "Abilities": "Two-handed Force or Polearm Mastery, Iron Fist, Rune Tattoo", "Gifts": "Horrifying, Enduring March, Bushcraft, Robust", "Burdens": "Impulsive, Dark Secret" },
+        "weaponMaster": { "Name": "Weapon Master", "Quote": "You want to live; I want to die and be remembered with admiration.", "Summary": "You devote yourself to mastering one weapon and its philosophy of combat. You may follow the path of the Axe Artist, Spear Dancer, Sacred Sword, or Flail Fighter.", "Attributes": "Accurate 13+, Quick 11+", "Races": "Barbarian, goblin, elf, abducted human, Ambrian, changeling, ogre, or troll", "Abilities": "Axe Artist: Acrobatics, Axe Artist, Twin Attack; Spear Dancer: Acrobatics, Staff Fighting, Entangling or Polearm Mastery; Sacred Sword: Acrobatics, Blessed Sword, Man-at-arms; Flail Fighter: Entangling, Two-handed Force, Flail Fighter", "Gifts": "Gambler, Contacts, Heirloom, Privileged, Robust, Servant, Commanding Voice", "Burdens": "Arch Enemy, Code of Honor" },
+        "formerCultist": { "Name": "Former Cultist", "Quote": "My Master's word was law; now survival is everything.", "Summary": "You abandoned a dark cult but carry memories, guilt, and enemies. Survival requires knowledge of poison, corruption, and the methods of those who now pursue you.", "Attributes": "Cunning 13+, Resolute 11+", "Races": "Changeling, human, or undead", "Abilities": "Alchemy, Channeling, Poisoner", "Gifts": "Contacts, Doubletongue, Hideouts, False Identity, Mirage, Con Artist", "Burdens": "Wanted, Addiction" },
+        "guildThief": { "Name": "Guild Thief", "Quote": "What are you doing on my turf?", "Summary": "You belong to the criminal tradition of Ambrian cities. Cunning, agility, discretion, and knowing who is untouchable separate a true guild member from a common thief.", "Attributes": "Cunning 13+, Quick 11+", "Races": "Changeling, human, or goblin", "Abilities": "Trapper, Knife Dance or Low Blow, Opportunist", "Gifts": "Contacts, Dexterous, Hideouts, Burglar, Trickster, Con Artist", "Burdens": "Impulsive, Protected" },
+        "sapper": { "Name": "Sapper", "Quote": "Your armor and walls are my combustion chamber.", "Summary": "Trained in sieges, fortifications, and alchemical weapons, you bring down walls and enemy positions. Some sappers serve armies; others take their dangerous knowledge on expeditions into Davokar.", "Attributes": "Cunning 13+, Accurate 11+", "Races": "Ambrian or ogre", "Abilities": "Alchemy or Blacksmith, Two-handed Force or Man-at-arms, Siege Expert", "Gifts": "Forbidden Knowledge, Dexterous, Contacts, Enduring March, Porter", "Burdens": "Slow, Addiction" },
+        "trollSinger": { "Name": "Troll Singer", "Quote": "My voice echoes with the harmony of creation.", "Summary": "Your voice reveals mysteries, inspires allies, and wins battles. This skaldic tradition is strongest among trolls, elves, and dwarves, often uniting poetry, leadership, and physical might.", "Attributes": "Persuasive 13+, Strong 11+", "Races": "Dwarf, elf, ogre, or troll", "Abilities": "Troll Singing, Leader, Mystical Power (usually Combat Hymn)", "Gifts": "Archivist, Contacts, Heirloom, Musician, Storyteller, Commanding Voice", "Burdens": "Mystical Mark, Dark Secret" },
+        "symbolist": { "Name": "Symbolist", "Quote": "I draw, and the world obeys.", "Summary": "You build power through runes, signs, and symbols. The tradition came from the east and is especially influential among Clan Vajvod, where its practitioners rival witches in authority.", "Attributes": "Cunning 11+, Resolute 13+", "Races": "Barbarian of Clan Vajvod, goblin, or troll", "Abilities": "Mystical Power (usually Protective Runes), Ritualist (usually Carve Rune Tattoo), Symbolism", "Gifts": "Augur, Archivist, Cartographer, Contacts, Heirloom", "Burdens": "Elderly, Mystical Mark" }
       }
     },
     "ActorTypes": {
@@ -1067,6 +1272,10 @@
       "ActivateShortcut": "Activate hotbar shortcut {number}"
     },
     "Settings": {
+      "PdfTemplatePath": {
+        "Name": "Editable PDF character sheet",
+        "Hint": "Path to the official editable Symbaroum character sheet uploaded to Foundry storage. Used by the Export PDF button on character sheets."
+      },
       "ItemCategoryManager": {
         "Name": "Item Categories",
         "Hint": "Allows the Game Master to inspect and change the Categories of every Item imported into the world and every official persistent asset. Changes are used by the Browser, stores, and stock generator.",

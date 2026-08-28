@@ -96,9 +96,11 @@ const {
   isContactsPreparationRequired,
   isPersonalityStepComplete,
   isShadowStepComplete,
+  normalizeEquipmentShopPriceSelection,
   startingThalerForExperience,
   shouldOfferCharacterCreator
 } = await import("../scripts/services/character-creator-service.mjs");
+const { parseShopPrice, selectShopPrice } = await import("../scripts/services/shop-service.mjs");
 const { CORE_OCCUPATIONS, OCCUPATION_ARCHETYPES } = await import(
   "../scripts/data/core-occupations.mjs"
 );
@@ -382,20 +384,35 @@ test("opens the creator on demand and resumes or reviews the saved creation", as
   ]);
 });
 
-test("the core occupation book contains all fifteen occupations in three archetypes", () => {
-  assert.equal(CORE_OCCUPATIONS.length, 15);
+test("the occupation book contains all starting occupations from the Core Rulebook and Advanced Player's Guide", () => {
+  assert.equal(CORE_OCCUPATIONS.length, 25);
   assert.deepEqual(OCCUPATION_ARCHETYPES.map((entry) => entry.id), [
+    "hunter",
     "warrior",
-    "mystic",
-    "rogue"
+    "rogue",
+    "mystic"
   ]);
+  const occupationCounts = { hunter: 4, warrior: 8, rogue: 6, mystic: 7 };
   for (const archetype of OCCUPATION_ARCHETYPES) {
     assert.match(archetype.label, /\.Name$/);
     assert.match(archetype.summary, /\.Summary$/);
+    assert.match(archetype.ability, /\.Ability$/);
+    assert.match(archetype.art, /^modules\/symbaroum-corerules\/images\/pictures\/.+\.webp$/);
+    assert.match(archetype.icon, /^fa-/);
     assert.equal(
       CORE_OCCUPATIONS.filter((entry) => entry.archetype === archetype.id).length,
-      5
+      occupationCounts[archetype.id]
     );
+  }
+  assert.equal(CORE_OCCUPATIONS.find(({ id }) => id === "witchhunter")?.archetype, "hunter");
+  assert.equal(CORE_OCCUPATIONS.find(({ id }) => id === "ranger")?.archetype, "hunter");
+  assert.equal(CORE_OCCUPATIONS.find(({ id }) => id === "monsterHunter")?.source, "advancedPlayersGuide");
+  assert.deepEqual(
+    CORE_OCCUPATIONS.filter(({ source }) => source === "advancedPlayersGuide").map(({ id }) => id),
+    ["monsterHunter", "bountyHunter", "runeSmith", "tattooedWarrior", "weaponMaster", "formerCultist", "guildThief", "sapper", "trollSinger", "symbolist"]
+  );
+  for (const profession of ["ironSworn", "templar", "wrathGuard", "queensSpy", "gentlemanThief", "inquisitor"]) {
+    assert.equal(CORE_OCCUPATIONS.some(({ id }) => id === profession), false);
   }
   for (const occupation of CORE_OCCUPATIONS) {
     assert.match(occupation.art, /^modules\/symbaroum-corerules\/images\/pictures\/.+\.webp$/);
@@ -405,6 +422,13 @@ test("the core occupation book contains all fifteen occupations in three archety
     assert.ok(occupation.suggestedRaces.length > 0);
     assert.ok(occupation.suggestedRaces.every((id) => CORE_RACES.some((race) => race.id === id)));
     assert.match(occupation.abilities, /\.Abilities$/);
+    if (occupation.source === "advancedPlayersGuide") {
+      assert.match(occupation.gifts, /\.Gifts$/);
+      assert.match(occupation.burdens, /\.Burdens$/);
+    } else {
+      assert.equal(occupation.gifts, "");
+      assert.equal(occupation.burdens, "");
+    }
   }
 });
 
@@ -417,15 +441,24 @@ test("the first creator step explains the process and exposes a detailed occupat
   assert.deepEqual(dialogConfigs.at(-1).position, { width: 1060, height: 680 });
   const content = dialogConfigs.at(-1).content;
   assert.match(content, /symbaroum-hud-creator-step-guide/);
+  assert.match(content, /class="symbaroum-hud-archetype-stage" data-archetype-stage>/);
+  assert.match(content, /data-occupation-stage hidden/);
+  assert.equal((content.match(/data-select-archetype=/g) ?? []).length, 4);
+  assert.doesNotMatch(content, /data-archetype-carousel/);
+  assert.doesNotMatch(content, /Occupation\.ArchetypeRuleText/);
+  assert.match(content, /data-select-custom-occupation/);
   assert.match(content, /Guide\.Progress/);
   assert.doesNotMatch(content, /Guide\.Title/);
   assert.match(content, /input[^>]+name="occupation"/);
   assert.doesNotMatch(content, /Occupation\.IndexHint/);
-  assert.equal((content.match(/data-occupation-id=/g) ?? []).length, 16);
+  assert.equal((content.match(/data-occupation-id=/g) ?? []).length, 26);
   assert.match(content, /symbaroum-hud-occupation-chapter-banner/);
   assert.match(content, /symbaroum-hud-occupation-journal-card/);
   assert.match(content, /symbaroum-hud-occupation-facts/);
+  assert.equal((content.match(/Occupation\.SuggestedGifts/g) ?? []).length, 10);
+  assert.equal((content.match(/Occupation\.SuggestedBurdens/g) ?? []).length, 10);
   assert.match(content, /data-occupation-id="custom"/);
+  assert.doesNotMatch(content, /<button[^>]*symbaroum-hud-occupation-index-entry(?:(?!<\/button>)[\s\S])*<small>/);
   assert.match(content, /symbaroum-hud-custom-occupation-page/);
   assert.match(content, /name="customOccupationName"/);
   assert.match(content, /modules\/symbaroum-corerules\/images\/pictures\/duelist-arch\.webp/);
@@ -466,6 +499,96 @@ test("suggested occupation Abilities link to original accessible world sheets", 
   assert.deepEqual(permissionLevels, [2]);
 });
 
+test("qualified occupation suggestions link their power or ritual and highlight it in the Ability step", async () => {
+  const blank = actor({ id: "symbolist-suggestions", uuid: "Actor.symbolist-suggestions" });
+  await blank.setFlag("symbaroum-hud", "characterCreationMode", "creator");
+  const mysticalPower = worldAbility("mystical-power", "Poder Místico");
+  mysticalPower.system.reference = "mysticalPower";
+  const ritualist = worldAbility("ritualist", "Ritualista");
+  ritualist.system.reference = "ritualist";
+  const symbolism = worldAbility("symbolism", "Simbolismo");
+  const protectiveRunes = worldMysticalPower("protective-runes", "Runas Protetivas");
+  const otherPower = worldMysticalPower("other-power", "Anátema");
+  const runeTattoo = worldRitual("rune-tattoo", "Esculpir Tatuagem Rúnica");
+  const otherRitual = worldRitual("other-ritual", "Adivinhação da Morte");
+  const previousItems = game.items;
+  const previousLocalize = game.i18n.localize;
+  game.items = [mysticalPower, ritualist, symbolism, otherPower, protectiveRunes, otherRitual, runeTattoo];
+  game.i18n.localize = (key) => {
+    if (key.endsWith("Occupations.symbolist.Name")) return "Simbolista";
+    if (key.endsWith("Occupations.symbolist.Abilities")) {
+      return "Poder Místico (geralmente Runas Protetivas), Ritualista (geralmente Esculpir Tatuagem Rúnica), Simbolismo";
+    }
+    return key;
+  };
+
+  dialogChoices.push("close", "close");
+  try {
+    await CharacterCreatorService.openOccupationStep(blank);
+    const occupationContent = dialogConfigs.at(-1).content;
+    assert.match(occupationContent, /data-open-occupation-ability="mystical-power"/);
+    assert.match(occupationContent, /data-open-occupation-related-item="protective-runes"/);
+    assert.match(occupationContent, /data-open-occupation-related-item="rune-tattoo"/);
+
+    await blank.setFlag("symbaroum-hud", "characterCreatorState", {
+      version: 1, step: "race-complete", occupation: "symbolist", race: "goblin"
+    });
+    await CharacterCreatorService.openAbilitiesStep(blank);
+  } finally {
+    game.items = previousItems;
+    game.i18n.localize = previousLocalize;
+  }
+
+  const abilityContent = dialogConfigs.at(-1).content;
+  assert.match(abilityContent, /data-mystical-power-choice="protective-runes"[\s\S]*?data-occupation-choice-recommended="true"/);
+  assert.match(abilityContent, /data-ritual-choice="rune-tattoo"[\s\S]*?data-occupation-choice-recommended="true"/);
+  assert.equal((abilityContent.match(/data-occupation-choice-recommendation/g) ?? []).length, 2);
+  assert.ok(
+    abilityContent.indexOf('data-mystical-power-choice="protective-runes"')
+      < abilityContent.indexOf('data-mystical-power-choice="other-power"')
+  );
+  assert.ok(
+    abilityContent.indexOf('data-ritual-choice="rune-tattoo"')
+      < abilityContent.indexOf('data-ritual-choice="other-ritual"')
+  );
+});
+
+test("suggested occupation boons and burdens link to their accessible original sheets", async () => {
+  const blank = actor({ id: "occupation-gift-burden-links", uuid: "Actor.occupation-gift-burden-links" });
+  await blank.setFlag("symbaroum-hud", "characterCreationMode", "creator");
+  const previousItems = game.items;
+  const previousLocalize = game.i18n.localize;
+  const permissionLevels = [];
+  game.items = [
+    worldEquipment("contacts-sheet", "Contatos", "boon", {}, (_user, level) => {
+      permissionLevels.push(level);
+      return level === 2;
+    }),
+    worldEquipment("enemy-sheet", "Arqui-Inimigo", "burden", {}, () => true),
+    worldEquipment("hidden-vice", "Vício", "burden", {}, () => false)
+  ];
+  game.i18n.localize = (key) => {
+    if (key.endsWith("Occupations.monsterHunter.Gifts")) return "Contatos";
+    if (key.endsWith("Occupations.monsterHunter.Burdens")) return "Arqui-Inimigo, Vício";
+    return key;
+  };
+  dialogChoices.push("close");
+
+  try {
+    await CharacterCreatorService.openOccupationStep(blank);
+  } finally {
+    game.items = previousItems;
+    game.i18n.localize = previousLocalize;
+  }
+
+  const content = dialogConfigs.at(-1).content;
+  assert.match(content, /data-open-occupation-suggestion="contacts-sheet"/);
+  assert.match(content, /data-open-occupation-suggestion="enemy-sheet"/);
+  assert.doesNotMatch(content, /data-open-occupation-suggestion="hidden-vice"/);
+  assert.match(content, /<\/button>, <span>Vício<\/span>/);
+  assert.deepEqual(permissionLevels, [2]);
+});
+
 test("choosing an occupation writes it to the sheet and completes the first step", async () => {
   const blank = actor({ id: "occupation", uuid: "Actor.occupation" });
   await blank.setFlag("symbaroum-hud", "characterCreationMode", "creator");
@@ -486,7 +609,7 @@ test("choosing an occupation writes it to the sheet and completes the first step
     archetype: "mystic",
     occupation: "wizard"
   });
-  assert.match(dialogConfigs.at(-1).content, /symbaroum-hud-attributes-book/);
+  assert.match(dialogConfigs.at(-1).content, /symbaroum-hud-race-book/);
 });
 
 test("a custom occupation saves its name and editable concept in creator state", async () => {
@@ -526,17 +649,19 @@ test("a custom occupation saves its name and editable concept in creator state",
     }
   });
   assert.match(dialogConfigs[occupationDialog].content, /data-occupation-page="custom"/);
-  assert.match(dialogConfigs.at(-1).content, /symbaroum-hud-attributes-book/);
+  assert.match(dialogConfigs.at(-1).content, /symbaroum-hud-race-book/);
 });
 
-test("the second creator step offers typical distribution and point buy", async () => {
+test("the third creator step offers typical distribution and point buy", async () => {
   const blank = actor({ id: "attributes", uuid: "Actor.attributes" });
   await blank.setFlag("symbaroum-hud", "characterCreationMode", "creator");
   await blank.setFlag("symbaroum-hud", "characterCreatorState", {
     version: 1,
-    step: "occupation-complete",
+    step: "race-complete",
+    completedSteps: ["occupation", "race"],
     archetype: "mystic",
-    occupation: "wizard"
+    occupation: "wizard",
+    race: "ambrian"
   });
   dialogChoices.push("close");
 
@@ -564,9 +689,11 @@ test("custom occupation Attribute recommendations appear in the Attribute step",
   await blank.setFlag("symbaroum-hud", "characterCreationMode", "creator");
   await blank.setFlag("symbaroum-hud", "characterCreatorState", {
     version: 1,
-    step: "occupation-complete",
+    step: "race-complete",
+    completedSteps: ["occupation", "race"],
     archetype: "custom",
     occupation: "custom",
+    race: "ambrian",
     customOccupation: { name: "Batedor", attributes: "Vigilante 13+, Discreto 11+" }
   });
   dialogChoices.push("close");
@@ -597,9 +724,11 @@ test("saving point-buy Attributes writes the native Symbaroum fields", async () 
   await blank.setFlag("symbaroum-hud", "characterCreationMode", "creator");
   await blank.setFlag("symbaroum-hud", "characterCreatorState", {
     version: 1,
-    step: "occupation-complete",
+    step: "race-complete",
+    completedSteps: ["occupation", "race"],
     archetype: "warrior",
-    occupation: "knight"
+    occupation: "knight",
+    race: "ambrian"
   });
   const distribution = [10, 13, 5, 7, 11, 15, 10, 9];
   dialogChoices.push({
@@ -624,7 +753,8 @@ test("saving point-buy Attributes writes the native Symbaroum fields", async () 
     step: "attributes-complete",
     archetype: "warrior",
     occupation: "knight",
-    completedSteps: ["occupation", "attributes"],
+    race: "ambrian",
+    completedSteps: ["occupation", "race", "attributes"],
     attributesDeferred: false,
     attributeDistribution: "point-buy",
     attributes: Object.fromEntries(CORE_ATTRIBUTES.map((attribute, index) => [
@@ -639,9 +769,11 @@ test("Attributes can be deferred until after Abilities and are then required aga
   await blank.setFlag("symbaroum-hud", "characterCreationMode", "creator");
   await blank.setFlag("symbaroum-hud", "characterCreatorState", {
     version: 1,
-    step: "occupation-complete",
+    step: "race-complete",
+    completedSteps: ["occupation", "race"],
     archetype: "mystic",
-    occupation: "wizard"
+    occupation: "wizard",
+    race: "ambrian"
   });
 
   const firstDialog = dialogConfigs.length;
@@ -651,14 +783,14 @@ test("Attributes can be deferred until after Abilities and are then required aga
     "attributes-deferred"
   );
   assert.equal(dialogConfigs[firstDialog].buttons.some((button) => button.action === "defer-attributes"), true);
-  assert.match(dialogConfigs.at(-1).content, /symbaroum-hud-race-book/);
+  assert.match(dialogConfigs.at(-1).content, /symbaroum-hud-abilities-book/);
   assert.equal(blank.flag("characterCreatorState").attributesDeferred, true);
   assert.equal(isAttributesStepComplete(blank), true);
 
   await blank.setFlag("symbaroum-hud", "characterCreatorState", {
     ...blank.flag("characterCreatorState"),
     step: "abilities-complete",
-    completedSteps: ["occupation", "attributes", "race", "abilities"],
+    completedSteps: ["occupation", "race", "attributes", "abilities"],
     abilities: [{ id: "mystical-power" }]
   });
   assert.equal(isAbilitiesStepComplete(blank), true);
@@ -686,11 +818,11 @@ test("Attributes can be deferred until after Abilities and are then required aga
   assert.equal(isAttributesStepComplete(blank), true);
 });
 
-test("the third creator step presents all core races and their trait rules", async () => {
+test("the second creator step presents all playable Core and Advanced Guide races and their racial rules", async () => {
   const blank = actor({ id: "races", uuid: "Actor.races" });
   await blank.setFlag("symbaroum-hud", "characterCreationMode", "creator");
   await blank.setFlag("symbaroum-hud", "characterCreatorState", {
-    version: 1, step: "attributes-complete", occupation: "wizard"
+    version: 1, step: "occupation-complete", occupation: "wizard"
   });
   const previous = game.items;
   game.items = Object.values(CORE_RACE_TRAITS).map((trait) => {
@@ -711,28 +843,40 @@ test("the third creator step presents all core races and their trait rules", asy
   assert.deepEqual(dialogConfigs.at(-1).position, { width: 1060, height: 680 });
   const content = dialogConfigs.at(-1).content;
   assert.match(content, /changeling\.webp[^>]+object-position:50% 8%/);
-  assert.equal(CORE_RACES.length, 5);
-  assert.equal(Object.keys(CORE_RACE_TRAITS).length, 9);
+  assert.equal(CORE_RACES.length, 10);
+  assert.equal(Object.keys(CORE_RACE_TRAITS).length, 19);
   assert.match(content, /RaceProgress/);
   assert.doesNotMatch(content, /Guide\.Title/);
   assert.doesNotMatch(content, /\.Family/);
-  assert.equal((content.match(/data-race-id=/g) ?? []).length, 5);
+  assert.equal((content.match(/data-race-id=/g) ?? []).length, 10);
   assert.equal((content.match(/data-occupation-recommended="true"/g) ?? []).length, 1);
   assert.match(content, /symbaroum-hud-race-occupation-recommendation/);
   assert.match(content, /Occupations\.wizard\.Races/);
   assert.match(content, /Race\.RecommendedTag/);
   assert.ok(content.indexOf('data-race-id="ambrian"') < content.indexOf('data-race-id="barbarian"'));
-  assert.equal((content.match(/class="symbaroum-hud-race-art"/g) ?? []).length, 5);
-  assert.equal((content.match(/data-race-lore="history"/g) ?? []).length, 5);
+  assert.equal((content.match(/class="symbaroum-hud-race-editorial-body"/g) ?? []).length, 10);
+  assert.equal((content.match(/class="symbaroum-hud-race-art"/g) ?? []).length, 10);
+  assert.equal((content.match(/loading="lazy"/g) ?? []).length, 10);
+  assert.equal((content.match(/data-race-lore="history"/g) ?? []).length, 10);
   assert.ok(content.indexOf("Entries.ambrian.Lore.history.Paragraph1") < content.indexOf("name=\"race-choice-ambrian\""));
   assert.ok(CORE_RACES.every((race) => race.art.endsWith(".webp") && race.lore.length >= 2));
   assert.match(content, /name="race-choice-ambrian"/);
   assert.match(content, /name="race-optional-goblin-survivalInstinct"/);
-  assert.equal((content.match(/data-open-race-trait=/g) ?? []).length, 12);
+  assert.equal((content.match(/data-open-race-trait=/g) ?? []).length, 29);
   assert.doesNotMatch(content, /Traits\.contacts\.Description/);
   assert.doesNotMatch(content, /Traits\.robust\.Description/);
   assert.match(content, /data-open-race-trait="contacts"/);
   assert.match(content, /data-open-race-trait="robust"/);
+  assert.match(content, /data-race-id="elf"/);
+  assert.match(content, /data-race-id="dwarf"/);
+  assert.match(content, /data-race-page="dwarf"(?:(?!data-race-page=)[\s\S])*guard-warrior\.webp/);
+  assert.doesNotMatch(content, /data-race-page="dwarf"(?:(?!data-race-page=)[\s\S])*robust-warrior\.webp/);
+  assert.match(content, /assets\/races\/goblin\.webp\?art=goblin-traveller-v2/);
+  assert.doesNotMatch(content, /data-race-page="goblin"(?:(?!data-race-page=)[\s\S])*robust-warrior\.webp/);
+  assert.match(content, /data-race-id="abductedHuman"/);
+  assert.match(content, /data-race-id="troll"/);
+  assert.match(content, /data-race-id="undead"/);
+  assert.match(content, /modules\/symbaroum-corerules\/images\/pictures\/summer-elf\.webp/);
 });
 
 test("racial Trait cards open an accessible original world item sheet", async () => {
@@ -754,6 +898,30 @@ test("racial Trait cards open an accessible original world item sheet", async ()
     game.items = previous;
   }
   assert.deepEqual(rendered, []);
+});
+
+test("Natural Heritage links the imported Earth bound world Trait", async () => {
+  const blank = actor({ id: "natural-heritage-open", uuid: "Actor.natural-heritage-open" });
+  await blank.setFlag("symbaroum-hud", "characterCreationMode", "creator");
+  await blank.setFlag("symbaroum-hud", "characterCreatorState", { version: 1, step: "occupation-complete" });
+  const naturalHeritage = worldEquipment("earthbound", "Herança Natural", "trait", {
+    reference: "earthbound",
+    description: "Descrição oficial importada."
+  });
+  naturalHeritage.flags = {
+    babele: { translated: true, originalName: "Earth bound" }
+  };
+  const previous = game.items;
+  game.items = [naturalHeritage];
+  dialogChoices.push("close");
+  try {
+    await CharacterCreatorService.openRaceStep(blank);
+    const content = dialogConfigs.at(-1).content;
+    assert.match(content, /data-open-race-trait="naturalHeritage"/);
+    assert.doesNotMatch(content, /data-open-race-trait="naturalHeritage" disabled/);
+  } finally {
+    game.items = previous;
+  }
 });
 
 test("a human racial choice is added as a native boon", async () => {
@@ -830,6 +998,9 @@ test("History and Personality prepares Contacts and records them in native Notes
   assert.match(content, /symbaroum-hud-personality-contacts/);
   assert.match(content, /name="contactsNetwork"/);
   assert.match(content, /name="contactsRelationship"/);
+  assert.match(content, /symbaroum-hud-contact-fold/);
+  assert.match(content, /Contacts\.QuickHint/);
+  assert.doesNotMatch(content, /Contacts\.Limits/);
   assert.equal((content.match(/name="contactName-/g) ?? []).length, 4);
   assert.equal(contacts.network, "Igreja do Sol em Yndaros");
   assert.deepEqual(contacts.people, [{
@@ -865,6 +1036,40 @@ test("goblin adds mandatory burdens and records its optional trait as an Ability
   assert.equal(blank.items[2].system.novice.isActive, true);
   assert.deepEqual(blank.flag("characterCreatorState").raceTraits, ["shortLived", "pariah", "survivalInstinct"]);
   assert.deepEqual(blank.flag("characterCreatorState").abilityCostTraits, ["survivalInstinct"]);
+});
+
+test("Advanced Guide races preserve native racial document types and every paid option", async () => {
+  const dwarf = actor({ id: "dwarf", uuid: "Actor.dwarf" });
+  await dwarf.setFlag("symbaroum-hud", "characterCreationMode", "creator");
+  await dwarf.setFlag("symbaroum-hud", "characterCreatorState", { version: 1, step: "attributes-complete" });
+  dialogChoices.push({
+    action: "choose-race",
+    form: { race: "dwarf", "race-optional-dwarf-retribution": true }
+  });
+
+  assert.equal(await CharacterCreatorService.openRaceStep(dwarf), "dwarf");
+  assert.deepEqual(dwarf.items.map((item) => item.type), ["trait", "boon", "burden", "mysticalPower"]);
+  assert.equal(dwarf.items.at(-1).system.novice.isActive, true);
+  assert.deepEqual(dwarf.flag("characterCreatorState").abilityCostTraits, ["retribution"]);
+
+  const troll = actor({ id: "troll", uuid: "Actor.troll" });
+  await troll.setFlag("symbaroum-hud", "characterCreationMode", "creator");
+  await troll.setFlag("symbaroum-hud", "characterCreatorState", { version: 1, step: "attributes-complete" });
+  dialogChoices.push({
+    action: "choose-race",
+    form: {
+      race: "troll",
+      "race-optional-troll-armored": true,
+      "race-optional-troll-naturalWeapon": true,
+      "race-optional-troll-regeneration": true,
+      "race-optional-troll-robust": true
+    }
+  });
+
+  assert.equal(await CharacterCreatorService.openRaceStep(troll), "troll");
+  assert.deepEqual(troll.flag("characterCreatorState").abilityCostTraits, [
+    "armored", "naturalWeapon", "regeneration", "robust"
+  ]);
 });
 
 test("validates both official Ability distributions and discounts optional racial traits", () => {
@@ -963,10 +1168,14 @@ test("mystical tradition Abilities open an adapted book chapter before their nat
     version: 1, step: "race-complete", race: "ambrian"
   });
   const traditions = [
-    ["witchcraft", "Bruxaria"],
-    ["sorcery", "Feitiçaria"],
-    ["wizardry", "Magismo"],
-    ["theurgy", "Teurgia"]
+    ["witchcraft", "Bruxaria", "witchcraft"],
+    ["sorcery", "Feitiçaria", "sorcery"],
+    ["wizardry", "Magismo", "wizardry"],
+    ["theurgy", "Teurgia", "theurgy"],
+    ["trollsinging", "Canto do Troll", "trollSinging"],
+    ["staffmagic", "Magia do Cajado", "staffMagic"],
+    ["symbolism", "Simbolismo", "symbolism"],
+    ["artifactcrafting", "Criar Artefatos", "artifactCrafting"]
   ].map(([reference, name]) => {
     const ability = worldAbility(reference, name);
     ability.system.reference = reference;
@@ -981,18 +1190,84 @@ test("mystical tradition Abilities open an adapted book chapter before their nat
     game.items = previous;
   }
   const content = dialogConfigs.at(-1).content;
-  for (const [reference, name] of [["witchcraft", "Bruxaria"], ["sorcery", "Feitiçaria"], ["wizardry", "Magismo"], ["theurgy", "Teurgia"]]) {
-    assert.match(content, new RegExp(`data-mystical-tradition="${reference}"`));
-    const chapter = content.indexOf(`data-mystical-tradition="${reference}"`);
+  for (const [_reference, name, traditionId] of [
+    ["witchcraft", "Bruxaria", "witchcraft"], ["sorcery", "Feitiçaria", "sorcery"],
+    ["wizardry", "Magismo", "wizardry"], ["theurgy", "Teurgia", "theurgy"],
+    ["trollsinging", "Canto do Troll", "trollSinging"], ["staffmagic", "Magia do Cajado", "staffMagic"],
+    ["symbolism", "Simbolismo", "symbolism"], ["artifactcrafting", "Criar Artefatos", "artifactCrafting"]
+  ]) {
+    assert.match(content, new RegExp(`data-mystical-tradition="${traditionId}"`));
+    const chapter = content.indexOf(`data-mystical-tradition="${traditionId}"`);
     const sheet = content.indexOf("symbaroum-hud-native-ability-sheet", chapter);
     assert.ok(chapter < sheet, `${name} chapter must appear before the native Ability sheet`);
   }
-  assert.equal((content.match(/symbaroum-hud-mystical-tradition-page/g) ?? []).length, 4);
+  assert.equal((content.match(/symbaroum-hud-mystical-tradition-page/g) ?? []).length, 8);
   assert.match(content, /Traditions\.PurchaseExplanation/);
+  assert.match(content, /Traditions\.ProfessionPurchaseExplanation/);
   assert.match(content, /Traditions\.CorruptionHeading/);
   assert.match(content, /Traditions\.AbilityHeading/);
   assert.match(content, /data-tradition-fallback-src=/);
   assert.doesNotMatch(content, /\bonerror\s*=/i);
+});
+
+test("the Ability step integrates the Advanced Guide Boons and Burdens XP rules", async () => {
+  const blank = actor({ id: "advanced-traits", uuid: "Actor.advanced-traits" });
+  await blank.setFlag("symbaroum-hud", "characterCreationMode", "creator");
+  await blank.setFlag("symbaroum-hud", "characterCreatorState", {
+    version: 1, step: "race-complete", race: "ambrian", archetype: "hunter"
+  });
+  const acrobatics = worldAbility("acrobatics", "Acrobacias");
+  const boon = worldEquipment("archivist", "Arquivista", "boon", { reference: "archivist" });
+  const burden = worldEquipment("wanted", "Procurado", "burden", { reference: "wanted" });
+  const previous = game.items;
+  game.items = [acrobatics, boon, burden];
+  dialogChoices.push("close");
+  try {
+    await CharacterCreatorService.openAbilitiesStep(blank);
+  } finally {
+    game.items = previous;
+  }
+  const content = dialogConfigs.at(-1).content;
+  assert.match(content, /AdvancedTraits\.Title/);
+  assert.match(content, /symbaroum-hud-ability-list-group" open/);
+  assert.match(content, /symbaroum-hud-ability-result-group symbaroum-hud-advanced-trait-catalogue/);
+  assert.ok(
+    content.indexOf("symbaroum-hud-creator-ability-results") < content.indexOf("symbaroum-hud-advanced-trait-catalogue"),
+    "Boons and Burdens must be rendered in the central results catalogue"
+  );
+  assert.match(content, /data-advanced-trait-choice value="archivist"/);
+  assert.match(content, /data-advanced-trait-choice value="wanted"/);
+  assert.match(content, /name="advancedTraitSelections"/);
+  assert.match(content, /Abilities\.Professions\.Title/);
+});
+
+test("profession-exclusive Advanced Guide powers, rituals, and boons remain readable but locked at creation", async () => {
+  const blank = actor({ id: "profession-gifts", uuid: "Actor.profession-gifts" });
+  await blank.setFlag("symbaroum-hud", "characterCreationMode", "creator");
+  await blank.setFlag("symbaroum-hud", "characterCreatorState", {
+    version: 1, step: "race-complete", race: "ambrian", archetype: "mystic"
+  });
+  const mysticalPower = worldAbility("mystical-power", "Poder Místico");
+  mysticalPower.system.reference = "mysticalPower";
+  const ritualist = worldAbility("ritualist", "Ritualista");
+  ritualist.system.reference = "ritualist";
+  const fireSoul = worldEquipment("fire-soul", "Alma de Fogo", "mysticalPower", { reference: "firesoul" });
+  const twinServants = worldEquipment("twin-servants", "Servos Gêmeos", "ritual", { reference: "twinservants" });
+  const beastCompanion = worldEquipment("beast-companion", "Besta Companheira", "boon", { reference: "beastcompanion" });
+  const previous = game.items;
+  game.items = [mysticalPower, ritualist, fireSoul, twinServants, beastCompanion];
+  dialogChoices.push("close");
+  try {
+    await CharacterCreatorService.openAbilitiesStep(blank);
+  } finally {
+    game.items = previous;
+  }
+  const content = dialogConfigs.at(-1).content;
+  assert.match(content, /data-mystical-power-choice="fire-soul"[^>]+data-profession-restricted-choice="pyromancer"/s);
+  assert.match(content, /data-ritual-choice="twin-servants"[^>]+data-profession-restricted-choice="pyromancer"/s);
+  assert.match(content, /data-advanced-trait-entry="beast-companion"[^>]+data-profession-restricted-choice="bloodWader"/s);
+  assert.match(content, /data-open-creation-item="fire-soul"/);
+  assert.match(content, /data-open-creation-item="twin-servants"/);
 });
 
 test("the HUD Ability browser reuses the creator book with the character available XP", async () => {
@@ -1123,6 +1398,85 @@ test("occupation recommendations are pinned and tagged at the top of the Ability
   assert.equal((content.match(/<small><i class="fa-solid fa-compass"[^>]*><\/i>Patrulheiro<\/small>/g) ?? []).length, 3);
 });
 
+test("chosen Abilities are pinned immediately below occupation recommendations", async () => {
+  const blank = actor({ id: "selected-abilities-order", uuid: "Actor.selected-abilities-order" });
+  await blank.setFlag("symbaroum-hud", "characterCreationMode", "creator");
+  await blank.setFlag("symbaroum-hud", "characterCreatorState", {
+    version: 1,
+    step: "race-complete",
+    occupation: "ranger",
+    race: "ambrian",
+    abilities: [{ id: "zealot", rank: "novice", name: "Zelote" }]
+  });
+  const previousItems = game.items;
+  const previousLocalize = game.i18n.localize;
+  game.items = [
+    worldAbility("alchemy", "Alquimia"),
+    worldAbility("acrobatics", "Acrobacias"),
+    worldAbility("marksman", "Atirador"),
+    worldAbility("zealot", "Zelote")
+  ];
+  game.i18n.localize = (key) => {
+    if (key.endsWith("Occupations.ranger.Name")) return "Patrulheiro";
+    if (key.endsWith("Occupations.ranger.Abilities")) return "Acrobacias, Atirador";
+    return key;
+  };
+  dialogChoices.push("close");
+
+  try {
+    await CharacterCreatorService.openAbilitiesStep(blank);
+  } finally {
+    game.items = previousItems;
+    game.i18n.localize = previousLocalize;
+  }
+
+  const content = dialogConfigs.at(-1).content;
+  const acrobatics = content.indexOf('data-creation-ability-id="acrobatics"');
+  const marksman = content.indexOf('data-creation-ability-id="marksman"');
+  const selected = content.indexOf('data-creation-ability-id="zealot"');
+  const unselected = content.indexOf('data-creation-ability-id="alchemy"');
+  assert.ok(acrobatics < marksman && marksman < selected && selected < unselected);
+});
+
+test("advanced occupation alternatives are all pinned as recommendations", async () => {
+  const blank = actor({ id: "advanced-recommended-abilities", uuid: "Actor.advanced-recommended-abilities" });
+  await blank.setFlag("symbaroum-hud", "characterCreationMode", "creator");
+  await blank.setFlag("symbaroum-hud", "characterCreatorState", {
+    version: 1, step: "race-complete", occupation: "monsterHunter", race: "ambrian"
+  });
+  const previousItems = game.items;
+  const previousLocalize = game.i18n.localize;
+  game.items = [
+    worldAbility("trapper", "Armadilheiro"),
+    worldAbility("marksman", "Atirador"),
+    worldAbility("polearm-mastery", "Maestria em Armas de Haste"),
+    worldAbility("beast-lore", "Saber de Bestas"),
+    worldAbility("alchemy", "Alquimia")
+  ];
+  game.i18n.localize = (key) => {
+    if (key.endsWith("Occupations.monsterHunter.Name")) return "Caçador de Monstros";
+    if (key.endsWith("Occupations.monsterHunter.Abilities")) {
+      return "Armadilheiro, Atirador ou Maestria em Armas de Haste, Saber de Bestas";
+    }
+    return key;
+  };
+  dialogChoices.push("close");
+
+  try {
+    await CharacterCreatorService.openAbilitiesStep(blank);
+  } finally {
+    game.items = previousItems;
+    game.i18n.localize = previousLocalize;
+  }
+
+  const content = dialogConfigs.at(-1).content;
+  assert.equal((content.match(/data-occupation-recommended="true"/g) ?? []).length, 4);
+  assert.ok(content.indexOf('data-creation-ability-id="trapper"') < content.indexOf('data-creation-ability-id="alchemy"'));
+  assert.ok(content.indexOf('data-creation-ability-id="marksman"') < content.indexOf('data-creation-ability-id="alchemy"'));
+  assert.ok(content.indexOf('data-creation-ability-id="polearm-mastery"') < content.indexOf('data-creation-ability-id="alchemy"'));
+  assert.ok(content.indexOf('data-creation-ability-id="beast-lore"') < content.indexOf('data-creation-ability-id="alchemy"'));
+});
+
 test("Poder Místico and Ritualista list every accessible world choice as Observer", async () => {
   const blank = actor({ id: "special-choices", uuid: "Actor.special-choices" });
   await blank.setFlag("symbaroum-hud", "characterCreationMode", "creator");
@@ -1169,6 +1523,9 @@ test("Poder Místico and Ritualista list every accessible world choice as Observ
   assert.match(content, /data-tradition-gateway="power"/);
   assert.match(content, /data-tradition-gateway="ritual"/);
   assert.equal((content.match(/data-tradition-ability-recommendation/g) ?? []).length, 2);
+  assert.match(content, /data-mystical-power-search/);
+  assert.match(content, /data-clear-mystical-power-search/);
+  assert.match(content, /data-mystical-power-search-value="[^"]*cascatadeenxofre[^"]*"/);
   assert.match(content, /data-choice-type="mysticalPower"/);
   assert.match(content, /data-open-creation-item="power-visible"/);
   assert.match(content, /data-creation-choice-identities="cascatadeenxofre powervisible"/);
@@ -1441,8 +1798,8 @@ test("step arrows navigate through every creator page without requiring prior co
 
   const opened = dialogConfigs.slice(firstDialog);
   assert.match(opened[0].content, /symbaroum-hud-occupation-book/);
-  assert.match(opened[1].content, /symbaroum-hud-attributes-book/);
-  assert.match(opened[2].content, /symbaroum-hud-race-book/);
+  assert.match(opened[1].content, /symbaroum-hud-race-book/);
+  assert.match(opened[2].content, /symbaroum-hud-attributes-book/);
   assert.match(opened[3].content, /symbaroum-hud-abilities-book/);
   assert.match(opened[4].content, /symbaroum-hud-equipment-book/);
   assert.match(opened[5].content, /symbaroum-hud-personality-book/);
@@ -1484,6 +1841,28 @@ test("creator steps keep the position and size chosen by the user", async () => 
     left: 72,
     top: 34
   });
+});
+
+test("creator opens at the available viewport size by default", async () => {
+  const blank = actor({ id: "creator-fullscreen", uuid: "Actor.creator-fullscreen" });
+  await blank.setFlag("symbaroum-hud", "characterCreationMode", "creator");
+  const previousWidth = globalThis.innerWidth;
+  const previousHeight = globalThis.innerHeight;
+  const firstDialog = dialogConfigs.length;
+  globalThis.innerWidth = 1280;
+  globalThis.innerHeight = 800;
+  dialogChoices.push("close");
+
+  try {
+    await CharacterCreatorService.openOccupationStep(blank);
+  } finally {
+    if (previousWidth === undefined) delete globalThis.innerWidth;
+    else globalThis.innerWidth = previousWidth;
+    if (previousHeight === undefined) delete globalThis.innerHeight;
+    else globalThis.innerHeight = previousHeight;
+  }
+
+  assert.deepEqual(dialogConfigs[firstDialog].position, { width: 1256, height: 776 });
 });
 
 test("unconfirmed Ability choices survive forward and backward navigation", async () => {
@@ -1541,9 +1920,10 @@ test("unconfirmed point-buy Attributes survive forward and backward navigation",
   await blank.setFlag("symbaroum-hud", "characterCreationMode", "creator");
   await blank.setFlag("symbaroum-hud", "characterCreatorState", {
     version: 1,
-    step: "occupation-complete",
-    completedSteps: ["occupation"],
-    occupation: "ranger"
+    step: "race-complete",
+    completedSteps: ["occupation", "race"],
+    occupation: "ranger",
+    race: "ambrian"
   });
   const values = {
     accurate: 15,
@@ -1564,7 +1944,7 @@ test("unconfirmed point-buy Attributes survive forward and backward navigation",
         ...Object.fromEntries(Object.entries(values).map(([id, value]) => [`points-${id}`, value]))
       }
     },
-    { action: "creator-previous-step", form: { race: "ambrian" } },
+    { action: "creator-previous-step", form: { abilitySelections: "[]", abilityDistributionMode: "experience" } },
     "close"
   );
 
@@ -1578,15 +1958,14 @@ test("unconfirmed point-buy Attributes survive forward and backward navigation",
   assert.equal(isAttributesStepComplete(blank), false);
 });
 
-test("unconfirmed Race and Trait choices survive direct navigation to Abilities", async () => {
+test("unconfirmed Race and Trait choices survive navigation to Attributes", async () => {
   const blank = actor({ id: "creator-race-draft", uuid: "Actor.creator-race-draft" });
   await blank.setFlag("symbaroum-hud", "characterCreationMode", "creator");
   await blank.setFlag("symbaroum-hud", "characterCreatorState", {
     version: 1,
-    step: "attributes-complete",
-    completedSteps: ["occupation", "attributes"],
-    occupation: "wizard",
-    attributes: {}
+    step: "occupation-complete",
+    completedSteps: ["occupation"],
+    occupation: "wizard"
   });
   const firstDialog = dialogConfigs.length;
   dialogChoices.push(
@@ -1596,7 +1975,7 @@ test("unconfirmed Race and Trait choices survive direct navigation to Abilities"
     },
     {
       action: "creator-previous-step",
-      form: { abilitySelections: "[]", abilityDistributionMode: "experience" }
+      form: { attributeDistributionMode: "point-buy" }
     },
     "close"
   );
@@ -1605,7 +1984,7 @@ test("unconfirmed Race and Trait choices survive direct navigation to Abilities"
 
   const opened = dialogConfigs.slice(firstDialog);
   assert.match(opened[0].content, /symbaroum-hud-race-book/);
-  assert.match(opened[1].content, /symbaroum-hud-abilities-book/);
+  assert.match(opened[1].content, /symbaroum-hud-attributes-book/);
   assert.match(opened[2].content, /name="race" value="ambrian"/);
   assert.match(opened[2].content, /name="race-choice-ambrian"[\s\S]*value="contacts" checked/);
   assert.deepEqual(blank.flag("characterCreatorState").drafts.race.state.raceTraits, ["contacts"]);
@@ -1682,8 +2061,8 @@ test("reviewing earlier steps restores saved Attributes, Race traits and Abiliti
 
   const opened = dialogConfigs.slice(firstDialog);
   const abilities = opened[2].content;
-  const race = opened[3].content;
-  const attributes = opened[4].content;
+  const attributes = opened[3].content;
+  const race = opened[4].content;
   assert.match(abilities, /name="abilityDistributionMode" value="experience"/);
   assert.match(abilities, /name="abilitySelections" value="[^\n]*acrobatics/);
   assert.match(abilities, /name="abilityExperienceBudget" value="60"/);
@@ -1965,6 +2344,121 @@ test("the fifth creator step maps learned Abilities to compatible accessible equ
   assert.equal(isEquipmentStepComplete(blank), false);
 });
 
+test("the Advanced Player's Guide fixed starting-equipment grants are imported from their Abilities", async () => {
+  const abilities = [
+    ["trollsinging", "Canto do Troll"],
+    ["agilecombat", "Combate Ágil"],
+    ["daggerdance", "Dança da Adaga"],
+    ["staffmagic", "Magia do Cajado"],
+    ["pyrotechnics", "Pirotecnia"],
+    ["symbolism", "Simbolismo"],
+    ["armoredmystic", "Místico Blindado"]
+  ].map(([reference, name]) => {
+    const ability = worldAbility(`ability-${reference}`, name);
+    ability.system.reference = reference;
+    return ability;
+  });
+  const blank = actor({ id: "advanced-fixed-equipment", uuid: "Actor.advanced-fixed-equipment", items: abilities });
+  await blank.setFlag("symbaroum-hud", "characterCreationMode", "creator");
+  await blank.setFlag("symbaroum-hud", "characterCreatorState", { version: 1, step: "shadow-complete" });
+  const previous = game.items;
+  game.items = [
+    worldEquipment("skald-cuirass", "Couraça de Escaldo", "armor", { reference: "mediumarmor", baseProtection: "1d6" }),
+    worldEquipment("longbow", "Arco Longo", "weapon", { reference: "ranged" }),
+    worldEquipment("stiletto", "Estilete", "weapon", { reference: "short" }),
+    worldEquipment("rune-staff", "Cajado Rúnico", "weapon", { reference: "long" }),
+    worldEquipment("grenade", "Granada Alquímica", "weapon", { reference: "thrown" }),
+    worldEquipment("flash-powder", "Pó Luminoso", "equipment", { reference: "" }),
+    worldEquipment("protection-symbol", "Símbolo de Proteção", "equipment", { reference: "" }),
+    worldEquipment("medium-armor", "Armadura Média", "armor", { reference: "mediumarmor", baseProtection: "1d6" }),
+    worldEquipment("light-armor", "Armadura Leve", "armor", { reference: "lightarmor", baseProtection: "1d4" }),
+    worldEquipment("camp", "Equipamento de Acampar", "equipment", { reference: "campingEquipment" })
+  ];
+  const firstDialog = dialogConfigs.length;
+  dialogChoices.push({ action: "choose-equipment", form: {} });
+  try {
+    await CharacterCreatorService.openEquipmentStep(blank);
+  } finally {
+    game.items = previous;
+  }
+
+  const content = dialogConfigs[firstDialog].content;
+  for (const name of [
+    "Couraça de Escaldo", "Arco Longo", "Estilete", "Cajado Rúnico",
+    "Granada Alquímica", "Pó Luminoso", "Símbolo de Proteção", "Armadura Média"
+  ]) {
+    assert.match(content, new RegExp(name));
+    assert.ok(blank.items.find((item) => item.name === name), `${name} should be imported`);
+  }
+  assert.equal(blank.items.some((item) => item.name === "Armadura Leve"), false);
+});
+
+test("the Advanced Player's Guide equipment choices are shown, saved and imported per Ability", async () => {
+  const abilities = [
+    ["axeartist", "Artista do Machado"],
+    ["swordsaint", "Espada Abençoada"],
+    ["blacksmith", "Ferreiro"],
+    ["rapidfire", "Fogo Rápido"],
+    ["arrowjab", "Golpe com Flecha"],
+    ["staffcombat", "Luta de Cajado"],
+    ["polearmmastery", "Maestria em Armas de Haste"],
+    ["flailer", "Mangualeiro"],
+    ["hammerrhythm", "Ritmo do Martelo"]
+  ].map(([reference, name]) => {
+    const ability = worldAbility(`ability-${reference}`, name);
+    ability.system.reference = reference;
+    return ability;
+  });
+  const blank = actor({ id: "advanced-choice-equipment", uuid: "Actor.advanced-choice-equipment", items: abilities });
+  await blank.setFlag("symbaroum-hud", "characterCreationMode", "creator");
+  await blank.setFlag("symbaroum-hud", "characterCreatorState", { version: 1, step: "shadow-complete" });
+  const previous = game.items;
+  game.items = [
+    worldEquipment("axe", "Machado", "weapon", { reference: "1handed" }),
+    worldEquipment("estoc", "Estoc", "weapon", { reference: "1handed" }),
+    worldEquipment("parrying-dagger", "Adaga de Aparar", "weapon", { reference: "short" }),
+    worldEquipment("common-heavy", "Arma Pesada", "weapon", { reference: "heavy" }),
+    worldEquipment("longbow", "Arco Longo", "weapon", { reference: "ranged" }),
+    worldEquipment("crossbow", "Besta", "weapon", { reference: "crossbow" }),
+    worldEquipment("staff", "Bordão", "weapon", { reference: "long" }),
+    worldEquipment("spear", "Lança", "weapon", { reference: "long" }),
+    worldEquipment("flail", "Mangual", "weapon", { reference: "1handed" }),
+    worldEquipment("hammer", "Martelo", "weapon", { reference: "1handed" }),
+    worldEquipment("medium-armor", "Armadura Média", "armor", { reference: "mediumarmor", baseProtection: "1d6" }),
+    worldEquipment("light-armor", "Armadura Leve", "armor", { reference: "lightarmor", baseProtection: "1d4" }),
+    worldEquipment("camp", "Equipamento de Acampar", "equipment", { reference: "campingEquipment" })
+  ];
+  const firstDialog = dialogConfigs.length;
+  dialogChoices.push({ action: "choose-equipment", form: {
+    "equipmentGrant-axeartist-0": "axe",
+    "equipmentGrant-sacredsword-0": "estoc",
+    "equipmentGrant-blacksmith-0": "common-heavy",
+    "equipmentGrant-rapidfire-0": "longbow",
+    "equipmentGrant-arrowjab-0": "crossbow",
+    "equipmentGrant-staffcombat-0": "staff",
+    "equipmentGrant-polearmmastery-0": "spear",
+    "equipmentGrant-flailer-0": "flail",
+    "equipmentGrant-hammerstep-0": "hammer"
+  } });
+  try {
+    await CharacterCreatorService.openEquipmentStep(blank);
+  } finally {
+    game.items = previous;
+  }
+
+  const content = dialogConfigs[firstDialog].content;
+  for (const ability of [
+    "axeartist", "sacredsword", "blacksmith", "rapidfire", "arrowjab",
+    "staffcombat", "polearmmastery", "flailer", "hammerstep"
+  ]) assert.match(content, new RegExp(`name="equipmentGrant-${ability}-0"`));
+  for (const name of [
+    "Machado", "Estoc", "Adaga de Aparar", "Arma Pesada", "Arco Longo",
+    "Besta", "Bordão", "Lança", "Mangual", "Martelo", "Armadura Média"
+  ]) assert.ok(blank.items.find((item) => item.name === name), `${name} should be imported`);
+  assert.equal(blank.items.some((item) => item.name === "Armadura Leve"), false);
+  assert.equal(blank.flag("characterCreatorState").equipment.filter((entry) => entry.grantId).length, 11);
+});
+
 test("an Ability-granted armor identifies its source and replaces the basic Light Armor", async () => {
   const manAtArms = worldAbility("man-at-arms", "Homem de Armas");
   manAtArms.system.reference = "manatarms";
@@ -1975,6 +2469,8 @@ test("an Ability-granted armor identifies its source and replaces the basic Ligh
   });
   const previous = game.items;
   game.items = [
+    worldEquipment("staff", "Bordão", "weapon", { reference: "long" }),
+    worldEquipment("dagger", "Adaga", "weapon", { reference: "short" }),
     worldEquipment("medium-armor", "Armadura Média", "armor", {
       reference: "mediumarmor", baseProtection: "1d6"
     }),
@@ -1986,7 +2482,9 @@ test("an Ability-granted armor identifies its source and replaces the basic Ligh
     })
   ];
   const firstDialog = dialogConfigs.length;
-  dialogChoices.push({ action: "choose-equipment", form: {} });
+  dialogChoices.push({ action: "choose-equipment", form: {
+    "equipmentGrant-basicweapon-0": "staff"
+  } });
   try {
     await CharacterCreatorService.openEquipmentStep(blank);
   } finally {
@@ -1996,8 +2494,13 @@ test("an Ability-granted armor identifies its source and replaces the basic Ligh
   const content = dialogConfigs[firstDialog].content;
   assert.match(content, /Armadura Média/);
   assert.match(content, /AbilityGrantReason/);
+  assert.match(content, /data-equipment-choice-stage/);
+  assert.match(content, /equipmentGrant-basicweapon-0/);
+  assert.match(content, /data-equipment-shop-stage hidden/);
   assert.doesNotMatch(content, /"itemId":"light-armor"/);
   assert.ok(blank.items.find((item) => item.name === "Armadura Média"));
+  assert.ok(blank.items.find((item) => item.name === "Bordão"));
+  assert.ok(blank.items.find((item) => item.name === "Adaga"));
   assert.equal(blank.items.some((item) => item.name === "Armadura Leve"), false);
 });
 
@@ -2186,6 +2689,11 @@ test("a character without weapon or armor grants chooses an official weapon comb
   assert.match(content, /StaffCombination/);
   assert.match(content, /OneHandedCombination/);
   assert.match(content, /RangedCombination/);
+  assert.match(content, /data-equipment-choice-stage/);
+  assert.match(content, /data-equipment-choice-continue/);
+  assert.match(content, /data-equipment-shop-stage hidden/);
+  assert.ok(content.indexOf("data-equipment-choice-stage") < content.indexOf("data-equipment-shop-stage"));
+  assert.doesNotMatch(content, /symbaroum-hud-initial-equipment-dialog/);
   assert.deepEqual(
     blank.items.filter((item) => ["weapon", "armor"].includes(item.type)).map((item) => item.name).sort(),
     ["Arco", "Adaga", "Armadura Leve"].sort()
@@ -2235,6 +2743,16 @@ test("the Equipment step embeds the shop and charges only the optional cart", as
   assert.deepEqual(blank.flag("characterCreatorState").equipmentPurchases, [{
     itemId: "rope", itemName: "Corda", amount: 2, quantity: 1
   }]);
+});
+
+test("cancelling a ranged-price equipment purchase never creates a cart price", () => {
+  const ranged = parseShopPrice("1-5 ortegas");
+  assert.equal(normalizeEquipmentShopPriceSelection(ranged, "cancel"), null);
+  assert.equal(normalizeEquipmentShopPriceSelection(ranged, null), null);
+  assert.deepEqual(
+    normalizeEquipmentShopPriceSelection(ranged, selectShopPrice(ranged, 3)),
+    selectShopPrice(ranged, 3)
+  );
 });
 
 test("the Bow combination recognizes the official regular arrows and bolts item name", async () => {

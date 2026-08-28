@@ -22,10 +22,12 @@ const {
   SHOP_BROWSER_CATEGORIES,
   browserObserverOwnershipUpdate,
   canBrowseConfiguredFolder,
+  canBrowseContentOrigin,
   canBrowseWorldDocument,
   dedupeBrowserEntries,
   explorerLicensePreview,
   filterBrowserEntries,
+  filterEntriesByPlayerOriginAccess,
   filterStockManagerEntries,
   keepBrowserDocumentSheetOnTop,
   consumeShopDefinitionStock,
@@ -33,6 +35,7 @@ const {
   applyShopPurchaseModifier,
   combinedShopPurchaseModifier,
   normalizeFolderAccess,
+  normalizeOriginAccess,
   normalizeShopConfiguration,
   normalizeShopImageSettings,
   normalizeShopPriceModifier,
@@ -477,6 +480,31 @@ test("folder access settings are normalized and deduplicated", () => {
   }), {
     configured: true,
     folderIds: ["official"]
+  });
+});
+
+test("player book access is an independent mandatory browser boundary", () => {
+  const access = { configured: true, originIds: ["core-rulebook"] };
+  const player = { id: "player", isGM: false };
+  const gm = { id: "gm", isGM: true };
+
+  assert.equal(canBrowseContentOrigin("core-rulebook", player, access), true);
+  assert.equal(canBrowseContentOrigin("advanced-players-guide", player, access), false);
+  assert.equal(canBrowseContentOrigin("advanced-players-guide", gm, access), true);
+  assert.deepEqual(filterEntriesByPlayerOriginAccess([
+    { uuid: "Item.core", origin: "core-rulebook" },
+    { uuid: "Item.advanced", origin: "advanced-players-guide" },
+    { uuid: "Item.unknown", origin: "unknown" }
+  ], player, access).map(({ uuid }) => uuid), ["Item.core"]);
+});
+
+test("book access settings reject invalid origins and remove duplicates", () => {
+  assert.deepEqual(normalizeOriginAccess({
+    configured: true,
+    originIds: ["core-rulebook", "invalid-origin", "core-rulebook", "unknown"]
+  }), {
+    configured: true,
+    originIds: ["core-rulebook", "unknown"]
   });
 });
 

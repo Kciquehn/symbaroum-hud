@@ -16,7 +16,9 @@ export const SETTINGS = Object.freeze({
   SHOP_STOCK_RULES: "shopStockRules",
   GENERAL_STORE_OPEN: "generalStoreOpen",
   COMPENDIUM_BROWSER_SOURCES: "compendiumBrowserSources",
-  COMPENDIUM_BROWSER_FOLDER_ACCESS: "compendiumBrowserFolderAccess"
+  COMPENDIUM_BROWSER_FOLDER_ACCESS: "compendiumBrowserFolderAccess",
+  COMPENDIUM_BROWSER_ORIGIN_ACCESS: "compendiumBrowserOriginAccess",
+  PDF_TEMPLATE_PATH: "pdfTemplatePath"
 });
 
 export const SELECTION_MODES = Object.freeze({

@@ -1,13 +1,21 @@
 # Changelog
 
-## 0.1.68
+## 0.1.69
 
+- Completa a etapa de Ocupações com as 10 opções iniciais do Guia Avançado do Jogador, incluindo Caçador de Monstros, e identifica o livro de origem, Dádivas e Fardos sugeridos de cada escolha.
+- Mantém Profissões avançadas fora da criação inicial conforme os pré-requisitos oficiais do livro.
+- Adiciona as cinco raças jogáveis do Guia Avançado — Elfo, Anão, Humano Sequestrado, Troll e Morto-Vivo — com regras, opções raciais, história e nomes.
+- Preserva o tipo nativo de Habilidades, Poderes Místicos, Dádivas, Fardos e Traços raciais e remove o limite artificial de duas opções raciais pagas.
+- Adiciona **Exportar PDF** ao topo das fichas de personagem, preenchendo a ficha oficial editável sem achatar seus campos.
+- Resume automaticamente os níveis aprendidos de Habilidades, Poderes Místicos e Rituais para os doze quadros disponíveis e marca os níveis Novato, Adepto e Mestre.
+- Configura a ficha-modelo por um caminho restrito ao Mestre, sem redistribuir o PDF oficial protegido por direitos autorais.
 - Pergunta o tamanho desejado antes de gerar o estoque de uma loja.
 - Adiciona as opções **Pequeno** (até 8 produtos), **Médio** (até 18) e **Grande** (até 35).
 - Mantém os itens essenciais garantidos mesmo quando o mestre escolhe um estoque pequeno.
 - Aplica o limite tanto às lojas oficiais quanto à geração personalizada por Categorias.
 - Mantém a geração determinística para o mesmo identificador de reposição.
-- Amplia a suíte automatizada para 318 testes.
+- Corrige o vínculo do traço **Herança Natural** com o Item importado cuja referência oficial é `earthbound`.
+- Amplia a suíte automatizada para 342 testes.
 
 ## 0.1.67
 

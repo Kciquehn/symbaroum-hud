@@ -28,6 +28,13 @@ import {
 } from "../data/character-creation-abilities.mjs";
 import { coreMysticalTradition } from "../data/core-mystical-traditions.mjs";
 import {
+  ADVANCED_PROFESSION_RULES,
+  archetypalAbilityRule,
+  countsTowardArchetype,
+  professionAbilityRule,
+  professionExclusiveItemRules
+} from "../data/advanced-character-options.mjs";
+import {
   CONTENT_ORIGINS,
   UNKNOWN_CONTENT_ORIGIN,
   contentOriginDefinition,
@@ -62,8 +69,8 @@ const PRIVILEGED_STARTING_THALER = 50;
 const PARIAH_STARTING_SHILLING = 5;
 const CREATOR_STEPS = Object.freeze([
   Object.freeze({ id: "occupation", complete: OCCUPATION_STEP_COMPLETE }),
-  Object.freeze({ id: "attributes", complete: ATTRIBUTES_STEP_COMPLETE }),
   Object.freeze({ id: "race", complete: RACE_STEP_COMPLETE }),
+  Object.freeze({ id: "attributes", complete: ATTRIBUTES_STEP_COMPLETE }),
   Object.freeze({ id: "abilities", complete: ABILITIES_STEP_COMPLETE }),
   Object.freeze({ id: "equipment", complete: EQUIPMENT_STEP_COMPLETE }),
   Object.freeze({ id: "personality", complete: PERSONALITY_STEP_COMPLETE }),
@@ -163,8 +170,8 @@ function canOpenCharacterCreator(actor) {
 
 function creatorEntryStep(actor) {
   if (!isOccupationStepComplete(actor)) return "occupation";
-  if (!isAttributesStepComplete(actor)) return "attributes";
   if (!isRaceStepComplete(actor)) return "race";
+  if (!isAttributesStepComplete(actor)) return "attributes";
   if (!isAbilitiesStepComplete(actor)) return "abilities";
   if (!isEquipmentStepComplete(actor)) return "equipment";
   if (!isPersonalityStepComplete(actor)) return "personality";
@@ -225,8 +232,8 @@ export class CharacterCreatorService {
         || hasDismissedCharacterCreator(actor, game.user)) return null;
       await closeOriginalActorSheet(sheet, actor);
       if (!isOccupationStepComplete(actor)) return this.openOccupationStep(actor);
-      if (!isAttributesStepComplete(actor)) return this.openAttributesStep(actor);
       if (!isRaceStepComplete(actor)) return this.openRaceStep(actor);
+      if (!isAttributesStepComplete(actor)) return this.openAttributesStep(actor);
       if (!isAbilitiesStepComplete(actor)) return this.openAbilitiesStep(actor);
       if (!isEquipmentStepComplete(actor)) return this.openEquipmentStep(actor);
       if (!isPersonalityStepComplete(actor)) return this.openPersonalityStep(actor);
@@ -344,7 +351,7 @@ export class CharacterCreatorService {
       || pendingActors.has(key)
       || !canOwn(actor, game.user)
       || actor.getFlag?.(MODULE_ID, MODE_FLAG) !== CHARACTER_CREATION_MODES.CREATOR
-      || !isOccupationStepComplete(actor)
+      || !isRaceStepComplete(actor)
       || isAttributesStepComplete(actor)
     ) return null;
 
@@ -368,7 +375,7 @@ export class CharacterCreatorService {
       || pendingActors.has(key)
       || !canOwn(actor, game.user)
       || actor.getFlag?.(MODULE_ID, MODE_FLAG) !== CHARACTER_CREATION_MODES.CREATOR
-      || !isAttributesStepComplete(actor)
+      || !isOccupationStepComplete(actor)
       || isRaceStepComplete(actor)
     ) return null;
 
@@ -494,9 +501,10 @@ export class CharacterCreatorService {
         close: () => null,
         rejectClose: false,
         render: (_event, dialog) => {
-          bindAbilitiesBook(dialog.element, 0, {
+          bindAbilitiesBook(dialog.element, actor, 0, {
             confirmAction: "buy-abilities",
-            requireSelection: true
+            requireSelection: true,
+            enforceAdvancedRules: false
           });
           globalThis.setTimeout(() => {
             if (dialog.element?.isConnected) dialog.bringToFront?.();
@@ -626,7 +634,7 @@ export class CharacterCreatorService {
       if (currentStep === initialStep && initialResult === undefined) initialResult = result;
       lastResult = result;
       if (result === "attributes-deferred") {
-        currentStep = "race";
+        currentStep = "abilities";
         continue;
       }
       currentStep = nextRequiredCreatorStep(actor, currentStep);
@@ -901,6 +909,10 @@ export class CharacterCreatorService {
     const rituals = availableCreationRituals(actor, {
       includeKnownIds: savedSelections.flatMap((selection) => selection.ritualIds ?? [])
     });
+    const savedAdvancedTraits = Array.isArray(creatorState.advancedTraits) ? creatorState.advancedTraits : [];
+    const advancedTraits = availableCreationAdvancedTraits(actor, {
+      includeKnownIds: savedAdvancedTraits.map((selection) => selection.id)
+    });
     const racialCost = racialAbilityCost(actor);
     return DialogV2.wait({
       classes: [
@@ -913,7 +925,7 @@ export class CharacterCreatorService {
         resizable: true
       },
       position: creatorDialogPosition(placement, 1140, 700),
-      content: await abilitiesBookContent(actor, abilities, racialCost, mysticalPowers, rituals),
+      content: await abilitiesBookContent(actor, abilities, racialCost, mysticalPowers, rituals, { advancedTraits }),
       buttons: [
         {
           action: "choose-abilities",
@@ -924,9 +936,14 @@ export class CharacterCreatorService {
             const mode = ABILITY_DISTRIBUTION_MODES.EXPERIENCE;
             const experienceBudget = Number(formValue(button.form, "abilityExperienceBudget"));
             const selections = parseAbilitySelections(formValue(button.form, "abilitySelections"));
+            const advancedTraitSelections = parseAdvancedTraitSelections(formValue(button.form, "advancedTraitSelections"));
             const previous = actor.getFlag?.(MODULE_ID, STATE_FLAG) ?? {};
             const costs = abilityExperienceCosts();
-            if (!isValidAbilitySelection(selections, mode, racialCost, { experienceBudget, costs })) {
+            const advancedTraitCost = advancedTraitExperienceCost(advancedTraitSelections);
+            if (!isValidAdvancedTraitSelection(advancedTraitSelections, advancedTraits)
+              || !isValidAbilitySelection(selections, mode, racialCost, {
+                experienceBudget: experienceBudget - advancedTraitCost, costs
+              })) {
               ui.notifications?.warn(game.i18n.localize("SYMBAROUMHUD.CharacterCreator.Abilities.Invalid"));
               return null;
             }
@@ -947,6 +964,10 @@ export class CharacterCreatorService {
               ui.notifications?.warn(game.i18n.localize("SYMBAROUMHUD.CharacterCreator.Abilities.InvalidSpecialChoice"));
               return null;
             }
+            if (!areAdvancedCreationAbilityRulesValid(actor, selections, available, availablePowers, availableRituals)) {
+              ui.notifications?.warn(game.i18n.localize("SYMBAROUMHUD.CharacterCreator.Abilities.AdvancedRuleInvalid"));
+              return null;
+            }
             const documents = selections.flatMap((selection) => {
               const ability = available.get(selection.id);
               if (selection.kind === "mysticalPower") {
@@ -959,6 +980,10 @@ export class CharacterCreatorService {
               return created;
             });
             const created = await applyCreationAbilityDocuments(actor, documents);
+            const advancedTraitDocuments = advancedTraitSelections.map((selection) => creationRitualData(
+              advancedTraits.find((item) => item.id === selection.id)
+            ));
+            const createdAdvancedTraits = await createMissingEmbeddedItems(actor, advancedTraitDocuments);
             const purchasedWithExperience = mode === ABILITY_DISTRIBUTION_MODES.EXPERIENCE;
             const freeExperience = purchasedWithExperience ? 0 : selections.reduce((total, selection) => {
               const source = selection.kind === "mysticalPower"
@@ -1013,13 +1038,18 @@ export class CharacterCreatorService {
                 abilityDistribution: mode,
               abilityExperienceBudget: purchasedWithExperience ? experienceBudget : null,
               abilityExperienceSpent: purchasedWithExperience
-                ? abilitySelectionCost(selections, costs) + racialCost * abilityRankCost("novice", costs)
+                ? abilitySelectionCost(selections, costs) + racialCost * abilityRankCost("novice", costs) + advancedTraitCost
                 : null,
               abilityBonusExperienceAwarded: creatorBonus,
-              abilities: saved
+              abilities: saved,
+              advancedTraits: advancedTraitSelections.map((selection) => ({
+                ...selection,
+                name: advancedTraits.find((item) => item.id === selection.id)?.name ?? selection.id
+              }))
             });
             Hooks.callAll(`${MODULE_ID}.characterCreatorStepCompleted`, actor, {
-              step: "abilities", mode, abilities: saved, created
+              step: "abilities", mode, abilities: saved, created,
+              advancedTraits: advancedTraitSelections, createdAdvancedTraits
             });
             return saved;
           }
@@ -1030,8 +1060,9 @@ export class CharacterCreatorService {
       rejectClose: false,
       render: (_event, dialog) => {
         bindCreatorDialogPlacement(dialog, placement);
+        stabilizeCreatorDialogPosition(dialog, placement, 1140, 700);
         bindCreatorStepNavigation(dialog.element, actor, "abilities");
-        bindAbilitiesBook(dialog.element, racialCost);
+        bindAbilitiesBook(dialog.element, actor, racialCost);
         globalThis.setTimeout(() => {
           if (dialog.element?.isConnected) dialog.bringToFront?.();
         }, 0);
@@ -1187,6 +1218,7 @@ export class CharacterCreatorService {
             const previous = actor.getFlag?.(MODULE_ID, STATE_FLAG) ?? {};
             const saved = selections.map(({ grant, item, quantity, combination }) => ({
               ability: grant.ability,
+              ...(grant.grantId ? { grantId: grant.grantId } : {}),
               category: grant.category,
               itemId: item.id,
               itemName: item.name,
@@ -1394,13 +1426,20 @@ function completedCreatorSteps(state = {}) {
   if (Array.isArray(state.completedSteps)) {
     return state.completedSteps.filter((step) => creatorStepIndex(step) >= 0);
   }
-  if (state.step === SHADOW_STEP_COMPLETE) {
-    return ["occupation", "attributes", "race", "abilities"];
-  }
-  const legacyProgress = creatorStepIndex(state.step);
-  return legacyProgress < 0
-    ? []
-    : CREATOR_STEPS.slice(0, legacyProgress + 1).map((entry) => entry.id);
+  // Older creator states do not have completedSteps and were recorded while
+  // Attributes preceded Race. Keep those markers backward compatible after
+  // changing the visible order to Race, Attributes and then Abilities.
+  const legacyCompleted = {
+    [OCCUPATION_STEP_COMPLETE]: ["occupation"],
+    [ATTRIBUTES_STEP_COMPLETE]: ["occupation", "attributes"],
+    [RACE_STEP_COMPLETE]: ["occupation", "attributes", "race"],
+    [ABILITIES_STEP_COMPLETE]: ["occupation", "attributes", "race", "abilities"],
+    [SHADOW_STEP_COMPLETE]: ["occupation", "attributes", "race", "abilities"],
+    [EQUIPMENT_STEP_COMPLETE]: ["occupation", "attributes", "race", "abilities", "equipment"],
+    [PERSONALITY_STEP_COMPLETE]: ["occupation", "attributes", "race", "abilities", "equipment", "personality"],
+    [FRIENDS_STEP_COMPLETE]: CREATOR_STEPS.map((entry) => entry.id)
+  }[state.step];
+  return legacyCompleted ? [...legacyCompleted] : [];
 }
 
 function hasCompletedCreatorStep(actor, step) {
@@ -1451,7 +1490,8 @@ function creatorStepDraftState(step, form) {
     return {
       abilityDistribution: ABILITY_DISTRIBUTION_MODES.EXPERIENCE,
       abilityExperienceBudget: Math.max(0, Number(formValue(form, "abilityExperienceBudget")) || 0),
-      abilities: parseAbilitySelections(formValue(form, "abilitySelections"))
+      abilities: parseAbilitySelections(formValue(form, "abilitySelections")),
+      advancedTraits: parseAdvancedTraitSelections(formValue(form, "advancedTraitSelections"))
     };
   }
   if (step === "equipment") {
@@ -1605,13 +1645,20 @@ function creatorNavigationDialogButtons(actor, currentStep) {
 }
 
 function creatorDialogPosition(placement, width, height) {
-  const resolvedWidth = Number.isFinite(placement?.width) ? placement.width : width;
-  const resolvedHeight = Number.isFinite(placement?.height) ? placement.height : height;
+  const margin = 12;
+  const viewportWidth = Number(globalThis.innerWidth);
+  const viewportHeight = Number(globalThis.innerHeight);
+  const defaultWidth = Number.isFinite(viewportWidth)
+    ? Math.max(760, viewportWidth - (margin * 2))
+    : width;
+  const defaultHeight = Number.isFinite(viewportHeight)
+    ? Math.max(520, viewportHeight - (margin * 2))
+    : height;
+  const resolvedWidth = Number.isFinite(placement?.width) ? placement.width : defaultWidth;
+  const resolvedHeight = Number.isFinite(placement?.height) ? placement.height : defaultHeight;
   const position = { width: resolvedWidth, height: resolvedHeight };
   if (!Number.isFinite(placement?.left) || !Number.isFinite(placement?.top)) return position;
 
-  const viewportWidth = Number(globalThis.innerWidth);
-  const viewportHeight = Number(globalThis.innerHeight);
   const maximumLeft = Number.isFinite(viewportWidth)
     ? Math.max(0, viewportWidth - Math.min(resolvedWidth, viewportWidth))
     : placement.left;
@@ -1656,6 +1703,19 @@ function bindCreatorDialogPlacement(dialog, placement) {
   resizeHandle?.addEventListener?.("mouseup", remember);
 }
 
+function stabilizeCreatorDialogPosition(dialog, placement, width, height) {
+  const apply = () => {
+    if (!dialog?.element?.isConnected) return;
+    dialog.setPosition?.(creatorDialogPosition(placement, width, height));
+  };
+
+  // Native Item sheets make the first Abilities layout heavier. Foundry can
+  // finish that render with a temporary height and only correct it after the
+  // window receives focus, so enforce the intended bounds during render too.
+  apply();
+  globalThis.setTimeout(apply, 0);
+}
+
 function isCreatorNavigationResult(result) {
   return Boolean(result?.creatorNavigation && (
     result.step === "contacts" || CREATOR_STEPS.some((entry) => entry.id === result.step)
@@ -1694,8 +1754,28 @@ function occupationBookContent(actor) {
   const creatorState = creatorStepViewState(actor, "occupation");
   const selectedId = creatorState.occupation === "custom" || coreOccupation(creatorState.occupation)
     ? creatorState.occupation
-    : CORE_OCCUPATIONS[0].id;
+    : "";
+  const selectedOccupation = coreOccupation(selectedId);
+  const selectedArchetypeId = selectedId === "custom"
+    ? "custom"
+    : (selectedOccupation?.archetype ?? "");
   const custom = creatorState.customOccupation ?? {};
+  const archetypeCards = OCCUPATION_ARCHETYPES.map((archetype) => `
+    <button type="button" class="symbaroum-hud-archetype-card"
+      data-select-archetype="${archetype.id}"
+      data-active="${archetype.id === selectedArchetypeId}"
+      aria-pressed="${archetype.id === selectedArchetypeId}"
+      aria-label="${localizeEscaped(archetype.label)}"
+      style="--symbaroum-hud-archetype-art: url(&quot;/${escapeHtml(archetype.art)}&quot;)">
+      <span class="symbaroum-hud-archetype-card-art" aria-hidden="true"></span>
+      <span class="symbaroum-hud-archetype-card-copy">
+        <strong>${localizeEscaped(archetype.label)}</strong>
+        <span>${localizeEscaped(archetype.summary)}</span>
+        <em>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Occupation.ChooseArchetype")}
+          <i class="fa-solid fa-chevron-right" aria-hidden="true"></i></em>
+      </span>
+    </button>
+  `).join("");
   const index = OCCUPATION_ARCHETYPES.map((archetype) => {
     const items = CORE_OCCUPATIONS
       .filter((occupation) => occupation.archetype === archetype.id)
@@ -1709,13 +1789,16 @@ function occupationBookContent(actor) {
         </button>
       `).join("");
     return `
-      <section class="symbaroum-hud-occupation-index-group">
+      <section class="symbaroum-hud-occupation-index-group"
+        data-occupation-archetype-group="${archetype.id}"
+        ${selectedArchetypeId === archetype.id ? "" : "hidden"}>
         <h3>${localizeEscaped(archetype.label)}</h3>
         ${items}
       </section>
     `;
   }).join("") + `
-    <section class="symbaroum-hud-occupation-index-group symbaroum-hud-occupation-custom-index">
+    <section class="symbaroum-hud-occupation-index-group symbaroum-hud-occupation-custom-index"
+      data-occupation-archetype-group="custom" ${selectedArchetypeId === "custom" ? "" : "hidden"}>
       <h3>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Occupation.CustomGroup")}</h3>
       <button type="button" class="symbaroum-hud-occupation-index-entry"
         data-occupation-id="custom" data-active="${selectedId === "custom"}"
@@ -1728,6 +1811,14 @@ function occupationBookContent(actor) {
   const pages = CORE_OCCUPATIONS.map((occupation) => {
     const archetype = OCCUPATION_ARCHETYPES.find((entry) => entry.id === occupation.archetype);
     const appropriateAbilities = occupationAbilityLinks(actor, game.i18n.localize(occupation.abilities));
+    const suggestedGifts = occupationSuggestionLinks(actor,
+      occupation.gifts ? game.i18n.localize(occupation.gifts) : "", "boon");
+    const suggestedBurdens = occupationSuggestionLinks(actor,
+      occupation.burdens ? game.i18n.localize(occupation.burdens) : "", "burden");
+    const advancedSuggestions = [
+      occupation.gifts ? `<li><strong>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Occupation.SuggestedGifts")}:</strong><span class="symbaroum-hud-occupation-ability-links">${suggestedGifts}</span></li>` : "",
+      occupation.burdens ? `<li><strong>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Occupation.SuggestedBurdens")}:</strong><span class="symbaroum-hud-occupation-ability-links">${suggestedBurdens}</span></li>` : ""
+    ].join("");
     return `
       <article class="symbaroum-hud-occupation-page"
         data-occupation-page="${occupation.id}"
@@ -1746,6 +1837,8 @@ function occupationBookContent(actor) {
               <li><strong>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Occupation.ImportantAttributes")}:</strong><span>${localizeEscaped(occupation.attributes)}</span></li>
               <li><strong>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Occupation.SuggestedRaces")}:</strong><span>${localizeEscaped(occupation.races)}</span></li>
               <li><strong>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Occupation.AppropriateAbilities")}:</strong><span class="symbaroum-hud-occupation-ability-links">${appropriateAbilities}</span></li>
+              ${advancedSuggestions}
+              <li><strong>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Occupation.Source")}:</strong><span>${localizeEscaped(occupation.sourceLabel)}</span></li>
             </ul>
           </section>
           <figure class="symbaroum-hud-occupation-art" data-occupation-art="${occupation.id}"
@@ -1804,16 +1897,41 @@ function occupationBookContent(actor) {
           <p>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Guide.StepOneText")}</p>
         </div>
       </header>
-      <aside class="symbaroum-hud-occupation-index">
+      <section class="symbaroum-hud-archetype-stage" data-archetype-stage>
+        <header class="symbaroum-hud-archetype-introduction">
+          <span>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Occupation.ArchetypeLabel")}</span>
+          <h2>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Occupation.ArchetypeSelectionTitle")}</h2>
+          <p>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Occupation.ArchetypeSelectionText")}</p>
+        </header>
+        <div class="symbaroum-hud-archetype-carousel">
+          <div class="symbaroum-hud-archetype-track" data-archetype-track>
+            ${archetypeCards}
+          </div>
+        </div>
+        <button type="button" class="symbaroum-hud-custom-from-archetypes" data-select-custom-occupation>
+          <i class="fa-solid fa-feather-pointed" aria-hidden="true"></i>
+          ${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Occupation.CustomFromArchetypes")}
+        </button>
+      </section>
+      <aside class="symbaroum-hud-occupation-index" data-occupation-stage hidden>
         <header>
+          <button type="button" class="symbaroum-hud-change-archetype" data-change-archetype
+            title="${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Occupation.ChangeArchetype")}">
+            <i class="fa-solid fa-chevron-left" aria-hidden="true"></i>
+            <span>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Occupation.ChangeArchetype")}</span>
+          </button>
           <h2>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Occupation.Index")}</h2>
         </header>
         <div class="symbaroum-hud-occupation-index-list" role="navigation"
           aria-label="${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Occupation.SelectLabel")}">
           ${index}
         </div>
+        <p class="symbaroum-hud-occupation-profession-notice">
+          <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+          ${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Occupation.ProfessionNotice")}
+        </p>
       </aside>
-      <main class="symbaroum-hud-occupation-reading-page">
+      <main class="symbaroum-hud-occupation-reading-page" data-occupation-stage hidden>
         <header class="symbaroum-hud-occupation-character-name">
           <i class="fa-solid fa-book-open" aria-hidden="true"></i>
           <span>${escapeHtml(actor.name)}</span>
@@ -1830,18 +1948,66 @@ function bindOccupationBook(element) {
   const input = element.querySelector('input[name="occupation"]');
   const entries = Array.from(element.querySelectorAll("[data-occupation-id]"));
   const pages = Array.from(element.querySelectorAll("[data-occupation-page]"));
+  const archetypeStage = element.querySelector("[data-archetype-stage]");
+  const occupationStages = Array.from(element.querySelectorAll("[data-occupation-stage]"));
+  const archetypeGroups = Array.from(element.querySelectorAll("[data-occupation-archetype-group]"));
+  const archetypeCards = Array.from(element.querySelectorAll("[data-select-archetype]"));
+  const confirm = element.querySelector('[data-action="choose-occupation"]');
+  const updateConfirmation = () => {
+    const occupationStageVisible = occupationStages.some((stage) => !stage.hidden);
+    if (confirm) confirm.disabled = !occupationStageVisible
+      || (!coreOccupation(input?.value) && input?.value !== "custom");
+  };
+  const selectOccupation = (id) => {
+    if (!coreOccupation(id) && id !== "custom") return;
+    input.value = id;
+    for (const candidate of entries) {
+      const active = candidate.dataset.occupationId === id;
+      candidate.dataset.active = String(active);
+      candidate.setAttribute("aria-pressed", String(active));
+    }
+    for (const page of pages) page.hidden = page.dataset.occupationPage !== id;
+    updateConfirmation();
+  };
+  const showOccupationStage = (archetypeId) => {
+    if (!OCCUPATION_ARCHETYPES.some(({ id }) => id === archetypeId) && archetypeId !== "custom") return;
+    if (archetypeStage) archetypeStage.hidden = true;
+    for (const stage of occupationStages) stage.hidden = false;
+    for (const group of archetypeGroups) {
+      group.hidden = group.dataset.occupationArchetypeGroup !== archetypeId;
+    }
+    for (const card of archetypeCards) {
+      const active = card.dataset.selectArchetype === archetypeId;
+      card.dataset.active = String(active);
+      card.setAttribute("aria-pressed", String(active));
+    }
+    const current = coreOccupation(input?.value);
+    if (archetypeId === "custom") selectOccupation("custom");
+    else if (current?.archetype !== archetypeId) {
+      selectOccupation(CORE_OCCUPATIONS.find((occupation) => occupation.archetype === archetypeId)?.id);
+    }
+  };
+  const showArchetypeStage = () => {
+    input.value = "";
+    for (const candidate of entries) {
+      candidate.dataset.active = "false";
+      candidate.setAttribute("aria-pressed", "false");
+    }
+    for (const page of pages) page.hidden = true;
+    for (const stage of occupationStages) stage.hidden = true;
+    if (archetypeStage) archetypeStage.hidden = false;
+    updateConfirmation();
+  };
+
+  for (const card of archetypeCards) {
+    card.addEventListener("click", () => showOccupationStage(card.dataset.selectArchetype));
+  }
+  element.querySelector("[data-select-custom-occupation]")?.addEventListener("click", () => {
+    showOccupationStage("custom");
+  });
+  element.querySelector("[data-change-archetype]")?.addEventListener("click", showArchetypeStage);
   for (const entry of entries) {
-    entry.addEventListener("click", () => {
-      const id = entry.dataset.occupationId;
-      if (!coreOccupation(id) && id !== "custom") return;
-      input.value = id;
-      for (const candidate of entries) {
-        const active = candidate.dataset.occupationId === id;
-        candidate.dataset.active = String(active);
-        candidate.setAttribute("aria-pressed", String(active));
-      }
-      for (const page of pages) page.hidden = page.dataset.occupationPage !== id;
-    });
+    entry.addEventListener("click", () => selectOccupation(entry.dataset.occupationId));
   }
   for (const button of element.querySelectorAll("[data-open-occupation-ability]")) {
     button.addEventListener("click", () => {
@@ -1853,6 +2019,27 @@ function bindOccupationBook(element) {
       openCreationItemSheet(item);
     });
   }
+  for (const button of element.querySelectorAll("[data-open-occupation-related-item]")) {
+    button.addEventListener("click", () => {
+      const item = occupationRelatedItemDocument(button.dataset.openOccupationRelatedItem);
+      if (!item) {
+        ui.notifications?.warn(game.i18n.localize("SYMBAROUMHUD.CharacterCreator.Abilities.Unavailable"));
+        return;
+      }
+      openCreationItemSheet(item);
+    });
+  }
+  for (const button of element.querySelectorAll("[data-open-occupation-suggestion]")) {
+    button.addEventListener("click", () => {
+      const item = occupationSuggestionDocument(button.dataset.openOccupationSuggestion);
+      if (!item) {
+        ui.notifications?.warn(game.i18n.localize("SYMBAROUMHUD.CharacterCreator.Abilities.Unavailable"));
+        return;
+      }
+      openCreationItemSheet(item);
+    });
+  }
+  updateConfirmation();
 }
 
 function customOccupationFromForm(form) {
@@ -1867,15 +2054,127 @@ function customOccupationFromForm(form) {
 }
 
 function occupationAbilityLinks(actor, value) {
-  return String(value ?? "").split(",").map((entry) => entry.trim()).filter(Boolean).map((label) => {
-    const item = occupationAbilityDocument(null, actor, label);
-    if (!item) return `<span>${escapeHtml(label)}</span>`;
-    const title = `${game.i18n.localize("SYMBAROUMHUD.Actions.OpenAbility")}: ${label}`;
+  return occupationAbilityGroups(value).map(({ heading, abilities }) => {
+    const links = abilities.map((label) => occupationAbilityEntryLink(actor, label)).join(", ");
+    return `${heading ? `<strong>${escapeHtml(heading)}:</strong> ` : ""}${links}`;
+  }).join("; ");
+}
+
+function occupationAbilityEntryLink(actor, label) {
+  const entry = occupationAbilityEntry(label);
+  const ability = occupationAbilityDocument(null, actor, entry.ability);
+  const abilityLabel = ability
+    ? `<button type="button" class="symbaroum-hud-occupation-ability-link"
+        data-open-occupation-ability="${escapeHtml(ability.id)}"
+        title="${escapeHtml(`${game.i18n.localize("SYMBAROUMHUD.Actions.OpenAbility")}: ${entry.ability}`)}">
+        ${escapeHtml(entry.ability)}
+      </button>`
+    : `<span>${escapeHtml(entry.ability)}</span>`;
+  if (!entry.qualifier || !entry.related.length) return abilityLabel;
+  const related = entry.related.map((suggestion) => {
+    const item = occupationRelatedItemDocument(null, actor, suggestion, entry.choiceType);
+    if (!item) return `<span>${escapeHtml(suggestion)}</span>`;
     return `<button type="button" class="symbaroum-hud-occupation-ability-link"
-      data-open-occupation-ability="${escapeHtml(item.id)}" title="${escapeHtml(title)}">
-      ${escapeHtml(label)}
+      data-open-occupation-related-item="${escapeHtml(item.id)}"
+      title="${escapeHtml(`${game.i18n.localize("SYMBAROUMHUD.Actions.OpenItem")}: ${suggestion}`)}">
+      ${escapeHtml(suggestion)}
     </button>`;
-  }).join(", ");
+  }).join(` ${escapeHtml(entry.connector)} `);
+  return `${abilityLabel} (${escapeHtml(entry.qualifier)} ${related})`;
+}
+
+function occupationSuggestionLinks(actor, value, type) {
+  return occupationAbilityGroups(value).map(({ heading, abilities }) => {
+    const links = abilities.map((label) => {
+      const item = occupationSuggestionDocument(null, actor, label, type);
+      if (!item) return `<span>${escapeHtml(label)}</span>`;
+      const title = `${game.i18n.localize("SYMBAROUMHUD.Actions.OpenItem")}: ${label}`;
+      return `<button type="button" class="symbaroum-hud-occupation-ability-link"
+        data-open-occupation-suggestion="${escapeHtml(item.id)}" title="${escapeHtml(title)}">
+        ${escapeHtml(label)}
+      </button>`;
+    }).join(", ");
+    return `${heading ? `<strong>${escapeHtml(heading)}:</strong> ` : ""}${links}`;
+  }).join("; ");
+}
+
+function occupationAbilityGroups(value) {
+  return String(value ?? "")
+    .split(/\s*;\s*/u)
+    .map((section) => section.trim())
+    .filter(Boolean)
+    .map((section) => {
+      const separator = section.indexOf(":");
+      const heading = separator >= 0 ? section.slice(0, separator).trim() : "";
+      const list = separator >= 0 ? section.slice(separator + 1) : section;
+      const abilities = splitOccupationAbilityList(list);
+      return { heading, abilities };
+    });
+}
+
+function splitOccupationAbilityList(value) {
+  const entries = [];
+  let current = "";
+  let depth = 0;
+  const text = String(value ?? "");
+  for (let index = 0; index < text.length; index++) {
+    const character = text[index];
+    if (character === "(") depth++;
+    else if (character === ")") depth = Math.max(0, depth - 1);
+    const alternative = depth === 0 ? text.slice(index).match(/^\s+(?:ou|or)\s+/iu) : null;
+    if (depth === 0 && (character === "," || alternative)) {
+      if (current.trim()) entries.push(current.trim());
+      current = "";
+      if (alternative) index += alternative[0].length - 1;
+      continue;
+    }
+    current += character;
+  }
+  if (current.trim()) entries.push(current.trim());
+  return entries;
+}
+
+function occupationAbilityNames(value) {
+  return occupationAbilityGroups(value)
+    .flatMap((group) => group.abilities)
+    .map((label) => occupationAbilityEntry(label).ability);
+}
+
+function occupationRelatedRecommendations(value) {
+  const recommendations = { mysticalPowers: [], rituals: [] };
+  for (const label of occupationAbilityGroups(value).flatMap((group) => group.abilities)) {
+    const entry = occupationAbilityEntry(label);
+    const target = entry.choiceType === "mysticalPower"
+      ? recommendations.mysticalPowers
+      : entry.choiceType === "ritual"
+        ? recommendations.rituals
+        : null;
+    if (!target) continue;
+    for (const suggestion of entry.related) {
+      if (!target.some((current) => normalizeName(current) === normalizeName(suggestion))) target.push(suggestion);
+    }
+  }
+  return recommendations;
+}
+
+function occupationAbilityEntry(label) {
+  const text = String(label ?? "").trim();
+  const qualified = text.match(/^(.*?)\s*\((geralmente|usually)\s+(.+?)\)\s*$/iu);
+  if (!qualified) return { ability: text, qualifier: "", connector: "ou", choiceType: "", related: [] };
+  const ability = qualified[1].trim();
+  const normalizedAbility = normalizeName(ability);
+  const choiceType = ["podermistico", "mysticalpower"].includes(normalizedAbility)
+    ? "mysticalPower"
+    : ["ritualista", "ritualist"].includes(normalizedAbility)
+      ? "ritual"
+      : "";
+  if (!choiceType) return { ability, qualifier: qualified[2], connector: "ou", choiceType: "", related: [] };
+  const connector = /\s+or\s+/iu.test(qualified[3]) ? "or" : "ou";
+  const related = qualified[3]
+    .split(/\s+(?:ou|or)\s+/iu)
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+  return { ability, qualifier: qualified[2], connector, choiceType, related };
 }
 
 function occupationAbilityDocument(id, actor = null, label = "") {
@@ -1944,12 +2243,14 @@ function raceBookContent(actor) {
           <h2>${localizeEscaped(race.name)}</h2>
         </div>
         <p class="symbaroum-hud-race-summary">${localizeEscaped(race.summary)}</p>
-        <figure class="symbaroum-hud-race-art"><img src="modules/symbaroum-hud/${race.art}" alt="" style="object-position:${race.artPosition}"></figure>
-        <div class="symbaroum-hud-race-lore">${lore}</div>
+        <div class="symbaroum-hud-race-editorial-body">
+          <figure class="symbaroum-hud-race-art"><img src="${escapeHtml(raceArtPath(race.art))}" alt="" loading="lazy" style="object-position:${race.artPosition}"></figure>
+          <div class="symbaroum-hud-race-lore">${lore}</div>
+        </div>
         <section class="symbaroum-hud-race-traits"><h3>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Race.TraitsHeading")}</h3>
-          ${required ? `<section class="symbaroum-hud-race-trait-section"><header><h3>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Race.RequiredTraits")}</h3><span>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Race.Automatic")}</span></header><p>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Race.RequiredHint")}</p><div>${required}</div></section>` : ""}
-          ${choices ? `<section class="symbaroum-hud-race-trait-section"><header><h3>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Race.ChooseOne")}</h3><span>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Race.FreeChoice")}</span></header><p>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Race.ChoiceHint")}</p><div>${choices}</div></section>` : ""}
-          ${optional ? `<section class="symbaroum-hud-race-trait-section"><header><h3>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Race.OptionalTraits")}</h3><span>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Race.CostsAbility")}</span></header><p>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Race.OptionalHint")}</p><div>${optional}</div></section>` : ""}
+          ${required ? `<section class="symbaroum-hud-race-trait-section" data-trait-group="required"><h4>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Race.RequiredTraits")}</h4><div>${required}</div></section>` : ""}
+          ${choices ? `<section class="symbaroum-hud-race-trait-section" data-trait-group="choice"><h4>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Race.ChooseOne")}</h4><div>${choices}</div></section>` : ""}
+          ${optional ? `<section class="symbaroum-hud-race-trait-section" data-trait-group="optional"><h4>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Race.OptionalTraits")} <small>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Race.CostsAbility")}</small></h4><div>${optional}</div></section>` : ""}
         </section>
       </article>`;
   }).join("");
@@ -2072,6 +2373,43 @@ function contactsBookContent(actor) {
     </div>`;
 }
 
+function occupationSuggestionDocument(id, actor = null, label = "", type = "") {
+  const observerLevel = globalThis.CONST?.DOCUMENT_OWNERSHIP_LEVELS?.OBSERVER ?? "OBSERVER";
+  const suggestedName = normalizeName(String(label).replace(/\s*\([^)]*\)\s*$/, ""));
+  return [...actorItems(actor), ...Array.from(game.items?.values?.() ?? game.items ?? [])].find((item) => {
+    if (!["boon", "burden"].includes(item?.type)) return false;
+    if (type && item.type !== type) return false;
+    if (id && item.id !== id) return false;
+    if (!id && suggestedName && ![
+      normalizeName(item.name),
+      normalizeName(item.system?.reference)
+    ].includes(suggestedName)) return false;
+    return !item.testUserPermission || item.testUserPermission(game.user, observerLevel);
+  }) ?? null;
+}
+
+function occupationRelatedItemDocument(id, actor = null, label = "", type = "") {
+  const observerLevel = globalThis.CONST?.DOCUMENT_OWNERSHIP_LEVELS?.OBSERVER ?? "OBSERVER";
+  const suggestedName = normalizeName(label);
+  return [...actorItems(actor), ...Array.from(game.items?.values?.() ?? game.items ?? [])].find((item) => {
+    if (type === "mysticalPower" && item?.type !== "mysticalPower") return false;
+    if (type === "ritual" && !isRitualDocument(item)) return false;
+    if (!type && item?.type !== "mysticalPower" && !isRitualDocument(item)) return false;
+    if (id && item.id !== id) return false;
+    if (!id && suggestedName && ![
+      normalizeName(item.name),
+      normalizeName(item.system?.reference)
+    ].includes(suggestedName)) return false;
+    return !item.testUserPermission || item.testUserPermission(game.user, observerLevel);
+  }) ?? null;
+}
+
+function raceArtPath(path) {
+  const value = String(path ?? "").replace(/^\/+/, "");
+  const resolved = /^(?:modules|systems)\//.test(value) ? value : `modules/symbaroum-hud/${value}`;
+  return value === "assets/races/goblin.webp" ? `${resolved}?art=goblin-traveller-v2` : resolved;
+}
+
 function occupationRaceRecommendation(actor) {
   const state = actor?.getFlag?.(MODULE_ID, STATE_FLAG) ?? {};
   if (state.occupation === "custom") {
@@ -2114,22 +2452,27 @@ function contactsFieldsContent(saved = {}) {
   return `
           <section class="symbaroum-hud-contacts-network">
             <label><span>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Contacts.Network")}<i class="fa-solid fa-asterisk" aria-hidden="true"></i></span>
-              <input type="text" name="contactsNetwork" required value="${escapeHtml(saved.network ?? "")}" placeholder="${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Contacts.NetworkPlaceholder")}">
-              <small>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Contacts.NetworkHint")}</small></label>
+              <input type="text" name="contactsNetwork" required value="${escapeHtml(saved.network ?? "")}" placeholder="${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Contacts.NetworkPlaceholder")}"></label>
             <label><span>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Contacts.Relationship")}<i class="fa-solid fa-asterisk" aria-hidden="true"></i></span>
               <textarea name="contactsRelationship" required placeholder="${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Contacts.RelationshipPlaceholder")}">${escapeHtml(saved.relationship ?? "")}</textarea></label>
           </section>
-          <section class="symbaroum-hud-contact-people">
-            <header><h3>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Contacts.PeopleHeading")}</h3>
-              <p>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Contacts.PeopleHint")}</p></header>
-            ${peopleRows}
-          </section>
-          <section class="symbaroum-hud-contacts-details">
-            <label><span>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Contacts.Access")}</span>
-              <textarea name="contactsAccess" placeholder="${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Contacts.AccessPlaceholder")}">${escapeHtml(saved.access ?? "")}</textarea></label>
-            <label><span>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Contacts.Complications")}</span>
-              <textarea name="contactsComplications" placeholder="${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Contacts.ComplicationsPlaceholder")}">${escapeHtml(saved.complications ?? "")}</textarea></label>
-          </section>`;
+          <details class="symbaroum-hud-contact-people symbaroum-hud-contact-fold">
+            <summary><span><i class="fa-solid fa-users" aria-hidden="true"></i>
+              ${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Contacts.PeopleHeading")}</span>
+              <small>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Contacts.Optional")}</small></summary>
+            <div class="symbaroum-hud-contact-fold-content">${peopleRows}</div>
+          </details>
+          <details class="symbaroum-hud-contacts-extra symbaroum-hud-contact-fold">
+            <summary><span><i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+              ${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Contacts.DetailsHeading")}</span>
+              <small>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Contacts.Optional")}</small></summary>
+            <div class="symbaroum-hud-contacts-details symbaroum-hud-contact-fold-content">
+              <label><span>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Contacts.Access")}</span>
+                <textarea name="contactsAccess" placeholder="${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Contacts.AccessPlaceholder")}">${escapeHtml(saved.access ?? "")}</textarea></label>
+              <label><span>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Contacts.Complications")}</span>
+                <textarea name="contactsComplications" placeholder="${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Contacts.ComplicationsPlaceholder")}">${escapeHtml(saved.complications ?? "")}</textarea></label>
+            </div>
+          </details>`;
 }
 
 function bindContactsBook(element) {
@@ -2176,9 +2519,14 @@ async function updateContactsTraitName(actor, contacts) {
 
 function raceTraitDocument(actor, trait) {
   if (!trait) return null;
-  const aliases = [trait.id, game.i18n.localize(trait.name), ...trait.aliases].map(normalizeName);
-  const matches = (item) => ["trait", "boon", "burden"].includes(item?.type)
-    && aliases.includes(normalizeName(item.system?.reference || item.name));
+  const aliases = new Set(
+    [trait.id, game.i18n.localize(trait.name), ...trait.aliases].map(normalizeName).filter(Boolean)
+  );
+  const matches = (item) => item?.type === trait.type && [
+    item.system?.reference,
+    item.name,
+    item.flags?.babele?.originalName
+  ].some((value) => aliases.has(normalizeName(value)));
   const embedded = actorItems(actor).find(matches);
   if (embedded) return embedded;
   const observerLevel = globalThis.CONST?.DOCUMENT_OWNERSHIP_LEVELS?.OBSERVER ?? "OBSERVER";
@@ -2217,6 +2565,16 @@ function availableCreationRituals(actor, { includeKnownIds = [] } = {}) {
     .map(abilityIdentity));
   const included = new Set(includeKnownIds);
   return availableCreationWorldItems(known, isRitualDocument, {
+    includeKnown: (item) => included.has(item.id)
+  });
+}
+
+function availableCreationAdvancedTraits(actor, { includeKnownIds = [] } = {}) {
+  const known = new Set(actorItems(actor)
+    .filter((item) => ["boon", "burden"].includes(item.type))
+    .map(abilityIdentity));
+  const included = new Set(includeKnownIds);
+  return availableCreationWorldItems(known, (item) => ["boon", "burden"].includes(item?.type), {
     includeKnown: (item) => included.has(item.id)
   });
 }
@@ -2284,7 +2642,7 @@ function mysticalTraditionChoiceIdentities(tradition, kind) {
 
 function racialAbilityCost(actor) {
   const state = actor?.getFlag?.(MODULE_ID, STATE_FLAG) ?? {};
-  return Math.min(2, Math.max(0, Array.isArray(state.abilityCostTraits) ? state.abilityCostTraits.length : 0));
+  return Math.max(0, Array.isArray(state.abilityCostTraits) ? state.abilityCostTraits.length : 0);
 }
 
 function racialFreeExperienceValue(actor) {
@@ -2296,7 +2654,9 @@ function racialFreeExperienceValue(actor) {
     const trait = coreRaceTrait(id);
     if (trait?.type === "boon") return total + (Number(costs.boon?.cost) || 5);
     if (trait?.type === "burden") return total + (Number(costs.burden?.cost) || -5);
-    if (trait?.type === "trait") return total + abilityRankCost("novice", costs.power);
+    if (["trait", "ability", "mysticalPower"].includes(trait?.type)) {
+      return total + abilityRankCost("novice", costs.power);
+    }
     return total;
   }, 0);
 }
@@ -2309,6 +2669,10 @@ async function abilitiesBookContent(actor, abilities, racialCost, mysticalPowers
   const savedSelections = browserMode
     ? []
     : parseAbilitySelections(JSON.stringify(state.abilities ?? []));
+  const advancedTraits = browserMode ? [] : Array.from(options.advancedTraits ?? []);
+  const savedAdvancedTraits = browserMode
+    ? []
+    : parseAdvancedTraitSelections(JSON.stringify(state.advancedTraits ?? []));
   const savedMode = ABILITY_DISTRIBUTION_MODES.EXPERIENCE;
   const recommendation = occupationAbilityRecommendation(actor);
   const recommendationOrder = new Map((recommendation?.abilities ?? []).map((name, index) => [
@@ -2319,11 +2683,15 @@ async function abilitiesBookContent(actor, abilities, racialCost, mysticalPowers
   const recommendationIndex = (ability) => Math.min(...[
     normalizeName(ability.name), normalizeName(ability.system?.reference)
   ].filter((identity) => recommendationOrder.has(identity)).map((identity) => recommendationOrder.get(identity)));
+  const savedSelectionIds = new Set(savedSelections.map((selection) => selection.id));
   const orderedAbilities = [...abilities].sort((left, right) => {
     const leftRecommended = isRecommended(left);
     const rightRecommended = isRecommended(right);
     if (leftRecommended !== rightRecommended) return leftRecommended ? -1 : 1;
     if (leftRecommended) return recommendationIndex(left) - recommendationIndex(right);
+    const leftSelected = savedSelectionIds.has(left.id);
+    const rightSelected = savedSelectionIds.has(right.id);
+    if (leftSelected !== rightSelected) return leftSelected ? -1 : 1;
     return left.name.localeCompare(right.name, game.i18n?.lang ?? "pt-BR", { sensitivity: "base" });
   });
   characterCreatorOriginIndex ??= staticContentOriginIndex();
@@ -2356,6 +2724,7 @@ async function abilitiesBookContent(actor, abilities, racialCost, mysticalPowers
     ? savedSelections[0].id
     : orderedAbilities[0]?.id ?? "";
   const costs = abilityExperienceCosts();
+  const selectedArchetype = String(state.archetype ?? actor?.getFlag?.(MODULE_ID, STATE_FLAG)?.archetype ?? "");
   const racialTraits = (state.abilityCostTraits ?? [])
     .map((id) => coreRaceTrait(id))
     .filter(Boolean)
@@ -2366,6 +2735,9 @@ async function abilitiesBookContent(actor, abilities, racialCost, mysticalPowers
       : isRitualistAbility(ability)
         ? "ritual"
         : "";
+    const archetypeRule = archetypalAbilityRule(ability);
+    const professionRule = professionAbilityRule(ability);
+    const archetypeApplies = archetypeRule?.archetype === selectedArchetype;
     return `
     <li data-ability-browser-result data-origin="${escapeHtml(origin)}" data-source="${browserSourceId}"
       data-ability-default-order="${abilityOrder}">
@@ -2373,6 +2745,8 @@ async function abilitiesBookContent(actor, abilities, racialCost, mysticalPowers
         data-creation-ability-id="${escapeHtml(ability.id)}"
         data-search="${escapeHtml(normalizeName(`${ability.name} ${ability.system?.reference ?? ""} ${originLabel} ${isRecommended(ability) ? recommendation?.name ?? "" : ""}`))}"
         data-occupation-recommended="${isRecommended(ability)}"
+        ${archetypeApplies ? `data-archetypal-ability="${escapeHtml(archetypeRule.id)}"` : ""}
+        ${professionRule && !browserMode ? `data-profession-restricted="${escapeHtml(professionRule.profession)}"` : ""}
         ${traditionGateway ? `data-tradition-gateway="${traditionGateway}" data-tradition-recommended="false"` : ""}
         data-active="${ability.id === firstId}" aria-pressed="${ability.id === firstId}">
         <img src="${escapeHtml(ability.img || "icons/svg/book.svg")}" alt="">
@@ -2381,6 +2755,10 @@ async function abilitiesBookContent(actor, abilities, racialCost, mysticalPowers
           ${isRecommended(ability) ? `<small><i class="fa-solid fa-compass" aria-hidden="true"></i>${escapeHtml(recommendation.name)}</small>` : ""}
           ${traditionGateway ? `<small class="symbaroum-hud-tradition-recommendation"
             data-tradition-ability-recommendation hidden><i class="fa-solid fa-hat-wizard" aria-hidden="true"></i><span></span></small>` : ""}
+          ${archetypeApplies ? `<small class="symbaroum-hud-advanced-rule-tag" data-archetype-rule-tag>
+            <i class="fa-solid fa-diagram-project" aria-hidden="true"></i>${formatEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.ArchetypeRequirementShort", { count: archetypeRule.minimum })}</small>` : ""}
+          ${professionRule && !browserMode ? `<small class="symbaroum-hud-advanced-rule-tag" data-locked="true">
+            <i class="fa-solid fa-lock" aria-hidden="true"></i>${escapeHtml(professionRule.professionName)}</small>` : ""}
           <b class="symbaroum-hud-ability-browser-rank" data-ability-entry-rank></b>
         </span>
       </button>
@@ -2390,19 +2768,40 @@ async function abilitiesBookContent(actor, abilities, racialCost, mysticalPowers
     const mysticalPowerAbility = isMysticalPowerAbility(ability);
     const ritualistAbility = isRitualistAbility(ability);
     const mysticalTradition = coreMysticalTradition(ability);
+    const archetypeRule = archetypalAbilityRule(ability);
+    const professionRule = professionAbilityRule(ability);
+    const archetypeApplies = archetypeRule?.archetype === selectedArchetype;
     const sheetLoaded = ability.id === firstId;
     const nativeSheet = sheetLoaded ? await renderCreationAbilitySheet(ability) : "";
     const mysticalPowerChoices = mysticalPowerAbility
-      ? await mysticalPowerChoiceContent(ability, mysticalPowers, costs, originIndex, browserSourceId)
+      ? await mysticalPowerChoiceContent(ability, mysticalPowers, costs, originIndex, browserSourceId, {
+        enforceProfessionRules: !browserMode,
+        occupationRecommendation: recommendation
+      })
       : "";
     const ritualChoices = ritualistAbility
-      ? await ritualChoiceContent(ability, rituals, originIndex, browserSourceId)
+      ? await ritualChoiceContent(ability, rituals, originIndex, browserSourceId, {
+        enforceProfessionRules: !browserMode,
+        occupationRecommendation: recommendation
+      })
       : "";
     return `
       <article class="symbaroum-hud-ability-page" data-creation-ability-page="${escapeHtml(ability.id)}"
         ${mysticalTradition ? `data-mystical-tradition="${escapeHtml(mysticalTradition.id)}"` : ""}
+        ${archetypeApplies ? `data-archetypal-ability-page="${escapeHtml(archetypeRule.id)}"` : ""}
+        ${professionRule && !browserMode ? `data-profession-restricted-page="${escapeHtml(professionRule.profession)}"` : ""}
         ${ability.id === firstId ? "" : "hidden"}>
         ${mysticalTradition ? mysticalTraditionContent(mysticalTradition, ability) : ""}
+        ${archetypeApplies ? `<aside class="symbaroum-hud-advanced-ability-rule" data-archetype-rule-notice>
+          <i class="fa-solid fa-diagram-project" aria-hidden="true"></i><div>
+            <strong>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.ArchetypeRequirementTitle")}</strong>
+            <span>${formatEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.ArchetypeRequirement", { count: archetypeRule.minimum })}</span>
+          </div></aside>` : ""}
+        ${professionRule && !browserMode ? `<aside class="symbaroum-hud-advanced-ability-rule" data-restricted="true">
+          <i class="fa-solid fa-lock" aria-hidden="true"></i><div>
+            <strong>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.ProfessionAbilityTitle")}</strong>
+            <span>${formatEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.ProfessionAbility", { profession: professionRule.professionName })}</span>
+          </div></aside>` : ""}
         <div class="symbaroum sheet item symbaroum-hud-native-ability-sheet"
           data-ability-sheet-host data-ability-sheet-loaded="${sheetLoaded}">
           ${sheetLoaded ? nativeSheet : abilitySheetLoadingContent()}
@@ -2410,6 +2809,8 @@ async function abilitiesBookContent(actor, abilities, racialCost, mysticalPowers
         <div class="symbaroum-hud-native-ability-purchase" ${mysticalPowerAbility ? "hidden" : ""}>
           ${["novice", "adept", "master"].map((rank) => `<button type="button"
             data-select-ability="${escapeHtml(ability.id)}" data-rank="${rank}"
+            ${archetypeApplies ? `data-archetypal-rule="${escapeHtml(archetypeRule.id)}" data-archetypal-minimum="${archetypeRule.minimum}"` : ""}
+            ${professionRule && !browserMode ? `data-profession-restricted="${escapeHtml(professionRule.profession)}"` : ""}
             ${ritualistAbility ? 'data-choice-type="ritualist"' : ""}>
             <i class="fa-regular fa-circle" aria-hidden="true"></i>
             <span>${localizeEscaped(`SYMBAROUMHUD.CharacterCreator.Abilities.Select${rank[0].toUpperCase()}${rank.slice(1)}`)}</span>
@@ -2428,6 +2829,7 @@ async function abilitiesBookContent(actor, abilities, racialCost, mysticalPowers
     <div class="symbaroum-hud-abilities-book" data-ability-browser="${browserMode}">
       <input type="hidden" name="abilityDistributionMode" value="${savedMode}">
       <input type="hidden" name="abilitySelections" value="${escapeHtml(JSON.stringify(savedSelections))}">
+      <input type="hidden" name="advancedTraitSelections" value="${escapeHtml(JSON.stringify(savedAdvancedTraits))}">
       <header class="symbaroum-hud-creator-step-guide">
         ${browserMode
           ? `<span class="symbaroum-hud-ability-browser-emblem"><i class="fa-solid fa-book-open" aria-hidden="true"></i></span>`
@@ -2468,6 +2870,7 @@ async function abilitiesBookContent(actor, abilities, racialCost, mysticalPowers
             <span data-ability-slot="adept" hidden><b>0</b>/0 ${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.Adept")}</span>
           </div>
           ${racialCost ? `<p class="symbaroum-hud-ability-racial-cost"><i class="fa-solid fa-feather"></i>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.RacialCost")}<strong>${escapeHtml(racialTraits.join(", "))}</strong></p>` : ""}
+          ${browserMode ? "" : advancedProfessionCatalogueContent()}
           <div class="symbaroum-hud-ability-filter-popover" data-ability-filter-panel hidden>
             <section class="symbaroum-hud-browser-origin-filter">
               <header><h2>${localizeEscaped("SYMBAROUMHUD.CompendiumBrowser.Origin")}</h2>
@@ -2489,10 +2892,15 @@ async function abilitiesBookContent(actor, abilities, racialCost, mysticalPowers
           </div>
         </aside>
         <section class="symbaroum-hud-browser-results symbaroum-hud-creator-ability-results">
-          <header><h2>${localizeEscaped("SYMBAROUMHUD.CompendiumBrowser.Results")}</h2>
-            <span><b data-ability-result-count>${orderedAbilities.length}</b> ${localizeEscaped("SYMBAROUMHUD.CompendiumBrowser.Found")}</span>
-          </header>
-          <ol>${index || `<li class="symbaroum-hud-browser-empty"><i class="fa-solid fa-book-open"></i><strong>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.Empty")}</strong></li>`}</ol>
+          <details class="symbaroum-hud-ability-result-group symbaroum-hud-ability-list-group" open>
+            <summary>
+              <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
+              <h2>${localizeEscaped("SYMBAROUMHUD.CompendiumBrowser.Categories.Abilities")}</h2>
+              <span><b data-ability-result-count>${orderedAbilities.length}</b> ${localizeEscaped("SYMBAROUMHUD.CompendiumBrowser.Found")}</span>
+            </summary>
+            <ol>${index || `<li class="symbaroum-hud-browser-empty"><i class="fa-solid fa-book-open"></i><strong>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.Empty")}</strong></li>`}</ol>
+          </details>
+          ${advancedTraits.length ? advancedTraitCatalogueContent(actor, advancedTraits, savedAdvancedTraits) : ""}
         </section>
         <main class="symbaroum-hud-ability-reading-page">${pages || `<p class="symbaroum-hud-ability-empty">${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.Empty")}</p>`}</main>
       </div>
@@ -2503,15 +2911,19 @@ function occupationAbilityRecommendation(actor) {
   const state = actor?.getFlag?.(MODULE_ID, STATE_FLAG) ?? {};
   if (state.occupation === "custom") {
     const name = String(state.customOccupation?.name ?? "").trim();
-    const abilities = String(state.customOccupation?.abilities ?? "").split(",")
-      .map((entry) => entry.trim()).filter(Boolean);
-    return name && abilities.length ? { name, abilities } : null;
+    const value = state.customOccupation?.abilities;
+    const abilities = occupationAbilityNames(value);
+    return name && abilities.length ? { name, abilities, ...occupationRelatedRecommendations(value) } : null;
   }
   const occupation = coreOccupation(state.occupation);
   if (!occupation) return null;
-  const abilities = String(game.i18n.localize(occupation.abilities)).split(",")
-    .map((entry) => entry.trim()).filter(Boolean);
-  return abilities.length ? { name: game.i18n.localize(occupation.name), abilities } : null;
+  const value = game.i18n.localize(occupation.abilities);
+  const abilities = occupationAbilityNames(value);
+  return abilities.length ? {
+    name: game.i18n.localize(occupation.name),
+    abilities,
+    ...occupationRelatedRecommendations(value)
+  } : null;
 }
 
 function shadowBookContent(actor, { embedded = false } = {}) {
@@ -2633,6 +3045,7 @@ function shadowBookContent(actor, { embedded = false } = {}) {
 
 function mysticalTraditionContent(tradition, ability) {
   const artFallback = escapeHtml(tradition.fallbackArt);
+  const practice = tradition.kind === "practice";
   return `
     <section class="symbaroum-hud-mystical-tradition-page">
       <header class="symbaroum-hud-mystical-tradition-hero">
@@ -2641,18 +3054,24 @@ function mysticalTraditionContent(tradition, ability) {
             data-tradition-fallback-src="${artFallback}">
         </figure>
         <div>
-          <span><i class="fa-solid ${escapeHtml(tradition.icon)}" aria-hidden="true"></i>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.Traditions.BookLabel")}</span>
+          <span><i class="fa-solid ${escapeHtml(tradition.icon)}" aria-hidden="true"></i>${localizeEscaped(practice
+            ? "SYMBAROUMHUD.CharacterCreator.Abilities.Traditions.PracticeBookLabel"
+            : "SYMBAROUMHUD.CharacterCreator.Abilities.Traditions.BookLabel")}</span>
           <h2>${localizeEscaped(tradition.name)}</h2>
           <p>${localizeEscaped(tradition.introduction)}</p>
           <aside>
             <i class="fa-solid fa-scroll" aria-hidden="true"></i>
-            <p>${formatEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.Traditions.PurchaseExplanation", { ability: ability.name })}</p>
+            <p>${formatEscaped(tradition.profession
+              ? "SYMBAROUMHUD.CharacterCreator.Abilities.Traditions.ProfessionPurchaseExplanation"
+              : "SYMBAROUMHUD.CharacterCreator.Abilities.Traditions.PurchaseExplanation", { ability: ability.name })}</p>
           </aside>
         </div>
       </header>
       <div class="symbaroum-hud-mystical-tradition-chapter">
         <section class="symbaroum-hud-mystical-tradition-doctrine">
-          <h3>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.Traditions.TraditionHeading")}</h3>
+          <h3>${localizeEscaped(practice
+            ? "SYMBAROUMHUD.CharacterCreator.Abilities.Traditions.PracticeHeading"
+            : "SYMBAROUMHUD.CharacterCreator.Abilities.Traditions.TraditionHeading")}</h3>
           <p>${localizeEscaped(tradition.doctrine)}</p>
         </section>
         <section>
@@ -2660,11 +3079,15 @@ function mysticalTraditionContent(tradition, ability) {
           <p>${localizeEscaped(tradition.titles)}</p>
         </section>
         <section>
-          <h3>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.Traditions.PowersHeading")}</h3>
+          <h3>${localizeEscaped(practice
+            ? "SYMBAROUMHUD.CharacterCreator.Abilities.Traditions.PracticeWorksHeading"
+            : "SYMBAROUMHUD.CharacterCreator.Abilities.Traditions.PowersHeading")}</h3>
           <p>${localizeEscaped(tradition.powers)}</p>
         </section>
         <section>
-          <h3>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.Traditions.RitualsHeading")}</h3>
+          <h3>${localizeEscaped(practice
+            ? "SYMBAROUMHUD.CharacterCreator.Abilities.Traditions.PracticeLimitsHeading"
+            : "SYMBAROUMHUD.CharacterCreator.Abilities.Traditions.RitualsHeading")}</h3>
           <p>${localizeEscaped(tradition.rituals)}</p>
         </section>
         <section class="symbaroum-hud-mystical-tradition-corruption">
@@ -2674,6 +3097,74 @@ function mysticalTraditionContent(tradition, ability) {
       </div>
       <footer><span>${formatEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.Traditions.AbilityHeading", { ability: ability.name })}</span></footer>
     </section>`;
+}
+
+function advancedTraitCatalogueContent(actor, items, savedSelections) {
+  const selected = new Set(savedSelections.map((selection) => selection.id));
+  const state = actor?.getFlag?.(MODULE_ID, STATE_FLAG) ?? {};
+  const occupation = coreOccupation(state.occupation);
+  const suggested = new Set([
+    occupation?.gifts ? game.i18n.localize(occupation.gifts) : "",
+    occupation?.burdens ? game.i18n.localize(occupation.burdens) : ""
+  ].flatMap((value) => String(value).split(/\s*,\s*/u)).map(normalizeName).filter(Boolean));
+  const groups = ["boon", "burden"].map((type) => {
+    const entries = items.filter((item) => item.type === type).sort((left, right) => {
+      const recommendation = Number(suggested.has(normalizeName(right.name)))
+        - Number(suggested.has(normalizeName(left.name)));
+      return recommendation || left.name.localeCompare(right.name, game.i18n?.lang ?? "pt-BR", { sensitivity: "base" });
+    });
+    return `<section data-advanced-trait-group="${type}">
+      <h4><i class="fa-solid ${type === "boon" ? "fa-gift" : "fa-weight-hanging"}" aria-hidden="true"></i>
+        ${localizeEscaped(type === "boon"
+          ? "SYMBAROUMHUD.CharacterCreator.Abilities.AdvancedTraits.Boons"
+          : "SYMBAROUMHUD.CharacterCreator.Abilities.AdvancedTraits.Burdens")}
+        <small><b data-advanced-trait-count="${type}">0</b>/${type === "boon" ? 3 : 2}</small></h4>
+      <div>${entries.map((item) => {
+        const professionRules = professionExclusiveItemRules(item);
+        return `<article data-advanced-trait-entry="${escapeHtml(item.id)}"
+          ${professionRules.length ? `data-profession-restricted-choice="${escapeHtml(professionRules.map((rule) => rule.id).join(" "))}"` : ""}>
+        <button type="button" data-open-creation-item="${escapeHtml(item.id)}" title="${escapeHtml(item.name)}">
+          <img src="${escapeHtml(item.img || (type === "boon" ? "icons/svg/upgrade.svg" : "icons/svg/downgrade.svg"))}" alt="">
+          <span>${escapeHtml(item.name)}</span>
+          ${suggested.has(normalizeName(item.name)) ? `<em><i class="fa-solid fa-compass"></i>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.AdvancedTraits.Suggested")}</em>` : ""}
+        </button>
+        <label><input type="checkbox" data-advanced-trait-choice value="${escapeHtml(item.id)}"
+          data-advanced-trait-type="${type}" ${selected.has(item.id) ? "checked" : ""}
+          ${professionRules.length ? `data-profession-restricted="${escapeHtml(professionRules.map((rule) => rule.id).join(" "))}" disabled` : ""}>
+          <i class="fa-regular fa-square" aria-hidden="true"></i></label>
+      </article>`;
+      }).join("")}</div>
+    </section>`;
+  }).join("");
+  return `<details class="symbaroum-hud-ability-result-group symbaroum-hud-advanced-trait-catalogue">
+    <summary><i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
+      <h2>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.AdvancedTraits.Title")}</h2>
+      <b data-advanced-trait-balance>0 XP</b></summary>
+    <div class="symbaroum-hud-advanced-trait-content">
+      <div class="symbaroum-hud-advanced-trait-rules">
+        <p>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.AdvancedTraits.Rules")}</p>
+        <small>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.AdvancedTraits.Limits")}</small>
+      </div>
+      ${groups}
+    </div>
+  </details>`;
+}
+
+function advancedProfessionCatalogueContent() {
+  const english = String(game.i18n?.lang ?? "pt-BR").toLowerCase().startsWith("en");
+  const entries = ADVANCED_PROFESSION_RULES.map((profession) => `<article>
+    <header><i class="fa-solid fa-lock" aria-hidden="true"></i>
+      <strong>${escapeHtml(english ? profession.englishName : profession.name)}</strong></header>
+    <p>${escapeHtml(english ? profession.requirements.en : profession.requirements.pt)}</p>
+  </article>`).join("");
+  return `<details class="symbaroum-hud-advanced-profession-catalogue">
+    <summary><i class="fa-solid fa-ranking-star" aria-hidden="true"></i>
+      <span>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.Professions.Title")}</span></summary>
+    <div class="symbaroum-hud-advanced-profession-introduction">
+      <p>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.Professions.Rules")}</p>
+    </div>
+    <div class="symbaroum-hud-advanced-profession-list">${entries}</div>
+  </details>`;
 }
 
 function bindShadowBook(element) {
@@ -2762,23 +3253,106 @@ function availableActorExperience(actor) {
   );
 }
 
+// Livro Basico + Guia Avancado do Jogador, Tabela 1: Equipamento Inicial (p. 7).
+// Each Ability can grant more than one item and may ask the player to choose the
+// exact weapon. Keeping the table declarative makes the Portuguese translations,
+// English references and future imported content resolve through the same path.
 const CREATION_EQUIPMENT_RULES = Object.freeze({
-  manatarms: { category: "medium-armor", label: "MediumArmor", quantity: 1 },
-  marksman: { category: "marksman-choice", label: "RangedWeapon", quantity: 1 },
-  polearmmastery: { category: "long", label: "Polearm", quantity: 1 },
-  shieldfighter: { category: "shield", label: "Shield", quantity: 1 },
-  steelthrow: { category: "thrown", label: "ThrownWeapon", quantity: 1 },
-  twinattack: { category: "sword", label: "Sword", quantity: 1 },
-  twohandedforce: { category: "heavy", label: "TwoHandedWeapon", quantity: 1 },
-  witchhammer: { category: "one-handed", label: "OneHandedWeapon", quantity: 1 }
+  agilecombat: Object.freeze([
+    Object.freeze({ grantId: "longbow", category: "named", itemAliases: ["arcolongo", "longbow"], weapon: true, quantity: 1 })
+  ]),
+  armoredmystic: Object.freeze([
+    Object.freeze({ grantId: "armor", category: "medium-armor", armor: true, quantity: 1 })
+  ]),
+  arrowjab: Object.freeze([
+    Object.freeze({ grantId: "ranged", category: "item-choice", choiceKind: "ranged", quantity: 1 })
+  ]),
+  axeartist: Object.freeze([
+    Object.freeze({ grantId: "axe", category: "item-choice", choiceKind: "axe", quantity: 1 })
+  ]),
+  blacksmith: Object.freeze([
+    Object.freeze({ grantId: "weapon", category: "item-choice", choiceKind: "common-weapon", quantity: 1 }),
+    Object.freeze({ grantId: "armor", category: "medium-armor", armor: true, quantity: 1 })
+  ]),
+  daggerdance: Object.freeze([
+    Object.freeze({ grantId: "stiletto", category: "named", itemAliases: ["estilete", "stiletto"], weapon: true, quantity: 1 })
+  ]),
+  flailer: Object.freeze([
+    Object.freeze({ grantId: "flail", category: "item-choice", choiceKind: "flail", quantity: 1 })
+  ]),
+  hammerstep: Object.freeze([
+    Object.freeze({ grantId: "hammer", category: "item-choice", choiceKind: "hammer", quantity: 1 })
+  ]),
+  manatarms: Object.freeze([
+    Object.freeze({ grantId: "armor", category: "medium-armor", label: "MediumArmor", armor: true, quantity: 1 })
+  ]),
+  marksman: Object.freeze([
+    Object.freeze({ category: "marksman-choice", label: "RangedWeapon", quantity: 1 })
+  ]),
+  polearmmastery: Object.freeze([
+    Object.freeze({ grantId: "polearm", category: "item-choice", choiceKind: "spear-or-staff", quantity: 1 })
+  ]),
+  pyrotechnics: Object.freeze([
+    Object.freeze({ grantId: "grenade", category: "named", itemAliases: ["granadaalquimica", "alchemicalgrenade"], weapon: true, quantity: 1 }),
+    Object.freeze({ grantId: "flash-powder", category: "named", itemAliases: ["poluminoso", "flashpowder"], quantity: 1 })
+  ]),
+  rapidfire: Object.freeze([
+    Object.freeze({ grantId: "ranged", category: "item-choice", choiceKind: "ranged", quantity: 1 })
+  ]),
+  sacredsword: Object.freeze([
+    Object.freeze({ grantId: "sword", category: "item-choice", choiceKind: "fencing-sword", quantity: 1 }),
+    Object.freeze({ grantId: "parrying-dagger", category: "named", itemAliases: ["adagadeaparar", "parryingdagger"], quantity: 1 })
+  ]),
+  shieldfighter: Object.freeze([
+    Object.freeze({ category: "shield", label: "Shield", quantity: 1 })
+  ]),
+  staffcombat: Object.freeze([
+    Object.freeze({ grantId: "long-weapon", category: "item-choice", choiceKind: "common-long", quantity: 1 })
+  ]),
+  staffmagic: Object.freeze([
+    Object.freeze({ grantId: "rune-staff", category: "named", itemAliases: ["cajadorunico", "runestaff"], weapon: true, quantity: 1 })
+  ]),
+  steelthrow: Object.freeze([
+    Object.freeze({ category: "thrown", label: "ThrownWeapon", quantity: 1 })
+  ]),
+  symbolism: Object.freeze([
+    Object.freeze({ grantId: "protection-symbol", category: "named", itemAliases: ["simbolodeprotecao", "symbolofprotection"], quantity: 1 })
+  ]),
+  trollsinging: Object.freeze([
+    Object.freeze({ grantId: "cuirass", category: "named", itemAliases: ["couracadeescaldo", "skaldscuirass"], armor: true, quantity: 1 })
+  ]),
+  twinattack: Object.freeze([
+    Object.freeze({ category: "sword", label: "Sword", quantity: 1 })
+  ]),
+  twohandedforce: Object.freeze([
+    Object.freeze({ category: "heavy", label: "TwoHandedWeapon", quantity: 1 })
+  ]),
+  witchhammer: Object.freeze([
+    Object.freeze({ category: "one-handed", label: "OneHandedWeapon", quantity: 1 })
+  ])
 });
 
 const CREATION_EQUIPMENT_ABILITY_ALIASES = Object.freeze({
+  agilecombat: ["combateagil", "agilecombat"],
+  armoredmystic: ["misticoblindado", "armoredmystic"],
+  arrowjab: ["golpecomflecha", "arrowjab"],
+  axeartist: ["artistadomachado", "axeartist"],
+  blacksmith: ["ferreiro", "blacksmith"],
+  daggerdance: ["dancadaadaga", "daggerdance"],
+  flailer: ["mangualeiro", "flailer"],
+  hammerstep: ["passodomartelo", "ritmodomartelo", "hammerstep", "hammerrhythm"],
   manatarms: ["homemdearmas", "manatarms"],
   marksman: ["atirador", "marksman"],
   polearmmastery: ["maestriaemarmasdehaste", "polearmmastery"],
+  pyrotechnics: ["pirotecnia", "pyrotechnics"],
+  rapidfire: ["fogorapido", "tirorapido", "rapidfire", "fastfire"],
+  sacredsword: ["espadasagrada", "espadaabencoada", "sacredsword", "swordsaint"],
   shieldfighter: ["combatentedeescudo", "shieldfighter"],
+  staffcombat: ["lutadecajado", "staffcombat"],
+  staffmagic: ["magiadocajado", "staffmagic"],
   steelthrow: ["arremessaraco", "steelthrow"],
+  symbolism: ["simbolismo", "symbolism"],
+  trollsinging: ["cantodotroll", "trollsinging"],
   twinattack: ["ataquegemeo", "twinattack"],
   twohandedforce: ["forcadaempunhaduradupla", "twohandedforce"],
   witchhammer: ["martelobruxo", "witchhammer"]
@@ -2807,6 +3381,7 @@ const STARTING_EQUIPMENT_COMBINATIONS = Object.freeze([
 
 const CONFIGURED_STARTING_ITEM_ALIASES = Object.freeze({
   staff: Object.freeze(["bordao", "staff", "quarterstaff"]),
+  spear: Object.freeze(["lanca", "spear"]),
   dagger: Object.freeze(["adaga", "dagger"]),
   sword: Object.freeze(["espada", "sword"]),
   bow: Object.freeze(["arco", "bow"]),
@@ -2823,23 +3398,29 @@ function creationEquipmentGrants(actor) {
     const identity = normalizeName(item?.system?.reference || item?.name);
     const ability = Object.entries(CREATION_EQUIPMENT_ABILITY_ALIASES)
       .find(([, aliases]) => aliases.includes(identity))?.[0];
-    const rule = CREATION_EQUIPMENT_RULES[ability];
-    if (!rule) continue;
+    const rules = CREATION_EQUIPMENT_RULES[ability];
+    if (!rules) continue;
     const adeptTwinAttack = ability === "twinattack"
       && Boolean(item?.system?.adept?.isActive || item?.system?.master?.isActive);
-    grants.push({
-      ...rule,
-      source: "ability",
-      ability,
-      abilityName: item.name,
-      quantity: adeptTwinAttack ? 2 : rule.quantity
-    });
+    for (const rule of rules) {
+      grants.push({
+        ...rule,
+        source: "ability",
+        ability,
+        abilityName: item.name,
+        quantity: adeptTwinAttack ? 2 : rule.quantity
+      });
+    }
   }
-  const hasAbilityEquipment = grants.length > 0;
-  const hasAbilityArmor = grants.some((grant) => isArmorEquipmentCategory(grant.category));
+  // The basic weapon combination is replaced only by an Ability that actually
+  // grants a weapon. Armor, shields and utility items do not satisfy that rule.
+  // Treating any grant as a weapon used to skip the choice screen and leave the
+  // final confirmation disabled for characters such as Homem-de-Armas.
+  const hasAbilityWeapon = grants.some(isWeaponEquipmentGrant);
+  const hasAbilityArmor = grants.some((grant) => grant.armor || isArmorEquipmentCategory(grant.category));
   return [
     ...grants,
-    ...(!hasAbilityEquipment ? [{
+    ...(!hasAbilityWeapon ? [{
       source: "basic",
       ability: "basicweapon",
       abilityName: game.i18n.localize("SYMBAROUMHUD.CharacterCreator.Equipment.BasicWeaponHeading"),
@@ -2862,6 +3443,21 @@ function isArmorEquipmentCategory(category) {
   return category === "light-armor" || category === "medium-armor";
 }
 
+function isWeaponEquipmentGrant(grant) {
+  if (grant?.weapon === true) return true;
+  return [
+    "marksman-choice",
+    "item-choice",
+    "sword",
+    "one-handed",
+    "heavy",
+    "long",
+    "short",
+    "ranged",
+    "thrown"
+  ].includes(grant?.category);
+}
+
 function availableCreationEquipment(actor) {
   const known = new Set(actorItems(actor).map(equipmentIdentity));
   const observerLevel = globalThis.CONST?.DOCUMENT_OWNERSHIP_LEVELS?.OBSERVER ?? "OBSERVER";
@@ -2879,7 +3475,11 @@ function availableCreationEquipment(actor) {
 }
 
 function equipmentIdentity(item) {
-  return `${item?.type ?? ""}:${normalizeName(item?.system?.reference || item?.name)}`;
+  // A reference such as "1handed" describes a category, not a document identity.
+  // Using it first collapsed different grants (for example an Estoc and a Hammer)
+  // into a single item. Names keep distinct official pieces while still preventing
+  // the same world item from being granted twice.
+  return `${item?.type ?? ""}:${normalizeName(item?.name || item?.system?.reference)}`;
 }
 
 function findCampingEquipment(actor, equipment = availableCreationEquipment(actor)) {
@@ -2942,6 +3542,78 @@ function findGenericEquipment(equipment, category) {
   return equipment.find((item) => genericEquipmentCategory(item) === category) ?? null;
 }
 
+function findNamedEquipment(equipment, aliases = []) {
+  const identities = new Set(aliases.map(normalizeName).filter(Boolean));
+  if (!identities.size) return null;
+  return equipment.find((item) => identities.has(normalizeName(item?.name)))
+    ?? equipment.find((item) => identities.has(normalizeName(item?.system?.reference)))
+    ?? null;
+}
+
+function findEquipmentForGrant(equipment, grant) {
+  if (grant?.itemAliases?.length) return findNamedEquipment(equipment, grant.itemAliases);
+  return findGenericEquipment(equipment, grant?.category);
+}
+
+function equipmentChoiceCandidates(equipment, grant) {
+  const unique = new Map();
+  const add = (item) => {
+    if (item?.id && !unique.has(item.id)) unique.set(item.id, item);
+  };
+  const nameOf = (item) => normalizeName(item?.name);
+  const referenceOf = (item) => normalizeName(item?.system?.reference);
+  const weapon = (item) => item?.type === "weapon";
+  const namedLike = (item, aliases) => aliases.some((alias) => {
+    const normalized = normalizeName(alias);
+    return nameOf(item) === normalized || nameOf(item).includes(normalized);
+  });
+
+  switch (grant?.choiceKind) {
+    case "axe":
+      equipment.filter((item) => weapon(item)
+        && ["1handed", "heavy"].includes(referenceOf(item))
+        && namedLike(item, ["machado", "axe"])).forEach(add);
+      break;
+    case "fencing-sword":
+      [
+        findNamedEquipment(equipment, ["espadadeduelo", "espadadeesgrimaambriana", "fencingsword", "ambrianfencingsword"]),
+        findNamedEquipment(equipment, ["estoc"])
+      ].forEach(add);
+      break;
+    case "common-weapon":
+      ["one-handed", "heavy", "long", "short", "ranged", "thrown"]
+        .map((category) => findGenericEquipment(equipment, category)).forEach(add);
+      ["sword", "dagger", "staff"].map((configured) => findConfiguredStartingItem(equipment, configured)).forEach(add);
+      break;
+    case "common-long":
+      add(findGenericEquipment(equipment, "long"));
+      ["staff", "spear"].map((configured) => findConfiguredStartingItem(equipment, configured)).forEach(add);
+      break;
+    case "spear-or-staff":
+      ["spear", "staff"].map((configured) => findConfiguredStartingItem(equipment, configured)).forEach(add);
+      break;
+    case "ranged":
+      equipment.filter((item) => weapon(item) && (
+        ["ranged", "bow", "crossbow"].includes(referenceOf(item))
+        || namedLike(item, ["arco", "besta", "bow", "crossbow"])
+      )).forEach(add);
+      break;
+    case "flail":
+      equipment.filter((item) => weapon(item) && namedLike(item, ["mangual", "flail"])).forEach(add);
+      break;
+    case "hammer":
+      equipment.filter((item) => weapon(item)
+        && ["1handed", "heavy"].includes(referenceOf(item))
+        && namedLike(item, ["martelo", "hammer"])).forEach(add);
+      break;
+    default:
+      break;
+  }
+  return [...unique.values()].sort((left, right) => left.name.localeCompare(
+    right.name, game.i18n?.lang ?? "pt-BR", { sensitivity: "base" }
+  ));
+}
+
 function genericEquipmentCategory(item) {
   const reference = normalizeName(item?.system?.reference);
   const name = normalizeName(item?.name);
@@ -2999,7 +3671,20 @@ function equipmentSelectionsFromForm(form, grants, equipment) {
       })));
       continue;
     }
-    const item = findGenericEquipment(equipment, grant.category);
+    if (grant.category === "item-choice") {
+      const itemId = formValue(form, equipmentGrantField(grant, 0));
+      const item = equipmentChoiceCandidates(equipment, grant).find((candidate) => candidate.id === itemId);
+      if (!item) {
+        ui.notifications?.warn(game.i18n.format(
+          "SYMBAROUMHUD.CharacterCreator.Equipment.AbilityChoiceRequired",
+          { ability: grant.abilityName }
+        ));
+        return null;
+      }
+      selections.push({ grant, item, quantity: grant.quantity, combination: item.id });
+      continue;
+    }
+    const item = findEquipmentForGrant(equipment, grant);
     if (!item) {
       ui.notifications?.warn(game.i18n.localize("SYMBAROUMHUD.CharacterCreator.Equipment.NoMatchingItems"));
       return null;
@@ -3150,10 +3835,13 @@ function equipmentShopEntryContent(item, originIndex) {
   </li>`;
 }
 
-function equipmentShopChoiceContent({ marksmanGrant, marksmanChoices, combinationGrant, combinations, savedCombination }) {
+function equipmentShopChoiceContent({
+  marksmanGrant, marksmanChoices, abilityChoices, combinationGrant, combinations, savedCombination
+}) {
+  const sections = [];
   if (marksmanGrant) {
-    return `<fieldset class="symbaroum-hud-creator-shop-choice">
-      <legend><i class="fa-solid fa-gift" aria-hidden="true"></i>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Equipment.MarksmanChoice")}</legend>
+    sections.push(`<section class="symbaroum-hud-creator-shop-choice" role="radiogroup" aria-label="${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Equipment.MarksmanChoice")}">
+      <h3><i class="fa-solid fa-gift" aria-hidden="true"></i>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Equipment.MarksmanChoice")}</h3>
       <div>${marksmanChoices.map(({ choice, item, resolved }) => {
         const extra = resolved?.items?.map(({ item: resolvedItem, quantity }) => equipmentShopItemPayload(
           resolvedItem, quantity, equipmentGrantReason(marksmanGrant), true
@@ -3165,11 +3853,28 @@ function equipmentShopChoiceContent({ marksmanGrant, marksmanChoices, combinatio
           <strong>${escapeHtml(item?.name || game.i18n.localize(`SYMBAROUMHUD.CharacterCreator.Equipment.${choice === "crossbow" ? "Crossbow" : "Bow"}`))}</strong>
         </label>`;
       }).join("")}</div>
-    </fieldset>`;
+    </section>`);
+  }
+  for (const { grant, candidates } of abilityChoices) {
+    const choiceLead = formatEscaped(
+        "SYMBAROUMHUD.CharacterCreator.Equipment.AbilityChoiceLead", { ability: grant.abilityName }
+      );
+    sections.push(`<section class="symbaroum-hud-creator-shop-choice" role="radiogroup" aria-label="${choiceLead}" data-ability-equipment-choice="${escapeHtml(grant.ability)}">
+      <h3><i class="fa-solid fa-gift" aria-hidden="true"></i>${choiceLead}</h3>
+      <div>${candidates.map((item) => {
+        const extra = [equipmentShopItemPayload(item, grant.quantity, equipmentGrantReason(grant), true)];
+        return `<label data-available="true">
+          <input type="radio" name="${equipmentGrantField(grant, 0)}" value="${escapeHtml(item.id)}" data-equipment-grant
+            data-free-cart='${escapeHtml(JSON.stringify(extra))}'${savedCombination(grant) === item.id ? " checked" : ""}>
+          <span></span><img src="${escapeHtml(item.img || "icons/svg/item-bag.svg")}" alt="">
+          <strong>${escapeHtml(item.name)}</strong>
+        </label>`;
+      }).join("") || `<p class="symbaroum-hud-equipment-unavailable">${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Equipment.NoMatchingItems")}</p>`}</div>
+    </section>`);
   }
   if (combinationGrant) {
-    return `<fieldset class="symbaroum-hud-creator-shop-choice">
-      <legend><i class="fa-solid fa-gift" aria-hidden="true"></i>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Equipment.NoAbilityGrantLead")}</legend>
+    sections.push(`<section class="symbaroum-hud-creator-shop-choice" role="radiogroup" aria-label="${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Equipment.NoAbilityGrantLead")}">
+      <h3><i class="fa-solid fa-gift" aria-hidden="true"></i>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Equipment.NoAbilityGrantLead")}</h3>
       <div>${combinations.map(({ combination, resolved }) => {
         const extra = resolved?.items?.map(({ item, quantity = 1 }) => equipmentShopItemPayload(
           item, quantity, equipmentGrantReason(combinationGrant), true
@@ -3180,15 +3885,24 @@ function equipmentShopChoiceContent({ marksmanGrant, marksmanChoices, combinatio
           <span></span><strong>${localizeEscaped(`SYMBAROUMHUD.CharacterCreator.Equipment.${combination.label}`)}</strong>
         </label>`;
       }).join("")}</div>
-    </fieldset>`;
+    </section>`);
   }
-  return "";
+  return sections.join("");
 }
 
 function equipmentBookContent(actor, grants, equipment, campingEquipment) {
   const creatorState = creatorStepViewState(actor, "equipment");
   const savedEquipment = Array.isArray(creatorState.equipment) ? creatorState.equipment : [];
-  const savedCombination = (category) => savedEquipment.find((entry) => entry.category === category)?.combination ?? "";
+  const savedCombination = (grantOrCategory) => {
+    if (typeof grantOrCategory === "string") {
+      return savedEquipment.find((entry) => entry.category === grantOrCategory)?.combination ?? "";
+    }
+    return savedEquipment.find((entry) => entry.ability === grantOrCategory?.ability
+      && entry.grantId === grantOrCategory?.grantId)?.combination
+      ?? savedEquipment.find((entry) => entry.ability === grantOrCategory?.ability
+        && entry.category === grantOrCategory?.category)?.combination
+      ?? "";
+  };
   const experience = creationExperienceTotal(actor);
   const baseThaler = startingThalerForExperience(experience);
   const privilegedThaler = privilegedStartingThaler(actor);
@@ -3205,9 +3919,14 @@ function equipmentBookContent(actor, grants, equipment, campingEquipment) {
   const combinationGrant = grants.find((grant) => grant.category === "starting-combination");
   const lightArmorGrant = grants.find((grant) => grant.category === "light-armor" && grant.source === "basic");
   const lightArmor = lightArmorGrant ? findGenericEquipment(equipment, "light-armor") : null;
+  const itemChoiceGrants = abilityGrants.filter((grant) => grant.category === "item-choice");
   const abilityItems = abilityGrants
-    .filter((grant) => grant.category !== "marksman-choice")
-    .map((grant) => ({ grant, item: findGenericEquipment(equipment, grant.category) }));
+    .filter((grant) => !["marksman-choice", "item-choice"].includes(grant.category))
+    .map((grant) => ({ grant, item: findEquipmentForGrant(equipment, grant) }));
+  const abilityChoices = itemChoiceGrants.map((grant) => ({
+    grant,
+    candidates: equipmentChoiceCandidates(equipment, grant)
+  }));
   const marksmanGrant = abilityGrants.find((grant) => grant.category === "marksman-choice");
   const marksmanChoices = marksmanGrant ? ["crossbow", "bow"].map((choice) => ({
     choice,
@@ -3238,10 +3957,11 @@ function equipmentBookContent(actor, grants, equipment, campingEquipment) {
     ? creatorState.equipmentShopCart.filter((line) => shopItems.some((item) => item.id === line.itemId))
     : [];
   const choices = equipmentShopChoiceContent({
-    marksmanGrant, marksmanChoices, combinationGrant, combinations, savedCombination
+    marksmanGrant, marksmanChoices, abilityChoices, combinationGrant, combinations, savedCombination
   });
   const automaticReady = Boolean(campItem)
     && abilityItems.every(({ item }) => Boolean(item))
+    && abilityChoices.every(({ candidates }) => candidates.length > 0)
     && (!marksmanGrant || marksmanChoices.some(({ resolved }) => Boolean(resolved)))
     && (!lightArmorGrant || Boolean(lightArmor));
 
@@ -3254,15 +3974,33 @@ function equipmentBookContent(actor, grants, equipment, campingEquipment) {
         <p>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Guide.StepSixText")}</p></div>
     </header>
     <input type="hidden" name="equipmentShopCart" value="${escapeHtml(JSON.stringify(savedCart))}" data-equipment-shop-cart>
-    <div class="symbaroum-hud-browser-shell symbaroum-hud-creator-equipment-shop" data-browser-mode="shop">
+    <section class="symbaroum-hud-equipment-choice-stage symbaroum-hud-initial-equipment-choice"
+      data-equipment-choice-stage${choices ? "" : " hidden"}>
+      <header><i class="fa-solid fa-shield-halved" aria-hidden="true"></i><div>
+        <h2>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Equipment.InitialChoiceTitle")}</h2>
+        <p>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Equipment.ChoiceStageText")}</p>
+      </div></header>
+      <div class="symbaroum-hud-equipment-choice-stage-options">${choices}</div>
+      <footer><button type="button" data-equipment-choice-continue>
+        <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
+        ${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Equipment.ContinueToShop")}
+      </button></footer>
+    </section>
+    <div class="symbaroum-hud-browser-shell symbaroum-hud-creator-equipment-shop" data-browser-mode="shop"
+      data-equipment-shop-stage${choices ? " hidden" : ""}>
       <header class="symbaroum-hud-browser-heading">
         <div><i class="fa-solid fa-shop" aria-hidden="true"></i><span>
           <strong>${localizeEscaped("SYMBAROUMHUD.CompendiumBrowser.Shop.Title")}</strong>
           <small>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Equipment.ShopSubtitle")}</small>
         </span></div>
-        <button type="button" data-equipment-rules-toggle title="${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Equipment.ShowRules")}">
-          <i class="fa-solid fa-book-open" aria-hidden="true"></i>
-        </button>
+        <span class="symbaroum-hud-browser-heading-actions symbaroum-hud-equipment-shop-heading-actions">
+          ${choices ? `<button type="button" data-equipment-choice-review title="${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Equipment.ReviewInitialChoices")}">
+            <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
+          </button>` : ""}
+          <button type="button" data-equipment-rules-toggle title="${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Equipment.ShowRules")}">
+            <i class="fa-solid fa-book-open" aria-hidden="true"></i>
+          </button>
+        </span>
       </header>
       <nav class="symbaroum-hud-browser-tabs" aria-label="${localizeEscaped("SYMBAROUMHUD.CompendiumBrowser.CategoriesLabel")}">
         ${[
@@ -3315,7 +4053,6 @@ function equipmentBookContent(actor, grants, equipment, campingEquipment) {
             <p>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Equipment.OfficialIntroductionBeforeCamp")}${campItem ? escapeHtml(campItem.name) : localizeEscaped("SYMBAROUMHUD.CharacterCreator.Equipment.CampingMissing")}${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Equipment.OfficialIntroductionAfterCamp")}</p>
             <p>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Equipment.StartingRulesArmor")}</p>
           </section>
-          ${choices}
         </div>
         <ol>${shopItems.map((item) => equipmentShopEntryContent(item, characterCreatorOriginIndex)).join("")}
           <li class="symbaroum-hud-browser-empty" data-equipment-shop-empty hidden><i class="fa-solid fa-store-slash" aria-hidden="true"></i><strong>${localizeEscaped("SYMBAROUMHUD.CompendiumBrowser.Shop.Empty")}</strong></li>
@@ -3330,6 +4067,11 @@ function bindEquipmentBook(element, actor) {
   const choices = Array.from(element.querySelectorAll("[data-equipment-grant]"));
   const groups = [...new Set(choices.map((choice) => choice.name))];
   const confirm = element.querySelector('[data-action="choose-equipment"]');
+  const formFooter = confirm?.closest(".form-footer");
+  const choiceStage = element.querySelector("[data-equipment-choice-stage]");
+  const shopStage = element.querySelector("[data-equipment-shop-stage]");
+  const continueToShop = element.querySelector("[data-equipment-choice-continue]");
+  const reviewChoices = element.querySelector("[data-equipment-choice-review]");
   const cartField = element.querySelector("[data-equipment-shop-cart]");
   const cartItems = element.querySelector("[data-equipment-cart-items]");
   const startingBalance = Number(book?.dataset.startingBalance) || 0;
@@ -3348,9 +4090,17 @@ function bindEquipmentBook(element, actor) {
     quantity: Math.max(1, Number(line.quantity) || 1)
   }]));
   let activeCategory = "all";
-  let choosingInitialEquipment = false;
+  let showingChoiceStage = groups.length > 0;
 
   const entryFor = (itemId) => element.querySelector(`[data-equipment-shop-entry][data-item-id="${globalThis.CSS?.escape?.(itemId) ?? itemId}"]`);
+  // Older creator drafts may contain an incomplete ranged-price line created
+  // when its price dialog was cancelled. Drop it before totals are calculated
+  // so a defensive MAX_SAFE_INTEGER value can never leak into the visible cart.
+  for (const [itemId, line] of paidCart) {
+    const entry = entryFor(itemId);
+    const selectedPrice = selectShopPrice(parseShopPrice(entry?.dataset.itemPrice), line.amount);
+    if (!entry || !selectedPrice) paidCart.delete(itemId);
+  }
   const selectedFree = () => choices.filter((choice) => choice.checked)
     .flatMap((choice) => parseJson(choice.dataset.freeCart));
   const paidTotal = () => [...paidCart.values()].reduce((total, line) => {
@@ -3361,6 +4111,16 @@ function bindEquipmentBook(element, actor) {
   }, 0);
   const saveCart = () => {
     if (cartField) cartField.value = JSON.stringify([...paidCart.values()]);
+  };
+  const allChoicesSelected = () => groups.every((name) => choices.some(
+    (choice) => choice.name === name && choice.checked
+  ));
+  const showStage = (stage) => {
+    showingChoiceStage = stage === "choices" && groups.length > 0;
+    if (choiceStage) choiceStage.hidden = !showingChoiceStage;
+    if (shopStage) shopStage.hidden = showingChoiceStage;
+    if (confirm) confirm.hidden = showingChoiceStage;
+    if (formFooter) formFooter.hidden = showingChoiceStage;
   };
   const paidCartLineContent = (line) => {
     const entry = entryFor(line.itemId);
@@ -3418,27 +4178,20 @@ function bindEquipmentBook(element, actor) {
       }
     }
     saveCart();
-    if (confirm) confirm.disabled = book?.dataset.campingReady !== "true"
-      || book?.dataset.equipmentReady !== "true"
-      || total > startingBalance;
+    const equipmentReady = book?.dataset.campingReady === "true"
+      && book?.dataset.equipmentReady === "true"
+      && allChoicesSelected();
+    if (continueToShop) continueToShop.disabled = !equipmentReady;
+    if (confirm) confirm.disabled = !equipmentReady || total > startingBalance;
   };
-  confirm?.addEventListener("click", (event) => {
-    const missingGroup = groups.find((name) => !choices.some((choice) => choice.name === name && choice.checked));
-    if (!missingGroup) return;
-    event.preventDefault();
-    event.stopImmediatePropagation();
-    if (choosingInitialEquipment) return;
-    const missingChoice = choices.find((choice) => choice.name === missingGroup);
-    const fieldset = missingChoice?.closest(".symbaroum-hud-creator-shop-choice");
-    choosingInitialEquipment = true;
-    void promptInitialEquipmentChoice(fieldset, missingGroup).then((value) => {
-      if (!value) return;
-      const selected = choices.find((choice) => choice.name === missingGroup && choice.value === value);
-      if (!selected) return;
-      selected.checked = true;
-      selected.dispatchEvent(new Event("change", { bubbles: true }));
-      globalThis.setTimeout(() => confirm.click(), 0);
-    }).finally(() => { choosingInitialEquipment = false; });
+  continueToShop?.addEventListener("click", () => {
+    if (continueToShop.disabled || !allChoicesSelected()) return;
+    showStage("shop");
+    refresh();
+  });
+  reviewChoices?.addEventListener("click", () => {
+    showStage("choices");
+    refresh();
   });
   for (const choice of choices) choice.addEventListener("change", refresh);
   for (const button of element.querySelectorAll("[data-open-equipment-item]")) button.addEventListener("click", () => {
@@ -3473,6 +4226,7 @@ function bindEquipmentBook(element, actor) {
         rejectClose: false
       });
     }
+    selected = normalizeEquipmentShopPriceSelection(parsed, selected);
     if (!selected) return;
     if (paidTotal() + selected.ortegs > startingBalance) {
       ui.notifications?.warn(game.i18n.localize("SYMBAROUMHUD.CompendiumBrowser.Shop.Insufficient"));
@@ -3554,59 +4308,15 @@ function bindEquipmentBook(element, actor) {
     const rules = element.querySelector(".symbaroum-hud-creator-shop-rules");
     if (rules) rules.hidden = !rules.hidden;
   });
+  showStage(showingChoiceStage ? "choices" : "shop");
   refresh();
   applyFilters();
   globalThis.setTimeout(refresh, 0);
 }
 
-async function promptInitialEquipmentChoice(fieldset, groupName) {
-  if (!fieldset || !groupName) return null;
-  const DialogV2 = dialogClass();
-  if (!DialogV2) return null;
-  const choice = fieldset.cloneNode(true);
-  choice.removeAttribute("data-attention");
-  for (const input of choice.querySelectorAll("input")) input.checked = false;
-  return DialogV2.wait({
-    classes: [
-      "symbaroum-hud-character-creator-dialog",
-      "symbaroum-hud-initial-equipment-dialog"
-    ],
-    window: {
-      title: game.i18n.localize("SYMBAROUMHUD.CharacterCreator.Equipment.InitialChoiceTitle")
-    },
-    position: { width: 700 },
-    content: `<div class="symbaroum-hud-initial-equipment-choice">
-      <header><i class="fa-solid fa-shield-halved" aria-hidden="true"></i><div>
-        <h2>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Equipment.InitialChoiceTitle")}</h2>
-        <p>${localizeEscaped(groupName.includes("marksman")
-          ? "SYMBAROUMHUD.CharacterCreator.Equipment.MarksmanRequired"
-          : "SYMBAROUMHUD.CharacterCreator.Equipment.StartingRulesWeapons")}</p>
-      </div></header>
-      <p>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Equipment.StartingChoiceHint")}</p>
-      ${choice.outerHTML}
-    </div>`,
-    buttons: [{
-      action: "choose",
-      icon: "fa-solid fa-check",
-      label: game.i18n.localize("SYMBAROUMHUD.CharacterCreator.Equipment.ConfirmInitialChoice"),
-      default: true,
-      callback: (_event, button) => formValue(button.form, groupName) || null
-    }, {
-      action: "cancel",
-      label: game.i18n.localize("Cancel"),
-      callback: () => null
-    }],
-    rejectClose: false,
-    render: (_event, dialog) => {
-      const inputs = Array.from(dialog.element?.querySelectorAll(`input[name="${globalThis.CSS?.escape?.(groupName) ?? groupName}"]`) ?? []);
-      const confirmChoice = dialog.element?.querySelector('[data-action="choose"]');
-      const refreshChoice = () => {
-        if (confirmChoice) confirmChoice.disabled = !inputs.some((input) => input.checked);
-      };
-      for (const input of inputs) input.addEventListener("change", refreshChoice);
-      refreshChoice();
-    }
-  });
+export function normalizeEquipmentShopPriceSelection(price, selection) {
+  if (!price || !selection || typeof selection !== "object") return null;
+  return selectShopPrice(price, selection.amount);
 }
 
 function personalityBookContent(actor) {
@@ -3685,13 +4395,11 @@ function personalityBookContent(actor) {
 function contactsBiographyContent(saved = {}) {
   return `
     <section class="symbaroum-hud-personality-contacts symbaroum-hud-contacts-page">
-      <header><span>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Contacts.TraitLabel")}</span>
+      <header class="symbaroum-hud-personality-contacts-header">
         <h2><i class="fa-solid fa-address-book" aria-hidden="true"></i>
-          ${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Contacts.WhoAreThey")}</h2></header>
-      <p class="symbaroum-hud-personality-contacts-introduction">
-        ${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Contacts.Introduction")}
-      </p>
-      <blockquote>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Contacts.Limits")}</blockquote>
+          ${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Contacts.WhoAreThey")}</h2>
+        <p>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Contacts.QuickHint")}</p>
+      </header>
       ${contactsFieldsContent(saved)}
     </section>`;
 }
@@ -3799,18 +4507,29 @@ async function renderCreationAbilitySheet(ability) {
   return renderEmbeddedItemSheet(ability);
 }
 
-async function mysticalPowerChoiceContent(ability, mysticalPowers, costs, originIndex, sourceId) {
+async function mysticalPowerChoiceContent(ability, mysticalPowers, costs, originIndex, sourceId, {
+  enforceProfessionRules = true,
+  occupationRecommendation = null
+} = {}) {
   if (!mysticalPowers.length) {
     return `<p class="symbaroum-hud-ability-special-empty">${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.NoMysticalPowers")}</p>`;
   }
-  const cards = await Promise.all(mysticalPowers.map(async (power, choiceOrder) => {
+  const recommendationOrder = occupationChoiceRecommendationOrder(occupationRecommendation?.mysticalPowers);
+  const orderedPowers = orderOccupationRecommendedChoices(mysticalPowers, recommendationOrder);
+  const cards = await Promise.all(orderedPowers.map(async (power, choiceOrder) => {
     const origin = resolveContentOrigin(power, { index: originIndex, sourceId });
     const identities = choiceIdentities(power);
+    const occupationRecommended = occupationChoiceRecommendationIndex(power, recommendationOrder) < Number.MAX_SAFE_INTEGER;
+    const professionRules = enforceProfessionRules ? professionExclusiveItemRules(power) : [];
+    const professionNames = professionRules.map((rule) => rule.name).join(", ");
     return `
       <article class="symbaroum-hud-ability-special-card" data-mystical-power-choice="${escapeHtml(power.id)}"
         data-creation-choice-origin="${escapeHtml(origin)}" data-creation-choice-source="${escapeHtml(sourceId)}"
         data-creation-choice-identities="${escapeHtml(identities.join(" "))}"
-        data-choice-default-order="${choiceOrder}" data-tradition-recommended="false">
+        data-mystical-power-search-value="${escapeHtml(normalizeName(`${power.name} ${power.system?.reference ?? ""}`))}"
+        data-choice-default-order="${choiceOrder}" data-tradition-recommended="false"
+        data-occupation-choice-recommended="${occupationRecommended}"
+        ${professionRules.length ? `data-profession-restricted-choice="${escapeHtml(professionRules.map((rule) => rule.id).join(" "))}"` : ""}>
         <header>
           <img src="${escapeHtml(power.img || "icons/svg/daze.svg")}" alt="">
           <div><button type="button" class="symbaroum-hud-ability-special-open"
@@ -3819,14 +4538,20 @@ async function mysticalPowerChoiceContent(ability, mysticalPowers, costs, origin
             <h4>${escapeHtml(power.name)}</h4>
           </button>
           ${power.system?.reference ? `<small>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.Reference")}: ${escapeHtml(power.system.reference)}</small>` : ""}
+          ${occupationRecommended ? `<small class="symbaroum-hud-tradition-recommendation" data-occupation-choice-recommendation>
+            <i class="fa-solid fa-compass" aria-hidden="true"></i><span>${escapeHtml(occupationRecommendation.name)}</span>
+          </small>` : ""}
           <small class="symbaroum-hud-tradition-recommendation" data-tradition-choice-recommendation hidden>
             <i class="fa-solid fa-hat-wizard" aria-hidden="true"></i><span></span>
-          </small></div>
+          </small>
+          ${professionRules.length ? `<small class="symbaroum-hud-advanced-rule-tag" data-locked="true">
+            <i class="fa-solid fa-lock" aria-hidden="true"></i>${escapeHtml(professionNames)}</small>` : ""}</div>
         </header>
         <div class="symbaroum-hud-ability-special-ranks">
           ${["novice", "adept", "master"].map((rank) => `
             <button type="button" data-select-ability="${escapeHtml(ability.id)}"
-              data-choice-type="mysticalPower" data-choice-id="${escapeHtml(power.id)}" data-rank="${rank}">
+              data-choice-type="mysticalPower" data-choice-id="${escapeHtml(power.id)}" data-rank="${rank}"
+              ${professionRules.length ? `data-profession-restricted="${escapeHtml(professionRules.map((rule) => rule.id).join(" "))}"` : ""}>
               <i class="fa-regular fa-circle" aria-hidden="true"></i>
               <span>${localizeEscaped(`SYMBAROUMHUD.CharacterCreator.Abilities.${rank[0].toUpperCase()}${rank.slice(1)}`)}</span>
               <small>${abilityRankCost(rank, costs)} XP</small>
@@ -3838,6 +4563,15 @@ async function mysticalPowerChoiceContent(ability, mysticalPowers, costs, origin
     <section class="symbaroum-hud-ability-special-picker symbaroum-hud-mystical-power-picker">
       <header><div><h3>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.ChooseMysticalPower")}</h3>
         <p>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.MysticalPowerChoiceIntro")}</p></div></header>
+      <label class="symbaroum-hud-ability-special-search">
+        <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+        <input type="search" data-mystical-power-search
+          placeholder="${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.SearchMysticalPowers")}">
+        <button type="button" data-clear-mystical-power-search
+          aria-label="${localizeEscaped("SYMBAROUMHUD.CompendiumBrowser.ClearSearch")}">
+          <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+        </button>
+      </label>
       <div class="symbaroum-hud-ability-special-list">${cards.join("")}</div>
       <p class="symbaroum-hud-ability-special-empty" data-mystical-power-filter-empty hidden>
         ${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.NoFilteredMysticalPowers")}
@@ -3845,16 +4579,26 @@ async function mysticalPowerChoiceContent(ability, mysticalPowers, costs, origin
     </section>`;
 }
 
-async function ritualChoiceContent(ability, rituals, originIndex, sourceId) {
-  const cards = rituals.map((ritual, choiceOrder) => {
+async function ritualChoiceContent(ability, rituals, originIndex, sourceId, {
+  enforceProfessionRules = true,
+  occupationRecommendation = null
+} = {}) {
+  const recommendationOrder = occupationChoiceRecommendationOrder(occupationRecommendation?.rituals);
+  const orderedRituals = orderOccupationRecommendedChoices(rituals, recommendationOrder);
+  const cards = orderedRituals.map((ritual, choiceOrder) => {
     const origin = resolveContentOrigin(ritual, { index: originIndex, sourceId });
     const identities = choiceIdentities(ritual);
+    const occupationRecommended = occupationChoiceRecommendationIndex(ritual, recommendationOrder) < Number.MAX_SAFE_INTEGER;
+    const professionRules = enforceProfessionRules ? professionExclusiveItemRules(ritual) : [];
+    const professionNames = professionRules.map((rule) => rule.name).join(", ");
     return `
       <article class="symbaroum-hud-ability-special-card symbaroum-hud-ritual-choice-card"
         data-ritual-choice="${escapeHtml(ritual.id)}"
         data-creation-choice-origin="${escapeHtml(origin)}" data-creation-choice-source="${escapeHtml(sourceId)}"
         data-creation-choice-identities="${escapeHtml(identities.join(" "))}"
-        data-choice-default-order="${choiceOrder}" data-tradition-recommended="false">
+        data-choice-default-order="${choiceOrder}" data-tradition-recommended="false"
+        data-occupation-choice-recommended="${occupationRecommended}"
+        ${professionRules.length ? `data-profession-restricted-choice="${escapeHtml(professionRules.map((rule) => rule.id).join(" "))}"` : ""}>
         <header>
           <img src="${escapeHtml(ritual.img || "icons/svg/book.svg")}" alt="">
           <div><button type="button" class="symbaroum-hud-ability-special-open"
@@ -3863,12 +4607,18 @@ async function ritualChoiceContent(ability, rituals, originIndex, sourceId) {
             <h4>${escapeHtml(ritual.name)}</h4>
           </button>
           ${ritual.system?.reference ? `<small>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.Reference")}: ${escapeHtml(ritual.system.reference)}</small>` : ""}
+          ${occupationRecommended ? `<small class="symbaroum-hud-tradition-recommendation" data-occupation-choice-recommendation>
+            <i class="fa-solid fa-compass" aria-hidden="true"></i><span>${escapeHtml(occupationRecommendation.name)}</span>
+          </small>` : ""}
           <small class="symbaroum-hud-tradition-recommendation" data-tradition-choice-recommendation hidden>
             <i class="fa-solid fa-hat-wizard" aria-hidden="true"></i><span></span>
-          </small></div>
+          </small>
+          ${professionRules.length ? `<small class="symbaroum-hud-advanced-rule-tag" data-locked="true">
+            <i class="fa-solid fa-lock" aria-hidden="true"></i>${escapeHtml(professionNames)}</small>` : ""}</div>
           <button type="button" class="symbaroum-hud-ritual-select"
             data-select-ritual="${escapeHtml(ritual.id)}"
             data-ritualist-ability="${escapeHtml(ability.id)}" aria-pressed="false" disabled
+            ${professionRules.length ? `data-profession-restricted="${escapeHtml(professionRules.map((rule) => rule.id).join(" "))}"` : ""}
             title="${formatEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.SelectRitual", { name: ritual.name })}">
             <i class="fa-regular fa-square" aria-hidden="true"></i>
             <span>${localizeEscaped("SYMBAROUMHUD.CharacterCreator.Abilities.SelectRitualLabel")}</span>
@@ -3891,18 +4641,40 @@ async function ritualChoiceContent(ability, rituals, originIndex, sourceId) {
     </section>`;
 }
 
-function bindAbilitiesBook(element, racialCost, {
+function occupationChoiceRecommendationOrder(labels = []) {
+  return new Map((labels ?? []).map((label, index) => [normalizeName(label), index]));
+}
+
+function occupationChoiceRecommendationIndex(item, recommendationOrder) {
+  const matches = choiceIdentities(item)
+    .filter((identity) => recommendationOrder.has(identity))
+    .map((identity) => recommendationOrder.get(identity));
+  return matches.length ? Math.min(...matches) : Number.MAX_SAFE_INTEGER;
+}
+
+function orderOccupationRecommendedChoices(items, recommendationOrder) {
+  return [...items].sort((left, right) => {
+    const difference = occupationChoiceRecommendationIndex(left, recommendationOrder)
+      - occupationChoiceRecommendationIndex(right, recommendationOrder);
+    return Number.isNaN(difference) || difference === 0 ? 0 : difference;
+  });
+}
+
+function bindAbilitiesBook(element, actor, racialCost, {
   confirmAction = "choose-abilities",
-  requireSelection = false
+  requireSelection = false,
+  enforceAdvancedRules = true
 } = {}) {
   const modeInput = element.querySelector('input[name="abilityDistributionMode"]');
   const selectionsInput = element.querySelector('input[name="abilitySelections"]');
+  const advancedTraitsInput = element.querySelector('input[name="advancedTraitSelections"]');
   const experienceInput = element.querySelector('input[name="abilityExperienceBudget"]');
   const costs = abilityExperienceCosts();
   const entries = [...element.querySelectorAll("[data-creation-ability-id]")];
   const pages = [...element.querySelectorAll("[data-creation-ability-page]")];
   const specialChoiceCards = [...element.querySelectorAll("[data-creation-choice-identities]")];
   const selections = new Map();
+  const advancedTraitSelections = new Map(parseAdvancedTraitSelections(advancedTraitsInput?.value).map((selection) => [selection.id, selection]));
   const selectionKey = (id, choiceId = "") => choiceId ? `${id}:${choiceId}` : id;
   for (const selection of parseAbilitySelections(selectionsInput?.value ?? "[]")) {
     selections.set(selectionKey(selection.id, selection.choiceId), selection);
@@ -3917,6 +4689,7 @@ function bindAbilitiesBook(element, racialCost, {
   }
   const selectionValues = (source = selections) => [...source.values()];
   const updateTraditionRecommendations = (values) => {
+    const selectedAbilityIds = new Set(values.map((selection) => selection.id));
     const traditions = [];
     const seen = new Set();
     for (const selection of values) {
@@ -3945,9 +4718,11 @@ function bindAbilitiesBook(element, racialCost, {
       [...entries].sort((left, right) => {
         const priority = (entry) => entry.dataset.occupationRecommended === "true"
           ? 0
-          : entry.dataset.traditionRecommended === "true"
+          : selectedAbilityIds.has(entry.dataset.creationAbilityId)
             ? 1
-            : 2;
+            : entry.dataset.traditionRecommended === "true"
+              ? 2
+              : 3;
         const priorityDifference = priority(left) - priority(right);
         if (priorityDifference) return priorityDifference;
         return Number(left.closest("[data-ability-default-order]")?.dataset.abilityDefaultOrder ?? 0)
@@ -3969,6 +4744,9 @@ function bindAbilitiesBook(element, racialCost, {
     }
     for (const list of element.querySelectorAll(".symbaroum-hud-ability-special-list")) {
       [...list.querySelectorAll("[data-choice-default-order]")].sort((left, right) => {
+        const occupationDifference = Number(right.dataset.occupationChoiceRecommended === "true")
+          - Number(left.dataset.occupationChoiceRecommended === "true");
+        if (occupationDifference) return occupationDifference;
         const recommendationDifference = Number(right.dataset.traditionRecommended === "true")
           - Number(left.dataset.traditionRecommended === "true");
         if (recommendationDifference) return recommendationDifference;
@@ -4023,12 +4801,23 @@ function bindAbilitiesBook(element, racialCost, {
     const limits = abilitySelectionLimits(mode, racialCost);
     const counts = { novice: 0, adept: 0, master: 0 };
     const values = selectionValues();
+    const advancedValues = [...advancedTraitSelections.values()];
+    const advancedTraitCost = advancedTraitExperienceCost(advancedValues);
+    if (advancedTraitsInput) advancedTraitsInput.value = JSON.stringify(advancedValues);
+    const archetypeProgress = new Map();
+    for (const ruleButton of element.querySelectorAll("[data-archetypal-rule]")) {
+      const ability = availableWorldItem(ruleButton.dataset.selectAbility);
+      const rule = archetypalAbilityRule(ability);
+      if (rule && !archetypeProgress.has(rule.id)) {
+        archetypeProgress.set(rule.id, advancedArchetypeAbilityCount(actor, values, rule));
+      }
+    }
     updateTraditionRecommendations(values);
     for (const selection of values) counts[selection.rank]++;
     selectionsInput.value = JSON.stringify(values);
     const experienceMode = mode === ABILITY_DISTRIBUTION_MODES.EXPERIENCE;
     const budget = Math.max(0, Number(experienceInput?.value) || 0);
-    const spent = abilitySelectionCost(values, costs) + racialCost * abilityRankCost("novice", costs);
+    const spent = abilitySelectionCost(values, costs) + racialCost * abilityRankCost("novice", costs) + advancedTraitCost;
     const experiencePanel = element.querySelector("[data-ability-experience-panel]");
     const slotsPanel = element.querySelector(".symbaroum-hud-ability-slots");
     if (experiencePanel) experiencePanel.hidden = !experienceMode;
@@ -4064,7 +4853,57 @@ function bindAbilitiesBook(element, racialCost, {
       button.hidden = experienceMode
         ? false
         : button.dataset.rank === "master" || (button.dataset.rank === "adept" && limits.adept === 0);
+      const required = Number(button.dataset.archetypalMinimum) || 0;
+      const progress = button.dataset.archetypalRule
+        ? (archetypeProgress.get(button.dataset.archetypalRule) ?? 0)
+        : required;
+      const professionRestricted = Boolean(button.dataset.professionRestricted);
+      button.disabled = professionRestricted || (!active && required > 0 && progress < required);
+      if (professionRestricted) {
+        button.title = game.i18n.localize("SYMBAROUMHUD.CharacterCreator.Abilities.ProfessionAbilityLocked");
+      } else if (required > 0 && progress < required) {
+        button.title = game.i18n.format?.("SYMBAROUMHUD.CharacterCreator.Abilities.ArchetypeRequirementProgress", {
+          current: progress, count: required
+        }) ?? `${progress}/${required}`;
+      } else button.removeAttribute("title");
       button.querySelector("i").className = active ? "fa-solid fa-circle-check" : "fa-regular fa-circle";
+    }
+    const benefitCounts = { boon: 0, burden: 0 };
+    for (const selection of advancedValues) benefitCounts[selection.type]++;
+    for (const type of ["boon", "burden"]) {
+      const count = element.querySelector(`[data-advanced-trait-count="${type}"]`);
+      if (count) count.textContent = String(benefitCounts[type]);
+    }
+    const balance = element.querySelector("[data-advanced-trait-balance]");
+    if (balance) {
+      balance.textContent = advancedTraitCost === 0
+        ? "0 XP"
+        : `${advancedTraitCost > 0 ? "−" : "+"}${Math.abs(advancedTraitCost)} XP`;
+      balance.dataset.bonus = String(advancedTraitCost < 0);
+    }
+    for (const input of element.querySelectorAll("[data-advanced-trait-choice]")) {
+      const active = advancedTraitSelections.has(input.value);
+      const type = input.dataset.advancedTraitType;
+      const maximum = type === "boon" ? 3 : 2;
+      const professionRestricted = Boolean(input.dataset.professionRestricted);
+      input.checked = active;
+      input.disabled = professionRestricted || (!active && benefitCounts[type] >= maximum);
+      const icon = input.closest("label")?.querySelector("i");
+      if (icon) icon.className = active ? "fa-solid fa-square-check" : "fa-regular fa-square";
+      input.closest("[data-advanced-trait-entry]")?.setAttribute("data-selected", String(active));
+    }
+    for (const notice of element.querySelectorAll("[data-archetype-rule-notice]")) {
+      const page = notice.closest("[data-archetypal-ability-page]");
+      const id = page?.dataset.archetypalAbilityPage;
+      const current = archetypeProgress.get(id) ?? 0;
+      const ruleButton = element.querySelector(`[data-archetypal-rule="${id}"]`);
+      const required = Number(ruleButton?.dataset.archetypalMinimum) || 3;
+      notice.dataset.complete = String(current >= required);
+      const text = notice.querySelector("span");
+      if (text) text.textContent = game.i18n.format?.(
+        "SYMBAROUMHUD.CharacterCreator.Abilities.ArchetypeRequirementProgress",
+        { current, count: required }
+      ) ?? `${current}/${required}`;
     }
     for (const picker of element.querySelectorAll("[data-ritual-picker]")) {
       const selection = selections.get(picker.dataset.ritualPicker);
@@ -4074,9 +4913,13 @@ function bindAbilitiesBook(element, racialCost, {
       picker.querySelector("[data-ritual-required]").textContent = String(required);
       for (const button of picker.querySelectorAll("[data-select-ritual]")) {
         const active = chosen.has(button.dataset.selectRitual);
+        const professionRestricted = Boolean(button.dataset.professionRestricted);
         button.dataset.selected = String(active);
         button.setAttribute("aria-pressed", String(active));
-        button.disabled = !selection || (!active && chosen.size >= required);
+        button.disabled = professionRestricted || !selection || (!active && chosen.size >= required);
+        if (professionRestricted) {
+          button.title = game.i18n.localize("SYMBAROUMHUD.CharacterCreator.Abilities.ProfessionChoiceLocked");
+        }
         button.querySelector("i").className = active ? "fa-solid fa-square-check" : "fa-regular fa-square";
       }
     }
@@ -4089,9 +4932,16 @@ function bindAbilitiesBook(element, racialCost, {
     });
     const confirm = element.querySelector(`[data-action="${confirmAction}"]`);
     if (confirm) confirm.disabled = (requireSelection && !values.length)
-      || !specialChoicesComplete || !isValidAbilitySelection(
+      || !specialChoicesComplete
+      || (enforceAdvancedRules && !areAdvancedCreationAbilityRulesValid(actor, values, new Map(values.map((selection) => [
+        selection.id, availableWorldItem(selection.id)
+      ]))))
+      || !isValidAdvancedTraitSelection(advancedValues, [...element.querySelectorAll("[data-advanced-trait-choice]")].map((input) => ({
+        id: input.value, type: input.dataset.advancedTraitType
+      })))
+      || !isValidAbilitySelection(
       values, mode, racialCost,
-      { experienceBudget: budget, costs }
+      { experienceBudget: budget - advancedTraitCost, costs }
     );
   };
   for (const entry of entries) entry.addEventListener("click", () => openPage(entry.dataset.creationAbilityId));
@@ -4125,7 +4975,8 @@ function bindAbilitiesBook(element, racialCost, {
         candidates.set(key, candidate);
         const budget = Math.max(0, Number(experienceInput?.value) || 0);
         const spent = abilitySelectionCost(selectionValues(candidates), costs)
-          + racialCost * abilityRankCost("novice", costs);
+          + racialCost * abilityRankCost("novice", costs)
+          + advancedTraitExperienceCost([...advancedTraitSelections.values()]);
         if (spent > budget) {
           ui.notifications?.warn(game.i18n.localize("SYMBAROUMHUD.CharacterCreator.Abilities.NotEnoughExperience"));
           return;
@@ -4163,6 +5014,7 @@ function bindAbilitiesBook(element, racialCost, {
     refresh();
   });
   const search = element.querySelector("[data-ability-search]");
+  const mysticalPowerSearch = element.querySelector("[data-mystical-power-search]");
   const filterPanel = element.querySelector("[data-ability-filter-panel]");
   const filterToggle = element.querySelector("[data-toggle-ability-filter-panel]");
   const originFilters = [...element.querySelectorAll("[data-creation-browser-origin]")];
@@ -4189,9 +5041,14 @@ function bindAbilitiesBook(element, racialCost, {
     }
     let visibleMysticalPowers = 0;
     let visibleRituals = 0;
+    const mysticalPowerQuery = normalizeName(mysticalPowerSearch?.value);
     for (const card of specialChoiceCards) {
+      const matchesMysticalPowerSearch = !card.matches("[data-mystical-power-choice]")
+        || !mysticalPowerQuery
+        || String(card.dataset.mysticalPowerSearchValue ?? "").includes(mysticalPowerQuery);
       const visible = origins.has(card.dataset.creationChoiceOrigin)
-        && sources.has(card.dataset.creationChoiceSource);
+        && sources.has(card.dataset.creationChoiceSource)
+        && matchesMysticalPowerSearch;
       card.hidden = !visible;
       if (!visible) continue;
       if (card.matches("[data-mystical-power-choice]")) visibleMysticalPowers++;
@@ -4208,10 +5065,22 @@ function bindAbilitiesBook(element, racialCost, {
     if (!active) openPage(orderedEntries.find((entry) => !entry.hidden)?.dataset.creationAbilityId ?? "");
   };
   search?.addEventListener("input", refreshBrowserFilters);
+  mysticalPowerSearch?.addEventListener("input", refreshBrowserFilters);
   element.querySelector("[data-clear-ability-search]")?.addEventListener("click", () => {
     search.value = "";
     search.focus();
     refreshBrowserFilters();
+  });
+  element.querySelector("[data-clear-mystical-power-search]")?.addEventListener("click", () => {
+    mysticalPowerSearch.value = "";
+    mysticalPowerSearch.focus();
+    refreshBrowserFilters();
+  });
+  for (const input of element.querySelectorAll("[data-advanced-trait-choice]")) input.addEventListener("change", () => {
+    if (input.checked) {
+      advancedTraitSelections.set(input.value, { id: input.value, type: input.dataset.advancedTraitType });
+    } else advancedTraitSelections.delete(input.value);
+    refresh();
   });
   filterToggle?.addEventListener("click", () => setFilterPanelOpen(filterPanel?.hidden !== false));
   element.addEventListener("click", (event) => {
@@ -4309,6 +5178,72 @@ function creationAbilityData(source, rank) {
   return data;
 }
 
+function parseAdvancedTraitSelections(value) {
+  try {
+    const parsed = JSON.parse(value || "[]");
+    if (!Array.isArray(parsed)) return [];
+    const seen = new Set();
+    return parsed.map((entry) => ({
+      id: String(entry?.id ?? ""),
+      type: String(entry?.type ?? "")
+    })).filter((entry) => entry.id && ["boon", "burden"].includes(entry.type) && !seen.has(entry.id) && seen.add(entry.id));
+  } catch {
+    return [];
+  }
+}
+
+function advancedTraitExperienceCost(selections) {
+  return selections.reduce((total, selection) => total + (selection.type === "boon" ? 5 : -5), 0);
+}
+
+function isValidAdvancedTraitSelection(selections, available) {
+  const sources = new Map(available.map((item) => [item.id, item]));
+  const counts = { boon: 0, burden: 0 };
+  for (const selection of selections) {
+    const source = sources.get(selection.id);
+    if (!source || source.type !== selection.type || professionExclusiveItemRules(source).length) return false;
+    counts[selection.type]++;
+  }
+  return counts.boon <= 3 && counts.burden <= 2;
+}
+
+function areAdvancedCreationAbilityRulesValid(actor, selections, abilities, mysticalPowers = null, rituals = null) {
+  const archetype = String(actor?.getFlag?.(MODULE_ID, STATE_FLAG)?.archetype ?? "");
+  for (const selection of selections) {
+    const ability = abilities.get(selection.id);
+    if (!ability) return false;
+    if (professionAbilityRule(ability)) return false;
+    if (selection.kind === "mysticalPower") {
+      const power = mysticalPowers?.get?.(selection.choiceId) ?? availableWorldItem(selection.choiceId);
+      if (professionExclusiveItemRules(power).length) return false;
+    }
+    if (selection.kind === "ritualist") {
+      for (const id of selection.ritualIds ?? []) {
+        const ritual = rituals?.get?.(id) ?? availableWorldItem(id);
+        if (professionExclusiveItemRules(ritual).length) return false;
+      }
+    }
+    const rule = archetypalAbilityRule(ability);
+    if (!rule) continue;
+    if (rule.archetype !== archetype || advancedArchetypeAbilityCount(actor, selections, rule) < rule.minimum) {
+      return false;
+    }
+  }
+  return true;
+}
+
+function advancedArchetypeAbilityCount(actor, selections, rule) {
+  const counted = new Set();
+  for (const item of actorItems(actor)) {
+    if (item?.type === "ability" && countsTowardArchetype(item, rule)) counted.add(abilityIdentity(item));
+  }
+  for (const selection of selections) {
+    const source = availableWorldItem(selection.id);
+    if (source && countsTowardArchetype(source, rule)) counted.add(abilityIdentity(source));
+  }
+  return counted.size;
+}
+
 async function applyCreationAbilityDocuments(actor, documents) {
   const remaining = [...actorItems(actor)];
   const missing = [];
@@ -4375,16 +5310,23 @@ async function enrichCreatorDescription(value, relativeTo) {
 
 async function addRaceTrait(actor, trait) {
   if (!trait) return null;
-  const aliases = [game.i18n.localize(trait.name), ...trait.aliases].map(normalizeName);
-  const existing = actorItems(actor).find((item) => aliases.includes(normalizeName(item.name)));
+  const aliases = new Set(
+    [trait.id, game.i18n.localize(trait.name), ...trait.aliases].map(normalizeName).filter(Boolean)
+  );
+  const matches = (item) => [
+    item?.system?.reference,
+    item?.name,
+    item?.flags?.babele?.originalName
+  ].some((value) => aliases.has(normalizeName(value)));
+  const existing = actorItems(actor).find((item) => item?.type === trait.type && matches(item));
   if (existing) return { id: trait.id, created: false, item: existing };
   const source = Array.from(game.items?.values?.() ?? game.items ?? []).find((item) =>
-    ["trait", "boon", "burden"].includes(item.type) && aliases.includes(normalizeName(item.name))
+    item.type === trait.type && matches(item)
   );
   const clone = globalThis.foundry?.utils?.deepClone ?? ((value) => structuredClone(value));
   const data = source?.toObject ? clone(source.toObject()) : fallbackTraitData(trait);
   delete data._id;
-  if (data.type === "trait") {
+  if (["trait", "ability", "mysticalPower"].includes(data.type)) {
     data.system ??= {};
     data.system.novice ??= {};
     data.system.adept ??= {};
@@ -4398,7 +5340,7 @@ async function addRaceTrait(actor, trait) {
 }
 
 function fallbackTraitData(trait) {
-  const system = trait.type === "trait"
+  const system = ["trait", "ability", "mysticalPower"].includes(trait.type)
     ? {
         description: game.i18n.localize(trait.description), reference: trait.id,
         novice: { isActive: true, action: "", description: "" },
