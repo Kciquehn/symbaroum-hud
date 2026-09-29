@@ -7,6 +7,7 @@ import {
   canonicalTaxonomyCategoryId
 } from "../data/item-taxonomy-categories.mjs";
 import {
+  OFFICIAL_SHOP_PRESET_BY_ID,
   OFFICIAL_SHOP_PRESETS,
   officialShopDescription
 } from "../data/official-shop-presets.mjs";
@@ -290,8 +291,9 @@ export class SymbaroumCompendiumBrowser extends ApplicationV2 {
   #shopStockMode = false;
   #shopStockSection = "items";
   #shopGeneratorCategories = new Set();
-  #shopGeneratorSeed = "";
   #shopGeneratorReplace = true;
+  #shopDraftSavedStockPresetId = "";
+  #shopDraftStockPresetId = "";
   #shopView = "catalog";
 
   static DEFAULT_OPTIONS = {
@@ -440,6 +442,8 @@ export class SymbaroumCompendiumBrowser extends ApplicationV2 {
         instance.#shopDraftOpen = store.open;
         instance.#shopDraftSavedCategories = [...(store.categories ?? [])];
         instance.#shopDraftCategories = [...(store.categories ?? [])];
+        instance.#shopDraftSavedStockPresetId = store.stockPresetId ?? "";
+        instance.#shopDraftStockPresetId = store.stockPresetId ?? "";
         instance.#shopDraftSavedStock = cloneShopStock(store.stock);
         instance.#shopDraftStock = cloneShopStock(store.stock);
       }
@@ -707,6 +711,13 @@ export class SymbaroumCompendiumBrowser extends ApplicationV2 {
             services: this.#shopStockSection === "services"
           },
           generator: {
+            presets: OFFICIAL_SHOP_PRESETS.map((preset) => ({
+              id: preset.id,
+              name: preset.name,
+              location: preset.location,
+              selected: preset.id === this.#shopDraftStockPresetId
+            })),
+            official: Boolean(this.#shopDraftStockPresetId),
             categories: SHOP_STOCK_GENERATOR_CATEGORIES.map((category) => ({
               id: category.id,
               label: game.i18n.localize(category.label),
@@ -714,7 +725,6 @@ export class SymbaroumCompendiumBrowser extends ApplicationV2 {
               depth: shopCategoryDepth(category.id),
               checked: this.#shopGeneratorCategories.has(category.id)
             })),
-            seed: this.#shopGeneratorSeed || shopGenerationSeed(),
             replace: this.#shopGeneratorReplace,
             selectedCount: this.#shopGeneratorCategories.size
           },
@@ -933,10 +943,6 @@ export class SymbaroumCompendiumBrowser extends ApplicationV2 {
         this.#scheduleShopAutoSave();
         return;
       }
-      if (event.target.matches("[data-stock-generator-seed]")) {
-        this.#shopGeneratorSeed = event.target.value;
-        return;
-      }
       if (!event.target.matches("[data-browser-search]")) return;
       this.#query = event.target.value;
       this.#resultLimit = RESULT_BATCH_SIZE;
@@ -948,6 +954,13 @@ export class SymbaroumCompendiumBrowser extends ApplicationV2 {
     }, { signal });
 
     root.addEventListener("change", (event) => {
+      if (event.target.matches("[data-stock-generator-preset]")) {
+        this.#shopDraftStockPresetId = normalizeShopStockPresetId(event.target.value);
+        this.#scheduleShopAutoSave();
+        this.#resultLimit = RESULT_BATCH_SIZE;
+        void this.render({ force: true });
+        return;
+      }
       if (event.target.matches("[data-stock-generator-category]")) {
         if (event.target.checked) this.#shopGeneratorCategories.add(event.target.value);
         else this.#shopGeneratorCategories.delete(event.target.value);
@@ -1280,6 +1293,8 @@ export class SymbaroumCompendiumBrowser extends ApplicationV2 {
         this.#shopDraftOpen = store.open;
         this.#shopDraftSavedCategories = [...(store.categories ?? [])];
         this.#shopDraftCategories = [...(store.categories ?? [])];
+        this.#shopDraftSavedStockPresetId = store.stockPresetId ?? "";
+        this.#shopDraftStockPresetId = store.stockPresetId ?? "";
         this.#shopDraftSavedStock = cloneShopStock(store.stock);
         this.#shopDraftStock = cloneShopStock(store.stock);
         this.#shopView = "create";
@@ -1310,6 +1325,8 @@ export class SymbaroumCompendiumBrowser extends ApplicationV2 {
       this.#shopDraftOpen = true;
       this.#shopDraftSavedCategories = [];
       this.#shopDraftCategories = [];
+      this.#shopDraftSavedStockPresetId = "";
+      this.#shopDraftStockPresetId = "";
       this.#shopDraftSavedStock = [];
       this.#shopDraftStock = [];
       this.#shopStockMode = false;
@@ -1338,7 +1355,6 @@ export class SymbaroumCompendiumBrowser extends ApplicationV2 {
       if (this.#shopStockMode) {
         this.#shopStockSection = "items";
         this.#shopGeneratorCategories = new Set(this.#shopDraftCategories);
-        this.#shopGeneratorSeed = shopGenerationSeed();
         this.#shopGeneratorReplace = true;
       }
       this.#filtersOpen = false;
@@ -1361,8 +1377,8 @@ export class SymbaroumCompendiumBrowser extends ApplicationV2 {
     if (action === "generate-shop-stock") return this.#generateShopStock();
     if (action === "generate-shop-stock-inline") {
       return this.#generateShopStock({
+        presetId: this.#shopDraftStockPresetId,
         categories: [...this.#shopGeneratorCategories],
-        seed: this.#shopGeneratorSeed || shopGenerationSeed(),
         replace: this.#shopGeneratorReplace
       });
     }
@@ -1920,7 +1936,7 @@ export class SymbaroumCompendiumBrowser extends ApplicationV2 {
     if (this.#mode !== "shop" || this.#shopView !== "create" || !game.user?.isGM) return null;
     if (!choice) {
       const presetOptions = OFFICIAL_SHOP_PRESETS.map((preset) => `
-        <option value="${escapeHtml(preset.id)}">${escapeHtml(preset.name)} — ${escapeHtml(preset.location)}</option>`).join("");
+        <option value="${escapeHtml(preset.id)}" ${preset.id === this.#shopDraftStockPresetId ? "selected" : ""}>${escapeHtml(preset.name)} — ${escapeHtml(preset.location)}</option>`).join("");
       const content = `<form class="symbaroum-hud-shop-generator-form">
         <header>
           <i class="fa-solid fa-dice" aria-hidden="true"></i>
@@ -1928,13 +1944,9 @@ export class SymbaroumCompendiumBrowser extends ApplicationV2 {
             <small>${escapeHtml(game.i18n.localize("SYMBAROUMHUD.CompendiumBrowser.Shop.StockGeneratorHint"))}</small></span>
         </header>
         <label>
-          <span>${escapeHtml(game.i18n.localize("SYMBAROUMHUD.CompendiumBrowser.Shop.OfficialStore"))}</span>
+          <span>${escapeHtml(game.i18n.localize("SYMBAROUMHUD.CompendiumBrowser.Shop.StockConfiguration"))}</span>
           <select name="preset" required>${presetOptions}</select>
-        </label>
-        <label>
-          <span>${escapeHtml(game.i18n.localize("SYMBAROUMHUD.CompendiumBrowser.Shop.GenerationSeed"))}</span>
-          <input type="text" name="seed" value="${escapeHtml(shopGenerationSeed())}" maxlength="120" required>
-          <small>${escapeHtml(game.i18n.localize("SYMBAROUMHUD.CompendiumBrowser.Shop.GenerationSeedHint"))}</small>
+          <small>${escapeHtml(game.i18n.localize("SYMBAROUMHUD.CompendiumBrowser.Shop.StockConfigurationHint"))}</small>
         </label>
         <label>
           <span>${escapeHtml(game.i18n.localize("SYMBAROUMHUD.CompendiumBrowser.Shop.StockSizeTitle"))}</span>
@@ -1967,7 +1979,6 @@ export class SymbaroumCompendiumBrowser extends ApplicationV2 {
             default: true,
             callback: (_event, button) => ({
               presetId: button.form.elements.preset.value,
-              seed: button.form.elements.seed.value,
               stockSize: button.form.elements.stockSize.value,
               replace: button.form.elements.replace.checked,
               applyIdentity: button.form.elements.applyIdentity.checked
@@ -1988,7 +1999,7 @@ export class SymbaroumCompendiumBrowser extends ApplicationV2 {
     }
 
     const entries = await this.#shopGeneratorEntries();
-    if (Array.isArray(choice.categories)) {
+    if (!choice.presetId && Array.isArray(choice.categories)) {
       const categories = [...new Set(choice.categories)].filter(Boolean);
       if (!categories.length) {
         ui.notifications?.warn(game.i18n.localize(
@@ -1997,7 +2008,7 @@ export class SymbaroumCompendiumBrowser extends ApplicationV2 {
         return null;
       }
       const stock = generateShopStockByCategories(entries, categories, {
-        seed: choice.seed,
+        random: Math.random,
         itemRules: configuredShopStockRules(),
         stockSize: choice.stockSize
       });
@@ -2020,7 +2031,7 @@ export class SymbaroumCompendiumBrowser extends ApplicationV2 {
       return this.render({ force: true });
     }
     const result = generateOfficialShopStock(entries, choice.presetId, {
-      seed: choice.seed,
+      random: Math.random,
       itemRules: configuredShopStockRules(),
       stockSize: choice.stockSize
     });
@@ -2035,6 +2046,7 @@ export class SymbaroumCompendiumBrowser extends ApplicationV2 {
       this.#shopDraftName = result.preset.name;
       this.#shopDraftDescription = officialShopDescription(result.preset);
     }
+    this.#shopDraftStockPresetId = result.preset.id;
     this.#shopStockSection = "items";
     this.#category = "all";
     this.#query = "";
@@ -2513,6 +2525,7 @@ export class SymbaroumCompendiumBrowser extends ApplicationV2 {
       description,
       open: this.#shopDraftOpen,
       categories: this.#shopDraftCategories,
+      stockPresetId: this.#shopDraftStockPresetId,
       stock: this.#shopDraftStock
     });
     try {
@@ -2541,6 +2554,7 @@ export class SymbaroumCompendiumBrowser extends ApplicationV2 {
     this.#shopDraftSavedDescription = description;
     this.#shopDraftSavedOpen = this.#shopDraftOpen;
     this.#shopDraftSavedCategories = [...this.#shopDraftCategories];
+    this.#shopDraftSavedStockPresetId = this.#shopDraftStockPresetId;
     this.#shopDraftSavedStock = cloneShopStock(this.#shopDraftStock);
     this.#activeShopId = id;
     return null;
@@ -2556,6 +2570,7 @@ export class SymbaroumCompendiumBrowser extends ApplicationV2 {
       description: this.#shopDraftDescription,
       open: this.#shopDraftOpen,
       categories: this.#shopDraftCategories,
+      stockPresetId: this.#shopDraftStockPresetId,
       stock: this.#shopDraftStock
     }, {
       name: this.#shopDraftSavedName,
@@ -2566,6 +2581,7 @@ export class SymbaroumCompendiumBrowser extends ApplicationV2 {
       description: this.#shopDraftSavedDescription,
       open: this.#shopDraftSavedOpen,
       categories: this.#shopDraftSavedCategories,
+      stockPresetId: this.#shopDraftSavedStockPresetId,
       stock: this.#shopDraftSavedStock
     });
   }
@@ -2711,6 +2727,7 @@ export class SymbaroumCompendiumBrowser extends ApplicationV2 {
         description: officialShopDescription(preset),
         open: true,
         categories: preset.categories,
+        stockPresetId: preset.id,
         stock: []
       });
     }
@@ -3582,6 +3599,9 @@ export function normalizeShopDefinitions(value = null) {
       ...image,
       description,
       open: store?.open !== false,
+      ...(normalizeShopStockPresetId(store?.stockPresetId, id) ? {
+        stockPresetId: normalizeShopStockPresetId(store.stockPresetId, id)
+      } : {}),
       ...(normalizeShopGenerationCategories(store?.categories).length
         ? { categories: normalizeShopGenerationCategories(store.categories) }
         : {}),
@@ -3758,6 +3778,9 @@ export function upsertShopDefinition(value, store) {
     ...image,
     description: String(store?.description ?? "").trim(),
     open: store?.open !== false,
+    ...(normalizeShopStockPresetId(store?.stockPresetId, id) ? {
+      stockPresetId: normalizeShopStockPresetId(store.stockPresetId, id)
+    } : {}),
     ...(normalizeShopGenerationCategories(store?.categories).length
       ? { categories: normalizeShopGenerationCategories(store.categories) }
       : {}),
@@ -3806,6 +3829,8 @@ export function shopDraftHasChanges(draft, saved = "") {
     return true;
   }
   if ((draft.open !== false) !== (baseline.open !== false)) return true;
+  if (normalizeShopStockPresetId(draft.stockPresetId)
+    !== normalizeShopStockPresetId(baseline.stockPresetId)) return true;
   if (JSON.stringify(normalizeShopGenerationCategories(draft.categories))
     !== JSON.stringify(normalizeShopGenerationCategories(baseline.categories))) return true;
   return JSON.stringify(normalizeShopStock(draft.stock))
@@ -3859,12 +3884,11 @@ export function officialShopLocationGroup(location) {
   return parts.at(-1) || String(location ?? "").trim() || "Symbaroum";
 }
 
-function shopGenerationSeed() {
-  const world = String(globalThis.game?.world?.id ?? "symbaroum");
-  const date = new Date();
-  const week = Math.ceil((((date - new Date(date.getFullYear(), 0, 1)) / 86400000)
-    + new Date(date.getFullYear(), 0, 1).getDay() + 1) / 7);
-  return `${world}-${date.getFullYear()}-${String(week).padStart(2, "0")}`;
+export function normalizeShopStockPresetId(value, storeId = "") {
+  const requested = String(value ?? "").trim();
+  if (OFFICIAL_SHOP_PRESET_BY_ID.has(requested)) return requested;
+  const id = String(storeId ?? "").trim();
+  return OFFICIAL_SHOP_PRESETS.find((preset) => id.endsWith(`-${preset.id}`))?.id ?? "";
 }
 
 function configuredShopDefinitions() {

@@ -400,6 +400,22 @@ test("unknown presets fail closed instead of generating arbitrary merchandise", 
   assert.deepEqual(result.stock, []);
 });
 
+test("stock generation without a seed uses fresh ambient randomness", () => {
+  const originalRandom = Math.random;
+  let calls = 0;
+  Math.random = () => {
+    calls += 1;
+    return calls % 2 ? 0.1 : 0.9;
+  };
+  try {
+    const result = generateOfficialShopStock(entries, "marvaloms");
+    assert.equal(result.seed, "");
+    assert.ok(calls > 0);
+  } finally {
+    Math.random = originalRandom;
+  }
+});
+
 test("seeded random returns stable values in the unit interval", () => {
   const one = seededRandom("davokar");
   const two = seededRandom("davokar");

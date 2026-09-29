@@ -13,7 +13,7 @@ export function normalizeShopStockSize(value) {
 }
 
 export function generateOfficialShopStock(entries, presetOrId, {
-  seed = `${Date.now()}`,
+  seed = null,
   random = null,
   itemRules = null,
   stockSize = "medium"
@@ -24,14 +24,18 @@ export function generateOfficialShopStock(entries, presetOrId, {
   if (!preset?.id || !Array.isArray(preset.pools)) {
     return Object.freeze({
       preset: null,
-      seed: String(seed),
+      seed: seed === null || seed === undefined ? "" : String(seed),
       stock: Object.freeze([]),
       missingPools: Object.freeze([]),
       missingEssentials: Object.freeze([])
     });
   }
 
-  const rng = typeof random === "function" ? random : seededRandom(seed);
+  const rng = typeof random === "function"
+    ? random
+    : seed === null || seed === undefined
+      ? Math.random
+      : seededRandom(seed);
   const rulesEnabled = itemRules !== null && itemRules !== undefined;
   const configuredRules = rulesEnabled ? normalizeShopStockRules(itemRules) : null;
   const documents = normalizeGeneratorEntries(entries)
@@ -118,7 +122,7 @@ export function generateOfficialShopStock(entries, presetOrId, {
   const limitedStock = generatedStock.slice(0, Math.max(size.maximumItems, essentialCount));
   return Object.freeze({
     preset,
-    seed: String(seed),
+    seed: seed === null || seed === undefined ? "" : String(seed),
     stockSize: size.id,
     stock: Object.freeze(limitedStock.sort((left, right) => left.uuid.localeCompare(right.uuid))),
     missingPools: Object.freeze(missingPools),
@@ -127,7 +131,7 @@ export function generateOfficialShopStock(entries, presetOrId, {
 }
 
 export function generateShopStockByCategories(entries, categories = [], {
-  seed = `${Date.now()}`,
+  seed = null,
   random = null,
   itemRules = null,
   price = [95, 105],
@@ -137,7 +141,11 @@ export function generateShopStockByCategories(entries, categories = [], {
     .map((category) => canonicalTaxonomyCategoryId(category))
     .filter(Boolean);
   if (!selectedCategories.length) return Object.freeze([]);
-  const rng = typeof random === "function" ? random : seededRandom(seed);
+  const rng = typeof random === "function"
+    ? random
+    : seed === null || seed === undefined
+      ? Math.random
+      : seededRandom(seed);
   const configuredRules = normalizeShopStockRules(itemRules);
   const candidates = normalizeGeneratorEntries(entries)
     .filter((entry) => matchesShopStockCategories(entry, selectedCategories))

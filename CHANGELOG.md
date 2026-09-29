@@ -1,5 +1,12 @@
 # Changelog
 
+## Próxima versão
+
+- Remove o identificador de reposição da interface: cada geração agora sorteia um estoque novo conforme as regras configuradas da loja.
+- Adiciona uma **Configuração de estoque** persistente, reunindo Categorias e todas as lojas oficiais; lojas oficiais existentes reconhecem automaticamente seu próprio modelo.
+- Mantém tamanho, chances, quantidades, itens essenciais e faixas de preço como parâmetros do sorteio aleatório.
+- Amplia a suíte automatizada para 347 testes.
+
 ## 0.1.70
 
 - Especializa a **Taverna do Triunfo de Afadir** com seu cardápio oficial, pratos refinados rotativos, preços exatos para as especialidades e a história pública do envenenamento do ano 18.

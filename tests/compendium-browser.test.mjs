@@ -41,6 +41,7 @@ const {
   normalizeShopPriceModifier,
   normalizeShopPriceModifiers,
   normalizeShopDefinitions,
+  normalizeShopStockPresetId,
   normalizeShopStock,
   officialShopLocationGroup,
   promoteBrowserDocumentSheet,
@@ -532,6 +533,21 @@ test("legacy generated official shops receive the expanded source-backed descrip
   assert.match(store.description, /Referência oficial:/);
 });
 
+test("official shop stock configurations are inferred and persisted", () => {
+  assert.equal(normalizeShopStockPresetId("afadirs-triumph"), "afadirs-triumph");
+  assert.equal(normalizeShopStockPresetId("unknown"), "");
+  assert.equal(
+    normalizeShopStockPresetId(null, "official-thistle-hold-afadirs-triumph"),
+    "afadirs-triumph"
+  );
+
+  const [store] = normalizeShopDefinitions({ stores: [{
+    id: "official-thistle-hold-afadirs-triumph",
+    name: "Taverna do Triunfo de Afadir"
+  }] });
+  assert.equal(store.stockPresetId, "afadirs-triumph");
+});
+
 test("saving a new shop adds it to the world shop directory", () => {
   assert.deepEqual(upsertShopDefinition({
     version: 1,
@@ -755,6 +771,10 @@ test("shop drafts detect pending name, image, and description changes", () => {
     img: "merchant.webp",
     description: "Armas de qualidade."
   }), true);
+  assert.equal(shopDraftHasChanges(
+    { name: "Taverna", stockPresetId: "afadirs-triumph" },
+    { name: "Taverna", stockPresetId: "court-and-harp" }
+  ), true);
 });
 
 test("item sheets opened from the browser are promoted above the shop", () => {

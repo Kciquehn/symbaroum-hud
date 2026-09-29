@@ -169,6 +169,14 @@ assert.match(compendiumBrowserTemplate, /data-shop-description/);
 assert.match(compendiumBrowserTemplate, /data-action="choose-shop-image"/);
 assert.match(compendiumBrowserTemplate, /data-action="toggle-shop-image-editor"/);
 assert.match(compendiumBrowserTemplate, /data-shop-image-surface/);
+assert.match(compendiumBrowserTemplate, /data-stock-generator-preset/);
+assert.match(compendiumBrowserTemplate, /Shop\.StockConfiguration/);
+assert.match(compendiumBrowser, /random: Math\.random/);
+assert.doesNotMatch(compendiumBrowser, /GenerationSeed|shopGenerationSeed|data-stock-generator-seed/);
+assert.doesNotMatch(compendiumBrowserTemplate, /GenerationSeed|data-stock-generator-seed/);
+for (const language of languages.values()) {
+  assert.equal("GenerationSeed" in (language.SYMBAROUMHUD?.CompendiumBrowser?.Shop ?? {}), false);
+}
 assert.match(compendiumBrowserTemplate, /CompendiumBrowser\.ItemCategories/);
 assert.doesNotMatch(compendiumBrowserTemplate, /data-browser-type|CompendiumBrowser\.ItemTypes/);
 assert.doesNotMatch(compendiumBrowser, /#excludedTypes|toggle-all-types/);

@@ -222,6 +222,17 @@
                   <small>{{localize "SYMBAROUMHUD.CompendiumBrowser.Shop.StockGeneratorHint"}}</small>
                 </span>
               </header>
+              <label>
+                <span>{{localize "SYMBAROUMHUD.CompendiumBrowser.Shop.StockConfiguration"}}</span>
+                <select data-stock-generator-preset>
+                  <option value="">{{localize "SYMBAROUMHUD.CompendiumBrowser.Shop.StockConfigurationCategories"}}</option>
+                  {{#each shop.builder.generator.presets}}
+                    <option value="{{id}}" {{#if selected}}selected{{/if}}>{{name}} — {{location}}</option>
+                  {{/each}}
+                </select>
+                <small>{{localize "SYMBAROUMHUD.CompendiumBrowser.Shop.StockConfigurationHint"}}</small>
+              </label>
+              {{#unless shop.builder.generator.official}}
               <section class="symbaroum-hud-shop-generator-categories">
                 <header>
                   <span>{{localize "SYMBAROUMHUD.CompendiumBrowser.Shop.GenerationCategories"}}</span>
@@ -237,12 +248,7 @@
                   {{/each}}
                 </div>
               </section>
-              <label>
-                <span>{{localize "SYMBAROUMHUD.CompendiumBrowser.Shop.GenerationSeed"}}</span>
-                <input type="text" data-stock-generator-seed value="{{shop.builder.generator.seed}}"
-                  maxlength="120" required>
-                <small>{{localize "SYMBAROUMHUD.CompendiumBrowser.Shop.GenerationSeedHint"}}</small>
-              </label>
+              {{/unless}}
               <label class="symbaroum-hud-shop-generator-check">
                 <input type="checkbox" data-stock-generator-replace {{#if shop.builder.generator.replace}}checked{{/if}}>
                 <span>{{localize "SYMBAROUMHUD.CompendiumBrowser.Shop.ReplaceStock"}}</span>
