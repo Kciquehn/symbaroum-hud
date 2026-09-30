@@ -129,7 +129,11 @@ export class ItemPilesIntegration {
     }
 
     // Delete item from actor
-    await ActorService.deleteItem(actor, item.id);
+    if (typeof item.delete === "function") {
+      await item.delete();
+    } else if (typeof actor?.deleteEmbeddedDocuments === "function") {
+      await actor.deleteEmbeddedDocuments("Item", [item.id]);
+    }
 
     // Send chat message
     const itemImg = item.img || "icons/svg/item-bag.svg";
