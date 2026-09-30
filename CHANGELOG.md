@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.73
+
+- Ajusta o espaçamento vertical entre os itens do painel de Poderes & Habilidades.
+- Remove contornos e áreas de foco indesejadas que vazavam fora dos botões ao passar o mouse.
+
 ## 0.1.72
 
 - Aplica o mesmo tom de fundo dos botões principais aos cards de atributos e aos chips de informações secundárias (Defesa, Armadura, Rações e Aljava).

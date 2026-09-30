@@ -6361,14 +6361,14 @@ body:has(#symbaroum-hud .symbaroum-hud-ammo-recovery-slot) > #tenebre-ammo-hud-l
 #symbaroum-hud .symbaroum-hud-simplified-pf2-list {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
 }
 
 #symbaroum-hud button.symbaroum-hud-simplified-pf2-item {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 3px 6px;
+  padding: 4px 6px;
   border-radius: 4px;
   background: transparent;
   border: 1px solid transparent;
@@ -6376,14 +6376,20 @@ body:has(#symbaroum-hud .symbaroum-hud-ammo-recovery-slot) > #tenebre-ammo-hud-l
   text-align: left;
   width: 100%;
   margin: 0;
+  outline: none !important;
+  box-shadow: none !important;
   transition: background 0.15s ease, border-color 0.15s ease;
   box-sizing: border-box;
 }
 
 #symbaroum-hud button.symbaroum-hud-simplified-pf2-item:hover,
+#symbaroum-hud button.symbaroum-hud-simplified-pf2-item:focus,
+#symbaroum-hud button.symbaroum-hud-simplified-pf2-item:focus-visible,
 #symbaroum-hud button.symbaroum-hud-simplified-pf2-item.is-selected {
   background: rgba(255, 255, 255, 0.08);
   border-color: rgba(255, 255, 255, 0.15);
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 #symbaroum-hud button.symbaroum-hud-simplified-pf2-item:hover .symbaroum-hud-simplified-pf2-name,
@@ -6478,13 +6484,19 @@ body:has(#symbaroum-hud .symbaroum-hud-ammo-recovery-slot) > #tenebre-ammo-hud-l
   color: #d1d5db;
   cursor: pointer;
   font-size: 10px;
+  outline: none !important;
+  box-shadow: none !important;
   transition: all 0.15s ease;
 }
 
-#symbaroum-hud button.symbaroum-hud-simplified-pf2-card-btn:hover {
+#symbaroum-hud button.symbaroum-hud-simplified-pf2-card-btn:hover,
+#symbaroum-hud button.symbaroum-hud-simplified-pf2-card-btn:focus,
+#symbaroum-hud button.symbaroum-hud-simplified-pf2-card-btn:focus-visible {
   background: rgba(255, 255, 255, 0.15);
   border-color: rgba(255, 255, 255, 0.4);
   color: #fff;
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 #symbaroum-hud .symbaroum-hud-simplified-pf2-card-tags {
@@ -6781,12 +6793,18 @@ body:has(#symbaroum-hud .symbaroum-hud-ammo-recovery-slot) > #tenebre-ammo-hud-l
   cursor: pointer;
   flex-shrink: 0;
   border-radius: 3px;
+  outline: none !important;
+  box-shadow: none !important;
   transition: transform 0.15s ease, filter 0.15s ease;
 }
 
-#symbaroum-hud button.symbaroum-hud-simplified-item-img-btn:hover {
+#symbaroum-hud button.symbaroum-hud-simplified-item-img-btn:hover,
+#symbaroum-hud button.symbaroum-hud-simplified-item-img-btn:focus,
+#symbaroum-hud button.symbaroum-hud-simplified-item-img-btn:focus-visible {
   filter: brightness(1.15);
   transform: scale(1.05);
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 #symbaroum-hud button.symbaroum-hud-simplified-item-img-btn:disabled {
