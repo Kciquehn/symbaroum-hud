@@ -1,15 +1,18 @@
 import {
   MODULE_ID,
   SETTINGS,
-  STORAGE_VIEW_MODES
+  STORAGE_VIEW_MODES,
+  THEMES
 } from "../constants.mjs";
 import { SymbaroumCompendiumBrowser } from "./compendium-browser.mjs";
 import { refreshHotbarShortcuts } from "../integrations/hotbar-shortcuts.mjs";
 import { IndResourcesIntegration } from "../integrations/ind-resources.mjs";
+import { ItemPilesIntegration } from "../integrations/item-piles.mjs";
 import {
   applyPlayerListVisibility,
   getSetting,
-  getStorageViewMode
+  getStorageViewMode,
+  getTheme
 } from "../settings.mjs";
 import {
   ActorService,
@@ -35,6 +38,7 @@ import {
   removeActorService,
   useActorService
 } from "../services/service-contract-service.mjs";
+import { itemHasTaxonomyTag } from "../services/item-taxonomy-service.mjs";
 
 const ApplicationV2 = foundry.applications.api.ApplicationV2;
 const HOTBAR_CONTROL_ACTIONS = new Set(["mute", "menu"]);
@@ -83,10 +87,18 @@ export class SymbaroumHud extends ApplicationV2 {
   #abilitiesOpen = false;
   #actor = null;
   #attacksOpen = false;
+  #simplifiedActionsOpen = false;
+  #simplifiedInventoryOpen = false;
+  #simplifiedPowersOpen = false;
+  #simplifiedPowersSelectedItemId = null;
+  #simplifiedCollapsedContainers = new Set();
+  #simplifiedOpenContainers = new Set();
   #collapseAnimationRunning = false;
   #collapseTransition = null;
   #effectMenuAbortController = null;
   #effectMenuElement = null;
+  #itemContextMenuAbortController = null;
+  #itemContextMenuElement = null;
   #hostilityTint = null;
   #hotbarAnchor = null;
   #listenerAbortController = null;
@@ -136,13 +148,15 @@ export class SymbaroumHud extends ApplicationV2 {
     const previousActorKey = actorKey(this.#actor);
     const resolvedActor = ActorService.resolve(getSetting(SETTINGS.SELECTION_MODE));
     const resolvedKey = actorKey(resolvedActor);
-    if (resolvedKey !== this.#resolvedActorKey) {
+    if (!this.#manualActorKey && resolvedKey !== this.#resolvedActorKey) {
       this.#resolvedActorKey = resolvedKey;
-      this.#manualActorKey = null;
       this.#actorPickerOpen = false;
       this.#mysticalPowersOpen = false;
       this.#abilitiesOpen = false;
       this.#attacksOpen = false;
+      this.#simplifiedActionsOpen = false;
+      this.#simplifiedInventoryOpen = false;
+      this.#simplifiedPowersOpen = false;
       this.#selectedAbilityId = null;
       this.#selectedAbilityTab = DEFAULT_ABILITY_TAB;
       this.#selectedMysticalPowerId = null;
@@ -160,7 +174,8 @@ export class SymbaroumHud extends ApplicationV2 {
 
     if (this.#manualActorKey) {
       const manualActor = ActorService.accessibleActors(this.#actor)
-        .find((actor) => actorKey(actor) === this.#manualActorKey);
+        .find((actor) => actorKey(actor) === this.#manualActorKey)
+        || (this.#manualActorKey.includes(".") ? fromUuidSync?.(this.#manualActorKey) : game.actors?.get(this.#manualActorKey));
       if (manualActor) this.#actor = manualActor;
       else this.#manualActorKey = null;
     } else if (resolvedActor) {
@@ -264,10 +279,31 @@ export class SymbaroumHud extends ApplicationV2 {
         showExperience: showPlayerResources
       },
       showEconomy: showPlayerResources,
+      theme: getTheme(),
+      isSimplified: getTheme() === THEMES.SIMPLIFIED,
+      isClassic: getTheme() === THEMES.CLASSIC,
+      isManualActor: Boolean(this.#manualActorKey),
       playersHidden: getSetting(SETTINGS.HIDE_PLAYERS),
       hudCollapsed,
       hudExpanded: !hudCollapsed,
       hudTransition: this.#collapseTransition ?? "",
+      simplifiedActionsOpen: this.#simplifiedActionsOpen,
+      simplifiedActions: simplifiedActionContext(actor, {
+        canRollActor,
+        drawnWeapons: indResources.drawnWeapons
+      }),
+      simplifiedInventoryOpen: this.#simplifiedInventoryOpen,
+      simplifiedInventory: simplifiedInventoryContext(actor, {
+        canRollActor,
+        drawnWeapons: indResources.drawnWeapons,
+        indResources,
+        isContainerCollapsed: (container) => this.#isSimplifiedContainerCollapsed(actor, container)
+      }),
+      simplifiedPowersOpen: this.#simplifiedPowersOpen,
+      simplifiedPowers: simplifiedPowersContext(actor, {
+        canRollActor,
+        selectedItemId: this.#simplifiedPowersSelectedItemId
+      }),
       weaponDrawn: Boolean(indResources.drawnWeapons?.length),
       vitalityState: actor ? vitalityState(vitalityValue, vitalityMax) : "healthy",
       actions: {
@@ -323,7 +359,8 @@ export class SymbaroumHud extends ApplicationV2 {
         canUse: canRollActor,
         items: attackContext(actor, {
           canDrag: canRollActor,
-          drawnWeapons: indResources.drawnWeapons
+          drawnWeapons: indResources.drawnWeapons,
+          canUse: canRollActor
         }),
         open: this.#attacksOpen
       },
@@ -348,7 +385,8 @@ export class SymbaroumHud extends ApplicationV2 {
         load: showPlayerResources && indResources.active ? indResources.load : null,
         money: showPlayerResources ? moneyContext(actor) : null,
         rations: showPlayerResources && indResources.active ? indResources.rations : null,
-        quiver: indResources.active ? indResources.quiver : null
+        quiver: indResources.active ? indResources.quiver : null,
+        maneuvers: indResources.active && Array.isArray(indResources.maneuvers) && indResources.maneuvers.length > 0 ? indResources.maneuvers.length : null
       },
       actor: actor
         ? {
@@ -387,6 +425,7 @@ export class SymbaroumHud extends ApplicationV2 {
 
   _replaceHTML(result, content) {
     this.#closeEffectMenu();
+    this.#closeItemContextMenu();
     const hotbar = document.getElementById("hotbar");
     if (hotbar && content.contains(hotbar)) hotbar.remove();
     const stableCharacterCard = this.#collapseAnimationRunning
@@ -403,6 +442,10 @@ export class SymbaroumHud extends ApplicationV2 {
     if (stableHotbarControls) {
       content.querySelector(".symbaroum-hud-hotbar-controls")?.replaceWith(stableHotbarControls);
     }
+    const currentTheme = getTheme();
+    content.dataset.symbaTheme = currentTheme;
+    content.classList.toggle("symbaroum-hud--classic", currentTheme === THEMES.CLASSIC);
+    content.classList.toggle("symbaroum-hud--simplified", currentTheme === THEMES.SIMPLIFIED);
     this.#updateHostilityTint(content);
     this.#dockHotbar(content, hotbar);
     this.#activateListeners(content);
@@ -418,6 +461,7 @@ export class SymbaroumHud extends ApplicationV2 {
     this.#listenerAbortController?.abort();
     this.#listenerAbortController = null;
     this.#closeEffectMenu();
+    this.#closeItemContextMenu();
     this.#updateHostilityTint(null);
     this.#clearDelayedTooltip();
     this.#restoreHotbar();
@@ -440,10 +484,29 @@ export class SymbaroumHud extends ApplicationV2 {
     this.#storageContainerId = null;
     this.#storageDragData = null;
     this.#storageOpen = false;
+    this.#simplifiedActionsOpen = false;
+    this.#simplifiedInventoryOpen = false;
+    this.#simplifiedPowersOpen = false;
+    this.#simplifiedCollapsedContainers.clear();
+    this.#simplifiedOpenContainers.clear();
     this.#tacticsCollapsed = true;
     this.#ritualsOpen = false;
     this.#traitsOpen = false;
     return super._onClose(options);
+  }
+
+  #isSimplifiedContainerCollapsed(actor, container) {
+    const id = typeof container === "string" ? container : container?.id;
+    if (!id) return true;
+    if (this.#simplifiedCollapsedContainers.has(id)) return true;
+    if (this.#simplifiedOpenContainers.has(id)) return false;
+    if (IndResourcesIntegration.api?.containers?.isContainerExpanded && actor) {
+      const containerItem = findActorItem(actor, id);
+      if (containerItem) {
+        return !IndResourcesIntegration.api.containers.isContainerExpanded(actor, containerItem);
+      }
+    }
+    return true;
   }
 
   #activateListeners(root) {
@@ -464,6 +527,14 @@ export class SymbaroumHud extends ApplicationV2 {
       const actionElement = event.target.closest("[data-action]");
       if (!actionElement || !root.contains(actionElement) || actionElement.closest("#hotbar")) return;
       event.preventDefault();
+      void this.#onAction(actionElement, event);
+    }, { signal });
+
+    root.addEventListener("contextmenu", (event) => {
+      const actionElement = event.target.closest('[data-action="set-actor"]');
+      if (!actionElement || !root.contains(actionElement)) return;
+      event.preventDefault();
+      event.stopPropagation();
       void this.#onAction(actionElement, event);
     }, { signal });
 
@@ -541,6 +612,14 @@ export class SymbaroumHud extends ApplicationV2 {
           console.error(`${MODULE_ID} | Storage container deletion failed.`, error);
           ui.notifications?.error(game.i18n.localize("SYMBAROUMHUD.Notifications.ActionFailed"));
         });
+    }, { signal });
+
+    root.addEventListener("contextmenu", (event) => {
+      const itemRow = event.target.closest(".symbaroum-hud-simplified-inventory-panel [data-item-id]");
+      if (!itemRow || !root.contains(itemRow)) return;
+      event.preventDefault();
+      event.stopPropagation();
+      this.#openItemContextMenu(itemRow, event);
     }, { signal });
 
     root.addEventListener("contextmenu", (event) => {
@@ -638,10 +717,8 @@ export class SymbaroumHud extends ApplicationV2 {
 
       this.#storageDragData = containerData;
       event.dataTransfer.effectAllowed = "move";
-      if (source === "inventory") {
-        event.dataTransfer.setData("text/plain", serializedDocument);
-        event.dataTransfer.setData("application/json", serializedDocument);
-      }
+      event.dataTransfer.setData("text/plain", serializedDocument);
+      event.dataTransfer.setData("application/json", serializedDocument);
       event.dataTransfer.setData(
         IND_RESOURCES_CONTAINER_DRAG_TYPE,
         serializedContainer
@@ -812,6 +889,11 @@ export class SymbaroumHud extends ApplicationV2 {
       event.stopPropagation();
       this.#clearStorageDropTargets(root);
       if (this.#isCurrentStorageDrag(this.#storageDragData)) {
+        if (this.#storageDragData.source === "stored") {
+          if (event.dataTransfer) event.dataTransfer.dropEffect = "move";
+          inventoryElement.dataset.storageInventoryTarget = "true";
+          return;
+        }
         if (event.dataTransfer) event.dataTransfer.dropEffect = "none";
         return;
       }
@@ -1166,6 +1248,21 @@ export class SymbaroumHud extends ApplicationV2 {
         return;
       }
       if (this.#isCurrentStorageDrag(this.#storageDragData)) {
+        if (this.#storageDragData.source === "stored" && this.#storageDragData.containerId) {
+          event.preventDefault();
+          event.stopPropagation();
+          const { itemId, containerId } = this.#storageDragData;
+          this.#storageDragData = null;
+          this.#clearStorageDropTargets(root);
+          void IndResourcesIntegration.withdrawFromContainer(
+            this.#actor,
+            itemId,
+            containerId
+          ).catch((error) => {
+            console.error(`${MODULE_ID} | Failed to withdraw item on inventory drop.`, error);
+          });
+          return;
+        }
         event.preventDefault();
         event.stopPropagation();
         this.#storageDragData = null;
@@ -1442,10 +1539,243 @@ export class SymbaroumHud extends ApplicationV2 {
     this.#effectMenuElement = null;
   }
 
+  #openItemContextMenu(itemRow, event) {
+    const actor = this.#actor;
+    const itemId = itemRow.dataset.itemId;
+    if (!actor || !itemId) return;
+
+    const item = findActorItem(actor, itemId) ?? ActorService.item(actor, itemId);
+    if (!item) return;
+
+    this.#closeItemContextMenu();
+    this.#closeEffectMenu();
+
+    const controller = new AbortController();
+    const signal = controller.signal;
+    const menu = document.createElement("div");
+    menu.className = "symbaroum-hud-item-context-menu";
+    menu.setAttribute("role", "menu");
+    menu.setAttribute("aria-label", item.name || "Item");
+
+    const options = [];
+
+    options.push({
+      action: "open-sheet",
+      icon: "fa-solid fa-file-lines",
+      label: game.i18n.localize("SYMBAROUMHUD.SimplifiedInventory.OpenSheet"),
+      callback: () => ActorService.openItem(actor, itemId)
+    });
+
+    options.push({
+      action: "post-to-chat",
+      icon: "fa-solid fa-message",
+      label: game.i18n.localize("SYMBAROUMHUD.SimplifiedInventory.PostToChat"),
+      callback: async () => {
+        if (typeof item.displayCard === "function") return item.displayCard();
+        if (typeof item.roll === "function") return item.roll();
+        const content = `<h3>${item.name}</h3>${item.system?.description?.value || ""}`;
+        return ChatMessage.create({
+          speaker: ChatMessage.getSpeaker({ actor }),
+          content
+        });
+      }
+    });
+
+    const isArmor = item.type === "armor" || Boolean(item.system?.baseProtection || item.system?.protection);
+    if (isArmor) {
+      const isEquipped = Boolean(item.system?.isActive || item.system?.state === "active");
+      options.push({
+        action: "toggle-armor",
+        icon: isEquipped ? "fa-solid fa-shirt" : "fa-solid fa-shield-halved",
+        label: isEquipped
+          ? game.i18n.localize("SYMBAROUMHUD.SimplifiedInventory.UnequipArmor")
+          : game.i18n.localize("SYMBAROUMHUD.SimplifiedInventory.EquipArmor"),
+        callback: async () => {
+          if (!ActorService.canUpdate(actor)) return;
+          await item.update({ "system.state": isEquipped ? "other" : "active" });
+          return this.render();
+        }
+      });
+    }
+
+    const readinessState = IndResourcesIntegration.weaponReadinessState(actor, itemId);
+    if (readinessState) {
+      options.push({
+        action: "toggle-weapon-drawn",
+        icon: readinessState.drawn ? "fa-solid fa-hand" : "fa-solid fa-khanda",
+        label: readinessState.drawn
+          ? game.i18n.localize("SYMBAROUMHUD.SimplifiedInventory.SheatheWeapon")
+          : game.i18n.localize("SYMBAROUMHUD.SimplifiedInventory.DrawWeapon"),
+        callback: async () => {
+          if (readinessState.drawn) {
+            await IndResourcesIntegration.sheatheWeapon(actor, itemId);
+          } else {
+            await IndResourcesIntegration.drawWeapon(actor, itemId);
+          }
+          return this.render();
+        }
+      });
+    }
+
+    if (isQuiverItem(item)) {
+      options.push({
+        action: "reload-quiver",
+        icon: "fa-solid fa-arrows-rotate",
+        label: game.i18n.localize("SYMBAROUMHUD.SimplifiedInventory.ReloadQuiver"),
+        callback: () => this.#reloadQuiver(actor, itemId)
+      });
+    }
+
+    const containerId = itemRow.dataset.containerId;
+    if (containerId) {
+      options.push({
+        action: "withdraw-from-container",
+        icon: "fa-solid fa-arrow-up-from-bracket",
+        label: game.i18n.localize("SYMBAROUMHUD.SimplifiedInventory.WithdrawItem"),
+        callback: async () => {
+          const containerItem = findActorItem(actor, containerId);
+          if (containerItem && isQuiverItem(containerItem)) {
+            await this.#withdrawFromQuiver(actor, containerItem, itemId);
+          } else {
+            await IndResourcesIntegration.withdrawFromContainer(actor, itemId, containerId);
+          }
+          return this.render();
+        }
+      });
+    }
+
+    options.push({
+      action: "drop-item",
+      icon: "fa-solid fa-arrow-down",
+      label: game.i18n.localize("SYMBAROUMHUD.SimplifiedInventory.DropItem"),
+      callback: async () => {
+        const success = await ItemPilesIntegration.dropItem(actor, item, { containerId });
+        if (success) {
+          return this.render();
+        }
+      }
+    });
+
+    options.push({
+      action: "delete-item",
+      icon: "fa-solid fa-trash",
+      isDestructive: true,
+      label: game.i18n.localize("SYMBAROUMHUD.SimplifiedInventory.DeleteItem"),
+      callback: () => this.#confirmAndDeleteItem(actor, item, containerId)
+    });
+
+    for (const opt of options) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = `symbaroum-hud-context-menu-item${opt.isDestructive ? " is-destructive" : ""}`;
+      button.setAttribute("role", "menuitem");
+      button.disabled = !ActorService.canUpdate(actor);
+
+      const icon = document.createElement("i");
+      icon.className = opt.icon;
+      icon.setAttribute("aria-hidden", "true");
+
+      const labelSpan = document.createElement("span");
+      labelSpan.textContent = opt.label;
+
+      button.append(icon, labelSpan);
+      button.addEventListener("click", () => {
+        this.#closeItemContextMenu();
+        void Promise.resolve(opt.callback()).catch((err) => {
+          console.error(`${MODULE_ID} | Item context menu action failed:`, err);
+          ui.notifications?.error(game.i18n.localize("SYMBAROUMHUD.Notifications.ActionFailed"));
+        });
+      }, { signal });
+
+      menu.appendChild(button);
+    }
+
+    document.body.appendChild(menu);
+    this.#itemContextMenuAbortController = controller;
+    this.#itemContextMenuElement = menu;
+
+    const margin = 6;
+    const bounds = menu.getBoundingClientRect();
+    const left = Math.max(
+      margin,
+      Math.min(event.clientX, window.innerWidth - bounds.width - margin)
+    );
+    const top = Math.max(
+      margin,
+      Math.min(event.clientY, window.innerHeight - bounds.height - margin)
+    );
+    menu.style.left = `${left}px`;
+    menu.style.top = `${top}px`;
+
+    const firstButton = menu.querySelector("button:not(:disabled)");
+    firstButton?.focus?.({ preventScroll: true });
+
+    document.addEventListener("pointerdown", (pointerEvent) => {
+      if (!menu.contains(pointerEvent.target)) this.#closeItemContextMenu();
+    }, { capture: true, signal });
+    document.addEventListener("keydown", (keyEvent) => {
+      if (keyEvent.key === "Escape") this.#closeItemContextMenu();
+    }, { signal });
+    window.addEventListener("blur", () => this.#closeItemContextMenu(), { signal });
+  }
+
+  #closeItemContextMenu() {
+    this.#itemContextMenuAbortController?.abort();
+    this.#itemContextMenuAbortController = null;
+    this.#itemContextMenuElement?.remove();
+    this.#itemContextMenuElement = null;
+  }
+
+  async #confirmAndDeleteItem(actor, item, containerId = null) {
+    if (!actor || !item || !ActorService.canUpdate(actor)) return;
+
+    const itemName = item.name ?? game.i18n.localize("SYMBAROUMHUD.Empty");
+    let confirmed = false;
+
+    const DialogV2 = globalThis.foundry?.applications?.api?.DialogV2;
+    if (typeof DialogV2?.confirm === "function") {
+      confirmed = await DialogV2.confirm({
+        window: { title: game.i18n.localize("SYMBAROUMHUD.SimplifiedInventory.DeleteItem") },
+        content: `<p>${game.i18n.format("SYMBAROUMHUD.SimplifiedInventory.DeleteItemConfirm", { name: itemName })}</p>`,
+        yes: { default: false },
+        rejectClose: false
+      });
+    } else if (typeof Dialog?.confirm === "function") {
+      confirmed = await Dialog.confirm({
+        title: game.i18n.localize("SYMBAROUMHUD.SimplifiedInventory.DeleteItem"),
+        content: `<p>${game.i18n.format("SYMBAROUMHUD.SimplifiedInventory.DeleteItemConfirm", { name: itemName })}</p>`,
+        defaultYes: false,
+        rejectClose: false
+      });
+    } else {
+      confirmed = true;
+    }
+
+    if (!confirmed) return;
+
+    if (containerId) {
+      const containerItem = findActorItem(actor, containerId);
+      if (containerItem && isQuiverItem(containerItem)) {
+        const loadedAmmo = Array.isArray(containerItem.flags?.["symbaroum-hud"]?.loadedAmmo)
+          ? [...containerItem.flags["symbaroum-hud"].loadedAmmo]
+          : [];
+        const filtered = loadedAmmo.filter((a) => (a.id ?? a) !== item.id);
+        await containerItem.setFlag("symbaroum-hud", "loadedAmmo", filtered);
+      }
+    }
+
+    await ActorService.deleteItem(actor, item.id);
+    ui.notifications?.info?.(game.i18n.localize("SYMBAROUMHUD.SimplifiedInventory.ItemDeleted"));
+    return this.render();
+  }
+
   #dockHotbar(root, detachedHotbar = null) {
     const hotbar = detachedHotbar ?? document.getElementById("hotbar");
     const slot = root.querySelector("[data-symba-hotbar]");
-    if (!hotbar || !slot) return;
+    if (!hotbar || !slot) {
+      if (detachedHotbar) this.#restoreHotbar();
+      return;
+    }
 
     if (!this.#hotbarAnchor && hotbar.parentNode && !root.contains(hotbar)) {
       this.#hotbarAnchor = document.createComment(`${MODULE_ID}:hotbar`);
@@ -1595,6 +1925,38 @@ export class SymbaroumHud extends ApplicationV2 {
         element.dataset.tooltip = label;
         const icon = element.querySelector("i");
         if (icon) icon.className = `fa-solid ${this.#tacticsCollapsed ? "fa-chevron-up" : "fa-chevron-down"}`;
+        return;
+      }
+
+      if (action === "set-actor") {
+        if (event?.button === 2) {
+          this.#manualActorKey = null;
+          this.#actor = ActorService.resolve(getSetting(SETTINGS.SELECTION_MODE));
+          return this.render();
+        }
+
+        const controlled = canvas?.tokens?.controlled?.map((t) => t.actor).find((a) => ActorService.isUsable(a));
+        if (controlled) {
+          if (this.#manualActorKey === actorKey(controlled)) {
+            this.#manualActorKey = null;
+            this.#actor = ActorService.resolve(getSetting(SETTINGS.SELECTION_MODE));
+            return this.render();
+          }
+          return this.#activateManualActor(controlled);
+        }
+
+        if (this.#manualActorKey) {
+          this.#manualActorKey = null;
+          this.#actor = ActorService.resolve(getSetting(SETTINGS.SELECTION_MODE));
+          return this.render();
+        }
+
+        const owned = ActorService.ownedActors(this.#actor);
+        if (owned.length > 1) {
+          return this.#cycleActor(1);
+        }
+
+        ui.notifications?.info?.(game.i18n?.localize?.("SYMBAROUMHUD.Actions.SetActorUnpinned") ?? "Selecione um token no mapa para fixar no HUD.");
         return;
       }
 
@@ -1876,6 +2238,36 @@ export class SymbaroumHud extends ApplicationV2 {
       if (action === "maneuver") {
         return this.#openManeuverDialog(actor);
       }
+      if (action === "execute-maneuver") {
+        const maneuverId = element.dataset.maneuverId;
+        if (!actor || !maneuverId) return null;
+        return IndResourcesIntegration.executeManeuver(actor, maneuverId);
+      }
+      if (action === "show-maneuver-info") {
+        const maneuverId = element.dataset.maneuverId;
+        const allManeuvers = IndResourcesIntegration.maneuvers();
+        const found = allManeuvers.find((m) => m.id === maneuverId);
+        if (found) {
+          const notes = Array.isArray(found.notes) ? found.notes.join("<br><br>") : (found.notes || "");
+          return new Dialog({
+            title: found.label,
+            content: `<div style="padding: 10px 6px; font-size: 13px; line-height: 1.5; color: #e5dec9;">${notes}</div>`,
+            buttons: {
+              roll: {
+                icon: '<i class="fa-solid fa-dice-d20"></i>',
+                label: game.i18n.localize("SYMBAROUMHUD.Maneuvers.Roll"),
+                callback: () => IndResourcesIntegration.executeManeuver(actor, maneuverId)
+              },
+              close: {
+                icon: '<i class="fa-solid fa-xmark"></i>',
+                label: game.i18n.localize("SYMBAROUMHUD.Actions.Close")
+              }
+            },
+            default: "roll"
+          }).render(true);
+        }
+        return null;
+      }
       if (action === "add-ability") {
         return this.#openAddAbilityDialog(actor);
       }
@@ -1903,8 +2295,172 @@ export class SymbaroumHud extends ApplicationV2 {
       if (action === "open-ritual") {
         return ActorService.openItem(actor, element.dataset.itemId);
       }
+      if (action === "open-trait") {
+        return ActorService.openItem(actor, element.dataset.itemId);
+      }
+      if (action === "use-ritual") {
+        return ActorService.usePower(actor, element.dataset.itemId);
+      }
+      if (action === "select-power-card") {
+        const itemId = element.dataset.itemId;
+        this.#simplifiedPowersSelectedItemId = this.#simplifiedPowersSelectedItemId === itemId ? null : itemId;
+        return this.render();
+      }
+      if (action === "close-power-card") {
+        this.#simplifiedPowersSelectedItemId = null;
+        return this.render();
+      }
+      if (action === "open-power-sheet") {
+        return ActorService.openItem(actor, element.dataset.itemId);
+      }
+      if (action === "post-power-card") {
+        const itemId = element.dataset.itemId;
+        const item = findActorItem(actor, itemId);
+        if (!item) return null;
+        if (typeof item.displayCard === "function") {
+          return item.displayCard();
+        }
+        const { tier, tierLabel } = getActiveTierInfo(item);
+        const desc = resolvePowerDescription(item, tier);
+        const speaker = typeof ChatMessage?.getSpeaker === "function"
+          ? ChatMessage.getSpeaker({ actor })
+          : { actor: actor.id, alias: actor.name };
+        const badgeHtml = tierLabel ? `<span style="display:inline-block; padding:1px 5px; font-size:10px; font-weight:bold; background:rgba(197,174,69,0.2); border:1px solid rgba(197,174,69,0.5); border-radius:3px; color:#c5ae45; text-transform:uppercase; margin-bottom:4px;">${tierLabel}</span>` : "";
+        return ChatMessage.create({
+          speaker,
+          flavor: `<div class="symbaroum-hud-roll-flavor"><strong>${actor.name}</strong>: ${item.name}</div>`,
+          content: `
+            <div class="symbaroum-hud-chat-card" style="padding:6px 8px; font-size:12px; line-height:1.45;">
+              <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:4px;">
+                <img src="${item.img || ''}" width="28" height="28" style="border-radius:3px; object-fit:cover; border:1px solid rgba(255,255,255,0.2);"/>
+                <div>
+                  <div style="font-weight:bold; font-size:13px; color:#fff;">${item.name}</div>
+                  ${badgeHtml}
+                </div>
+              </div>
+              <div style="color:#d1d5db;">${desc || item.name}</div>
+            </div>
+          `
+        });
+      }
+      if (action === "toggle-simplified-actions") {
+        this.#simplifiedActionsOpen = !this.#simplifiedActionsOpen;
+        if (this.#simplifiedActionsOpen) {
+          this.#simplifiedInventoryOpen = false;
+          this.#simplifiedPowersOpen = false;
+        }
+        return this.render();
+      }
+      if (action === "close-simplified-actions") {
+        this.#simplifiedActionsOpen = false;
+        return this.render();
+      }
+      if (action === "toggle-simplified-inventory") {
+        this.#simplifiedInventoryOpen = !this.#simplifiedInventoryOpen;
+        if (this.#simplifiedInventoryOpen) {
+          this.#simplifiedActionsOpen = false;
+          this.#simplifiedPowersOpen = false;
+        }
+        return this.render();
+      }
+      if (action === "close-simplified-inventory") {
+        this.#simplifiedInventoryOpen = false;
+        return this.render();
+      }
+      if (action === "toggle-simplified-powers") {
+        this.#simplifiedPowersOpen = !this.#simplifiedPowersOpen;
+        if (this.#simplifiedPowersOpen) {
+          this.#simplifiedActionsOpen = false;
+          this.#simplifiedInventoryOpen = false;
+        }
+        return this.render();
+      }
+      if (action === "close-simplified-powers") {
+        this.#simplifiedPowersOpen = false;
+        return this.render();
+      }
+      if (action === "toggle-simplified-container") {
+        const containerId = element.dataset.containerId;
+        if (!containerId) return;
+        const containerItem = findActorItem(actor, containerId);
+        const currentlyCollapsed = this.#isSimplifiedContainerCollapsed(actor, { id: containerId });
+        if (currentlyCollapsed) {
+          this.#simplifiedCollapsedContainers.delete(containerId);
+          this.#simplifiedOpenContainers.add(containerId);
+          if (containerItem && IndResourcesIntegration.api?.containers?.toggleContainer) {
+            if (!IndResourcesIntegration.api.containers.isContainerExpanded?.(actor, containerItem)) {
+              await IndResourcesIntegration.api.containers.toggleContainer(actor, containerItem).catch(() => undefined);
+            }
+          }
+        } else {
+          this.#simplifiedOpenContainers.delete(containerId);
+          this.#simplifiedCollapsedContainers.add(containerId);
+          if (containerItem && IndResourcesIntegration.api?.containers?.toggleContainer) {
+            if (IndResourcesIntegration.api.containers.isContainerExpanded?.(actor, containerItem)) {
+              await IndResourcesIntegration.api.containers.toggleContainer(actor, containerItem).catch(() => undefined);
+            }
+          }
+        }
+        return this.render();
+      }
+      if (action === "withdraw-from-container") {
+        const itemId = element.dataset.itemId;
+        const containerId = element.dataset.containerId;
+        if (!itemId || !containerId) return;
+        const containerItem = findActorItem(actor, containerId);
+        if (containerItem && isQuiverItem(containerItem)) {
+          await this.#withdrawFromQuiver(actor, containerItem, itemId);
+          return this.render();
+        }
+        await IndResourcesIntegration.withdrawFromContainer(actor, itemId, containerId);
+        return this.render();
+      }
+      if (action === "reload-quiver") {
+        const containerId = element.dataset.containerId;
+        if (!containerId) return;
+        return this.#reloadQuiver(actor, containerId);
+      }
+      if (action === "toggle-armor-equip") {
+        const item = findActorItem(actor, element.dataset.itemId);
+        if (!item || !ActorService.canUpdate(actor)) return null;
+        const isCurrentlyActive = Boolean(item.system?.isActive || item.system?.state === "active");
+        const nextState = isCurrentlyActive ? "other" : "active";
+        await item.update({ "system.state": nextState });
+        return this.render();
+      }
+      if (action === "change-item-quantity") {
+        const delta = Number(element.dataset.delta ?? 0);
+        return this.#changeItemQuantity(actor, element.dataset.itemId, delta);
+      }
+      if (action === "open-item") {
+        return ActorService.openItem(actor, element.dataset.itemId);
+      }
+      if (action === "use-item") {
+        const item = findActorItem(actor, element.dataset.itemId);
+        if (!item) return null;
+        const isRation = /\b(pao|pão|waybread|travel\s+bread|racao|ração|ration)\b/i.test(item.name)
+          || Boolean(item.flags?.["symbaroum-ind-resources"]?.isRation)
+          || Boolean(safeCall(() => IndResourcesIntegration.api?.rations?.isRation?.(item)));
+        if (isRation && IndResourcesIntegration.api?.rations?.consumeDay) {
+          const res = await IndResourcesIntegration.api.rations.consumeDay(actor, item);
+          void this.render();
+          return res;
+        }
+        if (typeof item.roll === "function") return item.roll();
+        if (typeof item.use === "function") return item.use();
+        if (typeof item.displayCard === "function") return item.displayCard();
+        return ActorService.openItem(actor, element.dataset.itemId);
+      }
       if (action === "roll-weapon") {
         return this.#rollWeapon(actor, element.dataset.itemId);
+      }
+      if (action === "draw-weapon") {
+        const drawn = await IndResourcesIntegration.drawWeapon(
+          actor,
+          element.dataset.itemId
+        );
+        if (drawn) return this.render();
+        return null;
       }
       if (action === "sheathe-weapon") {
         const sheathed = await IndResourcesIntegration.sheatheWeapon(
@@ -1924,6 +2480,7 @@ export class SymbaroumHud extends ApplicationV2 {
         return ActorService.rollAttribute(actor, element.dataset.attribute);
       }
       if (action === "roll-defense") return ActorService.rollArmor(actor);
+      if (action === "roll-armor-protection") return ActorService.rollArmorProtection(actor, element.dataset.itemId);
       if (action === "consume-ration") {
         return IndResourcesIntegration.execute("rations", actor);
       }
@@ -1938,6 +2495,12 @@ export class SymbaroumHud extends ApplicationV2 {
       if (action === "rest") return IndResourcesIntegration.execute("rest", actor);
       if (action === "weapon-readiness") {
         return IndResourcesIntegration.execute("readiness", actor);
+      }
+      if (action === "open-effect-menu") {
+        return this.#openEffectMenu(element.dataset.effectId, event);
+      }
+      if (action === "remove-effect") {
+        return ActorService.removeEffect(actor, element.dataset.effectId);
       }
     } catch (error) {
       console.error(`${MODULE_ID} | HUD action failed.`, error);
@@ -1974,6 +2537,214 @@ export class SymbaroumHud extends ApplicationV2 {
     if (!drawn) return null;
     return this.render();
   }
+
+  async #changeItemQuantity(actor, itemId, delta) {
+    const item = findActorItem(actor, itemId);
+    if (!item || !ActorService.canUpdate(actor) || !Number.isFinite(delta)) return null;
+    const currentQuantity = Math.max(0, Math.trunc(Number(item.system?.number ?? 1)));
+    const nextQuantity = Math.max(0, currentQuantity + Math.trunc(delta));
+    if (nextQuantity === currentQuantity) return item;
+    await item.update({ "system.number": nextQuantity });
+    return this.render();
+  }
+
+  async #reloadQuiver(actor, quiverId) {
+    if (!actor || !quiverId) return;
+
+    if (typeof IndResourcesIntegration.api?.ammo?.reloadQuiverPrompt === "function") {
+      const res = await IndResourcesIntegration.reloadQuiver(actor, quiverId);
+      void this.render();
+      return res;
+    }
+
+    const quiverItem = findActorItem(actor, quiverId);
+    if (!quiverItem) return;
+
+    const capacityLimit = 12;
+    let loadedAmmo = Array.from(quiverItem.flags?.["symbaroum-ind-resources"]?.loadedAmmo ?? []);
+    let currentLoaded = loadedAmmo.reduce((sum, e) => sum + (Number(e.quantity) || 0), 0);
+    if (!loadedAmmo.length) {
+      currentLoaded = Number(quiverItem.flags?.["symbaroum-ind-resources"]?.usesRemaining ?? quiverItem.system?.uses?.value ?? 0);
+    }
+    const allItems = Array.from(actor.items?.values?.() ?? actor.items ?? []);
+    const storedInQuiver = allItems.filter((i) => (
+      String(i.flags?.["symbaroum-ind-resources"]?.storedIn) === quiverId
+      || String(i.system?.storedIn) === quiverId
+    ));
+    for (const item of storedInQuiver) {
+      currentLoaded += Math.max(1, Number(item.system?.number ?? 1));
+    }
+
+    const remainingCapacity = Math.max(0, capacityLimit - currentLoaded);
+    if (remainingCapacity <= 0) {
+      ui.notifications?.warn(game.i18n?.localize?.("SYMBAROUMHUD.SimplifiedInventory.QuiverFull") ?? "A aljava está cheia (12/12 flechas).");
+      return;
+    }
+
+    const looseAmmoItems = allItems.filter((item) => (
+      isAmmoItem(item)
+      && !isQuiverItem(item)
+      && Number(item.system?.number ?? 1) > 0
+      && !item.flags?.["symbaroum-ind-resources"]?.storedIn
+      && !item.system?.storedIn
+    ));
+
+    if (!looseAmmoItems.length) {
+      ui.notifications?.warn(game.i18n?.localize?.("SYMBAROUMHUD.SimplifiedInventory.NoAmmoAvailable") ?? "Nenhuma flecha disponível no inventário.");
+      return;
+    }
+
+    if (looseAmmoItems.length === 1) {
+      const loose = looseAmmoItems[0];
+      const looseQty = Math.max(1, Number(loose.system?.number ?? 1));
+      const toLoad = Math.min(remainingCapacity, looseQty);
+
+      const nextLooseQty = looseQty - toLoad;
+      if (nextLooseQty <= 0) {
+        if (typeof loose.delete === "function") await loose.delete();
+        else if (actor.deleteEmbeddedDocuments) await actor.deleteEmbeddedDocuments("Item", [loose.id]);
+      } else {
+        if (typeof loose.update === "function") await loose.update({ "system.number": nextLooseQty });
+        else if (actor.updateEmbeddedDocuments) await actor.updateEmbeddedDocuments("Item", [{ _id: loose.id, "system.number": nextLooseQty }]);
+      }
+
+      const existingEntry = loadedAmmo.find((e) => e.name === loose.name);
+      if (existingEntry) {
+        existingEntry.quantity = (Number(existingEntry.quantity) || 0) + toLoad;
+      } else {
+        loadedAmmo.push({
+          id: loose.id,
+          name: loose.name,
+          img: loose.img || "icons/weapons/ammunition/arrows-bodkin-yellow-red.webp",
+          quantity: toLoad,
+          sourceUuid: loose.uuid || ""
+        });
+      }
+
+      await quiverItem.setFlag("symbaroum-ind-resources", "loadedAmmo", loadedAmmo);
+      ui.notifications?.info(
+        game.i18n?.format?.("TENEBRE.Ammo.ReloadSuccess", { loaded: toLoad, ammo: loose.name })
+        ?? `${toLoad}x ${loose.name} recarregada(s) na aljava.`
+      );
+      return this.render();
+    }
+
+    const optionsHtml = looseAmmoItems.map((item) => (
+      `<option value="${item.id}">${item.name} (${item.system?.number ?? 1}x)</option>`
+    )).join("");
+
+    const content = `
+      <form class="symbaroum-hud-quiver-reload-form">
+        <div class="form-group" style="margin-bottom: 8px;">
+          <label style="display:block; margin-bottom: 4px; font-weight: bold;">${game.i18n?.localize?.("TENEBRE.Ammo.ReloadChooseAmmo") ?? "Escolha a munição"}:</label>
+          <select name="ammoId" style="width: 100%;">${optionsHtml}</select>
+        </div>
+        <div class="form-group" style="margin-bottom: 8px;">
+          <label style="display:block; margin-bottom: 4px; font-weight: bold;">${game.i18n?.localize?.("TENEBRE.Ammo.ReloadQuantity") ?? "Quantidade"}:</label>
+          <input type="number" name="quantity" min="1" max="${remainingCapacity}" value="${Math.min(remainingCapacity, Number(looseAmmoItems[0].system?.number ?? 1))}" style="width: 100%;">
+          <small style="color: #888;">Capacidade restante: ${remainingCapacity} flecha(s)</small>
+        </div>
+      </form>
+    `;
+
+    if (globalThis.Dialog?.prompt) {
+      const selected = await globalThis.Dialog.prompt({
+        title: game.i18n?.localize?.("SYMBAROUMHUD.SimplifiedInventory.ReloadQuiver") ?? "Recarregar Aljava",
+        content,
+        label: game.i18n?.localize?.("TENEBRE.Common.Confirm") ?? "Confirmar",
+        callback: (html) => {
+          const form = html[0].querySelector("form") || html[0];
+          const ammoId = form.querySelector('[name="ammoId"]')?.value;
+          const qty = Number(form.querySelector('[name="quantity"]')?.value) || 0;
+          return { ammoId, qty };
+        },
+        rejectClose: false
+      });
+
+      if (!selected?.ammoId || !selected?.qty) return;
+
+      const loose = looseAmmoItems.find((i) => i.id === selected.ammoId);
+      if (!loose) return;
+
+      const looseQty = Math.max(1, Number(loose.system?.number ?? 1));
+      const toLoad = Math.min(remainingCapacity, looseQty, Math.max(1, selected.qty));
+
+      const nextLooseQty = looseQty - toLoad;
+      if (nextLooseQty <= 0) {
+        if (typeof loose.delete === "function") await loose.delete();
+        else if (actor.deleteEmbeddedDocuments) await actor.deleteEmbeddedDocuments("Item", [loose.id]);
+      } else {
+        if (typeof loose.update === "function") await loose.update({ "system.number": nextLooseQty });
+        else if (actor.updateEmbeddedDocuments) await actor.updateEmbeddedDocuments("Item", [{ _id: loose.id, "system.number": nextLooseQty }]);
+      }
+
+      const existingEntry = loadedAmmo.find((e) => e.name === loose.name);
+      if (existingEntry) {
+        existingEntry.quantity = (Number(existingEntry.quantity) || 0) + toLoad;
+      } else {
+        loadedAmmo.push({
+          id: loose.id,
+          name: loose.name,
+          img: loose.img || "icons/weapons/ammunition/arrows-bodkin-yellow-red.webp",
+          quantity: toLoad,
+          sourceUuid: loose.uuid || ""
+        });
+      }
+
+      await quiverItem.setFlag("symbaroum-ind-resources", "loadedAmmo", loadedAmmo);
+      ui.notifications?.info(
+        game.i18n?.format?.("TENEBRE.Ammo.ReloadSuccess", { loaded: toLoad, ammo: loose.name })
+        ?? `${toLoad}x ${loose.name} recarregada(s) na aljava.`
+      );
+      return this.render();
+    }
+  }
+
+  async #withdrawFromQuiver(actor, quiverItem, entryId) {
+    if (!actor || !quiverItem || !entryId) return;
+
+    let loadedAmmo = Array.from(quiverItem.flags?.["symbaroum-ind-resources"]?.loadedAmmo ?? []);
+    const entryIndex = loadedAmmo.findIndex((e, idx) => e.id === entryId || `loaded-${idx}` === entryId || e.name === entryId);
+
+    if (entryIndex >= 0) {
+      const entry = loadedAmmo[entryIndex];
+      const qtyToWithdraw = Number(entry.quantity) || 1;
+      loadedAmmo.splice(entryIndex, 1);
+      await quiverItem.setFlag("symbaroum-ind-resources", "loadedAmmo", loadedAmmo);
+
+      const allItems = Array.from(actor.items?.values?.() ?? actor.items ?? []);
+      const existingLoose = allItems.find((i) => i.name === entry.name && !i.flags?.["symbaroum-ind-resources"]?.storedIn && !i.system?.storedIn);
+      if (existingLoose) {
+        const curQty = Number(existingLoose.system?.number ?? 1);
+        if (typeof existingLoose.update === "function") {
+          await existingLoose.update({ "system.number": curQty + qtyToWithdraw });
+        } else if (actor.updateEmbeddedDocuments) {
+          await actor.updateEmbeddedDocuments("Item", [{ _id: existingLoose.id, "system.number": curQty + qtyToWithdraw }]);
+        }
+      } else {
+        if (actor.createEmbeddedDocuments) {
+          await actor.createEmbeddedDocuments("Item", [{
+            name: entry.name,
+            type: "equipment",
+            img: entry.img || "icons/weapons/ammunition/arrows-bodkin-yellow-red.webp",
+            system: { number: qtyToWithdraw }
+          }]);
+        }
+      }
+      return;
+    }
+
+    const physicalItem = findActorItem(actor, entryId);
+    if (physicalItem) {
+      if (typeof physicalItem.unsetFlag === "function") {
+        await physicalItem.unsetFlag("symbaroum-ind-resources", "storedIn");
+      }
+      if (physicalItem.system?.storedIn && typeof physicalItem.update === "function") {
+        await physicalItem.update({ "system.storedIn": "" });
+      }
+    }
+  }
+
 
   #openVitalityDialog(actor) {
     if (!ActorService.canUpdate(actor)) {
@@ -2409,6 +3180,7 @@ function moneyContext(actor) {
   };
 }
 
+
 function firstText(...values) {
   for (const value of values) {
     if (value === null || value === undefined) continue;
@@ -2771,7 +3543,947 @@ function escapeHtml(value) {
   });
 }
 
-function attackContext(actor, { canDrag = false, drawnWeapons = null } = {}) {
+function simplifiedActionContext(actor, { canRollActor = false, drawnWeapons = null } = {}) {
+  if (!actor) {
+    return {
+      hasActions: false,
+      attacks: [],
+      abilities: [],
+      mysticalPowers: [],
+      traits: [],
+      otherItems: []
+    };
+  }
+
+  const attacks = attackContext(actor, {
+    canDrag: canRollActor,
+    drawnWeapons,
+    canUse: canRollActor
+  });
+  const allItems = Array.from(actor?.items?.values?.() ?? actor?.items ?? [])
+    .filter((item) => Boolean(item?.name))
+    .sort((left, right) => left.name.localeCompare(right.name, game.i18n.lang));
+
+  const abilities = [];
+  const mysticalPowers = [];
+  const traits = [];
+  const otherItems = [];
+
+  for (const item of allItems) {
+    if (isMysticalPowerItem(item)) {
+      const activeLevel = ["master", "adept", "novice"].find((lvl) => Boolean(item.system?.[lvl]?.isActive));
+      const actionKey = activeLevel ? item.system?.[activeLevel]?.action : null;
+      mysticalPowers.push({
+        id: item.id,
+        name: item.name,
+        img: item.img || "systems/symbaroum/asset/image/power.png",
+        uuid: item.uuid || "",
+        canUse: canRollActor,
+        actionLabel: actionKey ? actionLabel(actionKey) : null
+      });
+      continue;
+    }
+
+    if (isRitualItem(item)) continue;
+
+    if (isTraitLikeItem(item)) {
+      if (canUsePowerItem(item)) {
+        traits.push({
+          id: item.id,
+          name: item.name,
+          img: item.img || "systems/symbaroum/asset/image/trait.png",
+          uuid: item.uuid || "",
+          canUse: canRollActor,
+          actionLabel: null
+        });
+      }
+      continue;
+    }
+
+    if (item.system?.isPower) {
+      if (canUsePowerItem(item)) {
+        const activeLevel = ["master", "adept", "novice"].find((lvl) => Boolean(item.system?.[lvl]?.isActive));
+        const actionKey = activeLevel ? item.system?.[activeLevel]?.action : null;
+        abilities.push({
+          id: item.id,
+          name: item.name,
+          img: item.img || "systems/symbaroum/asset/image/ability.png",
+          uuid: item.uuid || "",
+          canUse: canRollActor,
+          actionLabel: actionKey ? actionLabel(actionKey) : null
+        });
+      }
+      continue;
+    }
+
+    if (canUsePowerItem(item)) {
+      otherItems.push({
+        id: item.id,
+        name: item.name,
+        img: item.img || "icons/svg/item-bag.svg",
+        uuid: item.uuid || "",
+        canUse: canRollActor,
+        actionLabel: null
+      });
+    }
+  }
+
+  const rawManeuvers = IndResourcesIntegration.maneuvers();
+  const maneuvers = Array.isArray(rawManeuvers)
+    ? rawManeuvers.map((m) => ({
+        id: m.id,
+        name: m.label,
+        icon: m.icon || "fa-chess-knight",
+        description: Array.isArray(m.notes) ? m.notes.join("\n\n") : (m.notes || ""),
+        canUse: canRollActor
+      }))
+    : [];
+
+  const hasActions = Boolean(
+    attacks.length || abilities.length || mysticalPowers.length || traits.length || otherItems.length || maneuvers.length
+  );
+
+  return {
+    hasActions,
+    attacks,
+    abilities,
+    mysticalPowers,
+    traits,
+    otherItems,
+    maneuvers
+  };
+}
+
+function getActiveTierInfo(item) {
+  const activeLevel = ["master", "adept", "novice"].find((lvl) => Boolean(item.system?.[lvl]?.isActive));
+  if (!activeLevel) return { tier: null, tierLabel: "", actionKey: null };
+  const levelObj = ABILITY_LEVELS.find((l) => l.id === activeLevel);
+  const tierLabel = levelObj ? game.i18n.localize(levelObj.label) : activeLevel.toUpperCase();
+  const actionKey = item.system?.[activeLevel]?.action || null;
+  return { tier: activeLevel, tierLabel, actionKey };
+}
+
+function resolvePowerDescription(item, activeLevel) {
+  if (!item) return "";
+  let desc = "";
+  if (activeLevel && item.system?.[activeLevel]?.description) {
+    desc = item.system[activeLevel].description;
+  }
+  if (!desc && item.system?.description) {
+    desc = item.system.description;
+  }
+  if (!desc && item.system?.novice?.description) {
+    desc = item.system.novice.description;
+  }
+  return desc || "";
+}
+
+function simplifiedPowersContext(actor, { canRollActor = false, selectedItemId = null } = {}) {
+  if (!actor) {
+    return {
+      isEmpty: true,
+      hasAbilities: false,
+      hasMysticalPowers: false,
+      hasRituals: false,
+      hasTraits: false,
+      abilities: [],
+      mysticalPowers: [],
+      rituals: [],
+      traits: [],
+      column1: { sections: [], hasSections: false },
+      column2: { sections: [], hasSections: false },
+      hasColumn2: false,
+      selectedCard: null
+    };
+  }
+
+  const allItems = Array.from(actor?.items?.values?.() ?? actor?.items ?? [])
+    .filter((item) => Boolean(item?.name))
+    .sort((left, right) => left.name.localeCompare(right.name, game.i18n?.lang || "en"));
+
+  const abilities = [];
+  const mysticalPowers = [];
+  const rituals = [];
+  const traits = [];
+
+  let selectedCard = null;
+
+  for (const item of allItems) {
+    if (isRitualItem(item)) {
+      const description = resolvePowerDescription(item);
+      const isSelected = selectedItemId === String(item.id);
+      const entry = {
+        id: item.id,
+        name: item.name,
+        img: item.img || "systems/symbaroum/asset/image/ritual.png",
+        uuid: item.uuid || "",
+        description,
+        type: "ritual",
+        badge: game.i18n?.localize("SYMBAROUMHUD.Sections.Rituals") ?? "Ritual",
+        actionLabel: null,
+        canRoll: canRollActor && canUsePowerItem(item),
+        canUse: canRollActor,
+        rollAction: "use-ritual",
+        isSelected
+      };
+      rituals.push(entry);
+      if (isSelected) {
+        selectedCard = {
+          ...entry,
+          actorName: actor.name
+        };
+      }
+      continue;
+    }
+
+    if (isMysticalPowerItem(item)) {
+      const { tier, tierLabel, actionKey } = getActiveTierInfo(item);
+      const description = resolvePowerDescription(item, tier);
+      const canRoll = canRollActor && canUsePowerItem(item);
+      const isSelected = selectedItemId === String(item.id);
+      const entry = {
+        id: item.id,
+        name: item.name,
+        img: item.img || "systems/symbaroum/asset/image/power.png",
+        uuid: item.uuid || "",
+        tier,
+        tierLabel,
+        description,
+        type: "mysticalPower",
+        badge: tierLabel || (game.i18n?.localize("SYMBAROUMHUD.Sections.MysticalPowers") ?? "Poder Místico"),
+        actionLabel: actionKey ? actionLabel(actionKey) : null,
+        canRoll,
+        canUse: canRollActor,
+        rollAction: "use-mystical-power",
+        isSelected
+      };
+      mysticalPowers.push(entry);
+      if (isSelected) {
+        selectedCard = {
+          ...entry,
+          actorName: actor.name
+        };
+      }
+      continue;
+    }
+
+    if (isTraitLikeItem(item)) {
+      const { tier, tierLabel, actionKey } = getActiveTierInfo(item);
+      const description = resolvePowerDescription(item, tier);
+      const canRoll = canRollActor && canUsePowerItem(item);
+      const isSelected = selectedItemId === String(item.id);
+      const entry = {
+        id: item.id,
+        name: item.name,
+        img: item.img || "systems/symbaroum/asset/image/trait.png",
+        uuid: item.uuid || "",
+        tier,
+        tierLabel,
+        description,
+        type: "trait",
+        badge: tierLabel || (game.i18n?.localize("SYMBAROUMHUD.Sections.Traits") ?? "Traço"),
+        actionLabel: actionKey ? actionLabel(actionKey) : null,
+        canRoll,
+        canUse: canRollActor,
+        rollAction: "use-trait",
+        isSelected
+      };
+      traits.push(entry);
+      if (isSelected) {
+        selectedCard = {
+          ...entry,
+          actorName: actor.name
+        };
+      }
+      continue;
+    }
+
+    if (item.system?.isPower) {
+      const { tier, tierLabel, actionKey } = getActiveTierInfo(item);
+      const description = resolvePowerDescription(item, tier);
+      const canRoll = canRollActor && canUsePowerItem(item);
+      const isSelected = selectedItemId === String(item.id);
+      const entry = {
+        id: item.id,
+        name: item.name,
+        img: item.img || "systems/symbaroum/asset/image/ability.png",
+        uuid: item.uuid || "",
+        tier,
+        tierLabel,
+        description,
+        type: "ability",
+        badge: tierLabel || (game.i18n?.localize("SYMBAROUMHUD.Sections.Abilities") ?? "Habilidade"),
+        actionLabel: actionKey ? actionLabel(actionKey) : null,
+        canRoll,
+        canUse: canRollActor,
+        rollAction: "use-ability",
+        isSelected
+      };
+      abilities.push(entry);
+      if (isSelected) {
+        selectedCard = {
+          ...entry,
+          actorName: actor.name
+        };
+      }
+      continue;
+    }
+  }
+
+  // Multi-column section assignment (PF2e HUD style 2 columns):
+  const col1Sections = [];
+  const col2Sections = [];
+
+  const hasMagic = mysticalPowers.length > 0 || rituals.length > 0;
+
+  if (hasMagic) {
+    if (abilities.length > 0) {
+      col1Sections.push({
+        title: game.i18n?.localize("SYMBAROUMHUD.Sections.Abilities") ?? "Habilidades",
+        items: abilities,
+        icon: "fa-bolt"
+      });
+    }
+    if (traits.length > 0) {
+      col1Sections.push({
+        title: game.i18n?.localize("SYMBAROUMHUD.Sections.Traits") ?? "Traços & Características",
+        items: traits,
+        icon: "fa-dna"
+      });
+    }
+    if (mysticalPowers.length > 0) {
+      col2Sections.push({
+        title: game.i18n?.localize("SYMBAROUMHUD.Sections.MysticalPowers") ?? "Poderes Místicos",
+        items: mysticalPowers,
+        icon: "fa-wand-magic-sparkles"
+      });
+    }
+    if (rituals.length > 0) {
+      col2Sections.push({
+        title: game.i18n?.localize("SYMBAROUMHUD.Sections.Rituals") ?? "Rituais",
+        items: rituals,
+        icon: "fa-book-open"
+      });
+    }
+  } else if (traits.length > 0) {
+    if (abilities.length > 0) {
+      col1Sections.push({
+        title: game.i18n?.localize("SYMBAROUMHUD.Sections.Abilities") ?? "Habilidades",
+        items: abilities,
+        icon: "fa-bolt"
+      });
+    }
+    col2Sections.push({
+      title: game.i18n?.localize("SYMBAROUMHUD.Sections.Traits") ?? "Traços & Características",
+      items: traits,
+      icon: "fa-dna"
+    });
+  } else if (abilities.length > 4) {
+    const mid = Math.ceil(abilities.length / 2);
+    col1Sections.push({
+      title: game.i18n?.localize("SYMBAROUMHUD.Sections.Abilities") ?? "Habilidades",
+      items: abilities.slice(0, mid),
+      icon: "fa-bolt"
+    });
+    col2Sections.push({
+      title: game.i18n?.localize("SYMBAROUMHUD.Sections.Abilities") ?? "Habilidades",
+      items: abilities.slice(mid),
+      icon: "fa-bolt"
+    });
+  } else {
+    if (abilities.length > 0) {
+      col1Sections.push({
+        title: game.i18n?.localize("SYMBAROUMHUD.Sections.Abilities") ?? "Habilidades",
+        items: abilities,
+        icon: "fa-bolt"
+      });
+    }
+  }
+
+  const isEmpty = !abilities.length && !mysticalPowers.length && !rituals.length && !traits.length;
+
+  return {
+    isEmpty,
+    hasAbilities: abilities.length > 0,
+    hasMysticalPowers: mysticalPowers.length > 0,
+    hasRituals: rituals.length > 0,
+    hasTraits: traits.length > 0,
+    abilities,
+    mysticalPowers,
+    rituals,
+    traits,
+    column1: {
+      sections: col1Sections,
+      hasSections: col1Sections.length > 0
+    },
+    column2: {
+      sections: col2Sections,
+      hasSections: col2Sections.length > 0
+    },
+    hasColumn1: col1Sections.length > 0,
+    hasColumn2: col2Sections.length > 0,
+    selectedCard
+  };
+}
+
+function resolveItemUses(item, actor) {
+  if (!item) return null;
+
+  // 1. Ind Resources API for rations
+  if (IndResourcesIntegration.api?.rations?.getState) {
+    const isRation = /\b(pao|pão|waybread|travel\s+bread|racao|ração|ration)\b/i.test(item.name)
+      || Boolean(item.flags?.["symbaroum-ind-resources"]?.isRation)
+      || Boolean(safeCall(() => IndResourcesIntegration.api?.rations?.isRation?.(item)));
+    if (isRation) {
+      const state = safeCall(() => IndResourcesIntegration.api.rations.getState(actor, item));
+      if (state && Number.isFinite(state.totalUsesCapacity) && state.totalUsesCapacity > 0) {
+        return `${state.totalUsesRemaining}/${state.totalUsesCapacity}`;
+      }
+      if (state && Number.isFinite(state.usesPerUnit) && state.usesPerUnit > 0) {
+        return `${state.usesRemaining}/${state.usesPerUnit}`;
+      }
+    }
+  }
+
+  // 2. Actor flag from symbaroum-ind-resources
+  const rationFlag = actor?.getFlag?.("symbaroum-ind-resources", "rations");
+  const isRationName = /\b(pao|pão|waybread|travel\s+bread|racao|ração|ration)\b/i.test(item.name)
+    || Boolean(item.flags?.["symbaroum-ind-resources"]?.isRation);
+
+  if (isRationName) {
+    const rawQty = item.system?.number ?? item.system?.quantity ?? 1;
+    const quantity = Number.isFinite(Number(rawQty)) ? Math.max(1, Math.trunc(Number(rawQty))) : 1;
+    const usesPerUnit = 4;
+    let usesRemaining = usesPerUnit;
+
+    if (rationFlag) {
+      const travelBread = rationFlag.byRule?.travelBread ?? rationFlag;
+      if (Number.isFinite(Number(travelBread.usesRemaining))) {
+        usesRemaining = Math.max(0, Math.min(usesPerUnit, Number(travelBread.usesRemaining)));
+      }
+    }
+
+    const totalRemaining = ((quantity - 1) * usesPerUnit) + usesRemaining;
+    const totalCapacity = quantity * usesPerUnit;
+    return `${totalRemaining}/${totalCapacity}`;
+  }
+
+  // 3. Generic item uses (system.uses or item flags)
+  const systemUses = item.system?.uses;
+  if (systemUses && Number.isFinite(Number(systemUses.max)) && Number(systemUses.max) > 0) {
+    const current = Number.isFinite(Number(systemUses.value)) ? Number(systemUses.value) : 0;
+    return `${current}/${systemUses.max}`;
+  }
+
+  const indUses = item.flags?.["symbaroum-ind-resources"];
+  if (indUses && Number.isFinite(Number(indUses.usesPerUnit)) && Number(indUses.usesPerUnit) > 0) {
+    const max = Number(indUses.usesPerUnit);
+    const rem = Number.isFinite(Number(indUses.usesRemaining)) ? Number(indUses.usesRemaining) : max;
+    return `${rem}/${max}`;
+  }
+
+  return null;
+}
+
+function isAmmoItem(item) {
+  if (!item || !item.name) return false;
+  if (Boolean(item.flags?.["symbaroum-ind-resources"]?.isAmmo) || item.flags?.["symbaroum-ind-resources"]?.ammoType) return true;
+  if (Boolean(item.system?.isAmmo)) return true;
+  const name = String(item.name).toLocaleLowerCase();
+  return [
+    "flecha",
+    "flechas",
+    "virote",
+    "virotes",
+    "arrow",
+    "arrows",
+    "bolt",
+    "bolts",
+    "ammunition",
+    "municao",
+    "munição",
+    "projectile",
+    "projetil",
+    "projétil"
+  ].some((term) => name.includes(term));
+}
+
+function isQuiverItem(item) {
+  if (!item || !item.name) return false;
+  const name = String(item.name).toLocaleLowerCase();
+  return name.includes("aljava") || name.includes("quiver");
+}
+
+function simplifiedInventoryContext(actor, { canRollActor = false, drawnWeapons = null, indResources = null, isContainerCollapsed = null } = {}) {
+  const fallback = {
+    weapons: [],
+    armors: [],
+    equipment: [],
+    column1: {
+      weapons: [],
+      armors: [],
+      equipment: [],
+      hasWeapons: false,
+      hasArmors: false,
+      hasEquipment: false
+    },
+    column2: {
+      consumables: [],
+      treasure: [],
+      containers: [],
+      hasConsumables: false,
+      hasTreasure: false,
+      hasContainers: false
+    },
+    column3: {
+      survival: [],
+      general: [],
+      hasSurvival: false,
+      hasGeneral: false
+    },
+    money: { thaler: 0, shilling: 0, orteg: 0 },
+    load: null,
+    hasWeapons: false,
+    hasArmors: false,
+    hasEquipment: false,
+    hasColumn1: false,
+    hasColumn2: false,
+    hasColumn3: false,
+    isEmpty: true
+  };
+
+  if (!actor) return fallback;
+
+  try {
+    const readiness = readinessContext(drawnWeapons);
+    const lang = game.i18n?.lang || "en";
+    const processedIds = new Set();
+
+    // 1. Column 1: Weapons & Shields
+    const rawWeapons = Array.isArray(actor?.system?.weapons)
+      ? actor.system.weapons
+      : (actor?.system?.weapons && typeof actor.system.weapons === "object" ? Object.values(actor.system.weapons) : []);
+
+    const allItems = Array.from(actor?.items?.values?.() ?? actor?.items ?? []).filter((i) => Boolean(i?.name));
+
+    const weapons = [];
+    for (const weapon of rawWeapons) {
+      if (!weapon?.id || !weapon?.name) continue;
+      if (isAmmoItem(weapon) || isQuiverItem(weapon)) continue;
+      processedIds.add(String(weapon.id));
+      const item = findActorItem(actor, weapon.id);
+      if (item?.id) processedIds.add(String(item.id));
+      const uuid = item?.uuid ?? weapon.uuid ?? "";
+      const drawn = readiness ? readiness.has(weapon, item, uuid) : false;
+      const damage = weapon.damage?.displayTextShort
+        ?? (typeof weapon.damage?.displayText === "string" ? weapon.damage.displayText : null)
+        ?? (typeof weapon.damage === "string" ? weapon.damage : null)
+        ?? (typeof item?.system?.damage?.displayTextShort === "string" ? item.system.damage.displayTextShort : null)
+        ?? (typeof item?.system?.baseDamage === "string" ? item.system.baseDamage : null)
+        ?? "—";
+      const rawQty = weapon.system?.number ?? item?.system?.number ?? 1;
+      const quantity = Number.isFinite(Number(rawQty)) ? Math.max(0, Math.trunc(Number(rawQty))) : 1;
+      weapons.push({
+        id: weapon.id,
+        name: weapon.name,
+        img: weapon.img ?? item?.img ?? "systems/symbaroum/asset/image/weapon.png",
+        uuid,
+        damage,
+        quantity,
+        hasMultiple: quantity > 1,
+        drawn,
+        canUse: canRollActor,
+        readinessKnown: Boolean(readiness),
+        readinessLabel: readiness
+          ? (game.i18n?.localize(drawn ? "SYMBAROUMHUD.Attacks.Drawn" : "SYMBAROUMHUD.Attacks.Sheathed") ?? (drawn ? "Sacada" : "Guardada"))
+          : null
+      });
+    }
+
+    // Add weapons and shields from allItems not yet in weapons
+    for (const item of allItems) {
+      if (processedIds.has(String(item.id))) continue;
+      if (isAmmoItem(item) || isQuiverItem(item)) continue;
+      const isWpn = item.type === "weapon" || Boolean(item.system?.isWeapon) || itemHasTaxonomyTag(item, "weapon") || itemHasTaxonomyTag(item, "melee-weapons") || itemHasTaxonomyTag(item, "ranged-weapons");
+      const isShield = itemHasTaxonomyTag(item, "shields") || /\b(shield|escudo|broquel|buckler)\b/i.test(item.name);
+
+      if (isWpn || isShield) {
+        processedIds.add(String(item.id));
+        const uuid = item.uuid || "";
+        const drawn = readiness ? readiness.has(item, item, uuid) : false;
+        const damage = item.system?.damage?.displayTextShort
+          ?? (typeof item.system?.damage?.displayText === "string" ? item.system.damage.displayText : null)
+          ?? (typeof item.system?.baseDamage === "string" ? item.system.baseDamage : null)
+          ?? (isShield ? (item.system?.baseProtection ?? "—") : "—");
+        const rawQty = item.system?.number ?? 1;
+        const quantity = Number.isFinite(Number(rawQty)) ? Math.max(0, Math.trunc(Number(rawQty))) : 1;
+        weapons.push({
+          id: item.id,
+          name: item.name,
+          img: item.img || (isShield ? "systems/symbaroum/asset/image/shield.png" : "systems/symbaroum/asset/image/weapon.png"),
+          uuid,
+          damage,
+          quantity,
+          hasMultiple: quantity > 1,
+          drawn,
+          isShield,
+          canUse: canRollActor,
+          readinessKnown: Boolean(readiness),
+          readinessLabel: readiness
+            ? (game.i18n?.localize(drawn ? "SYMBAROUMHUD.Attacks.Drawn" : "SYMBAROUMHUD.Attacks.Sheathed") ?? (drawn ? "Sacada" : "Guardada"))
+            : null
+        });
+      }
+    }
+    weapons.sort((a, b) => String(a.name ?? "").localeCompare(String(b.name ?? ""), lang));
+
+    // 2. Column 1: Armors
+    const rawArmors = Array.isArray(actor?.system?.armors)
+      ? actor.system.armors
+      : (actor?.system?.armors && typeof actor.system.armors === "object" ? Object.values(actor.system.armors) : []);
+
+    const armors = [];
+    for (const armor of rawArmors) {
+      if (!armor?.id || !armor?.name || armor?.isNoArmor) continue;
+      if (processedIds.has(String(armor.id))) continue;
+      processedIds.add(String(armor.id));
+      const item = findActorItem(actor, armor.id);
+      if (item?.id) processedIds.add(String(item.id));
+      const uuid = item?.uuid ?? armor.uuid ?? "";
+      const isActive = Boolean(armor.isActive ?? (item?.system?.isActive || item?.system?.state === "active"));
+      const isEquipped = Boolean(armor.isEquipped ?? (item?.system?.isEquipped || item?.system?.state === "equipped"));
+      const protection = armor.displayTextShort
+        ?? (typeof armor.displayText === "string" ? armor.displayText : null)
+        ?? (typeof armor.baseProtection === "string" ? armor.baseProtection : null)
+        ?? (typeof item?.system?.baseProtection === "string" ? item.system.baseProtection : null)
+        ?? "—";
+      const rawQty = armor.system?.number ?? item?.system?.number ?? 1;
+      const quantity = Number.isFinite(Number(rawQty)) ? Math.max(0, Math.trunc(Number(rawQty))) : 1;
+      armors.push({
+        id: armor.id,
+        name: armor.name,
+        img: armor.img ?? item?.img ?? "systems/symbaroum/asset/image/armor.png",
+        uuid,
+        protection,
+        impeding: Number(armor.impeding ?? item?.system?.impeding ?? 0),
+        quantity,
+        hasMultiple: quantity > 1,
+        isActive,
+        isEquipped,
+        stateLabel: isActive
+          ? (game.i18n?.localize("SYMBAROUMHUD.Storage.StateActive") ?? "Ativa")
+          : isEquipped
+            ? (game.i18n?.localize("SYMBAROUMHUD.Storage.StateEquipped") ?? "Equipada")
+            : (game.i18n?.localize("SYMBAROUMHUD.Storage.StateStored") ?? "Guardada"),
+        canUse: canRollActor
+      });
+    }
+
+    for (const item of allItems) {
+      if (processedIds.has(String(item.id))) continue;
+      if (isAmmoItem(item) || isQuiverItem(item)) continue;
+      if ((item.type === "armor" || Boolean(item.system?.isArmor) || itemHasTaxonomyTag(item, "armor")) && !item.system?.isNoArmor) {
+        processedIds.add(String(item.id));
+        const isActive = Boolean(item.system?.isActive || item.system?.state === "active");
+        const isEquipped = Boolean(item.system?.isEquipped || item.system?.state === "equipped");
+        const rawQty = item.system?.number ?? 1;
+        const quantity = Number.isFinite(Number(rawQty)) ? Math.max(0, Math.trunc(Number(rawQty))) : 1;
+        armors.push({
+          id: item.id,
+          name: item.name,
+          img: item.img || "systems/symbaroum/asset/image/armor.png",
+          uuid: item.uuid || "",
+          protection: item.system?.baseProtection ?? "—",
+          impeding: Number(item.system?.impeding ?? 0),
+          quantity,
+          hasMultiple: quantity > 1,
+          isActive,
+          isEquipped,
+          stateLabel: isActive
+            ? (game.i18n?.localize("SYMBAROUMHUD.Storage.StateActive") ?? "Ativa")
+            : isEquipped
+              ? (game.i18n?.localize("SYMBAROUMHUD.Storage.StateEquipped") ?? "Equipada")
+              : (game.i18n?.localize("SYMBAROUMHUD.Storage.StateStored") ?? "Guardada"),
+          canUse: canRollActor
+        });
+      }
+    }
+    armors.sort((a, b) => String(a.name ?? "").localeCompare(String(b.name ?? ""), lang));
+
+    // 3. Column 2: Containers & Column 3: General Inventory
+    const EXCLUDED_TYPES = new Set(["ability", "mysticalPower", "mystical-power", "ritual", "trait", "boon", "burden"]);
+    const CONTAINER_REGEX = /\b(backpack|mochila|quiver|aljava|pouch|bolsa|algibeira|sacola|bau|chest|barril|barrel|basket|cesta|knapsack|caixa|box)\b|\bsaco(?!\s+de\s+dormir)\b|\bsack(?!\s+sleeping)\b/i;
+
+    function isItemAContainer(item) {
+      if (!item || !item.name) return false;
+      // Explicitly reject items that are not storage containers
+      if (/\b(cantil|waterskin|saco\s+de\s+dormir|sleeping\s+bag|caneca|copo|drinking\s+horn)\b/i.test(item.name)) {
+        return false;
+      }
+      if (isAmmoItem(item)) return false;
+      if (isQuiverItem(item)) return true;
+      if (item.system?.isContainer || Boolean(item.flags?.["symbaroum-ind-resources"]?.isContainer)) return true;
+      if (safeCall(() => IndResourcesIntegration.api?.containers?.isContainer?.(item))) return true;
+      return CONTAINER_REGEX.test(item.name);
+    }
+
+    const containerMap = new Map();
+
+    // Containers from Ind Resources if available:
+    if (indResources?.storage?.containers?.length) {
+      for (const c of indResources.storage.containers) {
+        if (c?.id) {
+          containerMap.set(String(c.id), {
+            id: c.id,
+            name: c.name,
+            img: c.img ?? "icons/svg/item-bag.svg",
+            capacity: c.capacity ?? null,
+            storedItems: Array.isArray(c.items) ? c.items : []
+          });
+        }
+      }
+    }
+
+    // Containers from allItems:
+    for (const item of allItems) {
+      if (processedIds.has(String(item.id))) continue;
+      if (isItemAContainer(item)) {
+        if (!containerMap.has(String(item.id))) {
+          const cap = safeCall(() => IndResourcesIntegration.api?.containers?.getContainerCapacityLabel?.(actor, item));
+          containerMap.set(String(item.id), {
+            id: item.id,
+            name: item.name,
+            img: item.img || "icons/svg/item-bag.svg",
+            capacity: cap ? String(cap) : null,
+            storedItems: []
+          });
+        }
+      }
+    }
+
+    // Process each container and its contents:
+    const containers = [];
+    for (const [cId, cData] of containerMap.entries()) {
+      processedIds.add(cId);
+      const containerItem = findActorItem(actor, cId);
+      const cUuid = containerItem?.uuid ?? "";
+      const isQuiver = isQuiverItem(containerItem) || isQuiverItem(cData);
+
+      const storedItemMap = new Map();
+      for (const s of cData.storedItems) {
+        if (s?.id) storedItemMap.set(String(s.id), s);
+      }
+      if (IndResourcesIntegration.api?.containers?.getStoredItems && containerItem) {
+        const fromApi = Array.from(safeCall(() => IndResourcesIntegration.api.containers.getStoredItems(actor, containerItem)) ?? []);
+        for (const s of fromApi) {
+          if (s?.id && !storedItemMap.has(String(s.id))) storedItemMap.set(String(s.id), s);
+        }
+      }
+      for (const item of allItems) {
+        if (String(item.flags?.["symbaroum-ind-resources"]?.storedIn) === cId
+          || String(item.system?.storedIn) === cId) {
+          if (!storedItemMap.has(String(item.id))) storedItemMap.set(String(item.id), item);
+        }
+      }
+
+      const storedItems = [];
+
+      if (isQuiver && containerItem) {
+        const loadedAmmo = containerItem.flags?.["symbaroum-ind-resources"]?.loadedAmmo;
+        if (Array.isArray(loadedAmmo) && loadedAmmo.length) {
+          loadedAmmo.forEach((entry, idx) => {
+            const qty = Math.max(1, Number(entry.quantity) || 1);
+            storedItems.push({
+              id: entry.id || `loaded-${idx}`,
+              name: entry.name || (game.i18n?.localize?.("SYMBAROUMHUD.Storage.LoadedAmmo") ?? "Flechas"),
+              img: entry.img || "icons/weapons/ammunition/arrows-bodkin-yellow-red.webp",
+              uuid: entry.sourceUuid || "",
+              quantity: qty,
+              hasMultiple: qty > 1,
+              uses: null,
+              containerId: cId,
+              draggable: false,
+              canUse: false,
+              canWithdraw: canRollActor,
+              isQuiverAmmo: true
+            });
+          });
+        } else {
+          const usesRemaining = containerItem.flags?.["symbaroum-ind-resources"]?.usesRemaining ?? containerItem.system?.uses?.value;
+          if (Number(usesRemaining) > 0) {
+            const qty = Number(usesRemaining);
+            storedItems.push({
+              id: "loaded-legacy",
+              name: game.i18n?.localize?.("SYMBAROUMHUD.Storage.LoadedAmmo") ?? "Flechas",
+              img: "icons/weapons/ammunition/arrows-bodkin-yellow-red.webp",
+              uuid: "",
+              quantity: qty,
+              hasMultiple: qty > 1,
+              uses: null,
+              containerId: cId,
+              draggable: false,
+              canUse: false,
+              canWithdraw: canRollActor,
+              isQuiverAmmo: true
+            });
+          }
+        }
+      }
+
+      for (const [sId, sItem] of storedItemMap.entries()) {
+        processedIds.add(sId);
+        if (isQuiver && storedItems.some((e) => e.name === sItem.name)) continue;
+        const rawQty = sItem.system?.number ?? sItem.quantity ?? 1;
+        const quantity = Number.isFinite(Number(rawQty)) ? Math.max(1, Math.trunc(Number(rawQty))) : 1;
+        const uses = resolveItemUses(sItem, actor);
+        storedItems.push({
+          id: sItem.id,
+          name: sItem.name,
+          img: sItem.img || (isQuiver ? "icons/weapons/ammunition/arrows-bodkin-yellow-red.webp" : "icons/svg/item-bag.svg"),
+          uuid: sItem.uuid || "",
+          quantity,
+          hasMultiple: quantity > 1,
+          uses,
+          containerId: cId,
+          draggable: true,
+          canUse: canRollActor,
+          canWithdraw: canRollActor,
+          isQuiverAmmo: isQuiver
+        });
+      }
+      storedItems.sort((a, b) => String(a.name ?? "").localeCompare(String(b.name ?? ""), lang));
+
+      const collapsed = typeof isContainerCollapsed === "function"
+        ? isContainerCollapsed(containerItem ?? { id: cId })
+        : true;
+
+      let capacity = cData.capacity;
+      let canReloadQuiver = false;
+      if (isQuiver) {
+        const totalLoaded = storedItems.reduce((acc, curr) => acc + (Number(curr.quantity) || 1), 0);
+        capacity = `${totalLoaded}/12`;
+        canReloadQuiver = canRollActor;
+      }
+
+      containers.push({
+        id: cId,
+        name: cData.name,
+        img: cData.img || (isQuiver ? "icons/weapons/ammunition/arrows-bodkin-yellow-red.webp" : "icons/svg/item-bag.svg"),
+        uuid: cUuid,
+        capacity,
+        quantity: 1,
+        hasMultiple: false,
+        collapsed,
+        isQuiver,
+        canReloadQuiver,
+        items: storedItems,
+        itemCount: storedItems.length,
+        hasItems: storedItems.length > 0
+      });
+    }
+    containers.sort((a, b) => String(a.name ?? "").localeCompare(String(b.name ?? ""), lang));
+
+    // Exclude any remaining stored items from appearing in general inventory:
+    for (const item of allItems) {
+      if (item.flags?.["symbaroum-ind-resources"]?.storedIn || item.system?.storedIn) {
+        processedIds.add(String(item.id));
+      }
+      if (IndResourcesIntegration.api?.containers?.isStored?.(item)) {
+        processedIds.add(String(item.id));
+      }
+    }
+
+    // Column 3: All remaining items (unified "Inventário")
+    const inventoryItems = allItems
+      .filter((item) => {
+        if (processedIds.has(String(item.id))) return false;
+        if (EXCLUDED_TYPES.has(item.type)) return false;
+        if (item.system?.isPower || isMysticalPowerItem(item) || isRitualItem(item) || isTraitLikeItem(item)) return false;
+        return true;
+      })
+      .map((item) => {
+        const rawQty = item.system?.number ?? item.system?.quantity ?? 1;
+        const quantity = Number.isFinite(Number(rawQty)) ? Math.max(1, Math.trunc(Number(rawQty))) : 1;
+        const uses = resolveItemUses(item, actor);
+        return {
+          id: item.id,
+          name: item.name,
+          img: item.img || "icons/svg/item-bag.svg",
+          uuid: item.uuid || "",
+          quantity,
+          hasMultiple: quantity > 1,
+          uses,
+          draggable: true,
+          canEdit: canRollActor,
+          canUse: canRollActor
+        };
+      });
+    inventoryItems.sort((a, b) => String(a.name ?? "").localeCompare(String(b.name ?? ""), lang));
+
+    const money = moneyContext(actor);
+    const rawLoad = indResources?.load ?? null;
+    let load = null;
+    if (rawLoad) {
+      const cur = Number(rawLoad.current ?? 0);
+      const cap = Number(rawLoad.capacity ?? 0);
+      const percent = cap > 0 ? Math.min(100, Math.round((cur / cap) * 100)) : 0;
+      load = {
+        current: cur,
+        capacity: cap,
+        overloaded: Boolean(rawLoad.overloaded),
+        percent
+      };
+    }
+
+    const hasCol1 = weapons.length > 0 || armors.length > 0;
+    const hasCol2 = containers.length > 0;
+    const hasCol3 = inventoryItems.length > 0;
+
+    return {
+      weapons,
+      armors,
+      equipment: [],
+      column1: {
+        weapons,
+        armors,
+        equipment: [],
+        hasWeapons: weapons.length > 0,
+        hasArmors: armors.length > 0,
+        hasEquipment: false
+      },
+      column2: {
+        containers,
+        hasContainers: containers.length > 0,
+        consumables: [],
+        treasure: [],
+        hasConsumables: false,
+        hasTreasure: false
+      },
+      column3: {
+        items: inventoryItems,
+        hasItems: inventoryItems.length > 0,
+        survival: inventoryItems,
+        general: inventoryItems,
+        hasSurvival: false,
+        hasGeneral: false
+      },
+      money,
+      load,
+      hasWeapons: weapons.length > 0,
+      hasArmors: armors.length > 0,
+      hasEquipment: false,
+      hasColumn1: hasCol1,
+      hasColumn2: hasCol2,
+      hasColumn3: hasCol3,
+      isEmpty: !hasCol1 && !hasCol2 && !hasCol3
+    };
+  } catch (error) {
+    console.error(`${MODULE_ID} | Error building simplifiedInventoryContext:`, error);
+    return fallback;
+  }
+}
+
+function attackContext(actor, { canDrag = false, drawnWeapons = null, canUse = true } = {}) {
   const readiness = readinessContext(drawnWeapons);
   return Array.from(actor?.system?.weapons ?? [])
     .filter((weapon) => weapon?.id && weapon?.name)
@@ -2786,6 +4498,7 @@ function attackContext(actor, { canDrag = false, drawnWeapons = null } = {}) {
         name: weapon.name,
         uuid,
         drawn,
+        canUse,
         readinessKnown: Boolean(readiness),
         readinessLabel: readiness
           ? game.i18n.localize(drawn ? "SYMBAROUMHUD.Attacks.Drawn" : "SYMBAROUMHUD.Attacks.Sheathed")
@@ -2822,6 +4535,14 @@ function normalizeText(value) {
     .replace(/[\u0300-\u036f]/g, "")
     .toLocaleLowerCase()
     .trim();
+}
+
+function safeCall(callback) {
+  try {
+    return callback();
+  } catch (_error) {
+    return null;
+  }
 }
 
 function storageWithServices(storage, services, {
@@ -2912,3 +4633,5 @@ function activeEffectContext(actor) {
       img: effect.img ?? effect.icon ?? "icons/svg/aura.svg"
     }));
 }
+
+export { simplifiedInventoryContext, simplifiedPowersContext, resolveItemUses, isAmmoItem, isQuiverItem };

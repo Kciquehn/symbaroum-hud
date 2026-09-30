@@ -716,3 +716,71 @@ test("observer actions do not roll or use another user's actor", async () => {
   assert.deepEqual(observed.calls, []);
   assert.equal(warnings.length, 5);
 });
+
+test("rollArmorProtection warns when actor has no armor equipped", async () => {
+  warnings.length = 0;
+  const noArmorActor = actor();
+  noArmorActor.system.combat = {};
+  const result = await ActorService.rollArmorProtection(noArmorActor);
+  assert.equal(result, null);
+  assert.equal(warnings.length, 1);
+});
+
+test("rollArmorProtection extracts protection formula from combat displayTextShort", async () => {
+  warnings.length = 0;
+  const armoredActor = actor();
+  armoredActor.system.combat = {
+    name: "Light Armor",
+    displayTextShort: "1d4"
+  };
+  const result = await ActorService.rollArmorProtection(armoredActor);
+  assert.deepEqual(result, { formula: "1d4", title: "Light Armor" });
+});
+
+test("rollArmorProtection extracts formula from specific item id", async () => {
+  warnings.length = 0;
+  const armoredActor = actor();
+  armoredActor.items = [
+    {
+      id: "armor-item-1",
+      name: "Medium Armor",
+      type: "armor",
+      system: { baseProtection: "1d6", isActive: true }
+    }
+  ];
+  armoredActor.items.get = (id) => armoredActor.items.find((i) => i.id === id);
+  const result = await ActorService.rollArmorProtection(armoredActor, "armor-item-1");
+  assert.deepEqual(result, { formula: "1d6", title: "Medium Armor" });
+});
+
+test("deleteItem invokes item.delete when available", async () => {
+  let deleted = false;
+  const testActor = actor();
+  testActor.items = [
+    {
+      id: "item-del-1",
+      name: "Old Dagger",
+      delete: async () => { deleted = true; }
+    }
+  ];
+  testActor.items.get = (id) => testActor.items.find((i) => i.id === id);
+  await ActorService.deleteItem(testActor, "item-del-1");
+  assert.equal(deleted, true);
+});
+
+test("deleteItem falls back to actor.deleteEmbeddedDocuments", async () => {
+  let deletedIds = [];
+  const testActor = actor();
+  testActor.items = [
+    {
+      id: "item-del-2",
+      name: "Torn Cloak"
+    }
+  ];
+  testActor.items.get = (id) => testActor.items.find((i) => i.id === id);
+  testActor.deleteEmbeddedDocuments = async (type, ids) => {
+    if (type === "Item") deletedIds = ids;
+  };
+  await ActorService.deleteItem(testActor, "item-del-2");
+  assert.deepEqual(deletedIds, ["item-del-2"]);
+});

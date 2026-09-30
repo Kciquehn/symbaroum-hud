@@ -1,11 +1,13 @@
 # Changelog
 
-## Próxima versão
+## 0.1.71
 
-- Remove o identificador de reposição da interface: cada geração agora sorteia um estoque novo conforme as regras configuradas da loja.
-- Adiciona uma **Configuração de estoque** persistente, reunindo Categorias e todas as lojas oficiais; lojas oficiais existentes reconhecem automaticamente seu próprio modelo.
-- Mantém tamanho, chances, quantidades, itens essenciais e faixas de preço como parâmetros do sorteio aleatório.
-- Amplia a suíte automatizada para 347 testes.
+- Adiciona novo tema **HUD Simplificado** inspirado no PF2e HUD, com interface escura moderna, painéis modulares e navegação compacta.
+- Adiciona painel de **Poderes & Habilidades** em duas colunas com inspetor de detalhes e ações de rolagem, postagem no chat e abertura de ficha.
+- Adiciona faixa de **Efeitos Ativos e Condições** acima do retrato do personagem, com suporte a menu de contexto para remoção.
+- Padroniza dimensões e ícones em todos os painéis e compacta o painel de Inventário.
+- Integração simplificada de manobras de combate com exibição de descrição oficial e rolagem direta.
+
 
 ## 0.1.70
 

@@ -353,7 +353,20 @@ test("normalizes the public Ind Resources API into HUD context", () => {
       name: "Mochila",
       img: "backpack.webp",
       capacity: "2/10",
-      active: false
+      active: false,
+      items: [{
+        id: "torch",
+        uuid: "Actor.actor.Item.torch",
+        containerId: "backpack",
+        draggable: true,
+        name: "Tocha",
+        img: "torch.webp",
+        quantity: 2,
+        state: "other",
+        stateIcon: "fa-warehouse",
+        stateLabel: "SYMBAROUMHUD.Storage.StateStored",
+        editable: true
+      }]
     }]
   });
 
@@ -1288,4 +1301,13 @@ test("detects the Ritualist ability through the public Ind Resources API", () =>
   } finally {
     indResourcesModule.active = true;
   }
+});
+
+test("returns maneuvers list and executes maneuver through Ind Resources", async () => {
+  const actor = { id: "actor-test" };
+  const maneuvers = IndResourcesIntegration.maneuvers();
+  assert.ok(Array.isArray(maneuvers));
+  const res = await IndResourcesIntegration.executeManeuver(actor, "disarm");
+  assert.equal(res, "maneuver");
+  assert.deepEqual(maneuverRolls.at(-1), ["actor-test", "disarm"]);
 });

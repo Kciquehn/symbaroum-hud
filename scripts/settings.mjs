@@ -2,7 +2,8 @@ import {
   MODULE_ID,
   SELECTION_MODES,
   SETTINGS,
-  STORAGE_VIEW_MODES
+  STORAGE_VIEW_MODES,
+  THEMES
 } from "./constants.mjs";
 import { ServiceCatalogApplication } from "./applications/service-catalog.mjs";
 import { ItemCategoryManagerApplication } from "./applications/item-category-manager.mjs";
@@ -35,6 +36,23 @@ export function registerSettings(onChange) {
     default: true,
     onChange: () => {
       applyPlayerListVisibility();
+      onChange();
+    }
+  });
+
+  game.settings.register(MODULE_ID, SETTINGS.THEME, {
+    name: "SYMBAROUMHUD.Settings.Theme.Name",
+    hint: "SYMBAROUMHUD.Settings.Theme.Hint",
+    scope: "client",
+    config: true,
+    type: String,
+    choices: {
+      [THEMES.CLASSIC]: "SYMBAROUMHUD.Settings.Theme.Classic",
+      [THEMES.SIMPLIFIED]: "SYMBAROUMHUD.Settings.Theme.Simplified"
+    },
+    default: THEMES.CLASSIC,
+    onChange: (theme) => {
+      applyHudTheme(theme);
       onChange();
     }
   });
@@ -206,4 +224,42 @@ export function getStorageViewMode() {
 export function applyPlayerListVisibility(hidden = getSetting(SETTINGS.HIDE_PLAYERS)) {
   const enabled = getSetting(SETTINGS.ENABLED);
   document.body?.classList.toggle("symbaroum-hud-hide-players", Boolean(enabled && hidden));
+
+  const controlBtn = typeof document !== "undefined"
+    ? document.querySelector(".symbaroum-hud-players-control button, button.symbaroum-hud-players-control, .symbaroum-hud-players-control")
+    : null;
+  if (controlBtn) {
+    if (controlBtn.tagName === "BUTTON") {
+      controlBtn.className = `control ui-control layer icon fa-solid ${hidden ? "fa-users-slash" : "fa-users"}`;
+      controlBtn.setAttribute("aria-pressed", hidden ? "false" : "true");
+    } else {
+      const icon = controlBtn.querySelector("i");
+      if (icon) icon.className = `fa-solid ${hidden ? "fa-users-slash" : "fa-users"}`;
+    }
+    const tooltipKey = hidden ? "SYMBAROUMHUD.Actions.ShowPlayers" : "SYMBAROUMHUD.Actions.HidePlayers";
+    const label = game.i18n?.localize?.(tooltipKey) ?? (hidden ? "Mostrar Jogadores" : "Ocultar Jogadores");
+    controlBtn.dataset.tooltip = label;
+    controlBtn.setAttribute("aria-label", label);
+    controlBtn.closest("li")?.classList.toggle("active", !hidden);
+  }
+}
+
+export function getTheme() {
+  const theme = getSetting(SETTINGS.THEME);
+  return theme === THEMES.SIMPLIFIED ? THEMES.SIMPLIFIED : THEMES.CLASSIC;
+}
+
+export function applyHudTheme(theme = getTheme()) {
+  const normalized = theme === THEMES.SIMPLIFIED ? THEMES.SIMPLIFIED : THEMES.CLASSIC;
+  if (typeof document !== "undefined") {
+    if (document.body) {
+      document.body.dataset.symbaroumHudTheme = normalized;
+    }
+    const hudElement = document.getElementById("symbaroum-hud");
+    if (hudElement) {
+      hudElement.dataset.symbaTheme = normalized;
+      hudElement.classList.toggle("symbaroum-hud--classic", normalized === THEMES.CLASSIC);
+      hudElement.classList.toggle("symbaroum-hud--simplified", normalized === THEMES.SIMPLIFIED);
+    }
+  }
 }

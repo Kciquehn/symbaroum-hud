@@ -548,7 +548,8 @@ function storageContext(containers, actor, selectedId, quivers = []) {
       name: container.name,
       img: container.img,
       capacity: container.capacity,
-      active: container.id === selected?.id
+      active: container.id === selected?.id,
+      items: container.items
     }))
   };
 }

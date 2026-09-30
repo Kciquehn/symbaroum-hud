@@ -100,7 +100,10 @@ export class ActorService {
 
   static weapon(actor, id) {
     if (!actor || !id) return null;
-    return (actor.system?.weapons ?? []).find((weapon) => weapon.id === id) ?? null;
+    const targetId = String(id);
+    return (actor.system?.weapons ?? []).find((weapon) => String(weapon.id) === targetId)
+      ?? actor.items?.get?.(id)
+      ?? null;
   }
 
   static item(actor, id) {
@@ -115,6 +118,69 @@ export class ActorService {
   static async rollArmor(actor) {
     if (!this.#canAct(actor) || typeof actor.rollArmor !== "function") return;
     return actor.rollArmor();
+  }
+
+  static async rollArmorProtection(actor, itemId = null) {
+    if (!this.#canAct(actor)) return null;
+
+    let formula = null;
+    let armorTitle = null;
+
+    if (itemId) {
+      const item = this.item(actor, itemId);
+      if (item) {
+        armorTitle = item.name;
+        formula = item.system?.displayTextShort
+          ?? item.system?.baseProtection
+          ?? item.system?.protection
+          ?? item.system?.damage?.displayTextShort;
+      }
+    }
+
+    if (!formula) {
+      armorTitle = actor?.system?.combat?.name || game.i18n.localize("SYMBAROUMHUD.Info.Armor");
+      formula = actor?.system?.combat?.displayTextShort
+        ?? actor?.system?.combat?.protectionPc;
+    }
+
+    if (!formula || formula === "—" || formula === "-") {
+      const activeArmor = actor.items?.find?.((i) => i.type === "armor" && (i.system?.isActive || i.system?.isEquipped || i.system?.state === "active" || i.system?.state === "equipped"));
+      if (activeArmor) {
+        armorTitle = activeArmor.name;
+        formula = activeArmor.system?.baseProtection
+          ?? activeArmor.system?.protection
+          ?? activeArmor.system?.damage?.displayTextShort;
+      }
+    }
+
+    const cleanFormula = typeof formula === "string" ? formula.replace(/\[[^\]]+\]/g, "").trim() : "";
+    if (!cleanFormula || cleanFormula === "—" || cleanFormula === "-" || cleanFormula === "0") {
+      ui.notifications?.warn(game.i18n.localize("SYMBAROUMHUD.SimplifiedInfo.NoArmorToRoll") || "Nenhuma proteção de armadura equipada para rolar.");
+      return null;
+    }
+
+    if (typeof Roll === "undefined") {
+      return { formula: cleanFormula, title: armorTitle };
+    }
+
+    try {
+      const roll = new Roll(cleanFormula);
+      await roll.evaluate();
+
+      const label = game.i18n.localize("SYMBAROUMHUD.SimplifiedInfo.ArmorProtection") || "Proteção";
+      const speaker = typeof ChatMessage?.getSpeaker === "function"
+        ? ChatMessage.getSpeaker({ actor })
+        : { actor: actor.id, alias: actor.name };
+
+      return await roll.toMessage({
+        speaker,
+        flavor: `<div class="symbaroum-hud-roll-flavor"><strong>${actor.name ?? ""}</strong>: ${armorTitle} (${label} ${cleanFormula})</div>`
+      });
+    } catch (err) {
+      console.error("SymbaroumHUD | Error rolling armor protection:", err);
+      ui.notifications?.error(game.i18n.localize("SYMBAROUMHUD.SimplifiedInfo.RollError") || "Erro ao rolar proteção da armadura.");
+      return null;
+    }
   }
 
   static async rollDeathTest(actor, { showDialog = false } = {}) {
@@ -340,6 +406,18 @@ export class ActorService {
     const item = this.item(actor, id);
     if (!item || !item.testUserPermission?.(game.user, "OBSERVER")) return;
     return item.sheet?.render(true);
+  }
+
+  static async deleteItem(actor, id) {
+    if (!this.#canAct(actor) || !id) return;
+    const item = this.item(actor, id);
+    if (!item) return;
+    if (typeof item.delete === "function") {
+      return item.delete();
+    }
+    if (typeof actor.deleteEmbeddedDocuments === "function") {
+      return actor.deleteEmbeddedDocuments("Item", [id]);
+    }
   }
 
   static async adjust(actor, path, delta) {

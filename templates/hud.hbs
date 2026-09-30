@@ -1,3 +1,866 @@
+{{#if isSimplified}}
+  <div class="symbaroum-hud-simplified" data-symba-theme="simplified">
+    <div class="symbaroum-hud-simplified-sidebar">
+      <button type="button" class="symbaroum-hud-simplified-sidebar-btn{{#if isManualActor}} is-pinned{{/if}}"
+        data-action="set-actor"
+        data-tooltip="{{#if isManualActor}}{{localize 'SYMBAROUMHUD.Actions.SetActorPinned' name=actor.name}}{{else}}{{localize 'SYMBAROUMHUD.Actions.SetActorUnpinned'}}{{/if}}"
+        aria-label="{{localize 'SYMBAROUMHUD.Actions.SetActor'}}"
+        aria-pressed="{{#if isManualActor}}true{{else}}false{{/if}}">
+        <i class="fa-solid {{#if isManualActor}}fa-turn-left{{else}}fa-user{{/if}}"></i>
+      </button>
+      <button type="button" class="symbaroum-hud-simplified-sidebar-btn"
+        data-action="rest"
+        data-tooltip="{{localize 'SYMBAROUMHUD.Actions.Rest'}}"
+        aria-label="{{localize 'SYMBAROUMHUD.Actions.Rest'}}"
+        {{#unless actions.rest}}disabled{{/unless}}>
+        <i class="fa-solid fa-bed" aria-hidden="true"></i>
+      </button>
+    </div>
+    {{#if actor}}
+      <div class="symbaroum-hud-simplified-portrait-card">
+        {{#if effects.length}}
+          <div class="symbaroum-hud-simplified-effects-strip" role="list" aria-label="{{localize 'SYMBAROUMHUD.Sections.Effects'}}">
+            {{#each effects}}
+              <button type="button" class="symbaroum-hud-simplified-effect" role="listitem"
+                data-action="open-effect-menu"
+                data-effect-id="{{id}}"
+                data-tooltip="{{name}}"
+                aria-label="{{name}}">
+                <img src="{{img}}" alt="{{name}}">
+              </button>
+            {{/each}}
+          </div>
+        {{/if}}
+        <button type="button" class="symbaroum-hud-simplified-portrait-btn" data-action="open-actor"
+          aria-label="{{actor.name}}">
+          <img src="{{actor.img}}" alt="{{actor.name}}">
+        </button>
+        <div class="symbaroum-hud-character-name">
+          <button type="button" class="symbaroum-hud-character-name-label"
+            data-action="{{#if canChooseOwnedActor}}toggle-actor-picker{{else}}open-actor{{/if}}"
+            {{#if canChooseOwnedActor}}aria-haspopup="listbox" aria-expanded="{{actorPickerOpen}}"
+              data-tooltip="{{localize 'SYMBAROUMHUD.Actions.ChooseActor'}}"{{/if}}>
+            {{actor.name}}
+          </button>
+          {{#if canChooseOwnedActor}}
+            <div class="symbaroum-hud-owned-actor-picker" data-owned-actor-picker role="listbox"
+              aria-label="{{localize 'SYMBAROUMHUD.Actions.ChooseActor'}}" {{#unless actorPickerOpen}}hidden{{/unless}}>
+              {{#each ownedActors}}
+                <button type="button" role="option" data-action="select-owned-actor" data-actor-id="{{id}}"
+                  data-active="{{active}}" aria-selected="{{active}}">
+                  <img src="{{img}}" alt="">
+                  <span>{{name}}</span>
+                  {{#if active}}<i class="fa-solid fa-check" aria-hidden="true"></i>{{/if}}
+                </button>
+              {{/each}}
+            </div>
+          {{/if}}
+        </div>
+        {{#if actor.deathFailures}}
+          <span class="symbaroum-hud-death-failures" data-tooltip="{{localize 'TOOLTIP.DEATH_SKULLS'}}">
+            {{#each actor.deathFailures}}
+              <i class="fa-solid fa-skull" aria-hidden="true"></i>
+            {{/each}}
+          </span>
+        {{/if}}
+        <span class="symbaroum-hud-character-resources">
+          <button type="button" class="symbaroum-hud-character-resource" data-resource="vitality"
+            data-action="modify-vitality"
+            data-tooltip="{{localize 'SYMBAROUMHUD.Vitality.Manage'}}: {{actor.vitality.value}}/{{actor.vitality.max}}"
+            aria-label="{{localize 'SYMBAROUMHUD.Vitality.Manage'}}: {{actor.vitality.value}}/{{actor.vitality.max}}"
+            style="--symbaroum-hud-resource-percent: {{actor.vitality.percent}}%;"
+            {{#unless actions.vitality}}disabled{{/unless}}>
+            <span class="symbaroum-hud-character-resource-fill" aria-hidden="true"></span>
+            <span class="symbaroum-hud-character-resource-value">
+              <i class="fa-solid fa-heart" aria-hidden="true"></i>
+              <strong>{{actor.vitality.value}}</strong>/{{actor.vitality.max}}
+            </span>
+          </button>
+          <button type="button" class="symbaroum-hud-character-resource" data-resource="corruption"
+            data-action="modify-corruption"
+            data-tooltip="{{localize 'SYMBAROUMHUD.Corruption.Manage'}}: {{actor.corruption.temporary}}+{{actor.corruption.permanent}}/{{actor.corruption.max}}"
+            aria-label="{{localize 'SYMBAROUMHUD.Corruption.Manage'}}: {{actor.corruption.temporary}}+{{actor.corruption.permanent}}/{{actor.corruption.max}}"
+            style="--symbaroum-hud-resource-percent: {{actor.corruption.percent}}%;"
+            {{#unless actions.corruption}}disabled{{/unless}}>
+            <span class="symbaroum-hud-character-resource-fill" aria-hidden="true"></span>
+            <span class="symbaroum-hud-character-resource-value">
+              <i class="fa-solid fa-droplet" aria-hidden="true"></i>
+              <strong>{{actor.corruption.temporary}}+{{actor.corruption.permanent}}</strong>/{{actor.corruption.max}}
+            </span>
+          </button>
+        </span>
+      </div>
+      <div class="symbaroum-hud-simplified-main-column">
+        <div class="symbaroum-hud-simplified-upper-row">
+          <section class="symbaroum-hud-attributes" aria-label="{{localize 'SYMBAROUMHUD.Sections.Attributes'}}">
+            {{#each attributes}}
+              <button type="button" class="symbaroum-hud-attribute"
+                data-action="roll-attribute" data-attribute="{{id}}"
+                data-tooltip="{{label}}: {{value}}" aria-label="{{label}}: {{value}}"
+                {{#unless ../actions.attributes}}disabled{{/unless}}>
+                <i class="fa-solid {{icon}}" aria-hidden="true"></i>
+                <span class="symbaroum-hud-attribute-name">{{label}}</span>
+                <strong>{{value}}</strong>
+              </button>
+            {{/each}}
+          </section>
+          <div class="symbaroum-hud-simplified-deck">
+            <div class="symbaroum-hud-simplified-info-bar">
+              <button type="button"
+                class="symbaroum-hud-simplified-info-chip is-defense"
+                data-action="roll-defense"
+                data-tooltip="{{localize 'SYMBAROUMHUD.SimplifiedInfo.Defense'}}: {{info.defense}} - {{localize 'SYMBAROUMHUD.SimplifiedInfo.DefenseRollTooltip'}}"
+                aria-label="{{localize 'SYMBAROUMHUD.SimplifiedInfo.Defense'}}: {{info.defense}}">
+                <div class="symbaroum-hud-simplified-chip-header">
+                  <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
+                  <span class="symbaroum-hud-simplified-chip-label">{{localize "SYMBAROUMHUD.SimplifiedInfo.Defense"}}</span>
+                </div>
+                <strong class="symbaroum-hud-simplified-chip-val">{{info.defense}}</strong>
+              </button>
+
+              <button type="button"
+                class="symbaroum-hud-simplified-info-chip is-armor"
+                data-action="roll-armor-protection"
+                data-tooltip="{{info.armorName}} ({{info.armor}}) - {{localize 'SYMBAROUMHUD.SimplifiedInfo.ArmorRollTooltip'}}"
+                aria-label="{{localize 'SYMBAROUMHUD.SimplifiedInfo.ArmorProtection'}}: {{info.armor}}">
+                <div class="symbaroum-hud-simplified-chip-header">
+                  <i class="fa-solid fa-vest" aria-hidden="true"></i>
+                  <span class="symbaroum-hud-simplified-chip-label">{{localize "SYMBAROUMHUD.SimplifiedInfo.ArmorProtection"}}</span>
+                </div>
+                <strong class="symbaroum-hud-simplified-chip-val">{{info.armor}}</strong>
+              </button>
+
+              <button type="button"
+                class="symbaroum-hud-simplified-info-chip is-rations{{#unless info.rations}} is-empty{{/unless}}"
+                data-action="consume-ration"
+                data-tooltip="{{#if info.rations}}{{localize 'SYMBAROUMHUD.SimplifiedInfo.Waybread'}}: {{info.rations.usesRemaining}}/{{info.rations.usesPerUnit}} - {{localize 'SYMBAROUMHUD.Actions.ConsumeRation'}}{{else}}{{localize 'SYMBAROUMHUD.SimplifiedInfo.NoWaybread'}}{{/if}}"
+                aria-label="{{localize 'SYMBAROUMHUD.SimplifiedInfo.Waybread'}}">
+                <div class="symbaroum-hud-simplified-chip-header">
+                  <i class="fa-solid fa-bread-slice" aria-hidden="true"></i>
+                  <span class="symbaroum-hud-simplified-chip-label">{{localize "SYMBAROUMHUD.SimplifiedInfo.Rations"}}</span>
+                </div>
+                <strong class="symbaroum-hud-simplified-chip-val">{{#if info.rations}}{{info.rations.usesRemaining}}/{{info.rations.usesPerUnit}}{{else}}—{{/if}}</strong>
+              </button>
+
+              <button type="button"
+                class="symbaroum-hud-simplified-info-chip is-quiver{{#unless info.quiver}} is-empty{{/unless}}"
+                data-action="reload-quiver"
+                data-quiver-id="{{info.quiver.id}}"
+                data-tooltip="{{#if info.quiver}}{{info.quiver.name}}: {{info.quiver.loaded}}/{{info.quiver.capacity}} ({{localize 'SYMBAROUMHUD.SimplifiedInfo.ReloadQuiver'}}){{else}}{{localize 'SYMBAROUMHUD.SimplifiedInfo.NoQuiver'}}{{/if}}"
+                aria-label="{{localize 'SYMBAROUMHUD.SimplifiedInfo.Quiver'}}">
+                <div class="symbaroum-hud-simplified-chip-header">
+                  <i class="fa-solid fa-bullseye" aria-hidden="true"></i>
+                  <span class="symbaroum-hud-simplified-chip-label">{{localize "SYMBAROUMHUD.SimplifiedInfo.Quiver"}}</span>
+                </div>
+                <strong class="symbaroum-hud-simplified-chip-val">{{#if info.quiver}}{{info.quiver.loaded}}/{{info.quiver.capacity}}{{else}}—{{/if}}</strong>
+              </button>
+            </div>
+
+            <div class="symbaroum-hud-simplified-buttons-row">
+              <button type="button"
+                class="symbaroum-hud-simplified-actions-btn{{#if simplifiedActionsOpen}} is-active{{/if}}"
+                data-action="toggle-simplified-actions"
+                data-tooltip="{{localize 'SYMBAROUMHUD.Actions.ToggleActions'}}"
+                aria-label="{{localize 'SYMBAROUMHUD.Actions.ToggleActions'}}"
+                aria-expanded="{{#if simplifiedActionsOpen}}true{{else}}false{{/if}}">
+                <i class="fa-solid fa-person-running" aria-hidden="true"></i>
+                <span>{{localize "SYMBAROUMHUD.Sections.ActionsTitle"}}</span>
+              </button>
+              <button type="button"
+                class="symbaroum-hud-simplified-inventory-btn{{#if simplifiedInventoryOpen}} is-active{{/if}}"
+                data-action="toggle-simplified-inventory"
+                data-tooltip="{{localize 'SYMBAROUMHUD.Actions.ToggleInventory'}}"
+                aria-label="{{localize 'SYMBAROUMHUD.Actions.ToggleInventory'}}"
+                aria-expanded="{{#if simplifiedInventoryOpen}}true{{else}}false{{/if}}"
+                data-storage-inventory-drop="true">
+                <i class="fa-solid fa-backpack" aria-hidden="true"></i>
+                <span>{{localize "SYMBAROUMHUD.Sections.Inventory"}}</span>
+              </button>
+              <button type="button"
+                class="symbaroum-hud-simplified-powers-btn{{#if simplifiedPowersOpen}} is-active{{/if}}"
+                data-action="toggle-simplified-powers"
+                data-tooltip="{{localize 'SYMBAROUMHUD.Actions.TogglePowers'}}"
+                aria-label="{{localize 'SYMBAROUMHUD.Actions.TogglePowers'}}"
+                aria-expanded="{{#if simplifiedPowersOpen}}true{{else}}false{{/if}}">
+                <i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i>
+                <span>{{localize "SYMBAROUMHUD.Sections.PowersAndAbilities"}}</span>
+              </button>
+            </div>
+          </div>
+
+          {{#if simplifiedActionsOpen}}
+            <section class="symbaroum-hud-simplified-actions-panel" aria-label="{{localize 'SYMBAROUMHUD.Sections.ActionsTitle'}}">
+              <header class="symbaroum-hud-simplified-panel-header">
+                <div class="symbaroum-hud-simplified-panel-title">
+                  <i class="fa-solid fa-person-running" aria-hidden="true"></i>
+                  <h3>{{localize "SYMBAROUMHUD.Sections.ActionsTitle"}}</h3>
+                </div>
+                <button type="button" class="symbaroum-hud-simplified-panel-close"
+                  data-action="close-simplified-actions"
+                  data-tooltip="{{localize 'SYMBAROUMHUD.Actions.CloseActions'}}"
+                  aria-label="{{localize 'SYMBAROUMHUD.Actions.CloseActions'}}">
+                  <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                </button>
+              </header>
+
+              <div class="symbaroum-hud-simplified-actions-content">
+                {{#if simplifiedActions.attacks.length}}
+                  <div class="symbaroum-hud-simplified-section-header">
+                    <i class="fa-solid fa-swords" aria-hidden="true"></i>
+                    <span>{{localize "SYMBAROUMHUD.Sections.Attacks"}}</span>
+                  </div>
+                  <div class="symbaroum-hud-simplified-action-list">
+                    {{#each simplifiedActions.attacks}}
+                      <div class="symbaroum-hud-simplified-item-row" data-item-id="{{id}}">
+                        <button type="button" class="symbaroum-hud-simplified-item-img-btn"
+                          data-action="roll-weapon" data-item-id="{{id}}"
+                          data-item-uuid="{{uuid}}"
+                          data-tooltip="{{localize 'SYMBAROUMHUD.Actions.RollWeapon'}}: {{name}}{{#if readinessKnown}} ({{readinessLabel}}){{/if}}"
+                          aria-label="{{localize 'SYMBAROUMHUD.Actions.RollWeapon'}}: {{name}}"
+                          {{#if draggable}}draggable="true" data-weapon-draggable="true"{{/if}}
+                          {{#unless canUse}}disabled{{/unless}}>
+                          <img src="{{img}}" alt="{{name}}">
+                        </button>
+                        <button type="button" class="symbaroum-hud-simplified-item-name-btn"
+                          data-action="roll-weapon" data-item-id="{{id}}"
+                          data-item-uuid="{{uuid}}"
+                          data-tooltip="{{localize 'SYMBAROUMHUD.Actions.RollWeapon'}}: {{name}}{{#if readinessKnown}} ({{readinessLabel}}){{/if}}"
+                          aria-label="{{localize 'SYMBAROUMHUD.Actions.RollWeapon'}}: {{name}}"
+                          {{#unless canUse}}disabled{{/unless}}>
+                          <span class="symbaroum-hud-simplified-item-name">{{name}}</span>
+                        </button>
+                        <div class="symbaroum-hud-simplified-item-controls">
+                          {{#if readinessKnown}}
+                            <button type="button" class="symbaroum-hud-simplified-readiness-btn"
+                              data-drawn="{{drawn}}" data-item-id="{{id}}"
+                              data-action="{{#if drawn}}sheathe-weapon{{else}}draw-weapon{{/if}}"
+                              data-tooltip="{{#if drawn}}{{localize 'SYMBAROUMHUD.Attacks.SheatheAction'}}: {{name}}{{else}}{{localize 'SYMBAROUMHUD.Actions.DrawWeapon'}}: {{name}}{{/if}}"
+                              aria-label="{{#if drawn}}{{localize 'SYMBAROUMHUD.Attacks.SheatheAction'}}: {{name}}{{else}}{{localize 'SYMBAROUMHUD.Actions.DrawWeapon'}}: {{name}}{{/if}}"
+                              {{#unless canUse}}disabled{{/unless}}>
+                              <i class="fa-solid {{#if drawn}}fa-hand-fist{{else}}fa-hand{{/if}}" aria-hidden="true"></i>
+                            </button>
+                          {{/if}}
+                        </div>
+                      </div>
+                    {{/each}}
+                  </div>
+                {{/if}}
+
+                {{#if simplifiedActions.abilities.length}}
+                  <div class="symbaroum-hud-simplified-section-header">
+                    <i class="fa-solid fa-bolt" aria-hidden="true"></i>
+                    <span>{{localize "SYMBAROUMHUD.Sections.Abilities"}}</span>
+                  </div>
+                  <div class="symbaroum-hud-simplified-action-list">
+                    {{#each simplifiedActions.abilities}}
+                      <div class="symbaroum-hud-simplified-item-row" data-item-id="{{id}}">
+                        <button type="button" class="symbaroum-hud-simplified-item-img-btn"
+                          {{#if canUse}}data-action="use-ability"{{else}}data-action="open-ability"{{/if}}
+                          data-item-id="{{id}}"
+                          data-item-uuid="{{uuid}}"
+                          data-tooltip="{{#if canUse}}{{localize 'SYMBAROUMHUD.Actions.UseAbility'}}{{else}}{{localize 'SYMBAROUMHUD.Actions.OpenAbility'}}{{/if}}: {{name}}"
+                          aria-label="{{name}}">
+                          <img src="{{img}}" alt="{{name}}">
+                        </button>
+                        <button type="button" class="symbaroum-hud-simplified-item-name-btn"
+                          {{#if canUse}}data-action="use-ability"{{else}}data-action="open-ability"{{/if}}
+                          data-item-id="{{id}}"
+                          data-item-uuid="{{uuid}}"
+                          data-tooltip="{{#if canUse}}{{localize 'SYMBAROUMHUD.Actions.UseAbility'}}{{else}}{{localize 'SYMBAROUMHUD.Actions.OpenAbility'}}{{/if}}: {{name}}"
+                          aria-label="{{name}}">
+                          <span class="symbaroum-hud-simplified-item-name">{{name}}</span>
+                          {{#if actionLabel}}
+                            <span class="symbaroum-hud-simplified-item-badge">{{actionLabel}}</span>
+                          {{/if}}
+                        </button>
+                      </div>
+                    {{/each}}
+                  </div>
+                {{/if}}
+
+                {{#if simplifiedActions.mysticalPowers.length}}
+                  <div class="symbaroum-hud-simplified-section-header">
+                    <i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i>
+                    <span>{{localize "SYMBAROUMHUD.Sections.MysticalPowers"}}</span>
+                  </div>
+                  <div class="symbaroum-hud-simplified-action-list">
+                    {{#each simplifiedActions.mysticalPowers}}
+                      <div class="symbaroum-hud-simplified-item-row" data-item-id="{{id}}">
+                        <button type="button" class="symbaroum-hud-simplified-item-img-btn"
+                          {{#if canUse}}data-action="use-mystical-power"{{else}}data-action="open-mystical-power"{{/if}}
+                          data-item-id="{{id}}"
+                          data-item-uuid="{{uuid}}"
+                          data-tooltip="{{#if canUse}}{{localize 'SYMBAROUMHUD.Actions.UseMysticalPower'}}{{else}}{{localize 'SYMBAROUMHUD.Actions.OpenMysticalPower'}}{{/if}}: {{name}}"
+                          aria-label="{{name}}">
+                          <img src="{{img}}" alt="{{name}}">
+                        </button>
+                        <button type="button" class="symbaroum-hud-simplified-item-name-btn"
+                          {{#if canUse}}data-action="use-mystical-power"{{else}}data-action="open-mystical-power"{{/if}}
+                          data-item-id="{{id}}"
+                          data-item-uuid="{{uuid}}"
+                          data-tooltip="{{#if canUse}}{{localize 'SYMBAROUMHUD.Actions.UseMysticalPower'}}{{else}}{{localize 'SYMBAROUMHUD.Actions.OpenMysticalPower'}}{{/if}}: {{name}}"
+                          aria-label="{{name}}">
+                          <span class="symbaroum-hud-simplified-item-name">{{name}}</span>
+                          {{#if actionLabel}}
+                            <span class="symbaroum-hud-simplified-item-badge">{{actionLabel}}</span>
+                          {{/if}}
+                        </button>
+                      </div>
+                    {{/each}}
+                  </div>
+                {{/if}}
+
+                {{#if simplifiedActions.traits.length}}
+                  <div class="symbaroum-hud-simplified-section-header">
+                    <i class="fa-solid fa-fingerprint" aria-hidden="true"></i>
+                    <span>{{localize "SYMBAROUMHUD.Sections.Traits"}}</span>
+                  </div>
+                  <div class="symbaroum-hud-simplified-action-list">
+                    {{#each simplifiedActions.traits}}
+                      <div class="symbaroum-hud-simplified-item-row" data-item-id="{{id}}">
+                        <button type="button" class="symbaroum-hud-simplified-item-img-btn"
+                          data-action="use-trait" data-item-id="{{id}}"
+                          data-item-uuid="{{uuid}}"
+                          data-tooltip="{{localize 'SYMBAROUMHUD.Actions.UseTrait'}}: {{name}}"
+                          aria-label="{{name}}">
+                          <img src="{{img}}" alt="{{name}}">
+                        </button>
+                        <button type="button" class="symbaroum-hud-simplified-item-name-btn"
+                          data-action="use-trait" data-item-id="{{id}}"
+                          data-item-uuid="{{uuid}}"
+                          data-tooltip="{{localize 'SYMBAROUMHUD.Actions.UseTrait'}}: {{name}}"
+                          aria-label="{{name}}">
+                          <span class="symbaroum-hud-simplified-item-name">{{name}}</span>
+                        </button>
+                      </div>
+                    {{/each}}
+                  </div>
+                {{/if}}
+
+                {{#if simplifiedActions.otherItems.length}}
+                  <div class="symbaroum-hud-simplified-section-header">
+                    <i class="fa-solid fa-flask" aria-hidden="true"></i>
+                    <span>{{localize "SYMBAROUMHUD.Sections.Inventory"}}</span>
+                  </div>
+                  <div class="symbaroum-hud-simplified-action-list">
+                    {{#each simplifiedActions.otherItems}}
+                      <div class="symbaroum-hud-simplified-item-row" data-item-id="{{id}}">
+                        <button type="button" class="symbaroum-hud-simplified-item-img-btn"
+                          data-action="use-ability" data-item-id="{{id}}"
+                          data-item-uuid="{{uuid}}"
+                          data-tooltip="{{name}}"
+                          aria-label="{{name}}">
+                          <img src="{{img}}" alt="{{name}}">
+                        </button>
+                        <button type="button" class="symbaroum-hud-simplified-item-name-btn"
+                          data-action="use-ability" data-item-id="{{id}}"
+                          data-item-uuid="{{uuid}}"
+                          data-tooltip="{{name}}"
+                          aria-label="{{name}}">
+                          <span class="symbaroum-hud-simplified-item-name">{{name}}</span>
+                        </button>
+                      </div>
+                    {{/each}}
+                  </div>
+                {{/if}}
+
+                {{#if simplifiedActions.maneuvers.length}}
+                  <div class="symbaroum-hud-simplified-section-header">
+                    <i class="fa-solid fa-chess-knight" aria-hidden="true"></i>
+                    <span>{{localize "SYMBAROUMHUD.Sections.Maneuvers"}}</span>
+                  </div>
+                  <div class="symbaroum-hud-simplified-action-list">
+                    {{#each simplifiedActions.maneuvers}}
+                      <div class="symbaroum-hud-simplified-item-row" data-maneuver-id="{{id}}">
+                        <button type="button" class="symbaroum-hud-simplified-item-img-btn"
+                          data-action="execute-maneuver" data-maneuver-id="{{id}}"
+                          data-tooltip="{{localize 'SYMBAROUMHUD.Maneuvers.Roll'}}: {{name}}"
+                          aria-label="{{name}}"
+                          {{#unless canUse}}disabled{{/unless}}>
+                          <i class="fa-solid {{icon}}" aria-hidden="true"></i>
+                        </button>
+                        <button type="button" class="symbaroum-hud-simplified-item-name-btn"
+                          data-action="execute-maneuver" data-maneuver-id="{{id}}"
+                          data-tooltip="{{localize 'SYMBAROUMHUD.Maneuvers.Roll'}}: {{name}}"
+                          aria-label="{{name}}"
+                          {{#unless canUse}}disabled{{/unless}}>
+                          <span class="symbaroum-hud-simplified-item-name">{{name}}</span>
+                        </button>
+                        <div class="symbaroum-hud-simplified-item-controls">
+                          <button type="button" class="symbaroum-hud-simplified-sheet-btn symbaroum-hud-simplified-maneuver-info-btn"
+                            data-action="show-maneuver-info" data-maneuver-id="{{id}}"
+                            data-tooltip="{{description}}"
+                            aria-label="{{localize 'SYMBAROUMHUD.Maneuvers.ShowDescription'}}">
+                            <i class="fa-solid fa-circle-question" aria-hidden="true"></i>
+                          </button>
+                        </div>
+                      </div>
+                    {{/each}}
+                  </div>
+                {{/if}}
+
+                {{#unless simplifiedActions.hasActions}}
+                  <div class="symbaroum-hud-simplified-empty">
+                    <i class="fa-solid fa-person-running" aria-hidden="true"></i>
+                    <span>{{localize "SYMBAROUMHUD.Attacks.Empty"}}</span>
+                  </div>
+                {{/unless}}
+              </div>
+            </section>
+          {{/if}}
+          {{#if simplifiedInventoryOpen}}
+            <section class="symbaroum-hud-simplified-inventory-panel" aria-label="{{localize 'SYMBAROUMHUD.Sections.Inventory'}}"
+              data-storage-inventory-drop="true">
+              <header class="symbaroum-hud-simplified-panel-header">
+                <div class="symbaroum-hud-simplified-panel-title">
+                  <i class="fa-solid fa-backpack" aria-hidden="true"></i>
+                  <h3>{{localize "SYMBAROUMHUD.Sections.Inventory"}}</h3>
+                </div>
+
+                <div class="symbaroum-hud-simplified-wealth-bar">
+                  <button type="button" class="symbaroum-hud-simplified-money-btn"
+                    data-action="open-money"
+                    data-tooltip="{{localize 'SYMBAROUMHUD.Info.InventoryStatus'}}"
+                    aria-label="{{localize 'SYMBAROUMHUD.Info.InventoryStatus'}}">
+                    <div class="symbaroum-hud-simplified-currency">
+                      <span class="currency-tag thaler">T</span>
+                      <span class="currency-val">{{simplifiedInventory.money.thaler}}</span>
+                    </div>
+                    <div class="symbaroum-hud-simplified-currency">
+                      <span class="currency-tag shilling">S</span>
+                      <span class="currency-val">{{simplifiedInventory.money.shilling}}</span>
+                    </div>
+                    <div class="symbaroum-hud-simplified-currency">
+                      <span class="currency-tag orteg">O</span>
+                      <span class="currency-val">{{simplifiedInventory.money.orteg}}</span>
+                    </div>
+                  </button>
+                  {{#if simplifiedInventory.load}}
+                    <div class="symbaroum-hud-simplified-load{{#if simplifiedInventory.load.overloaded}} is-overloaded{{/if}}"
+                      data-tooltip="{{localize 'SYMBAROUMHUD.Storage.Weight'}}: {{simplifiedInventory.load.current}} / {{simplifiedInventory.load.capacity}}{{#if simplifiedInventory.load.overloaded}} ({{localize 'SYMBAROUMHUD.Storage.Overload'}}){{/if}}">
+                      <i class="fa-solid fa-weight-hanging" aria-hidden="true"></i>
+                      <span>{{simplifiedInventory.load.current}} / {{simplifiedInventory.load.capacity}}</span>
+                      <div class="symbaroum-hud-simplified-load-track">
+                        <div class="symbaroum-hud-simplified-load-fill" style="width: {{simplifiedInventory.load.percent}}%;"></div>
+                      </div>
+                    </div>
+                  {{/if}}
+                </div>
+
+                <div class="symbaroum-hud-simplified-panel-actions">
+                  <button type="button" class="symbaroum-hud-simplified-header-btn"
+                    data-action="open-shop"
+                    data-tooltip="{{localize 'SYMBAROUMHUD.Shop.Title'}}"
+                    aria-label="{{localize 'SYMBAROUMHUD.Shop.Title'}}">
+                    <i class="fa-solid fa-store" aria-hidden="true"></i>
+                  </button>
+                  <button type="button" class="symbaroum-hud-simplified-panel-close"
+                    data-action="close-simplified-inventory"
+                    data-tooltip="{{localize 'SYMBAROUMHUD.Actions.CloseInventory'}}"
+                    aria-label="{{localize 'SYMBAROUMHUD.Actions.CloseInventory'}}">
+                    <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                  </button>
+                </div>
+              </header>
+
+              {{#if simplifiedInventory.isEmpty}}
+                <div class="symbaroum-hud-simplified-empty">
+                  <i class="fa-solid fa-backpack" aria-hidden="true"></i>
+                  <span>{{localize "SYMBAROUMHUD.Storage.InventoryEmpty"}}</span>
+                </div>
+              {{else}}
+                <div class="symbaroum-hud-simplified-inventory-grid" data-storage-inventory-drop="true">
+                <!-- COLUNA 1: Armas & Escudos, Armaduras, Equipamentos -->
+                <div class="symbaroum-hud-simplified-inventory-col" data-storage-inventory-drop="true">
+                  {{#if simplifiedInventory.column1.hasWeapons}}
+                    <div class="symbaroum-hud-simplified-col-section">
+                      <div class="symbaroum-hud-simplified-section-header">
+                        <i class="fa-solid fa-swords" aria-hidden="true"></i>
+                        <span>{{localize "SYMBAROUMHUD.SimplifiedInventory.WeaponsAndShields"}}</span>
+                      </div>
+                      <div class="symbaroum-hud-simplified-action-list">
+                        {{#each simplifiedInventory.column1.weapons}}
+                          <div class="symbaroum-hud-simplified-item-row" data-item-id="{{id}}"
+                            draggable="true" data-storage-draggable="true" data-storage-source="inventory">
+                            <button type="button" class="symbaroum-hud-simplified-item-img-btn"
+                              data-action="roll-weapon" data-item-id="{{id}}"
+                              data-item-uuid="{{uuid}}"
+                              data-tooltip="{{localize 'SYMBAROUMHUD.Actions.RollWeapon'}}: {{name}}"
+                              aria-label="{{name}}"
+                              {{#unless canUse}}disabled{{/unless}}>
+                              <img src="{{img}}" alt="{{name}}">
+                            </button>
+                            <button type="button" class="symbaroum-hud-simplified-item-name-btn"
+                              data-action="open-item" data-item-id="{{id}}"
+                              aria-label="{{name}}">
+                              <div class="symbaroum-hud-simplified-item-info">
+                                <span class="symbaroum-hud-simplified-item-name">{{name}}</span>
+                                <span class="symbaroum-hud-simplified-item-meta">
+                                  <span class="symbaroum-hud-simplified-item-badge">{{damage}}</span>
+                                  {{#if hasMultiple}}<span class="symbaroum-hud-simplified-item-qty">{{quantity}}x</span>{{/if}}
+                                  {{#if readinessLabel}}<span class="symbaroum-hud-simplified-item-readiness{{#if drawn}} is-drawn{{/if}}">{{readinessLabel}}</span>{{/if}}
+                                </span>
+                              </div>
+                            </button>
+                            <div class="symbaroum-hud-simplified-item-controls">
+                              {{#if readinessKnown}}
+                                <button type="button" class="symbaroum-hud-simplified-readiness-btn"
+                                  data-drawn="{{drawn}}" data-item-id="{{id}}"
+                                  data-action="{{#if drawn}}sheathe-weapon{{else}}draw-weapon{{/if}}"
+                                  data-tooltip="{{#if drawn}}{{localize 'SYMBAROUMHUD.Attacks.SheatheAction'}}: {{name}}{{else}}{{localize 'SYMBAROUMHUD.Actions.DrawWeapon'}}: {{name}}{{/if}}"
+                                  aria-label="{{name}}"
+                                  {{#unless canUse}}disabled{{/unless}}>
+                                  <i class="fa-solid {{#if drawn}}fa-hand-fist{{else}}fa-hand{{/if}}" aria-hidden="true"></i>
+                                </button>
+                              {{/if}}
+                            </div>
+                          </div>
+                        {{/each}}
+                      </div>
+                    </div>
+                  {{/if}}
+
+                  {{#if simplifiedInventory.column1.hasArmors}}
+                    <div class="symbaroum-hud-simplified-col-section">
+                      <div class="symbaroum-hud-simplified-section-header">
+                        <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
+                        <span>{{localize "SYMBAROUMHUD.SimplifiedInventory.Armors"}}</span>
+                      </div>
+                      <div class="symbaroum-hud-simplified-action-list">
+                        {{#each simplifiedInventory.column1.armors}}
+                          <div class="symbaroum-hud-simplified-item-row" data-item-id="{{id}}"
+                            draggable="true" data-storage-draggable="true" data-storage-source="inventory">
+                            <button type="button" class="symbaroum-hud-simplified-item-img-btn"
+                              data-action="roll-armor-protection" data-item-id="{{id}}"
+                              data-tooltip="{{name}}: {{protection}}{{#if impeding}} ({{impeding}}){{/if}}"
+                              aria-label="{{name}}"
+                              {{#unless canUse}}disabled{{/unless}}>
+                              <img src="{{img}}" alt="{{name}}">
+                            </button>
+                            <button type="button" class="symbaroum-hud-simplified-item-name-btn"
+                              data-action="open-item" data-item-id="{{id}}"
+                              aria-label="{{name}}">
+                              <div class="symbaroum-hud-simplified-item-info">
+                                <span class="symbaroum-hud-simplified-item-name">{{name}}</span>
+                                <span class="symbaroum-hud-simplified-item-meta">
+                                  <span class="symbaroum-hud-simplified-item-badge">{{protection}}</span>
+                                  {{#if impeding}}
+                                    <span class="symbaroum-hud-simplified-item-badge is-impeding">{{impeding}}</span>
+                                  {{/if}}
+                                  <span class="symbaroum-hud-simplified-item-state">{{stateLabel}}</span>
+                                </span>
+                              </div>
+                            </button>
+                            <div class="symbaroum-hud-simplified-item-controls">
+                              <button type="button" class="symbaroum-hud-simplified-equip-btn{{#if isActive}} is-active{{/if}}"
+                                data-action="toggle-armor-equip" data-item-id="{{id}}"
+                                data-tooltip="{{stateLabel}}: {{name}}"
+                                aria-label="{{stateLabel}}: {{name}}"
+                                {{#unless canUse}}disabled{{/unless}}>
+                                <i class="fa-solid fa-shirt" aria-hidden="true"></i>
+                              </button>
+                            </div>
+                          </div>
+                        {{/each}}
+                      </div>
+                    </div>
+                  {{/if}}
+
+                  {{#unless simplifiedInventory.hasColumn1}}
+                    <div class="symbaroum-hud-simplified-col-empty">
+                      <span>{{localize "SYMBAROUMHUD.SimplifiedInventory.Empty"}}</span>
+                    </div>
+                  {{/unless}}
+                </div>
+
+                <!-- COLUNA 2: Recipientes & Mochilas (Ind Resources) -->
+                <div class="symbaroum-hud-simplified-inventory-col" data-storage-inventory-drop="true">
+                  {{#if simplifiedInventory.column2.hasContainers}}
+                    <div class="symbaroum-hud-simplified-col-section">
+                      <div class="symbaroum-hud-simplified-section-header">
+                        <i class="fa-solid fa-box-archive" aria-hidden="true"></i>
+                        <span>{{localize "SYMBAROUMHUD.SimplifiedInventory.Containers"}}</span>
+                      </div>
+                      <div class="symbaroum-hud-simplified-action-list">
+                        {{#each simplifiedInventory.column2.containers}}
+                          <div class="symbaroum-hud-simplified-container-group{{#if collapsed}} is-collapsed{{/if}}">
+                            <div class="symbaroum-hud-simplified-item-row symbaroum-hud-simplified-container-header-row"
+                              data-item-id="{{id}}" data-storage-drop-container="{{id}}"
+                              draggable="true" data-storage-draggable="true" data-storage-source="inventory">
+                              <button type="button" class="symbaroum-hud-simplified-item-img-btn"
+                                data-action="toggle-simplified-container" data-container-id="{{id}}"
+                                data-tooltip="{{#if collapsed}}{{localize 'SYMBAROUMHUD.SimplifiedInventory.ExpandContainer'}}{{else}}{{localize 'SYMBAROUMHUD.SimplifiedInventory.CollapseContainer'}}{{/if}}: {{name}}"
+                                aria-label="{{name}}">
+                                <img src="{{img}}" alt="{{name}}">
+                              </button>
+                              <button type="button" class="symbaroum-hud-simplified-item-name-btn"
+                                data-action="open-item" data-item-id="{{id}}"
+                                aria-label="{{name}}">
+                                <div class="symbaroum-hud-simplified-item-info">
+                                  <span class="symbaroum-hud-simplified-item-name" title="{{name}}">{{name}}</span>
+                                  <span class="symbaroum-hud-simplified-item-meta">
+                                    {{#if capacity}}<span class="symbaroum-hud-simplified-item-badge{{#if isQuiver}} is-quiver-capacity{{/if}}">{{capacity}}</span>{{/if}}
+                                    {{#if hasMultiple}}<span class="symbaroum-hud-simplified-item-qty">{{quantity}}x</span>{{/if}}
+                                  </span>
+                                </div>
+                              </button>
+                              <div class="symbaroum-hud-simplified-item-controls">
+                                {{#if isQuiver}}
+                                  <button type="button" class="symbaroum-hud-simplified-quiver-reload-btn"
+                                    data-action="reload-quiver" data-container-id="{{id}}"
+                                    data-tooltip="{{localize 'SYMBAROUMHUD.SimplifiedInventory.ReloadQuiver'}}: {{name}}"
+                                    aria-label="{{localize 'SYMBAROUMHUD.SimplifiedInventory.ReloadQuiver'}}">
+                                    <i class="fa-solid fa-arrows-rotate" aria-hidden="true"></i>
+                                  </button>
+                                {{/if}}
+                                <button type="button" class="symbaroum-hud-simplified-container-toggle-btn"
+                                  data-action="toggle-simplified-container" data-container-id="{{id}}"
+                                  data-tooltip="{{#if collapsed}}{{localize 'SYMBAROUMHUD.SimplifiedInventory.ExpandContainer'}}{{else}}{{localize 'SYMBAROUMHUD.SimplifiedInventory.CollapseContainer'}}{{/if}}"
+                                  aria-label="{{name}}">
+                                  <i class="fa-solid {{#if collapsed}}fa-chevron-right{{else}}fa-chevron-down{{/if}}" aria-hidden="true"></i>
+                                </button>
+                              </div>
+                            </div>
+
+                            <!-- ITENS DENTRO DO RECIPIENTE -->
+                            {{#unless collapsed}}
+                              <div class="symbaroum-hud-simplified-container-children" data-storage-drop-container="{{id}}">
+                                {{#each items}}
+                                  <div class="symbaroum-hud-simplified-item-row symbaroum-hud-simplified-stored-item-row"
+                                    data-item-id="{{id}}" data-container-id="{{../id}}"
+                                    draggable="true" data-storage-draggable="true" data-storage-source="stored">
+                                    <button type="button" class="symbaroum-hud-simplified-item-img-btn"
+                                      data-action="use-item" data-item-id="{{id}}"
+                                      data-tooltip="{{localize 'SYMBAROUMHUD.SimplifiedInventory.UseItem'}}: {{name}}"
+                                      aria-label="{{localize 'SYMBAROUMHUD.SimplifiedInventory.UseItem'}}: {{name}}">
+                                      <img src="{{img}}" alt="{{name}}">
+                                    </button>
+                                    <button type="button" class="symbaroum-hud-simplified-item-name-btn"
+                                      data-action="open-item" data-item-id="{{id}}"
+                                      aria-label="{{name}}">
+                                      <div class="symbaroum-hud-simplified-item-info">
+                                        <span class="symbaroum-hud-simplified-item-name" title="{{name}}">{{name}}</span>
+                                        <span class="symbaroum-hud-simplified-item-meta">
+                                          {{#if uses}}<span class="symbaroum-hud-simplified-item-badge is-uses">{{uses}}</span>{{/if}}
+                                          <span class="symbaroum-hud-simplified-item-qty">{{quantity}}x</span>
+                                        </span>
+                                      </div>
+                                    </button>
+                                    <div class="symbaroum-hud-simplified-item-controls">
+                                      <button type="button" class="symbaroum-hud-simplified-withdraw-btn"
+                                        data-action="withdraw-from-container" data-item-id="{{id}}" data-container-id="{{../id}}"
+                                        data-tooltip="{{localize 'SYMBAROUMHUD.SimplifiedInventory.WithdrawItem'}}: {{name}}"
+                                        aria-label="{{localize 'SYMBAROUMHUD.SimplifiedInventory.WithdrawItem'}}">
+                                        <i class="fa-solid fa-arrow-up-from-bracket" aria-hidden="true"></i>
+                                      </button>
+                                    </div>
+                                  </div>
+                                {{/each}}
+                                {{#unless hasItems}}
+                                  <div class="symbaroum-hud-simplified-container-empty-msg">
+                                    <span>{{localize "SYMBAROUMHUD.SimplifiedInventory.ContainerEmpty"}}</span>
+                                  </div>
+                                {{/unless}}
+                              </div>
+                            {{/unless}}
+                          </div>
+                        {{/each}}
+                      </div>
+                    </div>
+                  {{/if}}
+
+                  {{#unless simplifiedInventory.hasColumn2}}
+                    <div class="symbaroum-hud-simplified-col-empty">
+                      <span>{{localize "SYMBAROUMHUD.SimplifiedInventory.Empty"}}</span>
+                    </div>
+                  {{/unless}}
+                </div>
+
+                <!-- COLUNA 3: Inventário Geral (todos os itens fora de recipientes) -->
+                <div class="symbaroum-hud-simplified-inventory-col" data-storage-inventory-drop="true">
+                  {{#if simplifiedInventory.column3.hasItems}}
+                    <div class="symbaroum-hud-simplified-col-section">
+                      <div class="symbaroum-hud-simplified-section-header">
+                        <i class="fa-solid fa-boxes-stacked" aria-hidden="true"></i>
+                        <span>{{localize "SYMBAROUMHUD.SimplifiedInventory.Title"}}</span>
+                      </div>
+                      <div class="symbaroum-hud-simplified-action-list">
+                        {{#each simplifiedInventory.column3.items}}
+                          <div class="symbaroum-hud-simplified-item-row" data-item-id="{{id}}"
+                            draggable="true" data-storage-draggable="true" data-storage-source="inventory">
+                            <button type="button" class="symbaroum-hud-simplified-item-img-btn"
+                              data-action="use-item" data-item-id="{{id}}"
+                              data-tooltip="{{localize 'SYMBAROUMHUD.SimplifiedInventory.UseItem'}}: {{name}}"
+                              aria-label="{{localize 'SYMBAROUMHUD.SimplifiedInventory.UseItem'}}: {{name}}">
+                              <img src="{{img}}" alt="{{name}}">
+                            </button>
+                            <button type="button" class="symbaroum-hud-simplified-item-name-btn"
+                              data-action="open-item" data-item-id="{{id}}"
+                              aria-label="{{name}}">
+                              <div class="symbaroum-hud-simplified-item-info">
+                                <span class="symbaroum-hud-simplified-item-name" title="{{name}}">{{name}}</span>
+                                <span class="symbaroum-hud-simplified-item-meta">
+                                  {{#if uses}}<span class="symbaroum-hud-simplified-item-badge is-uses">{{uses}}</span>{{/if}}
+                                  <span class="symbaroum-hud-simplified-item-qty">{{quantity}}x</span>
+                                </span>
+                              </div>
+                            </button>
+                          </div>
+                        {{/each}}
+                      </div>
+                    </div>
+                  {{/if}}
+
+                  {{#unless simplifiedInventory.hasColumn3}}
+                    <div class="symbaroum-hud-simplified-col-empty">
+                      <span>{{localize "SYMBAROUMHUD.SimplifiedInventory.Empty"}}</span>
+                    </div>
+                  {{/unless}}
+                </div>
+              </div>
+              {{/if}}
+            </section>
+          {{/if}}
+
+          {{#if simplifiedPowersOpen}}
+            <section class="symbaroum-hud-simplified-powers-panel" aria-label="{{localize 'SYMBAROUMHUD.Sections.PowersAndAbilities'}}">
+              <header class="symbaroum-hud-simplified-panel-header">
+                <div class="symbaroum-hud-simplified-panel-title">
+                  <i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i>
+                  <h3>{{localize "SYMBAROUMHUD.Sections.PowersAndAbilities"}}</h3>
+                </div>
+                <button type="button" class="symbaroum-hud-simplified-panel-close"
+                  data-action="close-simplified-powers"
+                  data-tooltip="{{localize 'SYMBAROUMHUD.Actions.ClosePowers'}}"
+                  aria-label="{{localize 'SYMBAROUMHUD.Actions.ClosePowers'}}">
+                  <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                </button>
+              </header>
+
+              <div class="symbaroum-hud-simplified-pf2-content">
+                {{#if simplifiedPowers.isEmpty}}
+                  <div class="symbaroum-hud-simplified-empty">
+                    <i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i>
+                    <span>{{localize "SYMBAROUMHUD.Powers.Empty"}}</span>
+                  </div>
+                {{else}}
+                  <div class="symbaroum-hud-simplified-pf2-grid">
+                    <!-- COLUNA 1 -->
+                    <div class="symbaroum-hud-simplified-pf2-col">
+                      {{#each simplifiedPowers.column1.sections}}
+                        <div class="symbaroum-hud-simplified-pf2-section">
+                          <div class="symbaroum-hud-simplified-pf2-header">
+                            <span>{{title}}</span>
+                          </div>
+                          <div class="symbaroum-hud-simplified-pf2-list">
+                            {{#each items}}
+                              <button type="button" class="symbaroum-hud-simplified-pf2-item{{#if isSelected}} is-selected{{/if}}"
+                                data-action="select-power-card" data-item-id="{{id}}"
+                                data-item-uuid="{{uuid}}"
+                                data-tooltip="{{name}}{{#if tierLabel}} ({{tierLabel}}){{/if}}"
+                                aria-label="{{name}}">
+                                <img class="symbaroum-hud-simplified-pf2-img" src="{{img}}" alt="{{name}}">
+                                <span class="symbaroum-hud-simplified-pf2-name">{{name}}</span>
+                                {{#if tierLabel}}
+                                  <span class="symbaroum-hud-simplified-pf2-tier">{{tierLabel}}</span>
+                                {{/if}}
+                              </button>
+                            {{/each}}
+                          </div>
+                        </div>
+                      {{/each}}
+                    </div>
+
+                    <!-- COLUNA 2 -->
+                    {{#if simplifiedPowers.hasColumn2}}
+                      <div class="symbaroum-hud-simplified-pf2-col">
+                        {{#each simplifiedPowers.column2.sections}}
+                          <div class="symbaroum-hud-simplified-pf2-section">
+                            <div class="symbaroum-hud-simplified-pf2-header">
+                              <span>{{title}}</span>
+                            </div>
+                            <div class="symbaroum-hud-simplified-pf2-list">
+                              {{#each items}}
+                                <button type="button" class="symbaroum-hud-simplified-pf2-item{{#if isSelected}} is-selected{{/if}}"
+                                  data-action="select-power-card" data-item-id="{{id}}"
+                                  data-item-uuid="{{uuid}}"
+                                  data-tooltip="{{name}}{{#if tierLabel}} ({{tierLabel}}){{/if}}"
+                                  aria-label="{{name}}">
+                                  <img class="symbaroum-hud-simplified-pf2-img" src="{{img}}" alt="{{name}}">
+                                  <span class="symbaroum-hud-simplified-pf2-name">{{name}}</span>
+                                  {{#if tierLabel}}
+                                    <span class="symbaroum-hud-simplified-pf2-tier">{{tierLabel}}</span>
+                                  {{/if}}
+                                </button>
+                              {{/each}}
+                            </div>
+                          </div>
+                        {{/each}}
+                      </div>
+                    {{/if}}
+                  </div>
+                {{/if}}
+              </div>
+
+              {{#if simplifiedPowers.selectedCard}}
+                <div class="symbaroum-hud-simplified-pf2-card">
+                  <div class="symbaroum-hud-simplified-pf2-card-header">
+                    <span class="symbaroum-hud-simplified-pf2-card-title">{{simplifiedPowers.selectedCard.actorName}} - {{simplifiedPowers.selectedCard.name}}</span>
+                    <div class="symbaroum-hud-simplified-pf2-card-actions">
+                      {{#if simplifiedPowers.selectedCard.canRoll}}
+                        <button type="button" class="symbaroum-hud-simplified-pf2-card-btn"
+                          data-action="{{simplifiedPowers.selectedCard.rollAction}}" data-item-id="{{simplifiedPowers.selectedCard.id}}"
+                          data-tooltip="{{localize 'SYMBAROUMHUD.Abilities.Roll'}}: {{simplifiedPowers.selectedCard.name}}"
+                          aria-label="{{localize 'SYMBAROUMHUD.Abilities.Roll'}}: {{simplifiedPowers.selectedCard.name}}"
+                          {{#unless simplifiedPowers.selectedCard.canUse}}disabled{{/unless}}>
+                          <i class="fa-solid fa-dice-d20" aria-hidden="true"></i>
+                        </button>
+                      {{/if}}
+                      <button type="button" class="symbaroum-hud-simplified-pf2-card-btn"
+                        data-action="post-power-card" data-item-id="{{simplifiedPowers.selectedCard.id}}"
+                        data-tooltip="{{localize 'SYMBAROUMHUD.SimplifiedInventory.PostToChat'}}"
+                        aria-label="{{localize 'SYMBAROUMHUD.SimplifiedInventory.PostToChat'}}">
+                        <i class="fa-solid fa-comment" aria-hidden="true"></i>
+                      </button>
+                      <button type="button" class="symbaroum-hud-simplified-pf2-card-btn"
+                        data-action="open-power-sheet" data-item-id="{{simplifiedPowers.selectedCard.id}}"
+                        data-tooltip="{{localize 'SYMBAROUMHUD.SimplifiedInventory.OpenSheet'}}"
+                        aria-label="{{localize 'SYMBAROUMHUD.SimplifiedInventory.OpenSheet'}}">
+                        <i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i>
+                      </button>
+                      <button type="button" class="symbaroum-hud-simplified-pf2-card-btn is-close"
+                        data-action="close-power-card"
+                        data-tooltip="{{localize 'SYMBAROUMHUD.Actions.Close'}}"
+                        aria-label="{{localize 'SYMBAROUMHUD.Actions.Close'}}">
+                        <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="symbaroum-hud-simplified-pf2-card-tags">
+                    {{#if simplifiedPowers.selectedCard.badge}}
+                      <span class="symbaroum-hud-simplified-pf2-tag">{{simplifiedPowers.selectedCard.badge}}</span>
+                    {{/if}}
+                    {{#if simplifiedPowers.selectedCard.actionLabel}}
+                      <span class="symbaroum-hud-simplified-pf2-tag is-action">{{simplifiedPowers.selectedCard.actionLabel}}</span>
+                    {{/if}}
+                  </div>
+                  {{#if simplifiedPowers.selectedCard.description}}
+                    <div class="symbaroum-hud-simplified-pf2-text">
+                      {{{simplifiedPowers.selectedCard.description}}}
+                    </div>
+                  {{/if}}
+                </div>
+              {{/if}}
+            </section>
+          {{/if}}
+        </div>
+        <div class="symbaroum-hud-simplified-hotbar-slot" data-symba-hotbar></div>
+      </div>
+    {{else}}
+      <div class="symbaroum-hud-simplified-hotbar-slot" data-symba-hotbar></div>
+    {{/if}}
+  </div>
+{{else}}
 {{#if hasStatusSummary}}
   <aside class="symbaroum-hud-status-summary">
     {{#if effects}}
@@ -30,7 +893,8 @@
   </aside>
 {{/if}}
 
-<div class="symbaroum-hud-card-row" data-symba-weapon-drawn="{{weaponDrawn}}"
+<div class="symbaroum-hud-card-row" data-symba-theme="{{theme}}"
+  data-symba-weapon-drawn="{{weaponDrawn}}"
   data-vitality-state="{{vitalityState}}" data-hud-collapsed="{{hudCollapsed}}"
   data-hud-transition="{{hudTransition}}">
   <div class="symbaroum-hud-hotbar-controls">
@@ -1325,3 +2189,4 @@
     <i class="fa-solid {{#if hudCollapsed}}fa-chevron-right{{else}}fa-chevron-left{{/if}}" aria-hidden="true"></i>
   </button>
 </div>
+{{/if}}

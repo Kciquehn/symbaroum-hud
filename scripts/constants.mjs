@@ -4,6 +4,7 @@ export const SUPPORTED_ACTOR_TYPES = new Set(["player", "monster"]);
 
 export const SETTINGS = Object.freeze({
   ENABLED: "enabled",
+  THEME: "theme",
   SELECTION_MODE: "selectionMode",
   SHOW_IND_RESOURCES: "showIndResources",
   SHOW_WEAPON_READINESS_BUTTON: "showWeaponReadinessButton",
@@ -19,6 +20,11 @@ export const SETTINGS = Object.freeze({
   COMPENDIUM_BROWSER_FOLDER_ACCESS: "compendiumBrowserFolderAccess",
   COMPENDIUM_BROWSER_ORIGIN_ACCESS: "compendiumBrowserOriginAccess",
   PDF_TEMPLATE_PATH: "pdfTemplatePath"
+});
+
+export const THEMES = Object.freeze({
+  CLASSIC: "classic",
+  SIMPLIFIED: "simplified"
 });
 
 export const SELECTION_MODES = Object.freeze({

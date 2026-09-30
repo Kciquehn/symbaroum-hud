@@ -1,11 +1,11 @@
 import { MODULE_ID } from "./constants.mjs";
-import { applyPlayerListVisibility, registerSettings } from "./settings.mjs";
+import { applyHudTheme, applyPlayerListVisibility, registerSettings } from "./settings.mjs";
 import { SymbaroumHud } from "./applications/symbaroum-hud.mjs";
 import {
   registerCompendiumBrowserHooks,
   SymbaroumCompendiumBrowser
 } from "./applications/compendium-browser.mjs";
-import { registerRefreshHooks } from "./hooks.mjs";
+import { registerRefreshHooks, registerSceneControlsHooks } from "./hooks.mjs";
 import {
   registerHotbarShortcutKeybindings,
   registerHotbarShortcuts
@@ -23,6 +23,7 @@ import {
 let hud = null;
 
 Hooks.once("init", () => {
+  if (!("alternatives" in globalThis)) globalThis.alternatives = [];
   registerHotbarShortcutKeybindings();
   registerSettings(() => {
     if (game.ready) Hooks.callAll(`${MODULE_ID}.refresh`);
@@ -38,6 +39,7 @@ Hooks.once("setup", () => {
   registerCompendiumBrowserHooks();
   registerItemTaxonomySheetHooks();
   registerRefreshHooks(hud);
+  registerSceneControlsHooks();
 
   const module = game.modules.get(MODULE_ID);
   if (module) {
@@ -68,6 +70,7 @@ Hooks.once("ready", () => {
   }
 
   applyPlayerListVisibility();
+  applyHudTheme();
   void synchronizeWorldItemTaxonomy()
     .then(({ updated }) => {
       if (updated) SymbaroumCompendiumBrowser.invalidate({ origins: false });
