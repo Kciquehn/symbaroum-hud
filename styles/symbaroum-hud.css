@@ -6085,6 +6085,10 @@ body:has(#symbaroum-hud .symbaroum-hud-ammo-recovery-slot) > #tenebre-ammo-hud-l
   height: 109px;
   min-height: 109px;
   flex: 0 0 220px;
+  background: var(--shud-surface, rgba(16, 16, 20, 0.85)) !important;
+  border: 1px solid var(--shud-border, rgba(255, 255, 255, 0.12)) !important;
+  border-radius: var(--shud-radius, 4px) !important;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4) !important;
 }
 
 #symbaroum-hud .symbaroum-hud-simplified-deck {
@@ -6092,53 +6096,57 @@ body:has(#symbaroum-hud .symbaroum-hud-ammo-recovery-slot) > #tenebre-ammo-hud-l
   flex-direction: column;
   justify-content: flex-end;
   height: auto;
-  gap: 4px;
+  gap: 6px;
   width: 250px;
   min-width: 250px;
 }
 
 #symbaroum-hud .symbaroum-hud-simplified-info-bar {
   display: grid;
-  grid-auto-flow: column;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   grid-template-rows: repeat(2, auto);
   align-items: center;
-  justify-content: flex-start;
-  gap: 2px 10px;
+  gap: 4px 6px;
   height: auto;
   min-height: auto;
-  padding: 2px 2px;
+  padding: 0;
   box-sizing: border-box;
   background: transparent;
   border: none;
   border-radius: 0;
   box-shadow: none;
+  width: 100%;
 }
 
 #symbaroum-hud button.symbaroum-hud-simplified-info-chip {
-  flex: 0 0 auto;
+  flex: 1 1 0;
   min-width: 0;
-  height: auto;
+  height: 28px;
+  min-height: 28px;
   display: flex;
   flex-direction: row;
   align-items: center;
   justify-content: flex-start;
-  gap: 4px;
-  padding: 2px 4px;
+  gap: 6px;
+  padding: 2px 8px;
   box-sizing: border-box;
-  border: none;
-  border-radius: 0;
-  background: transparent;
+  border: 1px solid var(--shud-border, rgba(255, 255, 255, 0.12));
+  border-radius: var(--shud-radius, 4px);
+  background: var(--shud-surface, rgba(16, 16, 20, 0.85));
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
   color: var(--shud-text, #efe6d8);
   cursor: pointer;
   outline: none;
-  transition: color 0.18s ease, opacity 0.18s ease;
-  overflow: visible;
+  transition: all 0.18s ease;
+  overflow: hidden;
 }
 
 #symbaroum-hud button.symbaroum-hud-simplified-info-chip:hover,
 #symbaroum-hud button.symbaroum-hud-simplified-info-chip:focus-visible {
+  border-color: #c5ae45;
   color: #fff;
-  opacity: 1;
+  background: rgba(197, 174, 69, 0.10);
+  box-shadow: 0 0 10px rgba(197, 174, 69, 0.25);
 }
 
 #symbaroum-hud button.symbaroum-hud-simplified-info-chip:active {
@@ -6164,17 +6172,15 @@ body:has(#symbaroum-hud .symbaroum-hud-ammo-recovery-slot) > #tenebre-ammo-hud-l
   display: none;
 }
 
-/* label hidden — hover rule removed */
-
 #symbaroum-hud button.symbaroum-hud-simplified-info-chip strong.symbaroum-hud-simplified-chip-val {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
   font-family: var(--font-primary);
   color: #fff;
   line-height: 1;
   white-space: nowrap;
-  overflow: visible;
-  text-overflow: clip;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 #symbaroum-hud button.symbaroum-hud-simplified-info-chip.is-empty strong.symbaroum-hud-simplified-chip-val {
@@ -7637,13 +7643,20 @@ body:has(#symbaroum-hud .symbaroum-hud-ammo-recovery-slot) > #tenebre-ammo-hud-l
 #symbaroum-hud.symbaroum-hud--simplified .symbaroum-hud-economy-panel,
 #symbaroum-hud.symbaroum-hud--simplified .symbaroum-hud-experience-panel {
   border-radius: var(--shud-radius);
-  background: var(--shud-bg);
+  background: var(--shud-surface, rgba(16, 16, 20, 0.85));
 }
 
 #symbaroum-hud.symbaroum-hud--simplified button.symbaroum-hud-attribute {
   color: var(--shud-text);
-  background: var(--shud-bg);
-  text-shadow: 0 0 3px #000, 0 0 3px #000, 0 0 3px #000;
+  background: transparent !important;
+  text-shadow: 0 0 3px #000;
+  transition: all 0.15s ease;
+}
+
+#symbaroum-hud.symbaroum-hud--simplified button.symbaroum-hud-attribute:hover,
+#symbaroum-hud.symbaroum-hud--simplified button.symbaroum-hud-attribute:focus-visible {
+  background: rgba(197, 174, 69, 0.12) !important;
+  color: #fff;
 }
 
 #symbaroum-hud.symbaroum-hud--simplified button.symbaroum-hud-attribute:nth-child(even) {
@@ -8283,22 +8296,67 @@ body:has(#symbaroum-hud .symbaroum-hud-ammo-recovery-slot) > #tenebre-ammo-hud-l
 
 /* ── Hotbar ────────────────────────────────────────────────────────────── */
 #symbaroum-hud.symbaroum-hud--simplified .symbaroum-hud-hotbar > #hotbar {
-  --slot-color: rgba(0, 0, 0, 0.65);
-  --key-bg-color-empty: rgba(0, 0, 0, 0.65);
-  --key-bg-color-full: rgba(0, 0, 0, 0.65);
+  --slot-color: var(--shud-surface, rgba(16, 16, 20, 0.85));
+  --key-bg-color-empty: var(--shud-surface, rgba(16, 16, 20, 0.85));
+  --key-bg-color-full: var(--shud-surface, rgba(16, 16, 20, 0.85));
 }
 
+body[data-symbaroum-hud-theme="simplified"] #hotbar #macro-list,
+#symbaroum-hud.symbaroum-hud--simplified #hotbar #macro-list,
+body[data-symbaroum-hud-theme="simplified"] #hotbar #action-bar,
+#symbaroum-hud.symbaroum-hud--simplified #hotbar #action-bar {
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+body[data-symbaroum-hud-theme="simplified"] #hotbar #macro-list li.macro,
+body[data-symbaroum-hud-theme="simplified"] #hotbar .macro,
+body[data-symbaroum-hud-theme="simplified"] #hotbar #action-bar .slot,
+#symbaroum-hud.symbaroum-hud--simplified #hotbar #macro-list li.macro,
+#symbaroum-hud.symbaroum-hud--simplified #hotbar .macro,
 #symbaroum-hud.symbaroum-hud--simplified #hotbar #action-bar .slot {
-  border-color: var(--shud-border);
-  border-radius: var(--shud-radius);
-  background: var(--shud-surface);
-  box-shadow: none;
+  background: var(--shud-surface, rgba(16, 16, 20, 0.85)) !important;
+  border: 1px solid var(--shud-border, rgba(255, 255, 255, 0.12)) !important;
+  border-radius: var(--shud-radius, 4px) !important;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4) !important;
+  transition: all 0.18s ease;
 }
 
+body[data-symbaroum-hud-theme="simplified"] #hotbar #macro-list li.macro:hover,
+body[data-symbaroum-hud-theme="simplified"] #hotbar .macro:hover,
+body[data-symbaroum-hud-theme="simplified"] #hotbar #action-bar .slot:hover,
+body[data-symbaroum-hud-theme="simplified"] #hotbar #action-bar .slot:focus-within,
+#symbaroum-hud.symbaroum-hud--simplified #hotbar #macro-list li.macro:hover,
+#symbaroum-hud.symbaroum-hud--simplified #hotbar .macro:hover,
 #symbaroum-hud.symbaroum-hud--simplified #hotbar #action-bar .slot:hover,
 #symbaroum-hud.symbaroum-hud--simplified #hotbar #action-bar .slot:focus-within {
-  border-color: var(--shud-accent);
-  box-shadow: 0 0 5px var(--shud-accent-glow);
+  border-color: #c5ae45 !important;
+  box-shadow: 0 0 10px rgba(197, 174, 69, 0.25) !important;
+}
+
+body[data-symbaroum-hud-theme="simplified"] #hotbar #macro-list li.macro .macro-key,
+body[data-symbaroum-hud-theme="simplified"] #hotbar .macro-key,
+#symbaroum-hud.symbaroum-hud--simplified #hotbar .macro-key {
+  color: #c5ae45 !important;
+  background: rgba(0, 0, 0, 0.6) !important;
+  border-bottom-right-radius: 3px !important;
+  top: 1px !important;
+  left: 1px !important;
+  padding: 1px 3px !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+}
+
+body[data-symbaroum-hud-theme="simplified"] #hotbar #hotbar-directory-controls,
+body[data-symbaroum-hud-theme="simplified"] #hotbar #hotbar-page-controls,
+#symbaroum-hud.symbaroum-hud--simplified #hotbar #hotbar-directory-controls,
+#symbaroum-hud.symbaroum-hud--simplified #hotbar #hotbar-page-controls {
+  background: var(--shud-surface, rgba(16, 16, 20, 0.85)) !important;
+  border: 1px solid var(--shud-border, rgba(255, 255, 255, 0.12)) !important;
+  border-radius: var(--shud-radius, 4px) !important;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4) !important;
+  color: #c5ae45 !important;
 }
 
 /* ── Codex / Ability reader override ───────────────────────────────────── */

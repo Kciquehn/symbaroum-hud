@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.72
+
+- Aplica o mesmo tom de fundo dos botões principais aos cards de atributos e aos chips de informações secundárias (Defesa, Armadura, Rações e Aljava).
+- Harmoniza os botões da barra rápida (Hotbar / macros) do Foundry com o estilo e superfície do HUD Simplificado.
+
 ## 0.1.71
 
 - Adiciona novo tema **HUD Simplificado** inspirado no PF2e HUD, com interface escura moderna, painéis modulares e navegação compacta.
