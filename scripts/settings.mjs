@@ -249,6 +249,11 @@ export function getTheme() {
   return theme === THEMES.SIMPLIFIED ? THEMES.SIMPLIFIED : THEMES.CLASSIC;
 }
 
+export async function setTheme(theme) {
+  const normalized = theme === THEMES.SIMPLIFIED ? THEMES.SIMPLIFIED : THEMES.CLASSIC;
+  await game.settings.set(MODULE_ID, SETTINGS.THEME, normalized);
+}
+
 export function applyHudTheme(theme = getTheme()) {
   const normalized = theme === THEMES.SIMPLIFIED ? THEMES.SIMPLIFIED : THEMES.CLASSIC;
   if (typeof document !== "undefined") {

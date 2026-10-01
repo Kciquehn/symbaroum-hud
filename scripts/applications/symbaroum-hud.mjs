@@ -12,7 +12,8 @@ import {
   applyPlayerListVisibility,
   getSetting,
   getStorageViewMode,
-  getTheme
+  getTheme,
+  setTheme
 } from "../settings.mjs";
 import {
   ActorService,
@@ -1869,6 +1870,13 @@ export class SymbaroumHud extends ApplicationV2 {
         document.querySelector(
           `#hotbar #hotbar-controls-left [data-action="${hotbarAction}"]`
         )?.click();
+        return;
+      }
+
+      if (action === "toggle-hud-theme") {
+        const current = getTheme();
+        const next = current === THEMES.SIMPLIFIED ? THEMES.CLASSIC : THEMES.SIMPLIFIED;
+        await setTheme(next);
         return;
       }
 
