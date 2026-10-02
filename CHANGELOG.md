@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.74
+
+- Permite arrastar e soltar (drag & drop) habilidades, poderes místicos, rituais e traços diretamente no botão e no painel "Geral" do HUD Simplificado.
+- Restaura e corrige a exibição das Táticas recolhíveis para NPCs/monstros no HUD Simplificado com toggle funcional.
+- Isola o container de resumo de status e efeitos para fora do cartão de retrato, impedindo a exibição indevida do hover da foto ao interagir com as táticas.
+- Corrige o botão lateral no HUD Simplificado para alternar entre os modos de exibição (Completo, Mínimo e Oculto).
+- Ajusta a suíte de testes de integração e o pipeline de CI para validação 100% verde no GitHub Actions.
+
 ## 0.1.73
 
 - Ajusta o espaçamento vertical entre os itens do painel de Poderes & Habilidades.

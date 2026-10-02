@@ -133,7 +133,7 @@ test("simplified HUD template contains character name header without cycle arrow
 
   const simplifiedPart = template.substring(
     template.indexOf("{{#if isSimplified}}"),
-    template.indexOf("{{#if hasStatusSummary}}")
+    template.lastIndexOf("{{#if hasStatusSummary}}")
   );
   assert.ok(simplifiedPart.includes("symbaroum-hud-simplified-portrait-card"));
   assert.ok(simplifiedPart.includes("symbaroum-hud-character-name"));
@@ -171,7 +171,7 @@ test("simplified HUD template contains inventory button and inventory panel with
 
   const simplifiedPart = template.substring(
     template.indexOf("{{#if isSimplified}}"),
-    template.indexOf("{{#if hasStatusSummary}}")
+    template.lastIndexOf("{{#if hasStatusSummary}}")
   );
 
   assert.ok(simplifiedPart.includes("symbaroum-hud-simplified-inventory-btn"));
@@ -200,7 +200,7 @@ test("simplified HUD template contains container expansion, stored items, withdr
 
   const simplifiedPart = template.substring(
     template.indexOf("{{#if isSimplified}}"),
-    template.indexOf("{{#if hasStatusSummary}}")
+    template.lastIndexOf("{{#if hasStatusSummary}}")
   );
 
   assert.ok(simplifiedPart.includes('data-action="toggle-simplified-container"'));
@@ -464,7 +464,7 @@ test("simplified HUD template includes active effects strip above portrait card"
 
   const simplifiedPart = template.substring(
     template.indexOf("{{#if isSimplified}}"),
-    template.indexOf("{{#if hasStatusSummary}}")
+    template.lastIndexOf("{{#if hasStatusSummary}}")
   );
 
   assert.ok(simplifiedPart.includes("symbaroum-hud-simplified-effects-strip"));
