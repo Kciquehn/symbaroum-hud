@@ -7639,12 +7639,15 @@ body:has(#symbaroum-hud .symbaroum-hud-ammo-recovery-slot) > #tenebre-ammo-hud-l
   display: flex;
   align-items: flex-end;
   pointer-events: auto;
+  width: max-content;
+  max-width: none;
 }
 
 #symbaroum-hud.symbaroum-hud--simplified .symbaroum-hud-simplified-hotbar-slot #hotbar {
   position: static;
   margin: 0;
   width: max-content;
+  max-width: none;
   height: 55px;
   pointer-events: auto;
 }
@@ -8471,19 +8474,51 @@ body:has(#symbaroum-hud .symbaroum-hud-ammo-recovery-slot) > #tenebre-ammo-hud-l
 }
 
 /* ── Hotbar ────────────────────────────────────────────────────────────── */
-#symbaroum-hud.symbaroum-hud--simplified .symbaroum-hud-hotbar > #hotbar {
+body[data-symbaroum-hud-theme="simplified"] #hotbar,
+#symbaroum-hud.symbaroum-hud--simplified #hotbar,
+#symbaroum-hud.symbaroum-hud--simplified .symbaroum-hud-simplified-hotbar-slot #hotbar {
+  --hotbar-size: 55px !important;
+  --button-size: 22px !important;
   --slot-color: var(--shud-surface, rgba(16, 16, 20, 0.85));
   --key-bg-color-empty: var(--shud-surface, rgba(16, 16, 20, 0.85));
   --key-bg-color-full: var(--shud-surface, rgba(16, 16, 20, 0.85));
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  flex-wrap: nowrap !important;
+  width: max-content !important;
+  max-width: none !important;
+  height: 55px !important;
+  margin: 0 !important;
+  gap: 0 !important;
+  pointer-events: auto !important;
+  transform: none !important;
 }
 
 body[data-symbaroum-hud-theme="simplified"] #hotbar #macro-list,
 #symbaroum-hud.symbaroum-hud--simplified #hotbar #macro-list,
 body[data-symbaroum-hud-theme="simplified"] #hotbar #action-bar,
-#symbaroum-hud.symbaroum-hud--simplified #hotbar #action-bar {
+#symbaroum-hud.symbaroum-hud--simplified #hotbar #action-bar,
+body[data-symbaroum-hud-theme="simplified"] #hotbar.compact #action-bar,
+#symbaroum-hud.symbaroum-hud--simplified #hotbar.compact #action-bar,
+body[data-symbaroum-hud-theme="simplified"] #hotbar.md.offset #action-bar,
+#symbaroum-hud.symbaroum-hud--simplified #hotbar.md.offset #action-bar,
+body[data-symbaroum-hud-theme="simplified"] #hotbar.sm #action-bar,
+#symbaroum-hud.symbaroum-hud--simplified #hotbar.sm #action-bar {
+  display: flex !important;
+  flex-direction: row !important;
+  width: max-content !important;
+  min-width: max-content !important;
+  max-width: none !important;
+  height: 55px !important;
+  gap: 4px !important;
+  flex-wrap: nowrap !important;
+  justify-content: flex-start !important;
   border: none !important;
   background: transparent !important;
   box-shadow: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
 }
 
 body[data-symbaroum-hud-theme="simplified"] #hotbar #macro-list li.macro,
@@ -8492,11 +8527,15 @@ body[data-symbaroum-hud-theme="simplified"] #hotbar #action-bar .slot,
 #symbaroum-hud.symbaroum-hud--simplified #hotbar #macro-list li.macro,
 #symbaroum-hud.symbaroum-hud--simplified #hotbar .macro,
 #symbaroum-hud.symbaroum-hud--simplified #hotbar #action-bar .slot {
+  width: 55px !important;
+  height: 55px !important;
+  flex: 0 0 55px !important;
   background: var(--shud-surface, rgba(16, 16, 20, 0.85)) !important;
   border: 1px solid var(--shud-border, rgba(255, 255, 255, 0.12)) !important;
   border-radius: var(--shud-radius, 4px) !important;
   box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4) !important;
   transition: all 0.18s ease;
+  box-sizing: border-box !important;
 }
 
 body[data-symbaroum-hud-theme="simplified"] #hotbar #macro-list li.macro:hover,
@@ -8524,15 +8563,109 @@ body[data-symbaroum-hud-theme="simplified"] #hotbar .macro-key,
   font-weight: 700 !important;
 }
 
-body[data-symbaroum-hud-theme="simplified"] #hotbar #hotbar-directory-controls,
+body[data-symbaroum-hud-theme="simplified"] #hotbar #hotbar-controls-right,
+#symbaroum-hud.symbaroum-hud--simplified #hotbar #hotbar-controls-right {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  flex: none !important;
+  height: 55px !important;
+  gap: 8px !important;
+  margin-left: 16px !important;
+  margin-right: 0 !important;
+  position: relative !important;
+  pointer-events: auto !important;
+}
+
 body[data-symbaroum-hud-theme="simplified"] #hotbar #hotbar-page-controls,
-#symbaroum-hud.symbaroum-hud--simplified #hotbar #hotbar-directory-controls,
 #symbaroum-hud.symbaroum-hud--simplified #hotbar #hotbar-page-controls {
   background: var(--shud-surface, rgba(16, 16, 20, 0.85)) !important;
   border: 1px solid var(--shud-border, rgba(255, 255, 255, 0.12)) !important;
   border-radius: var(--shud-radius, 4px) !important;
   box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4) !important;
   color: #c5ae45 !important;
+  height: 55px !important;
+  width: 26px !important;
+  padding: 3px 2px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  position: relative !important;
+  flex: none !important;
+  box-sizing: border-box !important;
+}
+
+body[data-symbaroum-hud-theme="simplified"] #hotbar #hotbar-page-controls .hotbar-page-control,
+#symbaroum-hud.symbaroum-hud--simplified #hotbar #hotbar-page-controls .hotbar-page-control {
+  color: #c5ae45 !important;
+  --button-text-color: #c5ae45 !important;
+  --button-hover-text-color: #fff !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  cursor: pointer !important;
+  font-size: 10px !important;
+  line-height: 1 !important;
+  padding: 1px !important;
+  width: 100% !important;
+  height: auto !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+body[data-symbaroum-hud-theme="simplified"] #hotbar #hotbar-page-controls .hotbar-page-control:hover,
+#symbaroum-hud.symbaroum-hud--simplified #hotbar #hotbar-page-controls .hotbar-page-control:hover {
+  color: #fff !important;
+}
+
+body[data-symbaroum-hud-theme="simplified"] #hotbar #hotbar-page-controls .hotbar-page-number,
+#symbaroum-hud.symbaroum-hud--simplified #hotbar #hotbar-page-controls .hotbar-page-number {
+  color: #f7f3e8 !important;
+  font-weight: 700 !important;
+  font-size: 12px !important;
+  line-height: 1 !important;
+  position: static !important;
+  margin: 0 !important;
+  text-align: center !important;
+}
+
+body[data-symbaroum-hud-theme="simplified"] #hotbar #hotbar-controls-right > div,
+#symbaroum-hud.symbaroum-hud--simplified #hotbar #hotbar-controls-right > div {
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  gap: 4px !important;
+  height: 55px !important;
+  flex: none !important;
+}
+
+body[data-symbaroum-hud-theme="simplified"] #hotbar #hotbar-controls-right button.ui-control,
+#symbaroum-hud.symbaroum-hud--simplified #hotbar #hotbar-controls-right button.ui-control {
+  background: var(--shud-surface, rgba(16, 16, 20, 0.85)) !important;
+  border: 1px solid var(--shud-border, rgba(255, 255, 255, 0.12)) !important;
+  border-radius: var(--shud-radius, 4px) !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35) !important;
+  color: #c5ae45 !important;
+  --button-text-color: #c5ae45 !important;
+  width: 25px !important;
+  height: 25px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 !important;
+  font-size: 11px !important;
+  cursor: pointer !important;
+  transition: all 0.18s ease !important;
+  box-sizing: border-box !important;
+}
+
+body[data-symbaroum-hud-theme="simplified"] #hotbar #hotbar-controls-right button.ui-control:hover,
+#symbaroum-hud.symbaroum-hud--simplified #hotbar #hotbar-controls-right button.ui-control:hover {
+  border-color: #c5ae45 !important;
+  color: #fff !important;
+  box-shadow: 0 0 10px rgba(197, 174, 69, 0.25) !important;
 }
 
 /* ── Codex / Ability reader override ───────────────────────────────────── */

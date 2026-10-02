@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.75
+
+- Corrige sobreposição dos controles da direita da barra de macros (páginas, trava e lixeira) que ficavam por baixo do último slot (slot 0/9).
+- Move os controles da direita do hotbar mais para o lado direito com espaçamento adequado e layout flexível.
+- Estiliza os botões de controle de páginas, trava e limpeza de macros no padrão escuro dourado do HUD Simplificado.
+
 ## 0.1.74
 
 - Permite arrastar e soltar (drag & drop) habilidades, poderes místicos, rituais e traços diretamente no botão e no painel "Geral" do HUD Simplificado.

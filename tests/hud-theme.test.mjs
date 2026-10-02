@@ -473,3 +473,16 @@ test("simplified HUD template includes active effects strip above portrait card"
   assert.ok(simplifiedPart.includes('data-effect-id="{{id}}"'));
 });
 
+test("simplified HUD stylesheet styles hotbar action bar and positions right controls to the right of slots", async () => {
+  const fs = await import("node:fs");
+  const path = await import("node:path");
+  const css = fs.readFileSync(path.resolve("styles/symbaroum-hud.css"), "utf8");
+
+  assert.match(css, /body\[data-symbaroum-hud-theme="simplified"\] #hotbar #action-bar/);
+  assert.match(css, /#symbaroum-hud\.symbaroum-hud--simplified #hotbar #hotbar-controls-right/);
+  assert.match(css, /margin-left:\s*16px/);
+  assert.match(css, /#hotbar #hotbar-page-controls/);
+  assert.match(css, /#hotbar #hotbar-controls-right button\.ui-control/);
+});
+
+
