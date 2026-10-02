@@ -6282,11 +6282,10 @@ body:has(#symbaroum-hud .symbaroum-hud-ammo-recovery-slot) > #tenebre-ammo-hud-l
 
 #symbaroum-hud .symbaroum-hud-simplified-info-bar {
   display: grid;
-  grid-template-columns: repeat(2, max-content);
+  grid-template-columns: repeat(2, calc((100% - 12px) / 3));
   grid-template-rows: repeat(2, 28px);
-  align-items: center;
+  align-items: stretch;
   justify-content: flex-start;
-  justify-items: start;
   gap: 4px 6px;
   height: auto;
   min-height: auto;
@@ -6296,14 +6295,13 @@ body:has(#symbaroum-hud .symbaroum-hud-ammo-recovery-slot) > #tenebre-ammo-hud-l
   border: none;
   border-radius: 0;
   box-shadow: none;
-  width: auto;
+  width: 100%;
 }
 
 #symbaroum-hud button.symbaroum-hud-simplified-info-chip {
-  width: fit-content;
-  min-width: 52px;
-  max-width: 120px;
-  justify-self: start;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
   height: 28px;
   min-height: 28px;
   display: flex;
@@ -6311,7 +6309,7 @@ body:has(#symbaroum-hud .symbaroum-hud-ammo-recovery-slot) > #tenebre-ammo-hud-l
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 2px 8px;
+  padding: 2px 6px;
   box-sizing: border-box;
   border: 1px solid var(--shud-border, rgba(255, 255, 255, 0.12));
   border-radius: var(--shud-radius, 4px);

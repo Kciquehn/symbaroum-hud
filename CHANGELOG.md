@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.79
+
+- Alinha os botões de informações menores (Defesa, Armadura, Rações e Aljava) para terem exatamente a mesma largura e altura uniforme.
+- Alinha perfeitamente as colunas das informações menores com os botões de ação abaixo ("Ações" e "Inventário"), eliminando qualquer desalinhamento ou degrau visual.
+
 ## 0.1.78
 
 - Torna o **Modo Simplificado** o tema padrão permanente e definitivo do HUD.

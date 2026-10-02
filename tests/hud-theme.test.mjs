@@ -519,5 +519,15 @@ test("simplified HUD sidebar contains toggle-players button and stylesheet style
   assert.match(css, /\.symbaroum-hud-simplified-sidebar\s*\{[^}]*min-height:\s*168px/);
 });
 
+test("simplified HUD info bar chips are sized equally and aligned with action buttons below", async () => {
+  const fs = await import("node:fs");
+  const path = await import("node:path");
+  const css = fs.readFileSync(path.resolve("styles/symbaroum-hud.css"), "utf8");
+
+  assert.match(css, /#symbaroum-hud \.symbaroum-hud-simplified-info-bar\s*\{[^}]*grid-template-columns:\s*repeat\(2,\s*calc\(\(100% - 12px\) \/ 3\)\)/);
+  assert.match(css, /#symbaroum-hud button\.symbaroum-hud-simplified-info-chip\s*\{[^}]*width:\s*100%/);
+});
+
+
 
 
