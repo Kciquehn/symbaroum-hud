@@ -787,8 +787,9 @@
                           <div class="symbaroum-hud-simplified-pf2-list">
                             {{#each items}}
                               <button type="button" class="symbaroum-hud-simplified-pf2-item{{#if isSelected}} is-selected{{/if}}"
-                                data-action="select-power-card" data-item-id="{{id}}"
+                                data-action="open-item" data-item-id="{{id}}"
                                 data-item-uuid="{{uuid}}"
+                                draggable="true" data-ability-draggable="true"
                                 data-tooltip="{{name}}{{#if tierLabel}} ({{tierLabel}}){{/if}}"
                                 aria-label="{{name}}">
                                 <img class="symbaroum-hud-simplified-pf2-img" src="{{img}}" alt="{{name}}">
@@ -814,8 +815,9 @@
                             <div class="symbaroum-hud-simplified-pf2-list">
                               {{#each items}}
                                 <button type="button" class="symbaroum-hud-simplified-pf2-item{{#if isSelected}} is-selected{{/if}}"
-                                  data-action="select-power-card" data-item-id="{{id}}"
+                                  data-action="open-item" data-item-id="{{id}}"
                                   data-item-uuid="{{uuid}}"
+                                  draggable="true" data-ability-draggable="true"
                                   data-tooltip="{{name}}{{#if tierLabel}} ({{tierLabel}}){{/if}}"
                                   aria-label="{{name}}">
                                   <img class="symbaroum-hud-simplified-pf2-img" src="{{img}}" alt="{{name}}">

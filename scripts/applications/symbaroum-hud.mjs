@@ -1583,7 +1583,7 @@ export class SymbaroumHud extends ApplicationV2 {
     if (!targetItem) return;
 
     this.#simplifiedPowersOpen = true;
-    this.#simplifiedPowersSelectedItemId = targetItem.id;
+    this.#simplifiedPowersSelectedItemId = null;
     this.#simplifiedActionsOpen = false;
     this.#simplifiedInventoryOpen = false;
     return this.render();
@@ -2435,9 +2435,7 @@ export class SymbaroumHud extends ApplicationV2 {
         return ActorService.usePower(actor, element.dataset.itemId);
       }
       if (action === "select-power-card") {
-        const itemId = element.dataset.itemId;
-        this.#simplifiedPowersSelectedItemId = this.#simplifiedPowersSelectedItemId === itemId ? null : itemId;
-        return this.render();
+        return ActorService.openItem(actor, element.dataset.itemId);
       }
       if (action === "close-power-card") {
         this.#simplifiedPowersSelectedItemId = null;

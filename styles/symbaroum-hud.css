@@ -6513,8 +6513,10 @@ body:has(#symbaroum-hud .symbaroum-hud-ammo-recovery-slot) > #tenebre-ammo-hud-l
 #symbaroum-hud button.symbaroum-hud-simplified-pf2-item {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   padding: 4px 6px;
+  min-height: 38px;
+  height: auto !important;
   border-radius: 4px;
   background: transparent;
   border: 1px solid transparent;
@@ -6525,7 +6527,9 @@ body:has(#symbaroum-hud .symbaroum-hud-ammo-recovery-slot) > #tenebre-ammo-hud-l
   outline: none !important;
   box-shadow: none !important;
   transition: background 0.15s ease, border-color 0.15s ease;
-  box-sizing: border-box;
+  box-sizing: border-box !important;
+  overflow: hidden;
+  position: relative;
 }
 
 #symbaroum-hud button.symbaroum-hud-simplified-pf2-item:hover,
@@ -6545,14 +6549,21 @@ body:has(#symbaroum-hud .symbaroum-hud-ammo-recovery-slot) > #tenebre-ammo-hud-l
 }
 
 #symbaroum-hud .symbaroum-hud-simplified-pf2-img {
-  width: 32px;
-  height: 32px;
+  width: 30px;
+  height: 30px;
+  min-width: 30px;
+  min-height: 30px;
+  max-width: 30px;
+  max-height: 30px;
   border-radius: 4px;
   object-fit: cover;
   border: 1px solid rgba(255, 255, 255, 0.18);
   background: rgba(0, 0, 0, 0.5);
   flex-shrink: 0;
   display: block;
+  margin: 0 !important;
+  padding: 0 !important;
+  box-sizing: border-box !important;
 }
 
 #symbaroum-hud .symbaroum-hud-simplified-pf2-name {

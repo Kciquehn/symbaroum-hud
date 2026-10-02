@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.76
+
+- Ao clicar em uma habilidade, poder místico, ritual ou traço no painel "Geral", abre diretamente a ficha oficial do item em Symbaroum em vez de exibir a descrição interna no HUD.
+- Permite arrastar habilidades, poderes, rituais e traços do painel "Geral" para a barra de macros / atalhos rápidos do Foundry.
+- Corrige o encaixe visual da imagem dos itens no painel "Geral", contendo o ícone perfeitamente dentro dos limites do botão sem vazar pelas bordas.
+
 ## 0.1.75
 
 - Corrige sobreposição dos controles da direita da barra de macros (páginas, trava e lixeira) que ficavam por baixo do último slot (slot 0/9).

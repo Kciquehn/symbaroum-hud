@@ -485,4 +485,23 @@ test("simplified HUD stylesheet styles hotbar action bar and positions right con
   assert.match(css, /#hotbar #hotbar-controls-right button\.ui-control/);
 });
 
+test("simplified HUD template uses open-item action and draggable items for abilities, powers, and traits, and stylesheet enforces containment", async () => {
+  const fs = await import("node:fs");
+  const path = await import("node:path");
+  const template = fs.readFileSync(path.resolve("templates/hud.hbs"), "utf8");
+  const css = fs.readFileSync(path.resolve("styles/symbaroum-hud.css"), "utf8");
+
+  const powersPanelStart = template.indexOf('symbaroum-hud-simplified-powers-panel');
+  const powersPart = template.substring(powersPanelStart, powersPanelStart + 3500);
+
+  assert.ok(powersPart.includes('class="symbaroum-hud-simplified-pf2-item'));
+  assert.ok(powersPart.includes('data-action="open-item"'));
+  assert.ok(powersPart.includes('draggable="true" data-ability-draggable="true"'));
+  assert.ok(!powersPart.includes('data-action="select-power-card"'));
+
+  assert.match(css, /button\.symbaroum-hud-simplified-pf2-item\s*\{[^}]*overflow:\s*hidden/);
+  assert.match(css, /button\.symbaroum-hud-simplified-pf2-item\s*\{[^}]*min-height:\s*38px/);
+  assert.match(css, /\.symbaroum-hud-simplified-pf2-img\s*\{[^}]*box-sizing:\s*border-box/);
+});
+
 
