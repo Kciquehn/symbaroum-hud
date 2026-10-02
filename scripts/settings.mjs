@@ -45,13 +45,9 @@ export function registerSettings(onChange) {
     name: "SYMBAROUMHUD.Settings.Theme.Name",
     hint: "SYMBAROUMHUD.Settings.Theme.Hint",
     scope: "client",
-    config: true,
+    config: false,
     type: String,
-    choices: {
-      [THEMES.CLASSIC]: "SYMBAROUMHUD.Settings.Theme.Classic",
-      [THEMES.SIMPLIFIED]: "SYMBAROUMHUD.Settings.Theme.Simplified"
-    },
-    default: THEMES.CLASSIC,
+    default: THEMES.SIMPLIFIED,
     onChange: (theme) => {
       applyHudTheme(theme);
       onChange();
@@ -297,7 +293,7 @@ export function applyPlayerListVisibility(hidden = getSetting(SETTINGS.HIDE_PLAY
 
 export function getTheme() {
   const theme = getSetting(SETTINGS.THEME);
-  return theme === THEMES.SIMPLIFIED ? THEMES.SIMPLIFIED : THEMES.CLASSIC;
+  return THEMES.SIMPLIFIED;
 }
 
 export function getSimplifiedHudMode() {
@@ -306,12 +302,12 @@ export function getSimplifiedHudMode() {
 }
 
 export async function setTheme(theme) {
-  const normalized = theme === THEMES.SIMPLIFIED ? THEMES.SIMPLIFIED : THEMES.CLASSIC;
+  const normalized = THEMES.SIMPLIFIED;
   await game.settings.set(MODULE_ID, SETTINGS.THEME, normalized);
 }
 
 export function applyHudTheme(theme = getTheme()) {
-  const normalized = theme === THEMES.SIMPLIFIED ? THEMES.SIMPLIFIED : THEMES.CLASSIC;
+  const normalized = THEMES.SIMPLIFIED;
   if (typeof document !== "undefined") {
     if (document.body) {
       document.body.dataset.symbaroumHudTheme = normalized;
@@ -319,8 +315,8 @@ export function applyHudTheme(theme = getTheme()) {
     const hudElement = document.getElementById("symbaroum-hud");
     if (hudElement) {
       hudElement.dataset.symbaTheme = normalized;
-      hudElement.classList.toggle("symbaroum-hud--classic", normalized === THEMES.CLASSIC);
-      hudElement.classList.toggle("symbaroum-hud--simplified", normalized === THEMES.SIMPLIFIED);
+      hudElement.classList.toggle("symbaroum-hud--classic", false);
+      hudElement.classList.toggle("symbaroum-hud--simplified", true);
     }
   }
 }

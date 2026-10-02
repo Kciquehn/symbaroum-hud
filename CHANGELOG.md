@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.78
+
+- Torna o **Modo Simplificado** o tema padrão permanente e definitivo do HUD.
+- Remove a opção de alternar para o estilo clássico nas configurações do módulo.
+- Garante que mesmo clientes ou mundos que possuíam o tema clássico salvo anteriormente sejam inicializados e carregados diretamente no Modo Simplificado.
+
 ## 0.1.77
 
 - Adiciona botão dedicado de alternar visibilidade dos usuários ativos (`toggle-players`) na barra lateral do HUD Simplificado com sincronização de ícone e estado ativo.

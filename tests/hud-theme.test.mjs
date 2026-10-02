@@ -12,7 +12,7 @@ import {
   registerSettings
 } from "../scripts/settings.mjs";
 
-test("HUD theme is a client setting with classic as its default", () => {
+test("HUD theme is a hidden client setting with simplified as its default always", () => {
   const originalGame = globalThis.game;
   const registered = new Map();
   globalThis.game = {
@@ -30,20 +30,17 @@ test("HUD theme is a client setting with classic as its default", () => {
     const setting = registered.get(SETTINGS.THEME);
     assert.ok(setting, "Setting for HUD theme must be registered");
     assert.equal(setting.scope, "client");
-    assert.equal(setting.config, true);
+    assert.equal(setting.config, false);
     assert.equal(setting.type, String);
-    assert.equal(setting.default, THEMES.CLASSIC);
-    assert.deepEqual(setting.choices, {
-      [THEMES.CLASSIC]: "SYMBAROUMHUD.Settings.Theme.Classic",
-      [THEMES.SIMPLIFIED]: "SYMBAROUMHUD.Settings.Theme.Simplified"
-    });
+    assert.equal(setting.default, THEMES.SIMPLIFIED);
+    assert.equal(setting.choices, undefined);
     assert.equal(typeof setting.onChange, "function");
   } finally {
     globalThis.game = originalGame;
   }
 });
 
-test("getTheme returns classic by default and resolves simplified", () => {
+test("getTheme returns simplified by default and always resolves simplified", () => {
   const originalGame = globalThis.game;
   let activeTheme = THEMES.CLASSIC;
   globalThis.game = {
@@ -53,17 +50,17 @@ test("getTheme returns classic by default and resolves simplified", () => {
   };
 
   try {
-    assert.equal(getTheme(), THEMES.CLASSIC);
+    assert.equal(getTheme(), THEMES.SIMPLIFIED);
     activeTheme = THEMES.SIMPLIFIED;
     assert.equal(getTheme(), THEMES.SIMPLIFIED);
     activeTheme = "unknown-theme";
-    assert.equal(getTheme(), THEMES.CLASSIC);
+    assert.equal(getTheme(), THEMES.SIMPLIFIED);
   } finally {
     globalThis.game = originalGame;
   }
 });
 
-test("applyHudTheme updates document body and hud element dataset and classes", () => {
+test("applyHudTheme updates document body and hud element dataset and classes to simplified", () => {
   const originalDocument = globalThis.document;
   const originalGame = globalThis.game;
 
@@ -109,17 +106,17 @@ test("applyHudTheme updates document body and hud element dataset and classes", 
   };
 
   try {
-    applyHudTheme(THEMES.SIMPLIFIED);
+    applyHudTheme();
     assert.equal(mockBody.dataset.symbaroumHudTheme, THEMES.SIMPLIFIED);
     assert.equal(mockHud.dataset.symbaTheme, THEMES.SIMPLIFIED);
     assert.equal(mockHud.classList.contains("symbaroum-hud--simplified"), true);
     assert.equal(mockHud.classList.contains("symbaroum-hud--classic"), false);
 
     applyHudTheme(THEMES.CLASSIC);
-    assert.equal(mockBody.dataset.symbaroumHudTheme, THEMES.CLASSIC);
-    assert.equal(mockHud.dataset.symbaTheme, THEMES.CLASSIC);
-    assert.equal(mockHud.classList.contains("symbaroum-hud--simplified"), false);
-    assert.equal(mockHud.classList.contains("symbaroum-hud--classic"), true);
+    assert.equal(mockBody.dataset.symbaroumHudTheme, THEMES.SIMPLIFIED);
+    assert.equal(mockHud.dataset.symbaTheme, THEMES.SIMPLIFIED);
+    assert.equal(mockHud.classList.contains("symbaroum-hud--simplified"), true);
+    assert.equal(mockHud.classList.contains("symbaroum-hud--classic"), false);
   } finally {
     globalThis.document = originalDocument;
     globalThis.game = originalGame;

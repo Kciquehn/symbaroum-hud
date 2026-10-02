@@ -1993,9 +1993,7 @@ export class SymbaroumHud extends ApplicationV2 {
       }
 
       if (action === "toggle-hud-theme") {
-        const current = getTheme();
-        const next = current === THEMES.SIMPLIFIED ? THEMES.CLASSIC : THEMES.SIMPLIFIED;
-        await setTheme(next);
+        await setTheme(THEMES.SIMPLIFIED);
         return;
       }
 
