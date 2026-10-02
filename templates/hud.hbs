@@ -25,19 +25,39 @@
     </div>
     {{#if actor}}
       <div class="symbaroum-hud-simplified-portrait-card">
-        {{#if effects.length}}
-          <div class="symbaroum-hud-simplified-effects-strip" role="list" aria-label="{{localize 'SYMBAROUMHUD.Sections.Effects'}}">
-            {{#each effects}}
-              <button type="button" class="symbaroum-hud-simplified-effect" role="listitem"
-                data-action="open-effect-menu"
-                data-effect-id="{{id}}"
-                data-tooltip="{{name}}"
-                aria-label="{{name}}">
-                <img src="{{img}}" alt="{{name}}">
-              </button>
-            {{/each}}
-          </div>
-        {{/if}}
+        <div class="symbaroum-hud-simplified-status-summary">
+          {{#if effects.length}}
+            <div class="symbaroum-hud-simplified-effects-strip" role="list" aria-label="{{localize 'SYMBAROUMHUD.Sections.Effects'}}">
+              {{#each effects}}
+                <button type="button" class="symbaroum-hud-simplified-effect" role="listitem"
+                  data-action="open-effect-menu"
+                  data-effect-id="{{id}}"
+                  data-tooltip="{{name}}"
+                  aria-label="{{name}}">
+                  <img src="{{img}}" alt="{{name}}">
+                </button>
+              {{/each}}
+            </div>
+          {{/if}}
+          {{#if tactics}}
+            <section class="symbaroum-hud-simplified-tactics" aria-label="{{localize 'BIO.TACTICS'}}"
+              data-tactics-collapsed="{{tactics.collapsed}}">
+              <header class="symbaroum-hud-simplified-tactics-header">
+                <div class="symbaroum-hud-simplified-tactics-title">
+                  <i class="fa-solid fa-chess-knight" aria-hidden="true"></i>
+                  <span>{{localize "BIO.TACTICS"}}</span>
+                </div>
+                <button type="button" class="symbaroum-hud-simplified-tactics-toggle" data-action="toggle-tactics"
+                  aria-expanded="{{#unless tactics.collapsed}}true{{else}}false{{/unless}}"
+                  aria-label="{{#if tactics.collapsed}}{{localize 'SYMBAROUMHUD.Actions.ShowTactics'}}{{else}}{{localize 'SYMBAROUMHUD.Actions.HideTactics'}}{{/if}}"
+                  data-tooltip="{{#if tactics.collapsed}}{{localize 'SYMBAROUMHUD.Actions.ShowTactics'}}{{else}}{{localize 'SYMBAROUMHUD.Actions.HideTactics'}}{{/if}}">
+                  <i class="fa-solid {{#if tactics.collapsed}}fa-chevron-up{{else}}fa-chevron-down{{/if}}" aria-hidden="true"></i>
+                </button>
+              </header>
+              <div class="symbaroum-hud-simplified-tactics-content" aria-hidden="{{tactics.collapsed}}">{{{tactics.html}}}</div>
+            </section>
+          {{/if}}
+        </div>
         <button type="button" class="symbaroum-hud-simplified-portrait-btn" data-action="open-actor"
           aria-label="{{actor.name}}">
           <img src="{{actor.img}}" alt="{{actor.name}}">
