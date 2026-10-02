@@ -2,6 +2,7 @@ import {
   MODULE_ID,
   SELECTION_MODES,
   SETTINGS,
+  SIMPLIFIED_HUD_MODES,
   STORAGE_VIEW_MODES,
   THEMES
 } from "./constants.mjs";
@@ -55,6 +56,14 @@ export function registerSettings(onChange) {
       applyHudTheme(theme);
       onChange();
     }
+  });
+
+  game.settings.register(MODULE_ID, SETTINGS.SIMPLIFIED_HUD_MODE, {
+    scope: "client",
+    config: false,
+    type: String,
+    default: SIMPLIFIED_HUD_MODES.FULL,
+    onChange: () => onChange()
   });
 
   game.settings.register(MODULE_ID, SETTINGS.SELECTION_MODE, {
@@ -247,6 +256,11 @@ export function applyPlayerListVisibility(hidden = getSetting(SETTINGS.HIDE_PLAY
 export function getTheme() {
   const theme = getSetting(SETTINGS.THEME);
   return theme === THEMES.SIMPLIFIED ? THEMES.SIMPLIFIED : THEMES.CLASSIC;
+}
+
+export function getSimplifiedHudMode() {
+  const mode = getSetting(SETTINGS.SIMPLIFIED_HUD_MODE);
+  return Object.values(SIMPLIFIED_HUD_MODES).includes(mode) ? mode : SIMPLIFIED_HUD_MODES.FULL;
 }
 
 export async function setTheme(theme) {

@@ -1,11 +1,12 @@
 {{#if isSimplified}}
-  <div class="symbaroum-hud-simplified" data-symba-theme="simplified">
+  <div class="symbaroum-hud-simplified" data-symba-theme="simplified" data-simplified-mode="{{simplifiedMode}}">
     <div class="symbaroum-hud-simplified-sidebar">
       <button type="button" class="symbaroum-hud-simplified-sidebar-btn"
-        data-action="toggle-hud-theme"
-        data-tooltip="{{localize 'SYMBAROUMHUD.Settings.Theme.Name'}}"
-        aria-label="{{localize 'SYMBAROUMHUD.Settings.Theme.Name'}}">
-        <i class="fa-solid fa-table-cells-large" aria-hidden="true"></i>
+        data-action="cycle-hud-mode"
+        data-hud-mode="{{simplifiedMode}}"
+        data-tooltip="{{simplifiedModeTooltip}}"
+        aria-label="{{simplifiedModeLabel}}">
+        <i class="fa-solid {{simplifiedModeIcon}}" aria-hidden="true"></i>
       </button>
       <button type="button" class="symbaroum-hud-simplified-sidebar-btn{{#if isManualActor}} is-pinned{{/if}}"
         data-action="set-actor"

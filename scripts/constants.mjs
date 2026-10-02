@@ -19,7 +19,14 @@ export const SETTINGS = Object.freeze({
   COMPENDIUM_BROWSER_SOURCES: "compendiumBrowserSources",
   COMPENDIUM_BROWSER_FOLDER_ACCESS: "compendiumBrowserFolderAccess",
   COMPENDIUM_BROWSER_ORIGIN_ACCESS: "compendiumBrowserOriginAccess",
-  PDF_TEMPLATE_PATH: "pdfTemplatePath"
+  PDF_TEMPLATE_PATH: "pdfTemplatePath",
+  SIMPLIFIED_HUD_MODE: "simplifiedHudMode"
+});
+
+export const SIMPLIFIED_HUD_MODES = Object.freeze({
+  FULL: "full",
+  MINIMAL: "minimal",
+  HIDDEN: "hidden"
 });
 
 export const THEMES = Object.freeze({

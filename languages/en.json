@@ -1342,6 +1342,14 @@
       "ManeuversTooltip": "Use Combat Maneuvers",
       "NoManeuvers": "No active maneuvers"
     },
+    "SimplifiedMode": {
+      "Full": "Full",
+      "Minimal": "Minimal",
+      "Hidden": "Hidden",
+      "TooltipFull": "HUD Mode: Full (click for Minimal)",
+      "TooltipMinimal": "HUD Mode: Minimal (click for Hidden)",
+      "TooltipHidden": "HUD Mode: Hidden (click for Full)"
+    },
     "Keybindings": {
       "ActivateShortcut": "Activate hotbar shortcut {number}"
     },

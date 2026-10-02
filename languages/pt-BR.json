@@ -1361,6 +1361,14 @@
       "ManeuversTooltip": "Usar Manobras de Combate",
       "NoManeuvers": "Nenhuma manobra ativa"
     },
+    "SimplifiedMode": {
+      "Full": "Completo",
+      "Minimal": "Mínimo",
+      "Hidden": "Oculto",
+      "TooltipFull": "Modo do HUD: Completo (clique para Mínimo)",
+      "TooltipMinimal": "Modo do HUD: Mínimo (clique para Oculto)",
+      "TooltipHidden": "Modo do HUD: Oculto (clique para Completo)"
+    },
     "Keybindings": {
       "ActivateShortcut": "Ativar atalho {number} da hotbar"
     },

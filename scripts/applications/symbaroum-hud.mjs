@@ -1,6 +1,7 @@
 import {
   MODULE_ID,
   SETTINGS,
+  SIMPLIFIED_HUD_MODES,
   STORAGE_VIEW_MODES,
   THEMES
 } from "../constants.mjs";
@@ -11,6 +12,7 @@ import { ItemPilesIntegration } from "../integrations/item-piles.mjs";
 import {
   applyPlayerListVisibility,
   getSetting,
+  getSimplifiedHudMode,
   getStorageViewMode,
   getTheme,
   setTheme
@@ -283,6 +285,22 @@ export class SymbaroumHud extends ApplicationV2 {
       theme: getTheme(),
       isSimplified: getTheme() === THEMES.SIMPLIFIED,
       isClassic: getTheme() === THEMES.CLASSIC,
+      simplifiedMode: getSimplifiedHudMode(),
+      simplifiedModeIcon: {
+        [SIMPLIFIED_HUD_MODES.FULL]: "fa-table-cells-large",
+        [SIMPLIFIED_HUD_MODES.MINIMAL]: "fa-table-cells",
+        [SIMPLIFIED_HUD_MODES.HIDDEN]: "fa-eye-slash"
+      }[getSimplifiedHudMode()] ?? "fa-table-cells-large",
+      simplifiedModeLabel: {
+        [SIMPLIFIED_HUD_MODES.FULL]: game.i18n?.localize?.("SYMBAROUMHUD.SimplifiedMode.Full") ?? "Completo",
+        [SIMPLIFIED_HUD_MODES.MINIMAL]: game.i18n?.localize?.("SYMBAROUMHUD.SimplifiedMode.Minimal") ?? "Mínimo",
+        [SIMPLIFIED_HUD_MODES.HIDDEN]: game.i18n?.localize?.("SYMBAROUMHUD.SimplifiedMode.Hidden") ?? "Oculto"
+      }[getSimplifiedHudMode()] ?? "Completo",
+      simplifiedModeTooltip: {
+        [SIMPLIFIED_HUD_MODES.FULL]: game.i18n?.localize?.("SYMBAROUMHUD.SimplifiedMode.TooltipFull") ?? "Modo do HUD: Completo (clique para Mínimo)",
+        [SIMPLIFIED_HUD_MODES.MINIMAL]: game.i18n?.localize?.("SYMBAROUMHUD.SimplifiedMode.TooltipMinimal") ?? "Modo do HUD: Mínimo (clique para Oculto)",
+        [SIMPLIFIED_HUD_MODES.HIDDEN]: game.i18n?.localize?.("SYMBAROUMHUD.SimplifiedMode.TooltipHidden") ?? "Modo do HUD: Oculto (clique para Completo)"
+      }[getSimplifiedHudMode()] ?? "Modo do HUD: Completo (clique para Mínimo)",
       isManualActor: Boolean(this.#manualActorKey),
       playersHidden: getSetting(SETTINGS.HIDE_PLAYERS),
       hudCollapsed,
@@ -1873,6 +1891,10 @@ export class SymbaroumHud extends ApplicationV2 {
         return;
       }
 
+      if (action === "cycle-hud-mode") {
+        return this.#cycleSimplifiedHudMode();
+      }
+
       if (action === "toggle-hud-theme") {
         const current = getTheme();
         const next = current === THEMES.SIMPLIFIED ? THEMES.CLASSIC : THEMES.SIMPLIFIED;
@@ -2514,6 +2536,18 @@ export class SymbaroumHud extends ApplicationV2 {
       console.error(`${MODULE_ID} | HUD action failed.`, error);
       ui.notifications.error(game.i18n.localize("SYMBAROUMHUD.Notifications.ActionFailed"));
     }
+  }
+
+  async #cycleSimplifiedHudMode() {
+    const current = getSimplifiedHudMode();
+    const modes = [
+      SIMPLIFIED_HUD_MODES.FULL,
+      SIMPLIFIED_HUD_MODES.MINIMAL,
+      SIMPLIFIED_HUD_MODES.HIDDEN
+    ];
+    const next = modes[(modes.indexOf(current) + 1) % modes.length];
+    await game.settings.set(MODULE_ID, SETTINGS.SIMPLIFIED_HUD_MODE, next);
+    return this.render({ force: true });
   }
 
   async #rollWeapon(actor, itemId) {

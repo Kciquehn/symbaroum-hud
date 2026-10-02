@@ -6091,6 +6091,26 @@ body:has(#symbaroum-hud .symbaroum-hud-ammo-recovery-slot) > #tenebre-ammo-hud-l
   box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4) !important;
 }
 
+/* ── Simplified Modes (Minimal & Hidden) ────────────────────────────────── */
+#symbaroum-hud .symbaroum-hud-simplified[data-simplified-mode="hidden"] .symbaroum-hud-simplified-main-column {
+  display: none !important;
+}
+
+#symbaroum-hud .symbaroum-hud-simplified[data-simplified-mode="minimal"] .symbaroum-hud-attribute-name {
+  display: none !important;
+}
+
+#symbaroum-hud .symbaroum-hud-simplified[data-simplified-mode="minimal"] .symbaroum-hud-attributes {
+  width: 108px !important;
+  min-width: 108px !important;
+  flex: 0 0 108px !important;
+}
+
+#symbaroum-hud .symbaroum-hud-simplified[data-simplified-mode="minimal"] button.symbaroum-hud-attribute {
+  justify-content: space-between;
+  padding: 3px 6px;
+}
+
 #symbaroum-hud .symbaroum-hud-simplified-deck {
   display: flex;
   flex-direction: column;
