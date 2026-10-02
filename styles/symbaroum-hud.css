@@ -4047,10 +4047,46 @@ button.symbaroum-hud-shadow-example { font-size: 0.56rem; }
   pointer-events: auto;
 }
 
+body:has(#symbaroum-hud) #scene-controls,
+body:has(#symbaroum-hud) #scene-controls > menu,
+body:has(#symbaroum-hud) #ui-left #ui-left-column-1 {
+  overflow: visible !important;
+}
+
 body:has(#symbaroum-hud .symbaroum-hud-character-card) #ui-left-column-1 #players,
 body:has(#symbaroum-hud .symbaroum-hud-simplified-portrait-card) #ui-left-column-1 #players,
 body:has(#symbaroum-hud) #players {
   margin-bottom: 184px;
+  position: relative;
+}
+
+#players .symbaroum-hud-players-close-btn {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  margin: 0;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(0, 0, 0, 0.65);
+  color: #c5ae45;
+  cursor: pointer;
+  border-radius: 4px;
+  font-size: 11px;
+  line-height: 1;
+  transition: all 0.15s ease;
+  z-index: 10;
+}
+
+#players .symbaroum-hud-players-close-btn:hover {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.45);
+  background: rgba(197, 76, 76, 0.7);
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.25);
 }
 
 body.symbaroum-hud-hide-players #players {
@@ -5892,7 +5928,8 @@ body:has(#symbaroum-hud .symbaroum-hud-ammo-recovery-slot) > #tenebre-ammo-hud-l
   align-items: center;
   justify-content: flex-end;
   width: 34px;
-  height: 168px;
+  min-height: 168px;
+  height: auto;
   box-sizing: border-box;
   padding: 4px 2px;
   gap: 6px;

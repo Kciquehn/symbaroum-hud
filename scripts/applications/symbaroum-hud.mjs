@@ -3235,15 +3235,17 @@ export class SymbaroumHud extends ApplicationV2 {
   }
 
   #updatePlayerToggle(element, hidden) {
-    element.classList.toggle("fa-users", hidden);
-    element.classList.toggle("fa-users-slash", !hidden);
-    element.setAttribute("aria-pressed", String(hidden));
-    element.setAttribute(
-      "aria-label",
-      game.i18n.localize(hidden
-        ? "SYMBAROUMHUD.Actions.ShowPlayers"
-        : "SYMBAROUMHUD.Actions.HidePlayers")
-    );
+    if (!element) return;
+    const icon = element.querySelector("i") || element;
+    icon.classList.toggle("fa-users", hidden);
+    icon.classList.toggle("fa-users-slash", !hidden);
+    element.classList.toggle("is-active", !hidden);
+    element.setAttribute("aria-pressed", String(!hidden));
+    const label = game.i18n.localize(hidden
+      ? "SYMBAROUMHUD.Actions.ShowPlayers"
+      : "SYMBAROUMHUD.Actions.HidePlayers");
+    element.setAttribute("aria-label", label);
+    if (element.dataset) element.dataset.tooltip = label;
   }
 
   async #cycleActor(direction) {

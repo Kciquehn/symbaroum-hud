@@ -504,4 +504,23 @@ test("simplified HUD template uses open-item action and draggable items for abil
   assert.match(css, /\.symbaroum-hud-simplified-pf2-img\s*\{[^}]*box-sizing:\s*border-box/);
 });
 
+test("simplified HUD sidebar contains toggle-players button and stylesheet styles players close button and control overflow", async () => {
+  const fs = await import("node:fs");
+  const path = await import("node:path");
+  const template = fs.readFileSync(path.resolve("templates/hud.hbs"), "utf8");
+  const css = fs.readFileSync(path.resolve("styles/symbaroum-hud.css"), "utf8");
+
+  const sidebarStart = template.indexOf('class="symbaroum-hud-simplified-sidebar"');
+  assert.ok(sidebarStart > -1, "Simplified sidebar must exist in template");
+  const sidebarPart = template.substring(sidebarStart, sidebarStart + 2500);
+
+  assert.ok(sidebarPart.includes('data-action="toggle-players"'), "Sidebar must have toggle-players button");
+  assert.ok(sidebarPart.includes('fa-users'), "Sidebar toggle-players must render fa-users / fa-users-slash icon");
+
+  assert.match(css, /#scene-controls[\s\S]*overflow:\s*visible\s*!important/);
+  assert.match(css, /#players \.symbaroum-hud-players-close-btn/);
+  assert.match(css, /\.symbaroum-hud-simplified-sidebar\s*\{[^}]*min-height:\s*168px/);
+});
+
+
 

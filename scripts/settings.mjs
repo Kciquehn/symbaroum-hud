@@ -238,18 +238,60 @@ export function applyPlayerListVisibility(hidden = getSetting(SETTINGS.HIDE_PLAY
     ? document.querySelector(".symbaroum-hud-players-control button, button.symbaroum-hud-players-control, .symbaroum-hud-players-control")
     : null;
   if (controlBtn) {
+    const iconClass = hidden ? "fa-users" : "fa-users-slash";
     if (controlBtn.tagName === "BUTTON") {
-      controlBtn.className = `control ui-control layer icon fa-solid ${hidden ? "fa-users-slash" : "fa-users"}`;
+      controlBtn.className = `control ui-control icon fa-solid ${iconClass}`;
       controlBtn.setAttribute("aria-pressed", hidden ? "false" : "true");
     } else {
       const icon = controlBtn.querySelector("i");
-      if (icon) icon.className = `fa-solid ${hidden ? "fa-users-slash" : "fa-users"}`;
+      if (icon) icon.className = `fa-solid ${iconClass}`;
     }
     const tooltipKey = hidden ? "SYMBAROUMHUD.Actions.ShowPlayers" : "SYMBAROUMHUD.Actions.HidePlayers";
     const label = game.i18n?.localize?.(tooltipKey) ?? (hidden ? "Mostrar Jogadores" : "Ocultar Jogadores");
     controlBtn.dataset.tooltip = label;
     controlBtn.setAttribute("aria-label", label);
     controlBtn.closest("li")?.classList.toggle("active", !hidden);
+  }
+
+  if (typeof document !== "undefined") {
+    for (const btn of document.querySelectorAll('[data-action="toggle-players"]')) {
+      btn.setAttribute("aria-pressed", String(!hidden));
+      const tooltipKey = hidden ? "SYMBAROUMHUD.Actions.ShowPlayers" : "SYMBAROUMHUD.Actions.HidePlayers";
+      const label = game.i18n?.localize?.(tooltipKey) ?? (hidden ? "Mostrar Jogadores" : "Ocultar Jogadores");
+      btn.dataset.tooltip = label;
+      btn.setAttribute("aria-label", label);
+      btn.classList.toggle("is-active", !hidden);
+      const icon = btn.querySelector("i");
+      if (icon) {
+        icon.className = `fa-solid ${hidden ? "fa-users" : "fa-users-slash"}`;
+      } else if (btn.classList.contains("fa-solid")) {
+        btn.classList.toggle("fa-users", hidden);
+        btn.classList.toggle("fa-users-slash", !hidden);
+      }
+    }
+
+    if (!hidden) {
+      const playersEl = document.getElementById("players");
+      if (playersEl && !playersEl.querySelector(".symbaroum-hud-players-close-btn")) {
+        const closeBtn = document.createElement("button");
+        closeBtn.type = "button";
+        closeBtn.className = "symbaroum-hud-players-close-btn";
+        closeBtn.innerHTML = '<i class="fa-solid fa-xmark" aria-hidden="true"></i>';
+        closeBtn.dataset.action = "toggle-symba-players";
+        const label = game.i18n?.localize?.("SYMBAROUMHUD.Actions.HidePlayers") ?? "Ocultar Jogadores";
+        closeBtn.dataset.tooltip = label;
+        closeBtn.setAttribute("aria-label", label);
+
+        closeBtn.addEventListener("click", async (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          await game.settings.set(MODULE_ID, SETTINGS.HIDE_PLAYERS, true);
+          applyPlayerListVisibility(true);
+        });
+
+        playersEl.appendChild(closeBtn);
+      }
+    }
   }
 }
 

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.77
+
+- Adiciona botão dedicado de alternar visibilidade dos usuários ativos (`toggle-players`) na barra lateral do HUD Simplificado com sincronização de ícone e estado ativo.
+- Adiciona botão de fechar (`[x]`) diretamente no canto superior direito do painel de jogadores (`#players`) para fechamento imediato.
+- Previne que os botões inferiores dos controles de cena (`#scene-controls`) sejam cortados ou desapareçam ao abrir a lista de jogadores ajustando as regras de `overflow` na coluna lateral do Foundry.
+- Corrige a alternância de ícones entre usuários visíveis e ocultos nos controles de cena e no HUD.
+
 ## 0.1.76
 
 - Ao clicar em uma habilidade, poder místico, ritual ou traço no painel "Geral", abre diretamente a ficha oficial do item em Symbaroum em vez de exibir a descrição interna no HUD.
