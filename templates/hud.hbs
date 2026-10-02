@@ -211,7 +211,8 @@
                 data-action="toggle-simplified-powers"
                 data-tooltip="{{localize 'SYMBAROUMHUD.Actions.TogglePowers'}}"
                 aria-label="{{localize 'SYMBAROUMHUD.Actions.TogglePowers'}}"
-                aria-expanded="{{#if simplifiedPowersOpen}}true{{else}}false{{/if}}">
+                aria-expanded="{{#if simplifiedPowersOpen}}true{{else}}false{{/if}}"
+                data-simplified-powers-drop="true">
                 <i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i>
                 <span>{{localize "SYMBAROUMHUD.Sections.PowersAndAbilities"}}</span>
               </button>
@@ -753,7 +754,8 @@
           {{/if}}
 
           {{#if simplifiedPowersOpen}}
-            <section class="symbaroum-hud-simplified-powers-panel" aria-label="{{localize 'SYMBAROUMHUD.Sections.PowersAndAbilities'}}">
+            <section class="symbaroum-hud-simplified-powers-panel" aria-label="{{localize 'SYMBAROUMHUD.Sections.PowersAndAbilities'}}"
+              data-simplified-powers-drop="true">
               <header class="symbaroum-hud-simplified-panel-header">
                 <div class="symbaroum-hud-simplified-panel-title">
                   <i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i>

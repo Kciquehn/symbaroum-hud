@@ -745,6 +745,27 @@ export class SymbaroumHud extends ApplicationV2 {
     }, { signal });
 
     root.addEventListener("dragover", (event) => {
+      const simplifiedPowersElement = event.target.closest('[data-simplified-powers-drop="true"]');
+      if (
+        simplifiedPowersElement
+        && root.contains(simplifiedPowersElement)
+        && this.#canDropOnSimplifiedPowers(event.dataTransfer)
+      ) {
+        event.preventDefault();
+        event.stopPropagation();
+        if (event.dataTransfer) {
+          event.dataTransfer.dropEffect = "copy";
+        }
+        this.#clearStorageDropTargets(root);
+        this.#clearAttackDropTargets(root);
+        this.#clearRitualDropTargets(root);
+        this.#clearMysticalPowerDropTargets(root);
+        this.#clearTraitDropTargets(root);
+        this.#clearSimplifiedPowersDropTargets(root);
+        simplifiedPowersElement.dataset.simplifiedPowersDropTarget = "true";
+        return;
+      }
+
       const traitsElement = event.target.closest('[data-trait-drop="true"]');
       if (
         traitsElement
@@ -965,6 +986,26 @@ export class SymbaroumHud extends ApplicationV2 {
     }, { signal });
 
     root.addEventListener("drop", (event) => {
+      const simplifiedPowersElement = event.target.closest('[data-simplified-powers-drop="true"]');
+      if (simplifiedPowersElement && root.contains(simplifiedPowersElement)) {
+        const dropData = this.#readDocumentDragData(event.dataTransfer);
+        if (!this.#isItemDropData(dropData)) return;
+
+        event.preventDefault();
+        event.stopPropagation();
+        const actor = this.#actor;
+        this.#storageDragData = null;
+        this.#clearStorageDropTargets(root);
+        this.#clearAttackDropTargets(root);
+        this.#clearRitualDropTargets(root);
+        this.#clearMysticalPowerDropTargets(root);
+        this.#clearTraitDropTargets(root);
+        this.#clearSimplifiedPowersDropTargets(root);
+
+        void this.#importSimplifiedPowerItem(actor, dropData);
+        return;
+      }
+
       const traitsElement = event.target.closest('[data-trait-drop="true"]');
       if (traitsElement && root.contains(traitsElement)) {
         const dragData = this.#storageDragData
@@ -1312,6 +1353,7 @@ export class SymbaroumHud extends ApplicationV2 {
       this.#clearRitualDropTargets(root);
       this.#clearMysticalPowerDropTargets(root);
       this.#clearTraitDropTargets(root);
+      this.#clearSimplifiedPowersDropTargets(root);
     }, { signal });
 
     for (const button of root.querySelectorAll("[data-symba-delayed-tooltip]")) {
@@ -1490,6 +1532,61 @@ export class SymbaroumHud extends ApplicationV2 {
     for (const element of root.querySelectorAll('[data-trait-drop-target="true"]')) {
       delete element.dataset.traitDropTarget;
     }
+  }
+
+  #canDropOnSimplifiedPowers(dataTransfer) {
+    if (!ActorService.canUpdate(this.#actor)) return false;
+    const dropData = this.#readDocumentDragData(dataTransfer);
+    return this.#isItemDropData(dropData);
+  }
+
+  #clearSimplifiedPowersDropTargets(root) {
+    for (const element of root.querySelectorAll('[data-simplified-powers-drop-target="true"]')) {
+      delete element.dataset.simplifiedPowersDropTarget;
+    }
+  }
+
+  async #importSimplifiedPowerItem(actor, dropData) {
+    if (!ActorService.canUpdate(actor) || dropData?.type !== "Item") return;
+
+    const ItemClass = globalThis.Item?.implementation
+      ?? globalThis.CONFIG?.Item?.documentClass;
+    if (typeof ItemClass?.fromDropData !== "function") return;
+
+    const item = await ItemClass.fromDropData(dropData);
+    if (!item || item.documentName !== "Item") return;
+
+    const canObserve = typeof item.testUserPermission !== "function"
+      || item.testUserPermission(game.user, "OBSERVER");
+    if (!canObserve) return;
+
+    const isAbility = item.type === "ability";
+    const isPower = item.type === "mysticalPower" || Boolean(item.system?.isPower);
+    const isRitual = item.type === "ritual" || Boolean(item.system?.isRitual);
+    const isTrait = isTraitLikeItem(item);
+
+    if (!isAbility && !isPower && !isRitual && !isTrait) {
+      ui.notifications.warn(game.i18n.localize("SYMBAROUMHUD.Notifications.OnlyPowersAndAbilities"));
+      return;
+    }
+
+    let targetItem = item;
+    if (!actor.uuid || item.parent?.uuid !== actor.uuid) {
+      if (typeof actor.createEmbeddedDocuments !== "function") return;
+      const source = item.toObject?.() ?? item;
+      const data = foundry.utils.deepClone(source);
+      delete data._id;
+      const created = await actor.createEmbeddedDocuments("Item", [data]);
+      targetItem = created?.[0] ?? null;
+    }
+
+    if (!targetItem) return;
+
+    this.#simplifiedPowersOpen = true;
+    this.#simplifiedPowersSelectedItemId = targetItem.id;
+    this.#simplifiedActionsOpen = false;
+    this.#simplifiedInventoryOpen = false;
+    return this.render();
   }
 
   #openEffectMenu(effectId, event) {
