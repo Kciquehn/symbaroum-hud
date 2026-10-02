@@ -6011,7 +6011,7 @@ body:has(#symbaroum-hud .symbaroum-hud-ammo-recovery-slot) > #tenebre-ammo-hud-l
 #symbaroum-hud .symbaroum-hud-simplified-status-summary {
   position: absolute;
   bottom: calc(100% + 6px);
-  left: 0;
+  left: 42px;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -6063,6 +6063,8 @@ body:has(#symbaroum-hud .symbaroum-hud-ammo-recovery-slot) > #tenebre-ammo-hud-l
   padding: 3px 8px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+  user-select: none;
 }
 
 #symbaroum-hud .symbaroum-hud-simplified-tactics[data-tactics-collapsed="true"] .symbaroum-hud-simplified-tactics-header {

@@ -1943,18 +1943,24 @@ export class SymbaroumHud extends ApplicationV2 {
 
       if (action === "toggle-tactics") {
         this.#tacticsCollapsed = !this.#tacticsCollapsed;
-        const section = element.closest(".symbaroum-hud-tactics");
-        const content = section?.querySelector(".symbaroum-hud-tactics-content");
+        const section = element.closest(".symbaroum-hud-tactics, .symbaroum-hud-simplified-tactics");
+        const content = section?.querySelector(".symbaroum-hud-tactics-content, .symbaroum-hud-simplified-tactics-content");
         section?.setAttribute("data-tactics-collapsed", String(this.#tacticsCollapsed));
         content?.setAttribute("aria-hidden", String(this.#tacticsCollapsed));
-        element.setAttribute("aria-expanded", String(!this.#tacticsCollapsed));
+        const toggleBtn = section?.querySelector('button[data-action="toggle-tactics"]') ?? element;
+        toggleBtn?.setAttribute("aria-expanded", String(!this.#tacticsCollapsed));
         const label = game.i18n.localize(this.#tacticsCollapsed
           ? "SYMBAROUMHUD.Actions.ShowTactics"
           : "SYMBAROUMHUD.Actions.HideTactics");
-        element.setAttribute("aria-label", label);
-        element.dataset.tooltip = label;
-        const icon = element.querySelector("i");
-        if (icon) icon.className = `fa-solid ${this.#tacticsCollapsed ? "fa-chevron-up" : "fa-chevron-down"}`;
+        toggleBtn?.setAttribute("aria-label", label);
+        if (toggleBtn?.dataset) toggleBtn.dataset.tooltip = label;
+        const header = section?.querySelector(".symbaroum-hud-simplified-tactics-header");
+        if (header) {
+          header.setAttribute("aria-label", label);
+          if (header.dataset) header.dataset.tooltip = label;
+        }
+        const icon = section?.querySelector('[data-action="toggle-tactics"] i') ?? element.querySelector("i");
+        if (icon) icon.className = `fa-solid ${this.#tacticsCollapsed ? "fa-chevron-down" : "fa-chevron-up"}`;
         return;
       }
 
