@@ -4056,8 +4056,15 @@ body:has(#symbaroum-hud) #ui-left #ui-left-column-1 {
 body:has(#symbaroum-hud .symbaroum-hud-character-card) #ui-left-column-1 #players,
 body:has(#symbaroum-hud .symbaroum-hud-simplified-portrait-card) #ui-left-column-1 #players,
 body:has(#symbaroum-hud) #players {
-  margin-bottom: 184px;
-  position: relative;
+  position: fixed !important;
+  left: 65px !important;
+  top: 50px !important;
+  bottom: auto !important;
+  margin: 0 !important;
+  z-index: 60 !important;
+  max-height: calc(100vh - 250px) !important;
+  overflow-y: auto !important;
+  pointer-events: auto !important;
 }
 
 #players .symbaroum-hud-players-close-btn {
