@@ -85,28 +85,6 @@ test("the GM service catalog is registered as a restricted module menu", () => {
   }
 });
 
-test("the GM Item Category manager is registered as a restricted module menu", () => {
-  const originalGame = globalThis.game;
-  let menu = null;
-  globalThis.game = {
-    settings: {
-      register: () => {},
-      registerMenu(moduleId, key, data) {
-        assert.equal(moduleId, MODULE_ID);
-        if (key === "itemCategoryManager") menu = data;
-      },
-      get: () => false
-    }
-  };
-  try {
-    registerSettings(() => {});
-    assert.equal(menu.restricted, true);
-    assert.equal(menu.name, "SYMBAROUMHUD.Settings.ItemCategoryManager.Name");
-    assert.equal(typeof menu.type, "function");
-  } finally {
-    globalThis.game = originalGame;
-  }
-});
 
 test("player list hiding is enabled by default", () => {
   const originalGame = globalThis.game;

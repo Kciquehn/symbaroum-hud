@@ -7,17 +7,7 @@ import {
   THEMES
 } from "./constants.mjs";
 import { ServiceCatalogApplication } from "./applications/service-catalog.mjs";
-import { ItemCategoryManagerApplication } from "./applications/item-category-manager.mjs";
-
 export function registerSettings(onChange) {
-  game.settings.registerMenu?.(MODULE_ID, "itemCategoryManager", {
-    name: "SYMBAROUMHUD.Settings.ItemCategoryManager.Name",
-    hint: "SYMBAROUMHUD.Settings.ItemCategoryManager.Hint",
-    label: "SYMBAROUMHUD.Settings.ItemCategoryManager.Label",
-    icon: "fa-solid fa-tags",
-    type: ItemCategoryManagerApplication,
-    restricted: true
-  });
 
   game.settings.registerMenu?.(MODULE_ID, "serviceCatalog", {
     name: "SYMBAROUMHUD.Settings.ServiceCatalog.Name",

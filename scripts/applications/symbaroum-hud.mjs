@@ -2295,16 +2295,6 @@ export class SymbaroumHud extends ApplicationV2 {
         await game.settings.set(MODULE_ID, SETTINGS.STORAGE_VIEW_MODE, nextMode);
         return this.render();
       }
-      if (action === "open-shop") {
-        return SymbaroumCompendiumBrowser.openShop({ actor });
-      }
-      if (action === "open-weapon-shop") {
-        return SymbaroumCompendiumBrowser.openShop({
-          actor,
-          category: "weapon",
-          lockCategory: true
-        });
-      }
       if (action === "select-storage-container") {
         this.#abilitiesOpen = false;
         this.#attacksOpen = false;

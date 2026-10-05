@@ -13,8 +13,6 @@ import {
 import { ContextService } from "./services/context-service.mjs";
 import { registerCharacterCreatorHooks } from "./services/character-creator-service.mjs";
 import { HotbarShortcutService } from "./services/hotbar-shortcut-service.mjs";
-import { synchronizeWorldItemTaxonomy } from "./services/item-taxonomy-service.mjs";
-import { registerItemTaxonomySheetHooks } from "./services/item-taxonomy-sheet-service.mjs";
 import {
   CharacterPdfExportService,
   registerCharacterPdfExportHooks
@@ -37,7 +35,6 @@ Hooks.once("setup", () => {
   registerCharacterCreatorHooks();
   registerCharacterPdfExportHooks();
   registerCompendiumBrowserHooks();
-  registerItemTaxonomySheetHooks();
   registerRefreshHooks(hud);
   registerSceneControlsHooks();
 
@@ -56,7 +53,6 @@ Hooks.once("setup", () => {
       openShop: (options = {}) => SymbaroumCompendiumBrowser.openShop({
         actor: options.actor ?? hud?.actor ?? null
       }),
-      synchronizeItemTaxonomy: () => synchronizeWorldItemTaxonomy(),
       exportActorPdf: (actor = hud?.actor) => CharacterPdfExportService.export(actor),
       refresh: () => Hooks.callAll(`${MODULE_ID}.refresh`)
     });
@@ -71,10 +67,5 @@ Hooks.once("ready", () => {
 
   applyPlayerListVisibility();
   applyHudTheme();
-  void synchronizeWorldItemTaxonomy()
-    .then(({ updated }) => {
-      if (updated) SymbaroumCompendiumBrowser.invalidate({ origins: false });
-    })
-    .catch((error) => console.error(`${MODULE_ID} | Failed to synchronize item taxonomy.`, error));
   void hud.render();
 });

@@ -177,7 +177,7 @@ test("simplified HUD template contains inventory button and inventory panel with
   assert.ok(simplifiedPart.includes('data-action="close-simplified-inventory"'));
   assert.ok(simplifiedPart.includes("symbaroum-hud-simplified-wealth-bar"));
   assert.ok(simplifiedPart.includes('data-action="open-money"'));
-  assert.ok(simplifiedPart.includes('data-action="open-shop"'));
+  assert.ok(!simplifiedPart.includes('data-action="open-shop"'));
   assert.ok(simplifiedPart.includes('data-action="toggle-armor-equip"'));
   assert.ok(simplifiedPart.includes("symbaroum-hud-simplified-item-img-btn"));
   assert.ok(simplifiedPart.includes("symbaroum-hud-simplified-item-name-btn"));

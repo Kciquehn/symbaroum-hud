@@ -486,12 +486,6 @@
                 </div>
 
                 <div class="symbaroum-hud-simplified-panel-actions">
-                  <button type="button" class="symbaroum-hud-simplified-header-btn"
-                    data-action="open-shop"
-                    data-tooltip="{{localize 'SYMBAROUMHUD.Shop.Title'}}"
-                    aria-label="{{localize 'SYMBAROUMHUD.Shop.Title'}}">
-                    <i class="fa-solid fa-store" aria-hidden="true"></i>
-                  </button>
                   <button type="button" class="symbaroum-hud-simplified-panel-close"
                     data-action="close-simplified-inventory"
                     data-tooltip="{{localize 'SYMBAROUMHUD.Actions.CloseInventory'}}"
@@ -1189,12 +1183,6 @@
               <strong>{{localize "SYMBAROUMHUD.Sections.Attacks"}}</strong>
             </span>
             <span class="symbaroum-hud-storage-header-actions">
-              <button type="button" class="symbaroum-hud-storage-shop symbaroum-hud-attacks-shop"
-                data-action="open-weapon-shop"
-                data-tooltip="{{localize 'SYMBAROUMHUD.Attacks.OpenWeaponShop'}}"
-                aria-label="{{localize 'SYMBAROUMHUD.Attacks.OpenWeaponShop'}}">
-                <i class="fa-solid fa-shop" aria-hidden="true"></i>
-              </button>
               <button type="button" class="symbaroum-hud-storage-close symbaroum-hud-attacks-close"
                 data-action="close-attacks"
                 data-tooltip="{{localize 'SYMBAROUMHUD.Actions.CloseAttacks'}}"
@@ -1284,13 +1272,6 @@
                 {{/if}}
               </span>
               <span class="symbaroum-hud-storage-header-actions">
-                <button type="button" class="symbaroum-hud-storage-shop"
-                  data-action="open-shop"
-                  data-tooltip="{{localize 'SYMBAROUMHUD.CompendiumBrowser.Shop.OpenButton'}}"
-                  aria-label="{{localize 'SYMBAROUMHUD.CompendiumBrowser.Shop.OpenButton'}}">
-                  <i class="fa-solid fa-shop" aria-hidden="true"></i>
-                </button>
-
                 {{#if storage.quiverSelected}}
                 <button type="button" class="symbaroum-hud-storage-view-toggle"
                   data-action="toggle-storage-view"
