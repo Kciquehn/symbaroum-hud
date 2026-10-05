@@ -5,7 +5,7 @@ import {
   STORAGE_VIEW_MODES,
   THEMES
 } from "../constants.mjs";
-import { SymbaroumCompendiumBrowser } from "./compendium-browser.mjs";
+
 import { refreshHotbarShortcuts } from "../integrations/hotbar-shortcuts.mjs";
 import { IndResourcesIntegration } from "../integrations/ind-resources.mjs";
 import { ItemPilesIntegration } from "../integrations/item-piles.mjs";

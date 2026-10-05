@@ -19,14 +19,13 @@ assert.equal(manifest.license, "https://github.com/Kciquehn/symbaroum-hud/blob/m
 assert.equal(manifest.bugs, "https://github.com/Kciquehn/symbaroum-hud/issues");
 assert.ok(manifest.esmodules.includes("scripts/main.mjs"));
 assert.ok(fs.existsSync(path.join(root, "scripts", "services", "character-creator-service.mjs")), "Missing character creator service");
-assert.ok(fs.existsSync(path.join(root, "scripts", "applications", "compendium-browser.mjs")), "Missing Compendium Browser application");
+
 assert.ok(fs.existsSync(path.join(root, "scripts", "services", "content-origin-service.mjs")), "Missing content origin service");
 assert.ok(fs.existsSync(path.join(root, "scripts", "services", "shop-service.mjs")), "Missing shop service");
 assert.ok(fs.existsSync(path.join(root, "scripts", "services", "native-item-sheet-service.mjs")), "Missing native Item sheet service");
 assert.ok(fs.existsSync(path.join(root, "scripts", "services", "item-taxonomy-service.mjs")), "Missing Item taxonomy service");
 assert.ok(fs.existsSync(path.join(root, "scripts", "data", "official-content-origin-ids.mjs")), "Missing bundled official content origins");
-assert.ok(fs.existsSync(path.join(root, "templates", "compendium-browser.hbs")), "Missing Compendium Browser template");
-assert.ok(fs.existsSync(path.join(root, "styles", "compendium-browser.css")), "Missing Compendium Browser stylesheet");
+
 assert.ok(fs.existsSync(path.join(root, "scripts", "data", "core-occupations.mjs")), "Missing core occupations data");
 assert.ok(fs.existsSync(path.join(root, "scripts", "data", "core-attributes.mjs")), "Missing core attributes data");
 assert.ok(fs.existsSync(path.join(root, "scripts", "data", "character-creation-abilities.mjs")), "Missing character creation Abilities data");
@@ -89,9 +88,7 @@ assert.deepEqual(
 
 const template = fs.readFileSync(path.join(root, "templates", "hud.hbs"), "utf8");
 const application = fs.readFileSync(path.join(root, "scripts", "applications", "symbaroum-hud.mjs"), "utf8");
-const compendiumBrowser = fs.readFileSync(path.join(root, "scripts", "applications", "compendium-browser.mjs"), "utf8");
-const compendiumBrowserTemplate = fs.readFileSync(path.join(root, "templates", "compendium-browser.hbs"), "utf8");
-const compendiumBrowserStyles = fs.readFileSync(path.join(root, "styles", "compendium-browser.css"), "utf8");
+
 const actorService = fs.readFileSync(path.join(root, "scripts", "services", "actor-service.mjs"), "utf8");
 const characterCreatorService = fs.readFileSync(path.join(root, "scripts", "services", "character-creator-service.mjs"), "utf8");
 const coreOccupations = fs.readFileSync(path.join(root, "scripts", "data", "core-occupations.mjs"), "utf8");
@@ -118,78 +115,11 @@ const characterCreatorTheme = fs.readFileSync(
   "utf8"
 );
 assert.match(application, /foundry\.applications\.handlebars\.renderTemplate/);
-assert.doesNotMatch(application, /SymbaroumCompendiumBrowser\.openShop/);
-assert.match(compendiumBrowser, /game\.items/);
-assert.match(compendiumBrowser, /addEventListener\("contextmenu"/);
-assert.match(compendiumBrowser, /shopStockContextMenu/);
-assert.match(compendiumBrowser, /#removeShopStock\(target\.dataset\.uuid\)/);
-assert.match(compendiumBrowserStyles, /\.symbaroum-hud-shop-description-field \{[^}]*align-self: start;[^}]*align-content: start;/s);
-assert.match(compendiumBrowserStyles, /\.symbaroum-hud-shop-description-field > textarea \{[^}]*height: clamp\(120px, 22vh, 220px\) !important;[^}]*max-height: 220px;/s);
-assert.match(compendiumBrowserStyles, /\.symbaroum-hud-shop-description-static > p \{[^}]*height: auto;[^}]*max-height: clamp\(120px, 22vh, 220px\);/s);
-assert.match(compendiumBrowser, /game\.actors/);
-assert.doesNotMatch(compendiumBrowser, /game\.packs/);
-assert.doesNotMatch(compendiumBrowser, /getIndex/);
-assert.match(compendiumBrowser, /testUserPermission/);
-assert.match(compendiumBrowser, /RESULT_BATCH_SIZE/);
-assert.match(compendiumBrowser, /restoreSearchFocus/);
-assert.match(compendiumBrowser, /setSelectionRange/);
-assert.match(compendiumBrowser, /data-browser-filter-panel/);
-assert.match(compendiumBrowser, /toggle-filters/);
-assert.match(compendiumBrowser, /#shopView = "catalog"/);
-assert.match(compendiumBrowser, /this\.#shopView = this\.#mode === "shop" \? "directory" : "catalog"/);
-assert.match(compendiumBrowser, /action === "show-shop-directory"/);
-assert.match(compendiumBrowser, /visible: customShopActive && \(activeShopOpen \|\| Boolean\(game\.user\?\.isGM\)\)/);
-assert.match(compendiumBrowser, /action === "create-shop"/);
-assert.match(compendiumBrowser, /#shopDraftName = ""/);
-assert.match(compendiumBrowser, /#shopDraftSavedName = ""/);
-assert.match(compendiumBrowser, /\[data-shop-name\]/);
-assert.match(compendiumBrowser, /#scheduleShopAutoSave/);
-assert.match(compendiumBrowser, /#flushShopAutoSave/);
-assert.match(compendiumBrowser, /action === "choose-shop-image"/);
-assert.match(compendiumBrowser, /action === "toggle-shop-image-editor"/);
-assert.match(compendiumBrowser, /#activateShopImageEditor/);
-assert.match(compendiumBrowser, /surface\.addEventListener\("pointermove"/);
-assert.match(compendiumBrowser, /surface\.addEventListener\("wheel"/);
-assert.doesNotMatch(compendiumBrowser, /configure-shop-image|#configureShopImage/);
-assert.match(compendiumBrowser, /FilePicker/);
-assert.match(compendiumBrowser, /SETTINGS\.SHOP_DEFINITIONS/);
-assert.doesNotMatch(compendiumBrowser, /action === "back-to-general-store"/);
-assert.doesNotMatch(compendiumBrowser, /SymbaroumShopDirectory/);
-assert.match(compendiumBrowserTemplate, /data-shop-view=/);
-assert.match(compendiumBrowserTemplate, /symbaroum-hud-shop-directory-grid/);
-assert.match(compendiumBrowserTemplate, /data-action="select-shop"/);
-assert.match(compendiumBrowserTemplate, /data-action="configure-shop-pricing"/);
-assert.match(compendiumBrowserTemplate, /data-has-image=/);
-assert.match(compendiumBrowserTemplate, /aria-label="\{\{name\}\}"/);
-assert.match(compendiumBrowserTemplate, /data-shop-builder/);
-assert.match(compendiumBrowserTemplate, /data-shop-name/);
-assert.match(compendiumBrowserTemplate, /data-shop-description/);
-assert.match(compendiumBrowserTemplate, /data-action="choose-shop-image"/);
-assert.match(compendiumBrowserTemplate, /data-action="toggle-shop-image-editor"/);
-assert.match(compendiumBrowserTemplate, /data-shop-image-surface/);
-assert.match(compendiumBrowserTemplate, /data-stock-generator-preset/);
-assert.match(compendiumBrowserTemplate, /Shop\.StockConfiguration/);
-assert.match(compendiumBrowser, /random: Math\.random/);
-assert.doesNotMatch(compendiumBrowser, /GenerationSeed|shopGenerationSeed|data-stock-generator-seed/);
-assert.doesNotMatch(compendiumBrowserTemplate, /GenerationSeed|data-stock-generator-seed/);
-for (const language of languages.values()) {
-  assert.equal("GenerationSeed" in (language.SYMBAROUMHUD?.CompendiumBrowser?.Shop ?? {}), false);
-}
-assert.match(compendiumBrowserTemplate, /CompendiumBrowser\.ItemCategories/);
-assert.doesNotMatch(compendiumBrowserTemplate, /data-browser-type|CompendiumBrowser\.ItemTypes/);
-assert.doesNotMatch(compendiumBrowser, /#excludedTypes|toggle-all-types/);
-assert.doesNotMatch(compendiumBrowserTemplate, /data-action="save-shop"/);
-assert.doesNotMatch(compendiumBrowserTemplate, /data-action="back-to-general-store"/);
-assert.match(main, /registerCompendiumBrowserHooks/);
-assert.match(main, /openCompendiumBrowser/);
-assert.match(main, /openShop/);
+
 assert.match(itemTaxonomyService, /ITEM_TAXONOMY_VERSION/);
 assert.match(itemTaxonomyService, /flags\.\$\{MODULE_ID\}\.itemTaxonomy/);
 assert.match(itemTaxonomyService, /official-folder/);
-assert.match(compendiumBrowser, /renderItemDirectory/);
-assert.doesNotMatch(compendiumBrowser, /hideObserverOnlyDirectoryEntries/);
-assert.doesNotMatch(compendiumBrowser, /renderActorDirectory/);
-assert.match(compendiumBrowser, /symbaroum-hud-directory-browser-action/);
+
 assert.doesNotMatch(template, /data-action="open-compendium-browser"/);
 assert.doesNotMatch(template, /data-action="open-shop"/);
 assert.doesNotMatch(template, /data-action="open-weapon-shop"/);
@@ -488,7 +418,7 @@ assert.match(template, /SYMBAROUMHUD\.Info\.ExperienceShort/);
 assert.match(template, /data-action="reroll-cost"/);
 assert.match(template, /actions\.rerollCost/);
 assert.doesNotMatch(template, /symbaroum-hud-ind-action/);
-assert.match(template, /data-action="toggle-players"/);
+
 assert.match(application, /document\.body\.appendChild/);
 assert.match(application, /getElementById\("hotbar"\)/);
 assert.match(application, /#dockHotbar\(content, hotbar\)/);

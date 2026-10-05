@@ -511,8 +511,7 @@ test("simplified HUD sidebar contains toggle-players button and stylesheet style
   assert.ok(sidebarStart > -1, "Simplified sidebar must exist in template");
   const sidebarPart = template.substring(sidebarStart, sidebarStart + 2500);
 
-  assert.ok(sidebarPart.includes('data-action="toggle-players"'), "Sidebar must have toggle-players button");
-  assert.ok(sidebarPart.includes('fa-users'), "Sidebar toggle-players must render fa-users / fa-users-slash icon");
+  assert.equal(sidebarPart.includes('data-action="toggle-players"'), false, "Sidebar must NOT have toggle-players button");
 
   assert.match(css, /#scene-controls[\s\S]*overflow:\s*visible\s*!important/);
   assert.match(css, /#players \.symbaroum-hud-players-close-btn/);

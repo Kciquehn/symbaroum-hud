@@ -44,8 +44,7 @@
     "scripts/main.mjs"
   ],
   "styles": [
-    "styles/symbaroum-hud.css",
-    "styles/compendium-browser.css"
+    "styles/symbaroum-hud.css"
   ],
   "languages": [
     {
