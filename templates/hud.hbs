@@ -22,13 +22,7 @@
         {{#unless actions.rest}}disabled{{/unless}}>
         <i class="fa-solid fa-bed" aria-hidden="true"></i>
       </button>
-      <button type="button" class="symbaroum-hud-simplified-sidebar-btn{{#unless playersHidden}} is-active{{/unless}}"
-        data-action="toggle-players"
-        data-tooltip="{{#if playersHidden}}{{localize 'SYMBAROUMHUD.Actions.ShowPlayers'}}{{else}}{{localize 'SYMBAROUMHUD.Actions.HidePlayers'}}{{/if}}"
-        aria-label="{{#if playersHidden}}{{localize 'SYMBAROUMHUD.Actions.ShowPlayers'}}{{else}}{{localize 'SYMBAROUMHUD.Actions.HidePlayers'}}{{/if}}"
-        aria-pressed="{{#unless playersHidden}}true{{else}}false{{/unless}}">
-        <i class="fa-solid {{#if playersHidden}}fa-users{{else}}fa-users-slash{{/if}}" aria-hidden="true"></i>
-      </button>
+
     </div>
     {{#if actor}}
       {{#if hasStatusSummary}}
