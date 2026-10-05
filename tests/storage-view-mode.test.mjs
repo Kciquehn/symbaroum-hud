@@ -62,28 +62,7 @@ test("the editable PDF template is a restricted world setting", () => {
   }
 });
 
-test("the GM service catalog is registered as a restricted module menu", () => {
-  const originalGame = globalThis.game;
-  let menu = null;
-  globalThis.game = {
-    settings: {
-      register: () => {},
-      registerMenu(moduleId, key, data) {
-        assert.equal(moduleId, MODULE_ID);
-        if (key === "serviceCatalog") menu = data;
-      },
-      get: () => false
-    }
-  };
-  try {
-    registerSettings(() => {});
-    assert.equal(menu.restricted, true);
-    assert.equal(menu.name, "SYMBAROUMHUD.Settings.ServiceCatalog.Name");
-    assert.equal(typeof menu.type, "function");
-  } finally {
-    globalThis.game = originalGame;
-  }
-});
+
 
 
 test("player list hiding is enabled by default", () => {
@@ -242,30 +221,7 @@ test("custom shop definitions are stored as hidden world data", () => {
   }
 });
 
-test("custom service definitions are stored as hidden world data", () => {
-  const originalGame = globalThis.game;
-  const registered = new Map();
-  globalThis.game = {
-    settings: {
-      register(moduleId, key, data) {
-        assert.equal(moduleId, MODULE_ID);
-        registered.set(key, data);
-      },
-      get: () => false
-    }
-  };
 
-  try {
-    registerSettings(() => {});
-    const setting = registered.get(SETTINGS.SERVICE_DEFINITIONS);
-    assert.equal(setting.scope, "world");
-    assert.equal(setting.config, false);
-    assert.equal(setting.type, Object);
-    assert.deepEqual(setting.default, { version: 1, services: [] });
-  } finally {
-    globalThis.game = originalGame;
-  }
-});
 
 test("general store availability is hidden world data and starts open", () => {
   const originalGame = globalThis.game;

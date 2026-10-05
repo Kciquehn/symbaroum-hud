@@ -1317,15 +1317,6 @@
                   <small>{{storage.armorCount}}</small>
                 </button>
 
-                <button type="button" data-action="select-storage-container"
-                  data-container-id="__services" data-active="{{storage.serviceSelected}}"
-                  aria-pressed="{{storage.serviceSelected}}"
-                  data-tooltip="{{localize 'SYMBAROUMHUD.Services.Title'}}"
-                  aria-label="{{localize 'SYMBAROUMHUD.Services.Title'}}">
-                  <i class="fa-solid fa-file-signature" aria-hidden="true"></i>
-                  <span>{{localize "SYMBAROUMHUD.Services.Title"}}</span>
-                  <small>{{storage.serviceCount}}</small>
-                </button>
 
                 {{#each storage.quivers}}
                   <button type="button" data-action="select-storage-container"
@@ -1362,64 +1353,6 @@
                 {{/unless}}
               </nav>
 
-              {{#if storage.serviceSelected}}
-                <section class="symbaroum-hud-services-page"
-                  aria-label="{{localize 'SYMBAROUMHUD.Services.Title'}}">
-                  <header class="symbaroum-hud-services-intro">
-                    <span><i class="fa-solid fa-file-signature" aria-hidden="true"></i></span>
-                    <div>
-                      <h3>{{localize "SYMBAROUMHUD.Services.Title"}}</h3>
-                      <p>{{localize "SYMBAROUMHUD.Services.HudHint"}}</p>
-                    </div>
-                  </header>
-                  <div class="symbaroum-hud-services-list">
-                    {{#each storage.services}}
-                      <article class="symbaroum-hud-service-record" data-status="{{status}}">
-                        <img src="{{img}}" alt="">
-                        <div class="symbaroum-hud-service-record-main">
-                          <header>
-                            <span>
-                              <strong>{{name}}</strong>
-                              <small><i class="fa-solid {{categoryIcon}}" aria-hidden="true"></i> {{fulfillmentLabel}}</small>
-                            </span>
-                            <em data-status="{{status}}"><i class="fa-solid {{statusIcon}}" aria-hidden="true"></i> {{statusLabel}}</em>
-                          </header>
-                          {{#if description}}<p>{{description}}</p>{{/if}}
-                          <dl>
-                            {{#if storeName}}<div><dt>{{localize "SYMBAROUMHUD.Services.Store"}}</dt><dd>{{storeName}}</dd></div>{{/if}}
-                            {{#if priceLabel}}<div><dt>{{localize "SYMBAROUMHUD.Services.PricePaid"}}</dt><dd>{{priceLabel}}</dd></div>{{/if}}
-                            <div><dt>{{localize "SYMBAROUMHUD.Services.QuantityOrDuration"}}</dt><dd>{{quantityLabel}}</dd></div>
-                            {{#if remainingLabel}}<div><dt>{{localize "SYMBAROUMHUD.Services.Remaining"}}</dt><dd>{{remainingLabel}}</dd></div>{{/if}}
-                            {{#if source}}<div><dt>{{localize "SYMBAROUMHUD.Services.Source"}}</dt><dd>{{source}}</dd></div>{{/if}}
-                          </dl>
-                        </div>
-                        <div class="symbaroum-hud-service-record-actions">
-                          {{#if canUse}}
-                            <button type="button" data-action="use-service-record" data-service-record-id="{{id}}"
-                              data-tooltip="{{useLabel}}" aria-label="{{useLabel}}: {{name}}">
-                              <i class="fa-solid fa-check" aria-hidden="true"></i><span>{{useLabel}}</span>
-                            </button>
-                          {{/if}}
-                          {{#if canRemove}}
-                            <button type="button" class="symbaroum-hud-service-record-remove"
-                              data-action="remove-service-record" data-service-record-id="{{id}}"
-                              data-tooltip="{{localize 'SYMBAROUMHUD.Services.Remove'}}"
-                              aria-label="{{localize 'SYMBAROUMHUD.Services.Remove'}}: {{name}}">
-                              <i class="fa-solid fa-trash-can" aria-hidden="true"></i>
-                            </button>
-                          {{/if}}
-                        </div>
-                      </article>
-                    {{else}}
-                      <div class="symbaroum-hud-services-empty">
-                        <i class="fa-solid fa-file-circle-xmark" aria-hidden="true"></i>
-                        <strong>{{localize "SYMBAROUMHUD.Services.Empty"}}</strong>
-                        <p>{{localize "SYMBAROUMHUD.Services.EmptyHint"}}</p>
-                      </div>
-                    {{/each}}
-                  </div>
-                </section>
-              {{else}}
               {{#if storage.quiverSelected}}
                 <div class="symbaroum-hud-quiver-page">
                   <section class="symbaroum-hud-quiver-detail"
@@ -1579,7 +1512,6 @@
                 {{/if}}
                 </div>
               </div>
-              {{/if}}
               {{/if}}
             </div>
           </section>

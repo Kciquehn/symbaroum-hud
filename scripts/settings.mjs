@@ -6,17 +6,7 @@ import {
   STORAGE_VIEW_MODES,
   THEMES
 } from "./constants.mjs";
-import { ServiceCatalogApplication } from "./applications/service-catalog.mjs";
 export function registerSettings(onChange) {
-
-  game.settings.registerMenu?.(MODULE_ID, "serviceCatalog", {
-    name: "SYMBAROUMHUD.Settings.ServiceCatalog.Name",
-    hint: "SYMBAROUMHUD.Settings.ServiceCatalog.Hint",
-    label: "SYMBAROUMHUD.Settings.ServiceCatalog.Label",
-    icon: "fa-solid fa-bell-concierge",
-    type: ServiceCatalogApplication,
-    restricted: true
-  });
 
   game.settings.register(MODULE_ID, SETTINGS.ENABLED, {
     name: "SYMBAROUMHUD.Settings.Enabled.Name",
@@ -131,17 +121,6 @@ export function registerSettings(onChange) {
       activeLocationId: null
     },
     onChange: () => Hooks.callAll(`${MODULE_ID}.shopDefinitionsChanged`)
-  });
-
-  game.settings.register(MODULE_ID, SETTINGS.SERVICE_DEFINITIONS, {
-    scope: "world",
-    config: false,
-    type: Object,
-    default: {
-      version: 1,
-      services: []
-    },
-    onChange: () => Hooks.callAll(`${MODULE_ID}.serviceDefinitionsChanged`)
   });
 
   game.settings.register(MODULE_ID, SETTINGS.SHOP_PRICE_MODIFIERS, {

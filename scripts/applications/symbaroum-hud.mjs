@@ -36,18 +36,12 @@ import {
   shouldShowDangerTint,
   vitalityState
 } from "../services/vitality-service.mjs";
-import {
-  actorServiceRecords,
-  removeActorService,
-  useActorService
-} from "../services/service-contract-service.mjs";
 import { itemHasTaxonomyTag } from "../services/item-taxonomy-service.mjs";
 
 const ApplicationV2 = foundry.applications.api.ApplicationV2;
 const HOTBAR_CONTROL_ACTIONS = new Set(["mute", "menu"]);
 const CONTROL_TOOLTIP_DELAY_MS = 800;
 const IND_RESOURCES_CONTAINER_DRAG_TYPE = "application/x-tenebre-container-item";
-const SERVICE_STORAGE_ID = "__services";
 const ATTRIBUTE_ORDER = [
   "accurate",
   "cunning",
@@ -2336,20 +2330,7 @@ export class SymbaroumHud extends ApplicationV2 {
           element.dataset.itemId
         );
       }
-      if (action === "use-service-record") {
-        const record = await useActorService(actor, element.dataset.serviceRecordId);
-        if (record) ui.notifications?.info(game.i18n.format("SYMBAROUMHUD.Services.UsedNotice", {
-          service: record.name,
-          actor: actor.name
-        }));
-        return this.render();
-      }
-      if (action === "remove-service-record") {
-        if (!game.user?.isGM) return null;
-        const removed = await removeActorService(actor, element.dataset.serviceRecordId);
-        if (removed) ui.notifications?.info(game.i18n.localize("SYMBAROUMHUD.Services.RemovedNotice"));
-        return this.render();
-      }
+
       if (action === "reload-quiver") {
         return IndResourcesIntegration.reloadQuiver(actor, element.dataset.quiverId);
       }
@@ -4686,7 +4667,6 @@ function storageWithServices(storage, services, {
   open = false,
   viewMode = STORAGE_VIEW_MODES.GRID
 } = {}) {
-  const serviceSelected = selectedId === SERVICE_STORAGE_ID;
   const base = storage ?? {
     mode: "inventory",
     containerSelected: false,
@@ -4706,55 +4686,13 @@ function storageWithServices(storage, services, {
     items: [],
     containers: []
   };
-  const records = Array.from(services ?? []).map((record) => ({
-    ...record,
-    canUse: Boolean(editable && record.canUse),
-    canRemove: Boolean(canRemove),
-    useLabel: game.i18n.localize(record.fulfillment === "consumable"
-      ? "SYMBAROUMHUD.Services.MarkUsed"
-      : "SYMBAROUMHUD.Services.Complete"),
-    quantityLabel: record.quantity > 1
-      ? `${record.quantity} × ${record.unitLabel}`
-      : record.unitLabel,
-    statusIcon: record.status === "active"
-      ? "fa-circle-check"
-      : record.status === "expired"
-        ? "fa-clock-rotate-left"
-        : "fa-circle-check",
-    categoryIcon: serviceCategoryIcon(record.category)
-  }));
   return {
     ...base,
-    mode: serviceSelected ? "services" : base.mode,
-    serviceSelected,
-    inventoryActive: serviceSelected ? false : base.inventoryActive,
-    containerSelected: serviceSelected ? false : base.containerSelected,
-    quiverSelected: serviceSelected ? false : base.quiverSelected,
-    armorSelected: serviceSelected ? false : base.armorSelected,
-    id: serviceSelected ? SERVICE_STORAGE_ID : base.id,
-    name: serviceSelected
-      ? game.i18n.localize("SYMBAROUMHUD.Services.Title")
-      : base.name,
-    services: records,
-    serviceCount: records.filter(({ status }) => status === "active").length,
-    hasServices: records.length > 0,
     load,
     open,
     viewMode,
     listView: viewMode === STORAGE_VIEW_MODES.LIST
   };
-}
-
-function serviceCategoryIcon(category) {
-  return ({
-    hospitality: "fa-bed",
-    travel: "fa-route",
-    professionals: "fa-user-tie",
-    contracts: "fa-file-signature",
-    permits: "fa-scroll",
-    fees: "fa-receipt",
-    information: "fa-book-open-reader"
-  })[category] ?? "fa-bell-concierge";
 }
 
 function activeEffectContext(actor) {
