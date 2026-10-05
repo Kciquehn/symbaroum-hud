@@ -245,7 +245,6 @@ export class SymbaroumHud extends ApplicationV2 {
       includeDetails: this.#ritualsOpen
     });
     const effects = activeEffectContext(actor);
-    const services = actorServiceRecords(actor);
     const tacticsHtml = game.user?.isGM && actor?.type === "monster"
       ? await enrichDescription(actor.system?.bio?.tactics, actor)
       : "";
@@ -381,7 +380,7 @@ export class SymbaroumHud extends ApplicationV2 {
       tactics: tacticsHtml ? { html: tacticsHtml, collapsed: this.#tacticsCollapsed } : null,
       hasStatusSummary: Boolean(tacticsHtml || effects.length),
       storage: actor
-        ? storageWithServices(indResources.storage, services, {
+        ? storageWithServices(indResources.storage, {
             selectedId: this.#storageContainerId,
             editable: canRollActor,
             canRemove: Boolean(game.user?.isGM),
@@ -4659,7 +4658,7 @@ function safeCall(callback) {
   }
 }
 
-function storageWithServices(storage, services, {
+function storageWithServices(storage, {
   selectedId = null,
   editable = false,
   canRemove = false,
