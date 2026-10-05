@@ -858,7 +858,7 @@ assert.match(stylesheet, /grid-auto-rows: minmax\(0, 1fr\)/);
 assert.match(stylesheet, /\.symbaroum-hud-info-entry \+ \.symbaroum-hud-info-entry/);
 assert.match(template, /data-hotbar-action="mute"/);
 assert.match(template, /data-hotbar-action="menu"/);
-assert.equal((template.match(/data-symba-delayed-tooltip/g) ?? []).length, 3);
+assert.equal((template.match(/data-symba-delayed-tooltip/g) ?? []).length, 2);
 assert.match(application, /HOTBAR_CONTROL_ACTIONS/);
 assert.match(application, /CONTROL_TOOLTIP_DELAY_MS = 800/);
 assert.match(application, /SETTINGS\.COLLAPSED/);
