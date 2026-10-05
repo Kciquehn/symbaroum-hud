@@ -1620,14 +1620,22 @@ export class SymbaroumHud extends ApplicationV2 {
 
     const margin = 6;
     const bounds = menu.getBoundingClientRect();
+    const targetElement = event.target?.closest?.("[data-effect-id]");
+    const targetRect = targetElement?.getBoundingClientRect?.() ?? {
+      left: event.clientX,
+      top: event.clientY,
+      right: event.clientX,
+      bottom: event.clientY
+    };
+
     const left = Math.max(
       margin,
-      Math.min(event.clientX, window.innerWidth - bounds.width - margin)
+      Math.min(targetRect.left, window.innerWidth - bounds.width - margin)
     );
-    const top = Math.max(
-      margin,
-      Math.min(event.clientY, window.innerHeight - bounds.height - margin)
-    );
+    let top = targetRect.top - bounds.height - 4;
+    if (top < margin) {
+      top = Math.min(targetRect.bottom + 4, window.innerHeight - bounds.height - margin);
+    }
     menu.style.left = `${left}px`;
     menu.style.top = `${top}px`;
     button.focus({ preventScroll: true });
