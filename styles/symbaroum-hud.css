@@ -6255,6 +6255,10 @@ body:has(#symbaroum-hud .symbaroum-hud-ammo-recovery-slot) > #tenebre-ammo-hud-l
   display: none !important;
 }
 
+#symbaroum-hud .symbaroum-hud-simplified[data-simplified-mode="hidden"] .symbaroum-hud-simplified-tactics {
+  display: none !important;
+}
+
 #symbaroum-hud .symbaroum-hud-simplified[data-simplified-mode="minimal"] .symbaroum-hud-attribute-name {
   display: none !important;
 }
