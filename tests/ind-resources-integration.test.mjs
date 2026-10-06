@@ -447,6 +447,34 @@ test("detects and draws a specific sheathed weapon through the public readiness 
   assert.deepEqual(drawnWeapons.at(-1), [shield.id, true]);
 });
 
+test("monster weapons track drawn state via system active status and drawWeapon equips unequipped monster weapons", async () => {
+  const bow = {
+    id: "bow",
+    name: "Arco",
+    type: "weapon",
+    system: { state: "other", isActive: false }
+  };
+  const monster = {
+    id: "npc1",
+    type: "monster",
+    items: new Map([[bow.id, bow]])
+  };
+
+  assert.deepEqual(IndResourcesIntegration.weaponReadinessState(monster, bow.id), {
+    drawn: false,
+    name: "Arco"
+  });
+
+  assert.equal(await IndResourcesIntegration.drawWeapon(monster, bow.id), true);
+  assert.equal(bow.system.state, "active");
+  assert.equal(bow.system.isActive, true);
+
+  assert.deepEqual(IndResourcesIntegration.weaponReadinessState(monster, bow.id), {
+    drawn: true,
+    name: "Arco"
+  });
+});
+
 test("sheathes a specific drawn weapon through the public readiness API", async () => {
   const sword = {
     id: "sword",

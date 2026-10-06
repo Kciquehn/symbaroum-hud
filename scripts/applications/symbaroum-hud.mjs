@@ -4210,7 +4210,17 @@ function simplifiedInventoryContext(actor, { canRollActor = false, drawnWeapons 
       const item = findActorItem(actor, weapon.id);
       if (item?.id) processedIds.add(String(item.id));
       const uuid = item?.uuid ?? weapon.uuid ?? "";
-      const drawn = readiness ? readiness.has(weapon, item, uuid) : false;
+      const isSystemActive = Boolean(
+        item?.system?.isActive
+        || item?.system?.state === "active"
+        || item?.system?.isEquipped
+        || item?.system?.state === "equipped"
+        || weapon?.isActive
+        || weapon?.state === "active"
+      );
+      const drawn = actor?.type === "monster"
+        ? isSystemActive
+        : (readiness ? readiness.has(weapon, item, uuid) : false);
       const damage = weapon.damage?.displayTextShort
         ?? (typeof weapon.damage?.displayText === "string" ? weapon.damage.displayText : null)
         ?? (typeof weapon.damage === "string" ? weapon.damage : null)
@@ -4219,6 +4229,7 @@ function simplifiedInventoryContext(actor, { canRollActor = false, drawnWeapons 
         ?? "—";
       const rawQty = weapon.system?.number ?? item?.system?.number ?? 1;
       const quantity = Number.isFinite(Number(rawQty)) ? Math.max(0, Math.trunc(Number(rawQty))) : 1;
+      const readinessKnown = actor?.type === "monster" ? true : Boolean(readiness);
       weapons.push({
         id: weapon.id,
         name: weapon.name,
@@ -4229,8 +4240,8 @@ function simplifiedInventoryContext(actor, { canRollActor = false, drawnWeapons 
         hasMultiple: quantity > 1,
         drawn,
         canUse: canRollActor,
-        readinessKnown: Boolean(readiness),
-        readinessLabel: readiness
+        readinessKnown,
+        readinessLabel: readinessKnown
           ? (game.i18n?.localize(drawn ? "SYMBAROUMHUD.Attacks.Drawn" : "SYMBAROUMHUD.Attacks.Sheathed") ?? (drawn ? "Sacada" : "Guardada"))
           : null
       });
@@ -4246,13 +4257,22 @@ function simplifiedInventoryContext(actor, { canRollActor = false, drawnWeapons 
       if (isWpn || isShield) {
         processedIds.add(String(item.id));
         const uuid = item.uuid || "";
-        const drawn = readiness ? readiness.has(item, item, uuid) : false;
+        const isItemSystemActive = Boolean(
+          item.system?.isActive
+          || item.system?.state === "active"
+          || item.system?.isEquipped
+          || item.system?.state === "equipped"
+        );
+        const drawn = actor?.type === "monster"
+          ? isItemSystemActive
+          : (readiness ? readiness.has(item, item, uuid) : false);
         const damage = item.system?.damage?.displayTextShort
           ?? (typeof item.system?.damage?.displayText === "string" ? item.system.damage.displayText : null)
           ?? (typeof item.system?.baseDamage === "string" ? item.system.baseDamage : null)
           ?? (isShield ? (item.system?.baseProtection ?? "—") : "—");
         const rawQty = item.system?.number ?? 1;
         const quantity = Number.isFinite(Number(rawQty)) ? Math.max(0, Math.trunc(Number(rawQty))) : 1;
+        const readinessKnown = actor?.type === "monster" ? true : Boolean(readiness);
         weapons.push({
           id: item.id,
           name: item.name,
@@ -4264,8 +4284,8 @@ function simplifiedInventoryContext(actor, { canRollActor = false, drawnWeapons 
           drawn,
           isShield,
           canUse: canRollActor,
-          readinessKnown: Boolean(readiness),
-          readinessLabel: readiness
+          readinessKnown,
+          readinessLabel: readinessKnown
             ? (game.i18n?.localize(drawn ? "SYMBAROUMHUD.Attacks.Drawn" : "SYMBAROUMHUD.Attacks.Sheathed") ?? (drawn ? "Sacada" : "Guardada"))
             : null
         });
@@ -4627,7 +4647,18 @@ function attackContext(actor, { canDrag = false, drawnWeapons = null, canUse = t
     .map((weapon) => {
       const item = findActorItem(actor, weapon.id);
       const uuid = item?.uuid ?? weapon.uuid ?? "";
-      const drawn = readiness ? readiness.has(weapon, item, uuid) : false;
+      const isSystemActive = Boolean(
+        item?.system?.isActive
+        || item?.system?.state === "active"
+        || item?.system?.isEquipped
+        || item?.system?.state === "equipped"
+        || weapon?.isActive
+        || weapon?.state === "active"
+      );
+      const drawn = actor?.type === "monster"
+        ? isSystemActive
+        : (readiness ? readiness.has(weapon, item, uuid) : false);
+      const readinessKnown = actor?.type === "monster" ? true : Boolean(readiness);
       return {
         id: weapon.id,
         img: weapon.img ?? item?.img ?? "icons/svg/sword.svg",
@@ -4635,8 +4666,8 @@ function attackContext(actor, { canDrag = false, drawnWeapons = null, canUse = t
         uuid,
         drawn,
         canUse,
-        readinessKnown: Boolean(readiness),
-        readinessLabel: readiness
+        readinessKnown,
+        readinessLabel: readinessKnown
           ? game.i18n.localize(drawn ? "SYMBAROUMHUD.Attacks.Drawn" : "SYMBAROUMHUD.Attacks.Sheathed")
           : null,
         draggable: Boolean(canDrag && uuid)

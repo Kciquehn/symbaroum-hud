@@ -260,21 +260,35 @@ export class IndResourcesIntegration {
   }
 
   static weaponReadinessState(actor, itemId) {
+    if (!actor || !itemId) return null;
+    const weapon = actorItems(actor).find((item) => item?.id === itemId);
+    if (!weapon) return null;
+
+    if (actor.type === "monster") {
+      const isEquipped = Boolean(
+        weapon.system?.isActive
+        || weapon.system?.state === "active"
+        || weapon.system?.isEquipped
+        || weapon.system?.state === "equipped"
+      );
+      return {
+        drawn: isEquipped,
+        name: weapon.name ?? ""
+      };
+    }
+
     const readiness = this.api?.weaponReadiness;
     if (
-      !actor
-      || !itemId
-      || !safeCall(() => readiness?.isEnabled?.())
+      !safeCall(() => readiness?.isEnabled?.())
       || typeof readiness?.getEligibleWeapons !== "function"
       || typeof readiness?.getDrawnWeapons !== "function"
       || typeof readiness?.setDrawn !== "function"
     ) return null;
 
-    const weapon = actorItems(actor).find((item) => item?.id === itemId);
     const eligible = Array.from(
       safeCall(() => readiness.getEligibleWeapons(actor)) ?? []
     ).find((item) => item?.id === itemId);
-    if (!weapon || !eligible) return null;
+    if (!eligible) return null;
 
     const drawn = Array.from(
       safeCall(() => readiness.getDrawnWeapons(actor)) ?? []
@@ -286,21 +300,46 @@ export class IndResourcesIntegration {
   }
 
   static async drawWeapon(actor, itemId) {
-    const state = this.weaponReadinessState(actor, itemId);
-    if (!state) return false;
-    if (state.drawn) return true;
-
+    if (!actor || !itemId) return false;
     const weapon = actorItems(actor).find((item) => item?.id === itemId);
-    return Boolean(await this.api.weaponReadiness.setDrawn(weapon, true));
+    if (!weapon) return false;
+
+    if (weapon.system?.state !== "active" || !weapon.system?.isActive) {
+      await updateActorItem(actor, weapon, {
+        "system.state": "active",
+        "system.isActive": true
+      });
+    }
+
+    const state = this.weaponReadinessState(actor, itemId);
+    if (state?.drawn && actor.type === "monster") return true;
+
+    if (this.api?.weaponReadiness?.setDrawn) {
+      const drawn = await this.api.weaponReadiness.setDrawn(weapon, true);
+      return Boolean(drawn);
+    }
+
+    return true;
   }
 
   static async sheatheWeapon(actor, itemId) {
-    const state = this.weaponReadinessState(actor, itemId);
-    if (!state) return false;
-    if (!state.drawn) return true;
-
+    if (!actor || !itemId) return false;
     const weapon = actorItems(actor).find((item) => item?.id === itemId);
-    return Boolean(await this.api.weaponReadiness.setDrawn(weapon, false));
+    if (!weapon) return false;
+
+    if (actor.type === "monster") {
+      await updateActorItem(actor, weapon, {
+        "system.state": "other",
+        "system.isActive": false
+      });
+    }
+
+    if (this.api?.weaponReadiness?.setDrawn) {
+      const sheathed = await this.api.weaponReadiness.setDrawn(weapon, false);
+      return Boolean(sheathed);
+    }
+
+    return true;
   }
 
   static isRitualistAbility(item) {
@@ -737,6 +776,17 @@ function updateActorItem(actor, item, changes) {
     return actor.updateEmbeddedDocuments("Item", [update]);
   }
   if (typeof item?.update === "function") return item.update(changes);
+  if (item && typeof item === "object") {
+    for (const [key, val] of Object.entries(changes)) {
+      if (key.startsWith("system.")) {
+        item.system ??= {};
+        item.system[key.slice(7)] = val;
+      } else {
+        item[key] = val;
+      }
+    }
+    return item;
+  }
   return notifyUnavailable();
 }
 
