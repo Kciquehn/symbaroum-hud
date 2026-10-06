@@ -1689,6 +1689,18 @@ export class SymbaroumHud extends ApplicationV2 {
       callback: () => ActorService.openItem(actor, itemId)
     });
 
+    if (IndResourcesIntegration.isUsableItem(item)) {
+      options.push({
+        action: "use-item",
+        icon: "fa-solid fa-hand-holding-heart",
+        label: game.i18n.localize("SYMBAROUMHUD.SimplifiedInventory.UseItem"),
+        callback: async () => {
+          await IndResourcesIntegration.useItem(actor, item);
+          return this.render();
+        }
+      });
+    }
+
     options.push({
       action: "post-to-chat",
       icon: "fa-solid fa-message",
@@ -2560,18 +2572,9 @@ export class SymbaroumHud extends ApplicationV2 {
       if (action === "use-item") {
         const item = findActorItem(actor, element.dataset.itemId);
         if (!item) return null;
-        const isRation = /\b(pao|pão|waybread|travel\s+bread|racao|ração|ration)\b/i.test(item.name)
-          || Boolean(item.flags?.["symbaroum-ind-resources"]?.isRation)
-          || Boolean(safeCall(() => IndResourcesIntegration.api?.rations?.isRation?.(item)));
-        if (isRation && IndResourcesIntegration.api?.rations?.consumeDay) {
-          const res = await IndResourcesIntegration.api.rations.consumeDay(actor, item);
-          void this.render();
-          return res;
-        }
-        if (typeof item.roll === "function") return item.roll();
-        if (typeof item.use === "function") return item.use();
-        if (typeof item.displayCard === "function") return item.displayCard();
-        return ActorService.openItem(actor, element.dataset.itemId);
+        const res = await IndResourcesIntegration.useItem(actor, item);
+        void this.render();
+        return res;
       }
       if (action === "roll-weapon") {
         return this.#rollWeapon(actor, element.dataset.itemId);
@@ -3752,14 +3755,27 @@ function simplifiedActionContext(actor, { canRollActor = false, drawnWeapons = n
       continue;
     }
 
-    if (canUsePowerItem(item)) {
+    if (IndResourcesIntegration.isWeaponItem(item) || IndResourcesIntegration.isArmorItem?.(item)) {
+      continue;
+    }
+    if (isAmmoItem(item) || isQuiverItem(item)) {
+      continue;
+    }
+
+    if (canUsePowerItem(item) || IndResourcesIntegration.isUsableItem(item)) {
+      const uses = resolveItemUses(item, actor);
+      const rawQty = item.system?.number ?? item.system?.quantity ?? 1;
+      const quantity = Number.isFinite(Number(rawQty)) ? Math.max(0, Math.trunc(Number(rawQty))) : 1;
       otherItems.push({
         id: item.id,
         name: item.name,
         img: item.img || "icons/svg/item-bag.svg",
         uuid: item.uuid || "",
+        quantity,
+        hasMultiple: quantity > 1,
+        uses,
         canUse: canRollActor,
-        actionLabel: null
+        actionLabel: uses ?? (quantity > 1 ? `${quantity}x` : null)
       });
     }
   }

@@ -1,6 +1,6 @@
 {
   "name": "symbaroum-hud",
-  "version": "0.1.85",
+  "version": "0.1.86",
   "description": "HUD independente para o sistema Symbaroum no Foundry VTT.",
   "private": true,
   "type": "module",

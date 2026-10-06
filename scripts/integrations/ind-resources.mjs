@@ -353,6 +353,88 @@ export class IndResourcesIntegration {
     return ["ritualista", "ritualist"].includes(normalizeText(item.name));
   }
 
+  static isHerbalCureItem(item) {
+    if (!item) return false;
+    const checker = this.api?.isHerbalCure;
+    if (typeof checker === "function") {
+      return Boolean(safeCall(() => checker(item)));
+    }
+    const reference = normalizeText(item.system?.reference).replace(/[\s_-]+/g, "");
+    const name = normalizeText(item.name);
+    return reference === "herbalcure" || name === "cura herbal" || name === "herbal cure";
+  }
+
+  static isRationItem(item) {
+    if (!item) return false;
+    const name = normalizeText(item.name);
+    return /\b(pao|waybread|travel\s+bread|racao|ration)\b/i.test(name)
+      || Boolean(item.flags?.["symbaroum-ind-resources"]?.isRation)
+      || Boolean(safeCall(() => this.api?.rations?.isRation?.(item)));
+  }
+
+  static isUsableItem(item) {
+    if (!item) return false;
+    if (isWeapon(item) || isArmor(item)) return false;
+    if (typeof this.api?.isUsableItem === "function") {
+      const isUsable = safeCall(() => this.api.isUsableItem(item));
+      if (isUsable) return true;
+    }
+    if (this.isHerbalCureItem(item)) return true;
+    if (this.isRationItem(item)) return true;
+    if (Boolean(item.flags?.["symbaroum-ind-resources"]?.usable)) return true;
+    if (Boolean(item.flags?.["symbaroum-ind-resources"]?.isUsable)) return true;
+    if (Boolean(item.system?.isUsable)) return true;
+    if (typeof item.use === "function" || typeof item.roll === "function") return true;
+    return false;
+  }
+
+  static async useItem(actor, itemIdOrItem) {
+    if (!actor || !itemIdOrItem) return null;
+    const item = typeof itemIdOrItem === "string"
+      ? actorItems(actor).find((candidate) => candidate?.id === itemIdOrItem)
+      : itemIdOrItem;
+    if (!item) return null;
+
+    // 1. Ind Resources explicit useItem API
+    if (typeof this.api?.useItem === "function") {
+      const res = await safeCall(() => this.api.useItem(actor, item));
+      if (res !== undefined && res !== null) return res;
+    }
+
+    // 2. Herbal Cure automation
+    if (this.isHerbalCureItem(item)) {
+      if (typeof this.api?.herbalCure?.use === "function") {
+        return this.api.herbalCure.use(actor, item);
+      }
+      const globalService = globalThis.HerbalCureService ?? globalThis.game?.tenebreResources?.herbalCure;
+      if (typeof globalService?.use === "function") {
+        return globalService.use(actor, item);
+      }
+      try {
+        const module = await import("/modules/symbaroum-ind-resources/scripts/herbal-cure.mjs");
+        if (typeof module?.HerbalCureService?.use === "function") {
+          return await module.HerbalCureService.use(actor, item);
+        }
+      } catch (err) {
+        console.warn("SymbaroumHUD | Could not import HerbalCureService dynamically:", err);
+      }
+    }
+
+    // 3. Rations automation
+    if (this.isRationItem(item)) {
+      if (typeof this.api?.rations?.consumeDay === "function") {
+        return this.api.rations.consumeDay(actor, item);
+      }
+    }
+
+    // 4. Native item methods fallback
+    if (typeof item.roll === "function") return item.roll();
+    if (typeof item.use === "function") return item.use();
+    if (typeof item.displayCard === "function") return item.displayCard();
+
+    return item.sheet?.render?.(true);
+  }
+
   static async storeInContainer(actor, itemId, containerId) {
     const containers = this.api?.containers;
     if (
@@ -394,6 +476,10 @@ export class IndResourcesIntegration {
 
   static isWeaponItem(item) {
     return isWeapon(item);
+  }
+
+  static isArmorItem(item) {
+    return isArmor(item);
   }
 
   static async importWeaponItem(actor, dropData) {

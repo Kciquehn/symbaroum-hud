@@ -378,18 +378,21 @@
                     {{#each simplifiedActions.otherItems}}
                       <div class="symbaroum-hud-simplified-item-row" data-item-id="{{id}}">
                         <button type="button" class="symbaroum-hud-simplified-item-img-btn"
-                          data-action="use-ability" data-item-id="{{id}}"
+                          data-action="use-item" data-item-id="{{id}}"
                           data-item-uuid="{{uuid}}"
-                          data-tooltip="{{name}}"
+                          data-tooltip="{{name}}{{#if actionLabel}} ({{actionLabel}}){{/if}}"
                           aria-label="{{name}}">
                           <img src="{{img}}" alt="{{name}}">
                         </button>
                         <button type="button" class="symbaroum-hud-simplified-item-name-btn"
-                          data-action="use-ability" data-item-id="{{id}}"
+                          data-action="use-item" data-item-id="{{id}}"
                           data-item-uuid="{{uuid}}"
-                          data-tooltip="{{name}}"
+                          data-tooltip="{{name}}{{#if actionLabel}} ({{actionLabel}}){{/if}}"
                           aria-label="{{name}}">
                           <span class="symbaroum-hud-simplified-item-name">{{name}}</span>
+                          {{#if actionLabel}}
+                            <span class="symbaroum-hud-simplified-item-badge">{{actionLabel}}</span>
+                          {{/if}}
                         </button>
                       </div>
                     {{/each}}

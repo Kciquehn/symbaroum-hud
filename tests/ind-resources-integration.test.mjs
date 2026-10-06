@@ -1339,3 +1339,52 @@ test("returns maneuvers list and executes maneuver through Ind Resources", async
   assert.equal(res, "maneuver");
   assert.deepEqual(maneuverRolls.at(-1), ["actor-test", "disarm"]);
 });
+
+test("identifies usable items and armor items correctly", () => {
+  const armor = { id: "armor-1", name: "Armadura de Couro", type: "armor", system: { isArmor: true } };
+  const weapon = { id: "weapon-1", name: "Espada Longa", type: "weapon", system: { isWeapon: true } };
+  const herbalCure = { id: "cure-1", name: "Cura herbal", type: "equipment" };
+  const ration = { id: "ration-1", name: "Ração de viagem", type: "equipment" };
+  const flaggedItem = { id: "flagged-1", name: "Elixir", type: "equipment", flags: { "symbaroum-ind-resources": { isUsable: true } } };
+  const ordinaryItem = { id: "ord-1", name: "Corda", type: "equipment" };
+
+  assert.equal(IndResourcesIntegration.isArmorItem(armor), true);
+  assert.equal(IndResourcesIntegration.isArmorItem(weapon), false);
+
+  assert.equal(IndResourcesIntegration.isUsableItem(armor), false);
+  assert.equal(IndResourcesIntegration.isUsableItem(weapon), false);
+  assert.equal(IndResourcesIntegration.isUsableItem(herbalCure), true);
+  assert.equal(IndResourcesIntegration.isUsableItem(ration), true);
+  assert.equal(IndResourcesIntegration.isUsableItem(flaggedItem), true);
+  assert.equal(IndResourcesIntegration.isUsableItem(ordinaryItem), false);
+});
+
+test("uses usable items delegating to appropriate service", async () => {
+  const actor = {
+    id: "actor-hero",
+    items: new Map([
+      ["cure-1", { id: "cure-1", name: "Cura herbal", type: "equipment" }],
+      ["ration-1", { id: "ration-1", name: "Ração de viagem", type: "equipment" }],
+      ["rollable-1", { id: "rollable-1", name: "Frasco misterioso", roll: async () => "rolled!" }]
+    ])
+  };
+
+  const usedHerbalCures = [];
+  globalThis.game.tenebreResources.herbalCure = {
+    use: async (act, itm) => {
+      usedHerbalCures.push([act.id, itm.id]);
+      return "herbal-cure-used";
+    }
+  };
+
+  const cureResult = await IndResourcesIntegration.useItem(actor, "cure-1");
+  assert.equal(cureResult, "herbal-cure-used");
+  assert.deepEqual(usedHerbalCures, [["actor-hero", "cure-1"]]);
+
+  const rationResult = await IndResourcesIntegration.useItem(actor, "ration-1");
+  assert.equal(rationResult, "rations");
+
+  const rollResult = await IndResourcesIntegration.useItem(actor, "rollable-1");
+  assert.equal(rollResult, "rolled!");
+});
+
