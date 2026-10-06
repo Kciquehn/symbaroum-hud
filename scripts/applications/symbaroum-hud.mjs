@@ -40,6 +40,12 @@ import { itemHasTaxonomyTag } from "../services/item-taxonomy-service.mjs";
 
 const ApplicationV2 = foundry.applications.api.ApplicationV2;
 const HOTBAR_CONTROL_ACTIONS = new Set(["mute", "menu"]);
+const SIMPLIFIED_ACTIONS_PANEL_PERSISTENT_ACTIONS = new Set([
+  "close-simplified-actions",
+  "show-maneuver-info",
+  "draw-weapon",
+  "sheathe-weapon"
+]);
 const CONTROL_TOOLTIP_DELAY_MS = 800;
 const IND_RESOURCES_CONTAINER_DRAG_TYPE = "application/x-tenebre-container-item";
 const ATTRIBUTE_ORDER = [
@@ -2094,6 +2100,15 @@ export class SymbaroumHud extends ApplicationV2 {
 
       const actor = this.#actor;
       if (!actor) return;
+
+      if (
+        this.#simplifiedActionsOpen
+        && !SIMPLIFIED_ACTIONS_PANEL_PERSISTENT_ACTIONS.has(action)
+        && element?.closest?.(".symbaroum-hud-simplified-actions-panel")
+      ) {
+        this.#simplifiedActionsOpen = false;
+        void this.render();
+      }
 
       if (action === "toggle-actor-picker") {
         const choices = game.user?.isGM ? [] : ActorService.ownedActors(actor);

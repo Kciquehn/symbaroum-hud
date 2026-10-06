@@ -527,6 +527,12 @@ test("simplified HUD info bar chips are sized equally and aligned with action bu
   assert.match(css, /#symbaroum-hud button\.symbaroum-hud-simplified-info-chip\s*\{[^}]*width:\s*100%/);
 });
 
+test("simplified HUD actions panel closes automatically when an action is executed from inside it", async () => {
+  const fs = await import("node:fs");
+  const path = await import("node:path");
+  const appJs = fs.readFileSync(path.resolve("scripts/applications/symbaroum-hud.mjs"), "utf8");
 
-
-
+  assert.match(appJs, /SIMPLIFIED_ACTIONS_PANEL_PERSISTENT_ACTIONS/);
+  assert.match(appJs, /this\.#simplifiedActionsOpen\s*=\s*false;\s*void\s+this\.render\(\);/);
+  assert.match(appJs, /element\?\.closest\?\.\(["']\.symbaroum-hud-simplified-actions-panel["']\)/);
+});
