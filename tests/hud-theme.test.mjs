@@ -525,6 +525,8 @@ test("simplified HUD info bar chips are sized equally and aligned with action bu
 
   assert.match(css, /#symbaroum-hud \.symbaroum-hud-simplified-info-bar\s*\{[^}]*grid-template-columns:\s*repeat\(2,\s*calc\(\(100% - 12px\) \/ 3\)\)/);
   assert.match(css, /#symbaroum-hud button\.symbaroum-hud-simplified-info-chip\s*\{[^}]*width:\s*100%/);
+  assert.match(css, /#symbaroum-hud button\.symbaroum-hud-simplified-info-chip\s*\{[^}]*justify-content:\s*flex-start/);
+  assert.match(css, /#symbaroum-hud button\.symbaroum-hud-simplified-info-chip \.symbaroum-hud-simplified-chip-header\s*\{[^}]*width:\s*16px/);
 });
 
 test("simplified HUD actions panel closes automatically when an action is executed from inside it", async () => {
@@ -536,3 +538,18 @@ test("simplified HUD actions panel closes automatically when an action is execut
   assert.match(appJs, /this\.#simplifiedActionsOpen\s*=\s*false;\s*void\s+this\.render\(\);/);
   assert.match(appJs, /element\?\.closest\?\.\(["']\.symbaroum-hud-simplified-actions-panel["']\)/);
 });
+
+test("simplified HUD minimal mode scales down hotbar action slots and controls", async () => {
+  const fs = await import("node:fs");
+  const path = await import("node:path");
+  const css = fs.readFileSync(path.resolve("styles/symbaroum-hud.css"), "utf8");
+  const appJs = fs.readFileSync(path.resolve("scripts/applications/symbaroum-hud.mjs"), "utf8");
+
+  assert.match(appJs, /symbaroum-hud--simplified-minimal/);
+  assert.match(appJs, /symbaroum-hud-hotbar--minimal/);
+  assert.match(css, /#symbaroum-hud \.symbaroum-hud-simplified\[data-simplified-mode="minimal"\] #hotbar[\s\S]*--hotbar-size:\s*40px/);
+  assert.match(css, /#symbaroum-hud \.symbaroum-hud-simplified\[data-simplified-mode="minimal"\] #hotbar #action-bar \.slot[\s\S]*width:\s*40px/);
+  assert.match(css, /#symbaroum-hud \.symbaroum-hud-simplified\[data-simplified-mode="minimal"\] #hotbar #action-bar \.slot[\s\S]*height:\s*40px/);
+  assert.match(css, /#symbaroum-hud \.symbaroum-hud-simplified\[data-simplified-mode="minimal"\] #hotbar #hotbar-controls-right button\.ui-control[\s\S]*width:\s*19px/);
+});
+

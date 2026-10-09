@@ -7,7 +7,6 @@ import {
   registerHotbarShortcuts
 } from "./integrations/hotbar-shortcuts.mjs";
 import { ContextService } from "./services/context-service.mjs";
-import { registerCharacterCreatorHooks } from "./services/character-creator-service.mjs";
 import { HotbarShortcutService } from "./services/hotbar-shortcut-service.mjs";
 import {
   CharacterPdfExportService,
@@ -28,7 +27,6 @@ Hooks.once("setup", () => {
   hud = new SymbaroumHud();
   HotbarShortcutService.setActorResolver(() => hud?.actor ?? null);
   registerHotbarShortcuts();
-  registerCharacterCreatorHooks();
   registerCharacterPdfExportHooks();
   registerRefreshHooks(hud);
   registerSceneControlsHooks();

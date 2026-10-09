@@ -1,6 +1,10 @@
 # Changelog
 
-## 0.1.79
+## 0.1.87
+
+- Reduz proporcionalmente a barra de ações rápidas (hotbar de macros) do Foundry quando o HUD simplificado estiver no modo mínimo (slots de 40px, gap de 3px, controles laterais ajustados para 19px e numeração de atalhos em 8.5px).
+- Alinha uniformemente os botões de informações menores (Defesa, Armadura, Rações e Aljava) com padding e ícones consistentes.
+- Remove o Criador de Fichas e limpa todos os arquivos e dependências associados.
 
 - Alinha os botões de informações menores (Defesa, Armadura, Rações e Aljava) para terem exatamente a mesma largura e altura uniforme.
 - Alinha perfeitamente as colunas das informações menores com os botões de ação abaixo ("Ações" e "Inventário"), eliminando qualquer desalinhamento ou degrau visual.

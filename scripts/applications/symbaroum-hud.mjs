@@ -23,7 +23,6 @@ import {
   hasPowerLevels,
   isTraitLikeItem
 } from "../services/actor-service.mjs";
-import { CharacterCreatorService } from "../services/character-creator-service.mjs";
 import { defenseDisplayValue } from "../services/defense-service.mjs";
 import { ritualistProgress } from "../services/ritual-service.mjs";
 import {
@@ -76,6 +75,7 @@ const ABILITY_LEVELS = Object.freeze([
 const DEFAULT_ABILITY_TAB = "description";
 const FALLBACK_RITUAL_IMAGE = "systems/symbaroum/asset/image/ritual.png";
 const FALLBACK_RITUALIST_IMAGE = "systems/symbaroum/asset/image/ability.png";
+const FALLBACK_ABILITY_IMAGE = "systems/symbaroum/asset/image/ability.png";
 const ACTION_LABEL_KEYS = Object.freeze({
   A: "ACTION.ACTIVE",
   F: "ACTION.FREE",
@@ -461,9 +461,13 @@ export class SymbaroumHud extends ApplicationV2 {
       content.querySelector(".symbaroum-hud-hotbar-controls")?.replaceWith(stableHotbarControls);
     }
     const currentTheme = getTheme();
+    const simplifiedMode = getSimplifiedHudMode();
     content.dataset.symbaTheme = currentTheme;
+    content.dataset.simplifiedMode = currentTheme === THEMES.SIMPLIFIED ? simplifiedMode : "";
     content.classList.toggle("symbaroum-hud--classic", currentTheme === THEMES.CLASSIC);
     content.classList.toggle("symbaroum-hud--simplified", currentTheme === THEMES.SIMPLIFIED);
+    content.classList.toggle("symbaroum-hud--simplified-minimal", currentTheme === THEMES.SIMPLIFIED && simplifiedMode === SIMPLIFIED_HUD_MODES.MINIMAL);
+    content.classList.toggle("symbaroum-hud--simplified-hidden", currentTheme === THEMES.SIMPLIFIED && simplifiedMode === SIMPLIFIED_HUD_MODES.HIDDEN);
     this.#updateHostilityTint(content);
     this.#dockHotbar(content, hotbar);
     this.#activateListeners(content);
@@ -1918,6 +1922,14 @@ export class SymbaroumHud extends ApplicationV2 {
     }
 
     slot.appendChild(hotbar);
+    const isSimplified = getTheme() === THEMES.SIMPLIFIED;
+    const isMinimal = isSimplified && getSimplifiedHudMode() === SIMPLIFIED_HUD_MODES.MINIMAL;
+    hotbar.classList.toggle("symbaroum-hud-hotbar--minimal", isMinimal);
+    if (isMinimal) {
+      hotbar.dataset.symbaroumHudMode = "minimal";
+    } else {
+      delete hotbar.dataset.symbaroumHudMode;
+    }
     for (const staleToggle of hotbar.querySelectorAll(".symbaroum-hud-collapse-toggle")) {
       staleToggle.remove();
     }
@@ -1944,6 +1956,8 @@ export class SymbaroumHud extends ApplicationV2 {
       this.#hotbarAnchor = null;
       return;
     }
+    hotbar.classList.remove("symbaroum-hud-hotbar--minimal");
+    delete hotbar.dataset.symbaroumHudMode;
 
     if (this.#hotbarAnchor?.parentNode) {
       this.#hotbarAnchor.parentNode.insertBefore(hotbar, this.#hotbarAnchor.nextSibling);
@@ -3014,25 +3028,72 @@ export class SymbaroumHud extends ApplicationV2 {
     dialog.render(true);
   }
 
-  async #openAddAbilityDialog(actor) {
+  #openAddAbilityDialog(actor) {
     if (!ActorService.canUpdate(actor)) {
       ui.notifications.warn(game.i18n.localize("SYMBAROUMHUD.Notifications.NoPermission"));
       return;
     }
-    const created = await CharacterCreatorService.openAbilityBrowser(actor);
-    if (!created?.length) return null;
-    const ability = created.find((item) => item.type === "ability");
-    if (ability) {
-      this.#selectedAbilityId = ability.id;
-      this.#selectedAbilityTab = DEFAULT_ABILITY_TAB;
+
+    const abilities = ActorService.availableWorldAbilities(actor);
+    if (!abilities.length) {
+      ui.notifications.warn(game.i18n.localize("SYMBAROUMHUD.Notifications.NoAvailableAbilities"));
+      return;
     }
-    this.#abilitiesOpen = true;
-    this.#attacksOpen = false;
-    this.#mysticalPowersOpen = false;
-    this.#ritualsOpen = false;
-    this.#storageOpen = false;
-    this.#traitsOpen = false;
-    return this.render();
+
+    const entries = abilities.map((item, index) => `
+      <label class="symbaroum-hud-ability-picker-entry" data-search-index="${escapeHtml(`${item.name ?? ""} ${item.system?.reference ?? ""}`.toLocaleLowerCase())}">
+        <input type="radio" name="abilityId" value="${escapeHtml(item.id)}" ${index === 0 ? "checked" : ""}>
+        <img src="${escapeHtml(item.img ?? FALLBACK_ABILITY_IMAGE)}" alt="">
+        <span>
+          <strong>${escapeHtml(item.name)}</strong>
+          ${item.system?.reference ? `<small>${escapeHtml(item.system.reference)}</small>` : ""}
+        </span>
+      </label>
+    `).join("");
+    const content = `
+      <form class="symbaroum-hud-ability-picker">
+        <p>${game.i18n.localize("SYMBAROUMHUD.Abilities.AddPrompt")}</p>
+        <label class="symbaroum-hud-ability-picker-search">
+          <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+          <input type="search" name="abilitySearch" autocomplete="off" placeholder="${escapeHtml(game.i18n.localize("SYMBAROUMHUD.Abilities.Search"))}">
+        </label>
+        <div class="symbaroum-hud-ability-picker-list">${entries}</div>
+        <p class="symbaroum-hud-ability-picker-empty" hidden>${game.i18n.localize("SYMBAROUMHUD.Abilities.NoSearchResults")}</p>
+      </form>
+    `;
+
+    const dialog = new Dialog({
+      title: game.i18n.localize("SYMBAROUMHUD.Abilities.Add"),
+      content,
+      buttons: {
+        ok: {
+          label: game.i18n.localize("SYMBAROUMHUD.Abilities.Buy"),
+          callback: async (html) => {
+            const root = html?.[0] ?? html;
+            const itemId = root?.querySelector?.("input[name='abilityId']:checked")?.value;
+            const created = await ActorService.buyWorldAbility(actor, itemId);
+            if (created) {
+              this.#selectedAbilityId = created.id;
+              this.#selectedAbilityTab = DEFAULT_ABILITY_TAB;
+              this.#abilitiesOpen = true;
+              this.#attacksOpen = false;
+              this.#mysticalPowersOpen = false;
+              this.#ritualsOpen = false;
+              this.#storageOpen = false;
+              this.#traitsOpen = false;
+              return this.render();
+            }
+            return null;
+          }
+        },
+        cancel: {
+          label: game.i18n.localize("Cancel")
+        }
+      },
+      default: "ok",
+      render: setupAbilityPickerSearch
+    });
+    dialog.render(true);
   }
 
   #openManeuverDialog(actor) {
