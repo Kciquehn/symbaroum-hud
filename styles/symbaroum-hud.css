@@ -4769,6 +4769,27 @@ body:has(#symbaroum-hud .symbaroum-hud-ammo-recovery-slot) > #tenebre-ammo-hud-l
   padding: 3px 6px;
 }
 
+#symbaroum-hud.symbaroum-hud--simplified-minimal .symbaroum-hud-simplified-sidebar,
+#symbaroum-hud .symbaroum-hud-simplified[data-simplified-mode="minimal"] .symbaroum-hud-simplified-sidebar,
+#symbaroum-hud[data-simplified-mode="minimal"] .symbaroum-hud-simplified-sidebar {
+  min-height: 153px !important;
+}
+
+#symbaroum-hud.symbaroum-hud--simplified-minimal .symbaroum-hud-simplified-portrait-card,
+#symbaroum-hud .symbaroum-hud-simplified[data-simplified-mode="minimal"] .symbaroum-hud-simplified-portrait-card,
+#symbaroum-hud[data-simplified-mode="minimal"] .symbaroum-hud-simplified-portrait-card {
+  width: 128px !important;
+  min-width: 128px !important;
+  height: 153px !important;
+  min-height: 153px !important;
+}
+
+#symbaroum-hud.symbaroum-hud--simplified-minimal .symbaroum-hud-simplified-main-column,
+#symbaroum-hud .symbaroum-hud-simplified[data-simplified-mode="minimal"] .symbaroum-hud-simplified-main-column,
+#symbaroum-hud[data-simplified-mode="minimal"] .symbaroum-hud-simplified-main-column {
+  min-height: 153px !important;
+}
+
 #symbaroum-hud .symbaroum-hud-simplified-deck {
   display: flex;
   flex-direction: column;

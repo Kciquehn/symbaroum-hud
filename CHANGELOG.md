@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.88
+
+- Reduz e alinha a altura da imagem e do card do retrato para 153px no modo mínimo, nivelando perfeitamente a altura total do HUD com o bloco de atributos e botões.
+- Ajusta a largura proporcional do retrato para 128px no modo mínimo, preservando a proporção (~5:6) da ilustração sem distorção.
+- Nivela o `min-height` da sidebar lateral e da coluna principal para 153px no modo mínimo.
+
 ## 0.1.87
 
 - Reduz proporcionalmente a barra de ações rápidas (hotbar de macros) do Foundry quando o HUD simplificado estiver no modo mínimo (slots de 40px, gap de 3px, controles laterais ajustados para 19px e numeração de atalhos em 8.5px).

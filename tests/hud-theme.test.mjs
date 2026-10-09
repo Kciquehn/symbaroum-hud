@@ -553,3 +553,15 @@ test("simplified HUD minimal mode scales down hotbar action slots and controls",
   assert.match(css, /#symbaroum-hud \.symbaroum-hud-simplified\[data-simplified-mode="minimal"\] #hotbar #hotbar-controls-right button\.ui-control[\s\S]*width:\s*19px/);
 });
 
+test("simplified HUD minimal mode scales down portrait image card and columns to match reduced height", async () => {
+  const fs = await import("node:fs");
+  const path = await import("node:path");
+  const css = fs.readFileSync(path.resolve("styles/symbaroum-hud.css"), "utf8");
+
+  assert.match(css, /#symbaroum-hud \.symbaroum-hud-simplified\[data-simplified-mode="minimal"\] \.symbaroum-hud-simplified-portrait-card[\s\S]*height:\s*153px/);
+  assert.match(css, /#symbaroum-hud \.symbaroum-hud-simplified\[data-simplified-mode="minimal"\] \.symbaroum-hud-simplified-portrait-card[\s\S]*width:\s*128px/);
+  assert.match(css, /#symbaroum-hud \.symbaroum-hud-simplified\[data-simplified-mode="minimal"\] \.symbaroum-hud-simplified-sidebar[\s\S]*min-height:\s*153px/);
+  assert.match(css, /#symbaroum-hud \.symbaroum-hud-simplified\[data-simplified-mode="minimal"\] \.symbaroum-hud-simplified-main-column[\s\S]*min-height:\s*153px/);
+});
+
+
