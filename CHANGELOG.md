@@ -1,6 +1,6 @@
 # Changelog
 
-## Não publicado — auditoria de 19/10/2026
+## 0.1.89
 
 - Corrige as seis pendências de loja/contratos: autoridade única no mestre, validação administrativa, preservação de registros, consumo concorrente, garantia/diagnóstico de essenciais e documentos individuais de armadura.
 - Compartilha a fila por ator entre compras e contratos, deduplica pedidos repetidos e rejeita identidades e preços forjados. Habilita o canal nativo do módulo, sem nova dependência.
