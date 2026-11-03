@@ -63,3 +63,12 @@ test("refresh hooks track assigned-character and actor-list changes", () => {
   listeners.get("deleteActor")({ id: "companion" });
   assert.equal(renders, 3);
 });
+
+test("permission and token actor changes invalidate the current selection", () => {
+  let renders = 0;
+  registerRefreshHooks({ actor: { uuid: "Actor.a" }, render: async () => { renders++; } });
+  listeners.get("updateActor")({ uuid: "Actor.other" }, { ownership: { user: 2 } });
+  listeners.get("updateToken")({ actor: { uuid: "Actor.other" } }, { actorId: "a" });
+  listeners.get("deleteToken")();
+  assert.equal(renders, 3);
+});

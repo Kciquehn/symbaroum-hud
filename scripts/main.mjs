@@ -8,6 +8,8 @@ import {
 } from "./integrations/hotbar-shortcuts.mjs";
 import { ContextService } from "./services/context-service.mjs";
 import { HotbarShortcutService } from "./services/hotbar-shortcut-service.mjs";
+import { actorTransactions } from "./services/actor-transaction-service.mjs";
+import "./services/shop-service.mjs";
 import {
   CharacterPdfExportService,
   registerCharacterPdfExportHooks
@@ -51,6 +53,7 @@ Hooks.once("ready", () => {
     return;
   }
 
+  actorTransactions.listen();
   applyPlayerListVisibility();
   applyHudTheme();
   void hud.render();

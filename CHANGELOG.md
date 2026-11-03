@@ -1,5 +1,17 @@
 # Changelog
 
+## Não publicado — auditoria de 19/10/2026
+
+- Corrige as seis pendências de loja/contratos: autoridade única no mestre, validação administrativa, preservação de registros, consumo concorrente, garantia/diagnóstico de essenciais e documentos individuais de armadura.
+- Compartilha a fila por ator entre compras e contratos, deduplica pedidos repetidos e rejeita identidades e preços forjados. Habilita o canal nativo do módulo, sem nova dependência.
+- Trata cancelamento de pagamento e criação parcial/cancelada, impede consumo de contratos expirados ou direitos permanentes e registra serviços personalizados nas configurações mundiais.
+- Corrige seleção após perda de permissão, Corrupção de longo prazo, proteção preparada de armadura e custo de rituais adicionais.
+- Respeita a automação de morte do Ind Resources e o cancelamento de uso de itens.
+- Corrige persistência, concorrência local e destino por ator dos atalhos; poderes sem execução abrem a ficha.
+- Corrige recarga/retirada da aljava, destinos de drag-and-drop, permissão de consulta e escape de textos dos menus.
+- Delega o descarte à transferência do Item Piles e preserva Defesa na exportação PDF sem armadura.
+- Atualiza a documentação ao escopo atual e registra pendências e validações em `AUDIT.md`.
+
 ## 0.1.88
 
 - Reduz e alinha a altura da imagem e do card do retrato para 153px no modo mínimo, nivelando perfeitamente a altura total do HUD com o bloco de atributos e botões.

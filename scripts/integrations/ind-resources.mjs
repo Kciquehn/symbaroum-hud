@@ -398,7 +398,7 @@ export class IndResourcesIntegration {
     // 1. Ind Resources explicit useItem API
     if (typeof this.api?.useItem === "function") {
       const res = await safeCall(() => this.api.useItem(actor, item));
-      if (res !== undefined && res !== null) return res;
+      if (res !== undefined && res !== null || this.api.isUsableItem?.(item)) return res;
     }
 
     // 2. Herbal Cure automation

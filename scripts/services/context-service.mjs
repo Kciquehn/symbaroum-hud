@@ -34,8 +34,9 @@ export class ContextService {
       },
       corruption: {
         temporary: number(corruption.temporary),
+        longterm: number(corruption.longterm),
         permanent: number(corruption.permanent),
-        total: number(corruption.value, number(corruption.temporary) + number(corruption.permanent)),
+        total: number(corruption.value, number(corruption.temporary) + number(corruption.longterm) + number(corruption.permanent)),
         max: number(corruption.max),
         threshold: number(corruption.threshold)
       },

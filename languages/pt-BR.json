@@ -403,7 +403,7 @@
     },
     "Resources": {
       "Toughness": "Vitalidade",
-      "Corruption": "Corrupção temporária + permanente"
+      "Corruption": "Corrupção temporária + longo prazo + permanente"
     },
     "Info": {
       "Title": "Informações do personagem",
@@ -760,6 +760,7 @@
       "RitualUnavailable": "Este ritual não está disponível para este personagem.",
       "NoAvailableRituals": "Nenhum ritual disponível no mundo para este personagem.",
       "NoAvailableExperience": "Este personagem não possui XP disponível para gastar.",
+      "DeathTestUseChat": "A automação de morte está ativa. Use o Teste de Morte autorizado no chat; o mestre pode gerar a solicitação para este personagem.",
       "CorruptionMaximumReached": "Este personagem já atingiu o máximo de corrupção.",
       "ActionFailed": "Não foi possível executar esta ação pelo HUD."
     },

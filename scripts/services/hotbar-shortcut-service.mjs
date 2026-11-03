@@ -1,13 +1,20 @@
-import { MODULE_ID } from "../constants.mjs";
+import { MODULE_ID, SETTINGS } from "../constants.mjs";
 import { assignHotbarMacro } from "../compat/hotbar.mjs";
-import { ActorService } from "./actor-service.mjs";
+import { ActorService, canUsePowerItem } from "./actor-service.mjs";
 
 const FLAG = "hotbarShortcuts";
 const FALLBACK_ICON = "icons/svg/item-bag.svg";
-const FLAG_VERSION = 2;
+const FLAG_VERSION = 3;
 const GLOBAL_ACTOR_KEY = "__global__";
 
 let actorResolver = () => null;
+let pendingMutation = Promise.resolve();
+
+function enqueueMutation(operation) {
+  const result = pendingMutation.then(operation);
+  pendingMutation = result.catch(() => {});
+  return result;
+}
 
 export const HOTBAR_SHORTCUT_DRAG_TYPE = `${MODULE_ID}.HotbarShortcut`;
 
@@ -21,7 +28,7 @@ export class HotbarShortcutService {
   }
 
   static isEnabled(user = game.user) {
-    return !user?.isGM;
+    return !user?.isGM && game.settings?.get?.(MODULE_ID, SETTINGS.ENABLED) !== false;
   }
 
   static all(user = game.user, { actorKey: key = this.activeActorKey() } = {}) {
@@ -49,36 +56,40 @@ export class HotbarShortcutService {
   static async assignDocumentDrop(data, slot) {
     const key = slotKey(slot);
     if (!key || !this.acceptsDocumentDrop(data)) return;
-
-    const document = await fromUuid(data.uuid);
-    if (!document || !canObserve(document)) {
-      return notify("SYMBAROUMHUD.Notifications.ShortcutUnavailable");
-    }
-
     const actorKey = this.activeActorKey();
-    const shortcuts = { ...this.all(game.user, { actorKey }) };
-    shortcuts[key] = shortcutData(document, data);
-    await assignHotbarMacro(game.user, null, Number(key));
-    await this.#persist(shortcuts, { actorKey });
+
+    return enqueueMutation(async () => {
+      const document = await fromUuid(data.uuid);
+      if (!document || !canObserve(document)) {
+        return notify("SYMBAROUMHUD.Notifications.ShortcutUnavailable");
+      }
+
+      const shortcuts = { ...this.all(game.user, { actorKey }) };
+      shortcuts[key] = shortcutData(document, data);
+      await assignHotbarMacro(game.user, null, Number(key));
+      await this.#persist(shortcuts, { actorKey });
+    });
   }
 
   static async assignMacroDrop(data, slot) {
     const key = slotKey(slot);
     if (!this.isEnabled() || !key || data?.type !== "Macro") return;
-
-    const MacroClass = foundry.documents.Macro.implementation;
-    let macro = await fromUuid(data.uuid);
-    if (!macro || macro.documentName !== "Macro") return;
-    if (!game.macros.has(macro.id)) {
-      macro = await MacroClass.create(macro.toObject());
-    }
-
     const actorKey = this.activeActorKey();
-    const shortcuts = { ...this.all(game.user, { actorKey }) };
-    delete shortcuts[key];
-    await this.#persist(shortcuts, { actorKey, render: false });
-    await assignHotbarMacro(game.user, macro, Number(key), { fromSlot: data.slot });
-    await this.#render();
+
+    return enqueueMutation(async () => {
+      const MacroClass = foundry.documents.Macro.implementation;
+      let macro = await fromUuid(data.uuid);
+      if (!macro || macro.documentName !== "Macro") return;
+      if (!game.macros.has(macro.id)) {
+        macro = await MacroClass.create(macro.toObject());
+      }
+
+      const shortcuts = { ...this.all(game.user, { actorKey }) };
+      delete shortcuts[key];
+      await this.#persist(shortcuts, { actorKey, render: false });
+      await assignHotbarMacro(game.user, macro, Number(key), { fromSlot: data.slot });
+      await this.#render();
+    });
   }
 
   static async move(sourceSlot, targetSlot, {
@@ -88,26 +99,28 @@ export class HotbarShortcutService {
     const targetKey = slotKey(targetSlot);
     if (!sourceKey || !targetKey || sourceKey === targetKey) return;
 
-    const shortcuts = { ...this.all(game.user, { actorKey: key }) };
-    const source = shortcuts[sourceKey];
-    if (!source) return;
+    return enqueueMutation(async () => {
+      const shortcuts = { ...this.all(game.user, { actorKey: key }) };
+      const source = shortcuts[sourceKey];
+      if (!source) return;
 
-    const targetShortcut = shortcuts[targetKey];
-    if (targetShortcut) shortcuts[sourceKey] = targetShortcut;
-    else delete shortcuts[sourceKey];
-    shortcuts[targetKey] = source;
+      const targetShortcut = shortcuts[targetKey];
+      if (targetShortcut) shortcuts[sourceKey] = targetShortcut;
+      else delete shortcuts[sourceKey];
+      shortcuts[targetKey] = source;
 
-    const targetMacroId = game.user.hotbar?.[targetKey];
-    const targetMacro = targetMacroId ? game.macros.get(targetMacroId) : null;
-    if (targetMacro) {
-      await assignHotbarMacro(game.user, targetMacro, Number(sourceKey), {
-        fromSlot: Number(targetKey)
-      });
-    } else {
-      await assignHotbarMacro(game.user, null, Number(targetKey));
-    }
+      const targetMacroId = game.user.hotbar?.[targetKey];
+      const targetMacro = targetMacroId ? game.macros.get(targetMacroId) : null;
+      if (targetMacro) {
+        await assignHotbarMacro(game.user, targetMacro, Number(sourceKey), {
+          fromSlot: Number(targetKey)
+        });
+      } else {
+        await assignHotbarMacro(game.user, null, Number(targetKey));
+      }
 
-    await this.#persist(shortcuts, { actorKey: key });
+      await this.#persist(shortcuts, { actorKey: key });
+    });
   }
 
   static async remove(slot) {
@@ -115,10 +128,12 @@ export class HotbarShortcutService {
     if (!key) return;
 
     const actorKey = this.activeActorKey();
-    const shortcuts = { ...this.all(game.user, { actorKey }) };
-    if (!shortcuts[key]) return;
-    delete shortcuts[key];
-    await this.#persist(shortcuts, { actorKey });
+    return enqueueMutation(async () => {
+      const shortcuts = { ...this.all(game.user, { actorKey }) };
+      if (!shortcuts[key]) return;
+      delete shortcuts[key];
+      await this.#persist(shortcuts, { actorKey });
+    });
   }
 
   static async activate(slot, { openSheet = false } = {}) {
@@ -139,7 +154,7 @@ export class HotbarShortcutService {
     if (document.system?.isArmor) {
       return ActorService.rollArmor(document.actor);
     }
-    if (document.system?.isPower) {
+    if (canUsePowerItem(document)) {
       return ActorService.usePower(document.actor, document.id);
     }
     return this.#openDocument(document);
@@ -170,7 +185,10 @@ export class HotbarShortcutService {
 
     await game.user.setFlag(MODULE_ID, FLAG, {
       version: FLAG_VERSION,
-      actors
+      // Arrays replace atomically. Object keys containing Actor/Token UUIDs are
+      // expanded as paths by Foundry, and omitted object keys are not deleted.
+      entries: Object.entries(actors).map(([actorKey, shortcuts]) => ({ actorKey, shortcuts })),
+      "-=actors": null
     });
     if (render) await this.#render();
   }
@@ -194,14 +212,29 @@ function flagState(value) {
     return { version: FLAG_VERSION, actors: {} };
   }
 
-  if (value.actors && typeof value.actors === "object") {
+  if (Array.isArray(value.entries)) {
     return {
       version: FLAG_VERSION,
-      actors: Object.fromEntries(
-        Object.entries(value.actors)
-          .map(([key, shortcuts]) => [key, shortcutsBySlot(shortcuts)])
-          .filter(([, shortcuts]) => Object.keys(shortcuts).length)
-      )
+      actors: Object.fromEntries(value.entries
+        .filter((entry) => typeof entry?.actorKey === "string")
+        .map((entry) => [entry.actorKey, shortcutsBySlot(entry.shortcuts)]))
+    };
+  }
+
+  if (value.actors && typeof value.actors === "object") {
+    const actors = {};
+    const collect = (node, path = []) => {
+      if (!node || typeof node !== "object") return;
+      const shortcuts = shortcutsBySlot(node);
+      if (Object.keys(shortcuts).length) actors[path.join(".")] = shortcuts;
+      for (const [key, child] of Object.entries(node)) {
+        if (!slotKey(key)) collect(child, [...path, key]);
+      }
+    };
+    collect(value.actors);
+    return {
+      version: FLAG_VERSION,
+      actors
     };
   }
 

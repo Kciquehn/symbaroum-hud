@@ -1,7 +1,9 @@
 import { ActorService } from "./actor-service.mjs";
-import { MODULE_ID } from "../constants.mjs";
+import { MODULE_ID, SETTINGS } from "../constants.mjs";
+import { actorTransactions, ActorTransactionError } from "./actor-transaction-service.mjs";
 import {
   createPurchasedServiceRecords,
+  findServiceDefinition,
   isServiceDefinition,
   normalizeServiceRecords
 } from "./service-contract-service.mjs";
@@ -14,7 +16,6 @@ export const SHOP_MONEY_VALUES = Object.freeze({
   orteg: 1
 });
 
-const PURCHASE_LOCKS = new Map();
 const MAX_CART_QUANTITY = 999;
 const PRICE_UNITS = Object.freeze({
   taler: "thaler",
@@ -127,83 +128,126 @@ export class ShopService {
     storeName = ""
   } = {}) {
     if (!actor || !ActorService.canUpdate(actor)) return purchaseFailure("permission");
-    const normalized = normalizeCartPurchases(purchases, { allowEmpty: complimentary.length > 0 });
-    if (!normalized.ok) return purchaseFailure(normalized.reason);
-    const normalizedComplimentary = normalizeComplimentaryItems(complimentary);
-    if (!normalizedComplimentary.ok) return purchaseFailure(normalizedComplimentary.reason);
-    if (!normalized.lines.length && !normalizedComplimentary.lines.length) {
-      return purchaseFailure("unavailable");
+    if (!Array.isArray(purchases) || !Array.isArray(complimentary)) return purchaseFailure("unavailable");
+    if (!globalThis.game.user.isGM && (balanceOverride != null || complimentary.length || purchases.some((entry) => entry?.priceOverride != null))) {
+      return purchaseFailure("permission");
     }
-    const lockKey = actor.uuid ?? actor.id;
-    if (!lockKey) return purchaseFailure("unavailable");
-
-    return enqueuePurchase(lockKey, async () => {
-      const originalTotal = moneyToOrtegs(actor.system?.money ?? {});
-      const currentTotal = balanceOverride == null
-        ? originalTotal
-        : nonNegativeInteger(balanceOverride);
-      if (currentTotal < normalized.totalOrtegs) {
-        return purchaseFailure("insufficient", {
-          totalOrtegs: normalized.totalOrtegs,
-          balance: moneyFromOrtegs(currentTotal)
-        });
-      }
-
-      const nextTotal = currentTotal - normalized.totalOrtegs;
-      const originalMoney = moneyFromOrtegs(originalTotal);
-      const nextMoney = moneyFromOrtegs(nextTotal);
-      const existingServices = normalizeServiceRecords(
-        actor?.getFlag?.(MODULE_ID, "services") ?? actor?.flags?.[MODULE_ID]?.services
-      );
-      const serviceLines = normalized.lines.filter(({ kind }) => kind === "service");
-      const purchasedServices = createPurchasedServiceRecords(serviceLines, { storeName });
-      const actorUpdate = actorMoneyUpdate(nextMoney);
-      if (purchasedServices.length) {
-        actorUpdate[`flags.${MODULE_ID}.services`] = [...existingServices, ...purchasedServices].slice(-200);
-      }
-      await actor.update(actorUpdate);
-
-      try {
-        const itemLines = normalized.lines.filter(({ kind }) => kind === "item");
-        const itemData = [
-          ...normalizedComplimentary.lines.map(({ source, quantity, reason }) => (
-            complimentaryItemData(source, quantity, reason)
-          )),
-          ...itemLines.map(({ source, price, quantity }) => (
-            purchasedItemData(source, price, quantity)
-          ))
-        ];
-        const created = itemData.length
-          ? await actor.createEmbeddedDocuments("Item", itemData)
-          : [];
-        return Object.freeze({
-          ok: true,
-          reason: null,
-          items: Object.freeze(Array.from(created ?? [])),
-          services: Object.freeze(purchasedServices),
-          lines: normalized.lines,
-          complimentary: normalizedComplimentary.lines,
-          totalOrtegs: normalized.totalOrtegs,
-          balance: nextMoney
-        });
-      } catch (error) {
-        try {
-          await actor.update({
-            ...actorMoneyUpdate(originalMoney),
-            ...(purchasedServices.length
-              ? { [`flags.${MODULE_ID}.services`]: existingServices }
-              : {})
-          });
-        } catch (rollbackError) {
-          console.error("symbaroum-hud | Shop purchase rollback failed.", rollbackError);
-        }
-        throw error;
-      }
-    });
+    try {
+      const result = await actorTransactions.execute(actor, "shop.purchase", {
+        purchases: purchases.map((entry) => ({ ...entry, source: sourceReference(entry?.source) })),
+        complimentary: complimentary.map((entry) => ({ ...entry, source: sourceReference(entry?.source) })),
+        balanceOverride, storeName
+      });
+      if (!result.ok) return result;
+      return Object.freeze({
+        ...result,
+        items: Object.freeze(result.items.map((item) => actor.items?.get?.(item._id ?? item.id) ?? item)),
+        lines: Object.freeze(result.lines.map((line, index) => ({ ...line, source: purchases[index]?.source }))),
+        complimentary: Object.freeze(result.complimentary.map((line, index) => ({ ...line, source: complimentary[index]?.source })))
+      });
+    } catch (error) {
+      if (error instanceof ActorTransactionError) return purchaseFailure(error.code);
+      throw error;
+    }
   }
 }
 
-function normalizeCartPurchases(purchases, { allowEmpty = false } = {}) {
+async function purchaseAsAuthority(actor, data, user) {
+  const { balanceOverride = null, storeName = "" } = data;
+  if (!Array.isArray(data.purchases) || !Array.isArray(data.complimentary)) return purchaseFailure("unavailable");
+  if (!user.isGM && (balanceOverride != null || data.complimentary.length || data.purchases.some((entry) => entry?.priceOverride != null))) {
+    return purchaseFailure("permission");
+  }
+  if (balanceOverride != null && (!Number.isSafeInteger(balanceOverride) || balanceOverride < 0)) return purchaseFailure("invalidPrice");
+  const purchases = await resolvePurchases(data.purchases, user);
+  const complimentary = await resolvePurchases(data.complimentary, user);
+  if (!purchases || !complimentary) return purchaseFailure("unavailable");
+  const normalized = normalizeCartPurchases(purchases, { allowEmpty: complimentary.length > 0, user });
+  if (!normalized.ok) return purchaseFailure(normalized.reason);
+  const normalizedComplimentary = normalizeComplimentaryItems(complimentary);
+  if (!normalizedComplimentary.ok) return purchaseFailure(normalizedComplimentary.reason);
+  if (!normalized.lines.length && !normalizedComplimentary.lines.length) {
+    return purchaseFailure("unavailable");
+  }
+  const originalTotal = moneyToOrtegs(actor.system?.money ?? {});
+  const currentTotal = balanceOverride == null
+    ? originalTotal
+    : nonNegativeInteger(balanceOverride);
+  if (currentTotal < normalized.totalOrtegs) {
+    return purchaseFailure("insufficient", {
+      totalOrtegs: normalized.totalOrtegs,
+      balance: moneyFromOrtegs(currentTotal)
+    });
+  }
+
+  const nextTotal = currentTotal - normalized.totalOrtegs;
+  const originalMoney = moneyFromOrtegs(originalTotal);
+  const nextMoney = moneyFromOrtegs(nextTotal);
+  const existingServices = normalizeServiceRecords(
+    actor?.getFlag?.(MODULE_ID, "services") ?? actor?.flags?.[MODULE_ID]?.services
+  );
+  const serviceLines = normalized.lines.filter(({ kind }) => kind === "service");
+  const purchasedServices = createPurchasedServiceRecords(serviceLines, { storeName });
+  const actorUpdate = actorMoneyUpdate(nextMoney);
+  if (purchasedServices.length) {
+    actorUpdate[`flags.${MODULE_ID}.services`] = [...existingServices, ...purchasedServices];
+  }
+  const paid = await actor.update(actorUpdate);
+  if (!paid) return purchaseFailure("paymentFailed");
+
+  try {
+    const itemLines = normalized.lines.filter(({ kind }) => kind === "item");
+    const itemData = [
+      ...normalizedComplimentary.lines.flatMap(({ source, quantity, reason }) => (
+        itemCopies(source, quantity, (count) => complimentaryItemData(source, count, reason))
+      )),
+      ...itemLines.flatMap(({ source, price, quantity }) => (
+        itemCopies(source, quantity, (count) => purchasedItemData(source, price, count))
+      ))
+    ];
+    const created = itemData.length
+      ? await actor.createEmbeddedDocuments("Item", itemData)
+      : [];
+    if (!Array.isArray(created) || created.length !== itemData.length) {
+      const ids = Array.from(created ?? [], (item) => item.id ?? item._id).filter(Boolean);
+      if (ids.length) {
+        // Remove only documents from this batch before refunding a partial creation.
+        if (typeof actor.deleteEmbeddedDocuments !== "function") throw new ActorTransactionError("rollbackFailed");
+        try { await actor.deleteEmbeddedDocuments("Item", ids); }
+        catch (error) { throw new ActorTransactionError("rollbackFailed"); }
+      }
+      throw new ActorTransactionError("creationIncomplete");
+    }
+    return Object.freeze({
+      ok: true,
+      reason: null,
+      items: Object.freeze(Array.from(created ?? [], (item) => item.toObject?.() ?? structuredClone(item))),
+      services: Object.freeze(purchasedServices),
+      lines: normalized.lines.map(({ source, ...line }) => ({ ...line, sourceUuid: source.uuid })),
+      complimentary: normalizedComplimentary.lines.map(({ source, ...line }) => ({ ...line, sourceUuid: source.uuid })),
+      totalOrtegs: normalized.totalOrtegs,
+      balance: nextMoney
+    });
+  } catch (error) {
+    // Refunding while partial items remain would grant them for free.
+    if (error instanceof ActorTransactionError && error.code === "rollbackFailed") throw error;
+    try {
+      const restored = await actor.update({
+        ...actorMoneyUpdate(originalMoney),
+        ...(purchasedServices.length
+          ? { [`flags.${MODULE_ID}.services`]: existingServices }
+          : {})
+      });
+      if (!restored) throw new ActorTransactionError("rollbackFailed");
+    } catch (rollbackError) {
+      console.error("symbaroum-hud | Shop purchase rollback failed.", rollbackError);
+      throw new ActorTransactionError("rollbackFailed");
+    }
+    throw error;
+  }
+}
+
+function normalizeCartPurchases(purchases, { allowEmpty = false, user = globalThis.game?.user } = {}) {
   const entries = Array.from(purchases ?? []);
   if (!entries.length && !allowEmpty) return { ok: false, reason: "unavailable" };
 
@@ -226,7 +270,7 @@ function normalizeCartPurchases(purchases, { allowEmpty = false } = {}) {
       return { ok: false, reason: "invalidQuantity" };
     }
     const negotiated = service && source.priceMode === "negotiated";
-    if (negotiated && !globalThis.game?.user?.isGM) {
+    if (negotiated && !user?.isGM) {
       return { ok: false, reason: "permission" };
     }
     const sourcePrice = negotiated
@@ -319,6 +363,7 @@ function purchasedItemData(source, price, quantity = 1) {
   data.system.cost = price.raw;
   const sourceQuantity = Math.max(1, nonNegativeInteger(source.system?.number ?? data.system.number ?? 1));
   data.system.number = Math.min(Number.MAX_SAFE_INTEGER, sourceQuantity * quantity);
+  if (source.type === "armor") delete data.system.number;
   return data;
 }
 
@@ -336,6 +381,7 @@ function complimentaryItemData(source, quantity = 1, reason = "") {
   data.flags[MODULE_ID].characterCreatorGrant = { quantity, reason };
   data.system ??= {};
   data.system.number = quantity;
+  if (source.type === "armor") delete data.system.number;
   return data;
 }
 
@@ -351,13 +397,40 @@ function purchaseFailure(reason, details = {}) {
   return Object.freeze({ ok: false, reason, ...details });
 }
 
-function enqueuePurchase(key, operation) {
-  const previous = PURCHASE_LOCKS.get(key) ?? Promise.resolve();
-  const current = previous.catch(() => {}).then(operation);
-  PURCHASE_LOCKS.set(key, current);
-  return current.finally(() => {
-    if (PURCHASE_LOCKS.get(key) === current) PURCHASE_LOCKS.delete(key);
-  });
+function itemCopies(source, quantity, createData) {
+  return source.type === "armor" ? Array.from({ length: quantity }, () => createData(1)) : [createData(quantity)];
+}
+
+function sourceReference(source) {
+  if (!source) return null;
+  return {
+    uuid: source.uuid,
+    ...(globalThis.game?.user?.isGM ? { snapshot: source.toObject?.() ?? structuredClone(source), documentName: source.documentName } : {})
+  };
+}
+
+async function resolvePurchases(entries, user) {
+  const result = [];
+  for (const entry of entries) {
+    const ref = entry?.source;
+    if (!ref) return null;
+    let source;
+    if (ref.snapshot && user.isGM) {
+      const snapshot = structuredClone(ref.snapshot);
+      source = { ...snapshot, uuid: ref.uuid, documentName: ref.documentName, toObject: () => structuredClone(snapshot) };
+    } else {
+      if (ref.snapshot || typeof ref.uuid !== "string") return null;
+      if (ref.uuid.startsWith("SymbaroumHudService.")) {
+        source = findServiceDefinition(ref.uuid, globalThis.game.settings.get(MODULE_ID, SETTINGS.SERVICE_DEFINITIONS));
+      } else {
+        source = await globalThis.fromUuid?.(ref.uuid);
+        if (!source?.testUserPermission?.(user, "OBSERVER")) return null;
+      }
+    }
+    if (!source) return null;
+    result.push({ ...entry, source });
+  }
+  return result;
 }
 
 function nonNegativeInteger(value) {
@@ -365,3 +438,5 @@ function nonNegativeInteger(value) {
   if (!Number.isFinite(number) || number <= 0) return 0;
   return Math.min(Number.MAX_SAFE_INTEGER, Math.floor(number));
 }
+
+actorTransactions.register("shop.purchase", purchaseAsAuthority);

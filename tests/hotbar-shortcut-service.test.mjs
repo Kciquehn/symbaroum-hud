@@ -8,17 +8,28 @@ const flags = {};
 const removedFlags = [];
 let currentActor = null;
 
+// Model Foundry's recursive flag merge, path expansion and deletion keys.
+function mergeFlag(target, source) {
+  for (const [key, value] of Object.entries(source)) {
+    const parts = key.split(".");
+    let parent = target;
+    for (const part of parts.slice(0, -1)) parent = parent[part] ??= {};
+    const leaf = parts.at(-1);
+    if (leaf.startsWith("-=")) delete parent[leaf.slice(2)];
+    else if (value && value.constructor === Object) {
+      parent[leaf] = mergeFlag(parent[leaf] ?? {}, value);
+    } else parent[leaf] = structuredClone(value);
+  }
+  return target;
+}
+
 const user = {
   id: "user",
   isGM: false,
   hotbar: { 1: "old-macro" },
   getFlag: (_scope, key) => flags[key],
   setFlag: async (_scope, key, value) => {
-    const current = flags[key];
-    flags[key] = current && typeof current === "object"
-      && value && typeof value === "object"
-      ? { ...current, ...value }
-      : value;
+    flags[key] = mergeFlag(flags[key] ?? {}, value);
   },
   unsetFlag: async (_scope, key) => {
     removedFlags.push(key);
@@ -139,7 +150,7 @@ test("moving a document shortcut clears its original slot", async () => {
 
   assert.equal(HotbarShortcutService.get(1), null);
   assert.equal(HotbarShortcutService.get(2)?.name, "Espada");
-  assert.equal(flags.hotbarShortcuts.actors["Actor.actor"]["1"], undefined);
+  assert.equal(flags.hotbarShortcuts.entries.find((entry) => entry.actorKey === "Actor.actor").shortcuts["1"], undefined);
 });
 
 test("clicking a weapon shortcut delegates to the owning Symbaroum actor", async () => {
@@ -178,7 +189,7 @@ test("removing a shortcut does not delete its source document", async () => {
   currentActor = documents.get("Actor.actor.Item.weapon").actor;
   await HotbarShortcutService.remove(2);
   assert.equal(HotbarShortcutService.get(2), null);
-  assert.equal(flags.hotbarShortcuts.actors["Actor.actor"], undefined);
+  assert.equal(flags.hotbarShortcuts.entries.find((entry) => entry.actorKey === "Actor.actor"), undefined);
   assert.ok(documents.has("Actor.actor.Item.weapon"));
 });
 
@@ -259,4 +270,79 @@ test("GM users keep the native Foundry hotbar behavior", async () => {
   assert.equal(flags.hotbarShortcuts, previousFlag);
   assert.equal(HotbarShortcutService.get(4), null);
   user.isGM = false;
+});
+
+test("legacy UUID paths expanded by Foundry retain shortcuts through migration", async () => {
+  currentActor = actor("legacy");
+  flags.hotbarShortcuts = {
+    version: 2,
+    actors: { Actor: { legacy: { 1: { uuid: "Item.legacy", name: "Legacy" } } } }
+  };
+  assert.equal(HotbarShortcutService.get(1)?.uuid, "Item.legacy");
+  await HotbarShortcutService.move(1, 2);
+  assert.equal(HotbarShortcutService.get(1), null);
+  assert.equal(HotbarShortcutService.get(2)?.uuid, "Item.legacy");
+  assert.equal(flags.hotbarShortcuts.version, 3);
+  assert.equal(flags.hotbarShortcuts.actors, undefined);
+  await HotbarShortcutService.remove(2);
+  assert.equal(HotbarShortcutService.get(2), null);
+});
+
+test("synthetic token actor UUIDs survive saving and reloading flags", async () => {
+  currentActor = { ...actor("synthetic"), uuid: "Scene.scene.Token.token.Actor.synthetic" };
+  const item = { uuid: "Item.token-item", name: "Token item", documentName: "Item", testUserPermission: () => true };
+  documents.set(item.uuid, item);
+  await HotbarShortcutService.assignDocumentDrop({ type: "Item", uuid: item.uuid }, 5);
+  flags.hotbarShortcuts = structuredClone(flags.hotbarShortcuts);
+  assert.equal(HotbarShortcutService.get(5)?.uuid, item.uuid);
+  await HotbarShortcutService.remove(5);
+  assert.equal(HotbarShortcutService.get(5), null);
+});
+
+test("a pending document drop remains assigned to the actor where it started", async () => {
+  const first = actor("pending-first");
+  currentActor = first;
+  const resolve = globalThis.fromUuid;
+  let finish;
+  globalThis.fromUuid = () => new Promise((done) => { finish = done; });
+  try {
+    const pending = HotbarShortcutService.assignDocumentDrop({ type: "Item", uuid: "Item.pending" }, 1);
+    await Promise.resolve();
+    currentActor = actor("pending-second");
+    finish({ uuid: "Item.pending", documentName: "Item", name: "Pending", testUserPermission: () => true });
+    await pending;
+    assert.equal(HotbarShortcutService.get(1), null);
+    currentActor = first;
+    assert.equal(HotbarShortcutService.get(1)?.uuid, "Item.pending");
+  } finally { globalThis.fromUuid = resolve; }
+});
+
+test("concurrent drops retain both shortcuts", async () => {
+  currentActor = actor("concurrent");
+  for (const id of ["one", "two"]) documents.set(`Item.${id}`, { uuid: `Item.${id}`, documentName: "Item", name: id, testUserPermission: () => true });
+  await Promise.all([
+    HotbarShortcutService.assignDocumentDrop({ type: "Item", uuid: "Item.one" }, 1),
+    HotbarShortcutService.assignDocumentDrop({ type: "Item", uuid: "Item.two" }, 2)
+  ]);
+  assert.equal(HotbarShortcutService.get(1)?.uuid, "Item.one");
+  assert.equal(HotbarShortcutService.get(2)?.uuid, "Item.two");
+});
+
+test("non-executable ritual shortcuts open the Item sheet", async () => {
+  currentActor = actor("ritual-reader");
+  let opens = 0;
+  documents.set("Item.ritual", {
+    uuid: "Item.ritual", documentName: "Item", name: "Ritual", actor: currentActor,
+    system: { isPower: true, hasScript: false }, testUserPermission: () => true,
+    sheet: { render: async () => { opens++; } }
+  });
+  await HotbarShortcutService.assignDocumentDrop({ type: "Item", uuid: "Item.ritual" }, 1);
+  await HotbarShortcutService.activate(1);
+  assert.equal(opens, 1);
+});
+
+test("disabling the HUD disables document shortcut interception", () => {
+  game.settings = { get: () => false };
+  try { assert.equal(HotbarShortcutService.isEnabled(), false); }
+  finally { delete game.settings; }
 });

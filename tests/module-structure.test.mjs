@@ -762,7 +762,7 @@ assert.match(application, /addEventListener\("click",[\s\S]*\{ signal \}/);
 assert.match(application, /game\.tooltip\.activate/);
 assert.match(application, /applyPlayerListVisibility\(hidden\)/);
 assert.match(application, /#updatePlayerToggle/);
-assert.match(application, /if \(resolvedActor\) this\.#actor = resolvedActor/);
+assert.match(application, /if \(!this\.#manualActorKey\)\s*\{\s*this\.#actor = resolvedActor/);
 assert.match(application, /icons\/svg\/mystery-man\.svg/);
 assert.match(application, /nbrOfFailedDeathRoll/);
 

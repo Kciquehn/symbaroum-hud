@@ -60,6 +60,17 @@ test("getTheme returns simplified by default and always resolves simplified", ()
   }
 });
 
+test("disabling the HUD removes its global hotbar theme", () => {
+  const oldDocument = globalThis.document;
+  const oldGame = globalThis.game;
+  globalThis.document = { body: { dataset: { symbaroumHudTheme: "simplified" } }, getElementById: () => null };
+  globalThis.game = { settings: { get: (_scope, key) => key === SETTINGS.ENABLED ? false : THEMES.SIMPLIFIED } };
+  try {
+    applyHudTheme();
+    assert.equal(document.body.dataset.symbaroumHudTheme, undefined);
+  } finally { globalThis.document = oldDocument; globalThis.game = oldGame; }
+});
+
 test("applyHudTheme updates document body and hud element dataset and classes to simplified", () => {
   const originalDocument = globalThis.document;
   const originalGame = globalThis.game;
@@ -523,7 +534,7 @@ test("simplified HUD info bar chips are sized equally and aligned with action bu
   const path = await import("node:path");
   const css = fs.readFileSync(path.resolve("styles/symbaroum-hud.css"), "utf8");
 
-  assert.match(css, /#symbaroum-hud \.symbaroum-hud-simplified-info-bar\s*\{[^}]*grid-template-columns:\s*repeat\(2,\s*calc\(\(100% - 12px\) \/ 3\)\)/);
+  assert.match(css, /#symbaroum-hud \.symbaroum-hud-simplified-info-bar\s*\{[^}]*grid-template-columns:\s*repeat\(3,\s*minmax\(0,\s*1fr\)\)/);
   assert.match(css, /#symbaroum-hud button\.symbaroum-hud-simplified-info-chip\s*\{[^}]*width:\s*100%/);
   assert.match(css, /#symbaroum-hud button\.symbaroum-hud-simplified-info-chip\s*\{[^}]*justify-content:\s*flex-start/);
   assert.match(css, /#symbaroum-hud button\.symbaroum-hud-simplified-info-chip \.symbaroum-hud-simplified-chip-header\s*\{[^}]*width:\s*16px/);

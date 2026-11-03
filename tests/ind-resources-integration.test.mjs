@@ -1388,3 +1388,17 @@ test("uses usable items delegating to appropriate service", async () => {
   assert.equal(rollResult, "rolled!");
 });
 
+test("canceling an item handled by the public API does not invoke it a second time", async () => {
+  const api = game.tenebreResources;
+  const previous = { useItem: api.useItem, isUsableItem: api.isUsableItem, herbalCure: api.herbalCure };
+  let calls = 0;
+  api.useItem = async () => { calls++; return null; };
+  api.isUsableItem = () => true;
+  api.herbalCure = { use: async () => { calls++; return true; } };
+  try {
+    const result = await IndResourcesIntegration.useItem({ id: "actor" }, { id: "cure", name: "Cura herbal", type: "equipment" });
+    assert.equal(result, null);
+    assert.equal(calls, 1);
+  } finally { Object.assign(api, previous); }
+});
+

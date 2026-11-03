@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 globalThis.game = {
+  user: { id: "gm", isGM: true },
   time: { worldTime: 1_000 },
   i18n: {
     localize: (key) => key
@@ -14,6 +15,7 @@ const {
   createPurchasedServiceRecords,
   findServiceDefinition,
   normalizeCustomServices,
+  normalizeServiceRecords,
   removeCustomService,
   removeActorService,
   serviceBrowserEntries,
@@ -396,6 +398,8 @@ function purchaseLine(serviceId, quantity = 1) {
 
 function mockActor() {
   return {
+    id: `actor-${Math.random()}`,
+    testUserPermission: () => true,
     flags: {},
     getFlag(moduleId, key) {
       return this.flags[moduleId]?.[key];
@@ -407,3 +411,48 @@ function mockActor() {
     }
   };
 }
+
+test("concurrent uses debit distinct charges and preserve unrelated records", async () => {
+  const actor = mockActor();
+  const records = createPurchasedServiceRecords([
+    line({ id: "passage", fulfillment: "consumable", unit: "use" }, 3),
+    line({ id: "permit", fulfillment: "permanent", unit: "purchase" })
+  ]);
+  await addActorServiceRecords(actor, records);
+  await Promise.all([useActorService(actor, records[0].id), useActorService(actor, records[0].id)]);
+  assert.equal(actorServiceRecords(actor)[0].remaining, 1);
+  assert.equal(actorServiceRecords(actor)[1].status, "active");
+});
+
+test("normalizing and adding more than 200 records never discards active rights", async () => {
+  const actor = mockActor();
+  const records = Array.from({ length: 201 }, (_, i) => ({
+    id: `r${i}`, serviceId: "permit", name: "Permit", fulfillment: "permanent", status: "active"
+  }));
+  assert.equal(normalizeServiceRecords(records).length, 201);
+  await addActorServiceRecords(actor, records);
+  assert.equal(actorServiceRecords(actor).length, 201);
+  assert.equal(actorServiceRecords(actor)[0].id, "r0");
+  await addActorServiceRecords(actor, [records[0]]);
+  assert.equal(actorServiceRecords(actor).length, 201, "repeated grants of the same record do not duplicate it");
+});
+
+test("expired contracts and permanent rights cannot be consumed", async () => {
+  const actor = mockActor();
+  const records = [
+    { id: "old", serviceId: "old", name: "Expired", fulfillment: "temporary", status: "active", expiresAt: 10 },
+    { id: "permit", serviceId: "permit", name: "Permanent", fulfillment: "permanent", status: "active" }
+  ];
+  await addActorServiceRecords(actor, records);
+  await useActorService(actor, "old");
+  await useActorService(actor, "permit");
+  assert.equal(actorServiceRecords(actor)[0].status, "expired");
+  assert.equal(actorServiceRecords(actor)[1].status, "active");
+});
+
+test("contract mutations require ownership and grants require a GM", async () => {
+  const actor = mockActor();
+  actor.testUserPermission = () => false;
+  await assert.rejects(useActorService(actor, "record"), { code: "permission" });
+  await assert.rejects(removeActorService(actor, "record"), { code: "permission" });
+});

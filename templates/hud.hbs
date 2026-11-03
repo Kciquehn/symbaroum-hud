@@ -109,14 +109,14 @@
           </button>
           <button type="button" class="symbaroum-hud-character-resource" data-resource="corruption"
             data-action="modify-corruption"
-            data-tooltip="{{localize 'SYMBAROUMHUD.Corruption.Manage'}}: {{actor.corruption.temporary}}+{{actor.corruption.permanent}}/{{actor.corruption.max}}"
-            aria-label="{{localize 'SYMBAROUMHUD.Corruption.Manage'}}: {{actor.corruption.temporary}}+{{actor.corruption.permanent}}/{{actor.corruption.max}}"
+            data-tooltip="{{localize 'SYMBAROUMHUD.Corruption.Manage'}}: {{actor.corruption.temporary}}{{#if actor.corruption.longterm}}+{{actor.corruption.longterm}}{{/if}}+{{actor.corruption.permanent}}/{{actor.corruption.max}}"
+            aria-label="{{localize 'SYMBAROUMHUD.Corruption.Manage'}}: {{actor.corruption.temporary}}{{#if actor.corruption.longterm}}+{{actor.corruption.longterm}}{{/if}}+{{actor.corruption.permanent}}/{{actor.corruption.max}}"
             style="--symbaroum-hud-resource-percent: {{actor.corruption.percent}}%;"
             {{#unless actions.corruption}}disabled{{/unless}}>
             <span class="symbaroum-hud-character-resource-fill" aria-hidden="true"></span>
             <span class="symbaroum-hud-character-resource-value">
               <i class="fa-solid fa-droplet" aria-hidden="true"></i>
-              <strong>{{actor.corruption.temporary}}+{{actor.corruption.permanent}}</strong>/{{actor.corruption.max}}
+              <strong>{{actor.corruption.temporary}}{{#if actor.corruption.longterm}}+{{actor.corruption.longterm}}{{/if}}+{{actor.corruption.permanent}}</strong>/{{actor.corruption.max}}
             </span>
           </button>
         </span>
@@ -185,6 +185,18 @@
                 </div>
                 <strong class="symbaroum-hud-simplified-chip-val">{{#if info.quiver}}{{info.quiver.loaded}}/{{info.quiver.capacity}}{{else}}—{{/if}}</strong>
               </button>
+              {{#if ammoRecovery}}
+                <button type="button"
+                  class="symbaroum-hud-simplified-info-chip is-ammo-recovery"
+                  data-action="recover-ammo"
+                  data-tooltip="{{localize 'SYMBAROUMHUD.Actions.RecoverAmmo'}}: {{ammoRecovery.count}}"
+                  aria-label="{{localize 'SYMBAROUMHUD.Actions.RecoverAmmo'}}: {{ammoRecovery.count}}">
+                  <div class="symbaroum-hud-simplified-chip-header">
+                    <i class="fa-solid fa-arrows-rotate" aria-hidden="true"></i>
+                  </div>
+                  <strong class="symbaroum-hud-simplified-chip-val">{{ammoRecovery.count}}</strong>
+                </button>
+              {{/if}}
             </div>
 
             <div class="symbaroum-hud-simplified-buttons-row">
@@ -1021,14 +1033,14 @@
       </button>
       <button type="button" class="symbaroum-hud-character-resource" data-resource="corruption"
         data-action="modify-corruption"
-        data-tooltip="{{localize 'SYMBAROUMHUD.Corruption.Manage'}}: {{actor.corruption.temporary}}+{{actor.corruption.permanent}}/{{actor.corruption.max}}"
-        aria-label="{{localize 'SYMBAROUMHUD.Corruption.Manage'}}: {{actor.corruption.temporary}}+{{actor.corruption.permanent}}/{{actor.corruption.max}}"
+        data-tooltip="{{localize 'SYMBAROUMHUD.Corruption.Manage'}}: {{actor.corruption.temporary}}{{#if actor.corruption.longterm}}+{{actor.corruption.longterm}}{{/if}}+{{actor.corruption.permanent}}/{{actor.corruption.max}}"
+        aria-label="{{localize 'SYMBAROUMHUD.Corruption.Manage'}}: {{actor.corruption.temporary}}{{#if actor.corruption.longterm}}+{{actor.corruption.longterm}}{{/if}}+{{actor.corruption.permanent}}/{{actor.corruption.max}}"
         style="--symbaroum-hud-resource-percent: {{actor.corruption.percent}}%;"
         {{#unless actions.corruption}}disabled{{/unless}}>
         <span class="symbaroum-hud-character-resource-fill" aria-hidden="true"></span>
         <span class="symbaroum-hud-character-resource-value">
           <i class="fa-solid fa-droplet" aria-hidden="true"></i>
-          <strong>{{actor.corruption.temporary}}+{{actor.corruption.permanent}}</strong>/{{actor.corruption.max}}
+          <strong>{{actor.corruption.temporary}}{{#if actor.corruption.longterm}}+{{actor.corruption.longterm}}{{/if}}+{{actor.corruption.permanent}}</strong>/{{actor.corruption.max}}
         </span>
       </button>
     </span>

@@ -335,7 +335,7 @@ test("generated stock obeys each item's appearance chance and quantity", () => {
     itemRules: { items: { "Item.sword": { chance: 0, minimum: 1, maximum: 1 } } }
   });
   assert.equal(absent.stock.some(({ uuid }) => uuid === "Item.sword"), false);
-  assert.deepEqual(absent.missingEssentials, []);
+  assert.deepEqual(absent.missingEssentials, ["sword"]);
 
   const present = generateOfficialShopStock(entries, preset, {
     seed: "uma-espada",
@@ -344,6 +344,21 @@ test("generated stock obeys each item's appearance chance and quantity", () => {
   const sword = present.stock.find(({ uuid }) => uuid === "Item.sword");
   assert.ok(sword);
   assert.ok(sword.quantity >= 1 && sword.quantity <= 2);
+});
+
+test("essentials survive failed default availability rolls", () => {
+  const preset = {
+    id: "essentials", pools: [], price: [100, 100],
+    essentials: [{ id: "sword", names: ["Espada"], categories: ["weapon"], quantity: [1, 1] }]
+  };
+  const result = generateOfficialShopStock(entries, preset, { itemRules: {}, random: () => 0.99 });
+  assert.ok(result.stock.some(({ uuid }) => uuid === "Item.sword"));
+  assert.deepEqual(result.missingEssentials, []);
+  const excluded = generateOfficialShopStock(entries, preset, {
+    itemRules: { items: { "Item.sword": { chance: 0 } } }, random: () => 0
+  });
+  assert.equal(excluded.stock.length, 0, "explicit zero chance remains excluded even if the random value is zero");
+  assert.deepEqual(excluded.missingEssentials, ["sword"]);
 });
 
 test("stock pools respect category and exclusion constraints", () => {

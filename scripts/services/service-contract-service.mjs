@@ -1,4 +1,5 @@
 import { MODULE_ID } from "../constants.mjs";
+import { actorTransactions, ActorTransactionError } from "./actor-transaction-service.mjs";
 import { OFFICIAL_SERVICES } from "../data/official-services.mjs";
 import { OFFICIAL_SERVICE_EXPANSIONS } from "../data/official-service-expansions.mjs";
 import { OFFICIAL_PURCHASABLE_ASSETS } from "../data/official-purchasable-assets.mjs";
@@ -28,7 +29,6 @@ const UNIT_IDS = new Set([
 ]);
 const FULFILLMENT_IDS = new Set(["instant", "consumable", "temporary", "permanent"]);
 const PRICE_MODE_IDS = new Set(["fixed", "negotiated"]);
-const MAX_RECORDS = 200;
 
 export function serviceUuid(id) {
   return `${SERVICE_UUID_PREFIX}${String(id ?? "").trim()}`;
@@ -191,7 +191,7 @@ export function actorServiceRecords(actor, { worldTime = globalThis.game?.time?.
 
 export function normalizeServiceRecords(value = null) {
   if (!Array.isArray(value)) return [];
-  return value.slice(-MAX_RECORDS).flatMap((entry) => {
+  return value.flatMap((entry) => {
     const id = cleanId(entry?.id);
     const serviceId = cleanId(entry?.serviceId);
     const name = cleanText(entry?.name, 120);
@@ -263,19 +263,29 @@ export function createPurchasedServiceRecords(lines, {
 }
 
 export async function addActorServiceRecords(actor, records) {
-  if (!actor?.update) return [];
+  return actorTransactions.execute(actor, "service.add", { records });
+}
+
+async function addRecords(actor, { records }, user) {
+  if (!user.isGM) throw new ActorTransactionError("permission");
   const current = normalizeServiceRecords(
     actor?.getFlag?.(MODULE_ID, "services") ?? actor?.flags?.[MODULE_ID]?.services
   );
   const added = normalizeServiceRecords(records);
-  const next = [...current, ...added].slice(-MAX_RECORDS);
-  await actor.update({ [`flags.${MODULE_ID}.services`]: next });
-  return added;
+  const ids = new Set(current.map(({ id }) => id));
+  const unique = added.filter(({ id }) => !ids.has(id) && ids.add(id));
+  const next = [...current, ...unique];
+  if (!await actor.update({ [`flags.${MODULE_ID}.services`]: next })) throw new ActorTransactionError("updateFailed");
+  return unique;
 }
 
 export async function useActorService(actor, recordId) {
+  return actorTransactions.execute(actor, "service.use", { recordId });
+}
+
+async function useRecord(actor, { recordId }) {
   return updateActorServiceRecords(actor, recordId, (record) => {
-    if (record.status !== "active") return record;
+    if (!serviceRecordContext(record, globalThis.game?.time?.worldTime ?? 0).canUse) return record;
     if (record.fulfillment === "consumable") {
       const remaining = Math.max(0, record.remaining - 1);
       return { ...record, remaining, status: remaining ? "active" : "completed" };
@@ -285,13 +295,16 @@ export async function useActorService(actor, recordId) {
 }
 
 export async function removeActorService(actor, recordId) {
-  if (!actor?.update) return false;
+  return actorTransactions.execute(actor, "service.remove", { recordId });
+}
+
+async function removeRecord(actor, { recordId }) {
   const current = normalizeServiceRecords(
     actor?.getFlag?.(MODULE_ID, "services") ?? actor?.flags?.[MODULE_ID]?.services
   );
   const next = current.filter(({ id }) => id !== recordId);
   if (next.length === current.length) return false;
-  await actor.update({ [`flags.${MODULE_ID}.services`]: next });
+  if (!await actor.update({ [`flags.${MODULE_ID}.services`]: next })) throw new ActorTransactionError("updateFailed");
   return true;
 }
 
@@ -304,7 +317,7 @@ function serviceRecordContext(record, worldTime) {
     status,
     active: status === "active",
     expired,
-    canUse: status === "active" && ["consumable", "temporary"].includes(record.fulfillment),
+    canUse: status === "active" && (record.fulfillment === "temporary" || (record.fulfillment === "consumable" && record.remaining > 0)),
     remainingLabel: record.fulfillment === "consumable"
       ? `${record.remaining}/${record.quantity}`
       : record.fulfillment === "temporary"
@@ -334,7 +347,7 @@ async function updateActorServiceRecords(actor, recordId, transform) {
     return changed;
   });
   if (!changed) return null;
-  await actor.update({ [`flags.${MODULE_ID}.services`]: next });
+  if (!await actor.update({ [`flags.${MODULE_ID}.services`]: next })) throw new ActorTransactionError("updateFailed");
   return serviceRecordContext(changed, globalThis.game?.time?.worldTime ?? 0);
 }
 
@@ -403,3 +416,7 @@ function nonNegativeNumber(value) {
   const number = Number(value);
   return Number.isFinite(number) && number >= 0 ? number : 0;
 }
+
+actorTransactions.register("service.add", addRecords);
+actorTransactions.register("service.use", useRecord);
+actorTransactions.register("service.remove", removeRecord);

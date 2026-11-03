@@ -385,6 +385,77 @@ test("checks out character-creation grants for free and charges only selected sh
   assert.equal(actor.created[1].system.number, 2);
 });
 
+test("multiple purchased and granted armors create separate native documents", async () => {
+  const actor = mockActor({ thaler: 10 });
+  const armor = mockItem("Armadura", "armor", "1 táler");
+  const result = await ShopService.purchaseCart(actor, [{ source: armor, quantity: 2 }], {
+    complimentary: [{ source: armor, quantity: 2 }]
+  });
+  assert.equal(result.ok, true);
+  assert.equal(actor.created.length, 4);
+  assert.ok(actor.created.every((item) => !Object.hasOwn(item.system, "number")));
+  assert.equal(moneyToOrtegs(actor.system.money), 800);
+});
+
+test("a 201st service purchase preserves every existing active contract", async () => {
+  const actor = mockActor({ thaler: 2 });
+  const records = Array.from({ length: 200 }, (_, index) => ({
+    id: `r${index}`, serviceId: `s${index}`, name: `Contract ${index}`, fulfillment: "permanent", status: "active"
+  }));
+  actor.flags["symbaroum-hud"] = { services: records };
+  const result = await ShopService.purchaseCart(actor, [{
+    source: { id: "new", type: "service", name: "New", cost: "1 xelim", fulfillment: "permanent" }, quantity: 1
+  }]);
+  assert.equal(result.ok, true);
+  assert.equal(actor.flags["symbaroum-hud"].services.length, 201);
+  assert.equal(actor.flags["symbaroum-hud"].services[0].id, "r0");
+});
+
+test("non-GMs cannot set balance, fixed-price overrides or free grants", async () => {
+  const actor = mockActor({ thaler: 1 });
+  const source = mockItem("Corda", "equipment", "1 táler");
+  game.user.isGM = false;
+  try {
+    for (const [cart, options] of [
+      [[{ source }], { balanceOverride: 10_000 }],
+      [[{ source, priceOverride: { ortegs: 1 } }], {}],
+      [[], { complimentary: [{ source }] }]
+    ]) {
+      assert.equal((await ShopService.purchaseCart(actor, cart, options)).reason, "permission");
+    }
+    assert.equal(actor.updates.length, 0);
+    assert.equal(actor.created.length, 0);
+  } finally { game.user.isGM = true; }
+});
+
+test("canceled embedded item creation refunds the purchase", async () => {
+  const actor = mockActor({ thaler: 1 });
+  actor.createEmbeddedDocuments = async () => [];
+  const result = await ShopService.purchase(actor, mockItem("Sword", "weapon", "1 táler"));
+  assert.equal(result.reason, "creationIncomplete");
+  assert.equal(moneyToOrtegs(actor.system.money), 100);
+});
+
+test("partial item batches are removed before refunding the cart", async () => {
+  const actor = mockActor({ thaler: 3 });
+  const deleted = [];
+  actor.createEmbeddedDocuments = async () => [{ _id: "partial" }];
+  actor.deleteEmbeddedDocuments = async (_type, ids) => deleted.push(...ids);
+  const result = await ShopService.purchaseCart(actor, [{ source: mockItem("Armor", "armor", "1 táler"), quantity: 2 }]);
+  assert.equal(result.reason, "creationIncomplete");
+  assert.deepEqual(deleted, ["partial"]);
+  assert.equal(moneyToOrtegs(actor.system.money), 300);
+});
+
+test("a canceled payment update cannot grant unpaid items", async () => {
+  const actor = mockActor({ thaler: 1 });
+  actor.update = async () => undefined;
+  const result = await ShopService.purchase(actor, mockItem("Sword", "weapon", "1 táler"));
+  assert.equal(result.reason, "paymentFailed");
+  assert.equal(actor.created.length, 0);
+  assert.equal(moneyToOrtegs(actor.system.money), 100);
+});
+
 function mockActor(money, { failCreation = false } = {}) {
   const actor = {
     id: `actor-${Math.random()}`,

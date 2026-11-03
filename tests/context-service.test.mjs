@@ -56,6 +56,14 @@ test("never exposes a weapon damage object to Handlebars", () => {
   assert.equal(context.weapons[0].damage, "");
 });
 
+test("corruption fallback includes the native long-term corruption component", () => {
+  const actor = actorWithDamage("1d8");
+  Object.assign(actor.system.health.corruption, { temporary: 1, longterm: 4, permanent: 2 });
+  const context = ContextService.build(actor, { showIndResources: false });
+  assert.equal(context.corruption.longterm, 4);
+  assert.equal(context.corruption.total, 7);
+});
+
 test("uses the prepared isPower flag and omits suppressed effects", () => {
   const actor = actorWithDamage("1d8");
   actor.items = [

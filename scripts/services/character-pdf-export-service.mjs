@@ -293,6 +293,10 @@ export function actorPdfFieldData(actor) {
         ?? `ATTRIBUTE.${String(prepared?.attribute ?? item.system?.attribute ?? "").toUpperCase()}`
     );
   });
+  if (!armors.length) {
+    values["Defense 1"] = valueText(system.combat?.defense ?? system.attributes?.quick?.total);
+    values["Defense Protection 1"] = valueText(system.combat?.displayTextShort ?? system.combat?.protectionPc);
+  }
   armors.forEach((item, index) => {
     const slot = index + 1;
     const prepared = preparedArmor(system, item);

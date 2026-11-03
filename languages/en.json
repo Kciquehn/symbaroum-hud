@@ -403,7 +403,7 @@
     },
     "Resources": {
       "Toughness": "Toughness",
-      "Corruption": "Temporary + permanent corruption"
+      "Corruption": "Temporary + long-term + permanent corruption"
     },
     "Info": {
       "Title": "Character information",
@@ -760,6 +760,7 @@
       "RitualUnavailable": "This ritual is not available for this character.",
       "NoAvailableRituals": "No world rituals are available for this character.",
       "NoAvailableExperience": "This character has no available XP to spend.",
+      "DeathTestUseChat": "Death automation is active. Use the authorized Death Test in chat; the GM can create the prompt for this character.",
       "CorruptionMaximumReached": "This character has already reached maximum corruption.",
       "ActionFailed": "The HUD could not execute this action."
     },

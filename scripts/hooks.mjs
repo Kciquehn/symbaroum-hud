@@ -12,6 +12,7 @@ export function registerRefreshHooks(hud) {
     "controlToken",
     "createActor",
     "deleteActor",
+    "deleteToken",
     "createCombat",
     "updateCombat",
     "deleteCombat",
@@ -22,8 +23,12 @@ export function registerRefreshHooks(hud) {
     Hooks.on(hook, refresh);
   }
 
-  Hooks.on("updateActor", (actor) => {
-    if (sameActor(actor, hud.actor)) refresh();
+  Hooks.on("updateActor", (actor, changes = {}) => {
+    if (sameActor(actor, hud.actor) || Object.hasOwn(changes, "ownership")) refresh();
+  });
+
+  Hooks.on("updateToken", (token, changes = {}) => {
+    if (Object.hasOwn(changes, "actorId") || Object.hasOwn(changes, "actorLink") || sameActor(token.actor, hud.actor)) refresh();
   });
 
   for (const hook of [

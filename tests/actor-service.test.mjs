@@ -784,3 +784,61 @@ test("deleteItem falls back to actor.deleteEmbeddedDocuments", async () => {
   await ActorService.deleteItem(testActor, "item-del-2");
   assert.deepEqual(deletedIds, ["item-del-2"]);
 });
+
+test("armor protection uses the prepared bonus for the selected armor", async () => {
+  const owned = actor();
+  owned.items.set("armor", { id: "armor", name: "Leather", system: { baseProtection: "1d4" } });
+  owned.system.armors = [{ id: "armor", displayTextShort: "1d4+1" }];
+  const result = await ActorService.rollArmorProtection(owned, "armor");
+  assert.equal(result.formula, "1d4+1");
+});
+
+test("temporary corruption leaves room for long-term and permanent corruption", async () => {
+  const owned = actor();
+  Object.assign(owned.system.health.corruption, { temporary: 1, longterm: 4, permanent: 2, value: 7, max: 10 });
+  await ActorService.adjust(owned, "system.health.corruption.temporary", 9);
+  assert.deepEqual(owned.calls[0], ["update", { "system.health.corruption.temporary": 4 }]);
+});
+
+test("additional rituals cannot be bought without their native XP cost", async () => {
+  const owned = actor();
+  owned.system.experience.available = 0;
+  for (let i = 0; i < 5; i++) owned.items.set(`r${i}`, { type: "ritual", system: { isRitual: true } });
+  const oldSettings = game.settings;
+  game.settings = { get: (_scope, key) => key === "optionalMoreRituals" };
+  const source = { id: "extra", type: "ritual", name: "Extra", system: { isRitual: true }, testUserPermission: () => true };
+  game.items = [source];
+  try {
+    const result = await ActorService.buyWorldRitual(owned, source.id);
+    assert.equal(result, undefined);
+    assert.equal(owned.calls.length, 0);
+    assert.equal(warnings.at(-1), "SYMBAROUMHUD.Notifications.NotEnoughExperience");
+  } finally { game.settings = oldSettings; }
+});
+
+test("death automation owns death tests, recovery and the zero toughness transition", async () => {
+  const oldModules = game.modules;
+  const oldApi = game.tenebreResources;
+  const owned = actor();
+  const operations = [];
+  const oldInfo = ui.notifications.info;
+  ui.notifications.info = () => {};
+  game.modules = new Map([["symbaroum-ind-resources", { active: true }]]);
+  game.tenebreResources = { death: {
+    isEnabled: () => true,
+    ensurePrompt: async (subject) => operations.push(["prompt", subject.id]),
+    recoverActor: async (subject) => operations.push(["recover", subject.id])
+  } };
+  try {
+    await ActorService.rollDeathTest(owned);
+    await ActorService.recoverDeath(owned);
+    const previousChatCount = chatMessages.length;
+    await ActorService.adjust(owned, "system.health.toughness.value", -10);
+    assert.deepEqual(operations, [["prompt", owned.id], ["recover", owned.id]]);
+    assert.equal(chatMessages.length, previousChatCount, "the native dead announcement must not compete with automation");
+  } finally {
+    game.modules = oldModules;
+    game.tenebreResources = oldApi;
+    ui.notifications.info = oldInfo;
+  }
+});

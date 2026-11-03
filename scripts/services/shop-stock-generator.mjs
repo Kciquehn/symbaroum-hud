@@ -46,7 +46,7 @@ export function generateOfficialShopStock(entries, presetOrId, {
       stockRule: rulesEnabled ? resolveShopStockRule(entry, configuredRules) : null
     }));
   const available = new Set(documents
-    .filter((entry) => !entry.stockRule || rng() <= entry.stockRule.chance / 100)
+    .filter((entry) => !entry.stockRule || (entry.stockRule.chance > 0 && rng() < entry.stockRule.chance / 100))
     .map(({ uuid }) => uuid));
   const selected = new Set();
   const stock = new Map();
@@ -56,7 +56,8 @@ export function generateOfficialShopStock(entries, presetOrId, {
   for (const essential of preset.essentials ?? []) {
     const matching = documents.filter((entry) => matchesEssential(entry, essential));
     const candidates = matching
-      .filter((entry) => available.has(entry.uuid) && !selected.has(entry.uuid))
+      // Essentials bypass random appearance; an explicit GM exclusion remains authoritative.
+      .filter((entry) => !selected.has(entry.uuid) && !(entry.stockRule?.customized && entry.stockRule.chance === 0))
       .sort((left, right) => {
         const score = essentialMatchScore(right, essential) - essentialMatchScore(left, essential);
         return score || left.name.localeCompare(right.name) || left.uuid.localeCompare(right.uuid);
@@ -67,7 +68,7 @@ export function generateOfficialShopStock(entries, presetOrId, {
         : candidates[0])
       : null;
     if (!choice) {
-      if (!matching.length) missingEssentials.push(essential.id);
+      if (!matching.some((entry) => selected.has(entry.uuid))) missingEssentials.push(essential.id);
       continue;
     }
     selected.add(choice.uuid);
@@ -150,7 +151,7 @@ export function generateShopStockByCategories(entries, categories = [], {
   const candidates = normalizeGeneratorEntries(entries)
     .filter((entry) => matchesShopStockCategories(entry, selectedCategories))
     .map((entry) => ({ ...entry, stockRule: resolveShopStockRule(entry, configuredRules) }))
-    .filter((entry) => rng() <= entry.stockRule.chance / 100);
+    .filter((entry) => entry.stockRule.chance > 0 && rng() < entry.stockRule.chance / 100);
   shuffleInPlace(candidates, rng);
   const size = normalizeShopStockSize(stockSize);
   const stock = candidates

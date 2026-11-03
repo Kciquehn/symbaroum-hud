@@ -17,6 +17,8 @@ export function registerSettings(onChange) {
     default: true,
     onChange: () => {
       applyPlayerListVisibility();
+      applyHudTheme();
+      void ui.hotbar?.render({ force: true });
       onChange();
     }
   });
@@ -121,6 +123,13 @@ export function registerSettings(onChange) {
       activeLocationId: null
     },
     onChange: () => Hooks.callAll(`${MODULE_ID}.shopDefinitionsChanged`)
+  });
+
+  game.settings.register(MODULE_ID, SETTINGS.SERVICE_DEFINITIONS, {
+    scope: "world",
+    config: false,
+    type: Object,
+    default: { version: 1, services: [] }
   });
 
   game.settings.register(MODULE_ID, SETTINGS.SHOP_PRICE_MODIFIERS, {
@@ -279,7 +288,8 @@ export function applyHudTheme(theme = getTheme()) {
   const normalized = THEMES.SIMPLIFIED;
   if (typeof document !== "undefined") {
     if (document.body) {
-      document.body.dataset.symbaroumHudTheme = normalized;
+      if (getSetting(SETTINGS.ENABLED) === false) delete document.body.dataset.symbaroumHudTheme;
+      else document.body.dataset.symbaroumHudTheme = normalized;
     }
     const hudElement = document.getElementById("symbaroum-hud");
     if (hudElement) {

@@ -1,5 +1,13 @@
 import { ActorService } from "../services/actor-service.mjs";
 
+const pendingDrops = new Set();
+
+function escapeHtml(value) {
+  return String(value ?? "").replace(/[&<>"']/g, (char) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  })[char]);
+}
+
 export class ItemPilesIntegration {
   static get active() {
     return Boolean(
@@ -74,7 +82,19 @@ export class ItemPilesIntegration {
    * @returns {Promise<boolean>}
    */
   static async dropItem(actor, itemOrId, { containerId = null } = {}) {
-    if (!actor) return false;
+    if (!ActorService.canUpdate(actor)) return false;
+    const itemId = typeof itemOrId === "string" ? itemOrId : itemOrId?.id;
+    const key = `${actor.uuid ?? actor.id}:${itemId}`;
+    if (!itemId || pendingDrops.has(key)) return false;
+    pendingDrops.add(key);
+    try {
+      return await this.#dropItem(actor, itemId, { containerId });
+    } finally {
+      pendingDrops.delete(key);
+    }
+  }
+
+  static async #dropItem(actor, itemOrId, { containerId = null } = {}) {
     const item = typeof itemOrId === "string"
       ? (ActorService.item(actor, itemOrId) ?? Array.from(actor.items ?? []).find((i) => i.id === itemOrId))
       : itemOrId;
@@ -88,28 +108,28 @@ export class ItemPilesIntegration {
       return false;
     }
 
-    const itemData = typeof item.toObject === "function" ? item.toObject() : item;
     const itemName = item.name ?? game.i18n.localize("SYMBAROUMHUD.Empty");
     const actorName = actor.name ?? game.i18n.localize("SYMBAROUMHUD.Empty");
 
-    if (api && typeof api.createItemPile === "function") {
-      let created = false;
+    if (api && typeof api.createItemPile === "function" && typeof api.transferItems === "function") {
       try {
-        await api.createItemPile({
-          targetLocation: position,
-          position,
-          items: [itemData]
+        // Create an empty destination; the Item Piles authority transfers the
+        // original instead of copying it and attempting a separate deletion.
+        const created = await api.createItemPile({
+          sceneId: position.sceneId,
+          position: { x: position.x, y: position.y },
+          items: []
         });
-        created = true;
+        const target = created?.tokenUuid ?? created?.actorUuid;
+        if (!target) return false;
+        const destination = await globalThis.fromUuid?.(target);
+        if (!destination) return false;
+        const transferred = await api.transferItems(actor, destination, [item.id]);
+        if (!Array.isArray(transferred) || !transferred.length) return false;
       } catch (err) {
-        try {
-          await api.createItemPile(position, [itemData]);
-          created = true;
-        } catch (innerErr) {
-          console.error("Symbaroum HUD | Error dropping item via Item Piles:", innerErr);
-          ui.notifications?.error?.(game.i18n.localize("SYMBAROUMHUD.Notifications.ActionFailed"));
-          return false;
-        }
+        console.error("Symbaroum HUD | Error dropping item via Item Piles:", err);
+        ui.notifications?.error?.(game.i18n.localize("SYMBAROUMHUD.Notifications.ActionFailed"));
+        return false;
       }
     } else {
       ui.notifications?.warn?.(game.i18n.localize("SYMBAROUMHUD.SimplifiedInventory.DropItemNoModule"));
@@ -128,23 +148,16 @@ export class ItemPilesIntegration {
       }
     }
 
-    // Delete item from actor
-    if (typeof item.delete === "function") {
-      await item.delete();
-    } else if (typeof actor?.deleteEmbeddedDocuments === "function") {
-      await actor.deleteEmbeddedDocuments("Item", [item.id]);
-    }
-
     // Send chat message
     const itemImg = item.img || "icons/svg/item-bag.svg";
     const dropText = game.i18n.format("SYMBAROUMHUD.SimplifiedInventory.DropItemChat", {
-      actor: actorName,
-      item: itemName
+      actor: escapeHtml(actorName),
+      item: escapeHtml(itemName)
     });
 
     const chatContent = `
       <div class="symbaroum-hud-chat-drop-card" style="display: flex; align-items: center; gap: 8px;">
-        <img src="${itemImg}" width="32" height="32" style="border: 0; border-radius: 3px; object-fit: cover; flex-shrink: 0;" alt="${itemName}" />
+        <img src="${escapeHtml(itemImg)}" width="32" height="32" style="border: 0; border-radius: 3px; object-fit: cover; flex-shrink: 0;" alt="${escapeHtml(itemName)}" />
         <div>
           <p style="margin: 0; font-size: 13px; line-height: 1.3;">${dropText}</p>
         </div>

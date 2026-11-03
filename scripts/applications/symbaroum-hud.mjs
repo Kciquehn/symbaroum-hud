@@ -172,16 +172,17 @@ export class SymbaroumHud extends ApplicationV2 {
       this.#tacticsCollapsed = true;
       this.#ritualsOpen = false;
       this.#traitsOpen = false;
-      if (resolvedActor) this.#actor = resolvedActor;
+      this.#actor = resolvedActor;
     }
 
     if (this.#manualActorKey) {
-      const manualActor = ActorService.accessibleActors(this.#actor)
+      const manualActor = ActorService.accessibleActors()
         .find((actor) => actorKey(actor) === this.#manualActorKey)
-        || (this.#manualActorKey.includes(".") ? fromUuidSync?.(this.#manualActorKey) : game.actors?.get(this.#manualActorKey));
-      if (manualActor) this.#actor = manualActor;
+        || (this.#manualActorKey.includes(".") ? globalThis.fromUuidSync?.(this.#manualActorKey) : game.actors?.get(this.#manualActorKey));
+      if (ActorService.isUsable(manualActor)) this.#actor = manualActor;
       else this.#manualActorKey = null;
-    } else if (resolvedActor) {
+    }
+    if (!this.#manualActorKey) {
       this.#actor = resolvedActor;
     }
 
@@ -202,9 +203,10 @@ export class SymbaroumHud extends ApplicationV2 {
     const vitalityValue = number(toughness.value);
     const vitalityMax = number(toughness.max);
     const temporaryCorruption = number(corruption.temporary);
+    const longtermCorruption = number(corruption.longterm);
     const permanentCorruption = number(corruption.permanent);
     const corruptionMax = number(corruption.max);
-    const totalCorruption = temporaryCorruption + permanentCorruption;
+    const totalCorruption = number(corruption.value, temporaryCorruption + longtermCorruption + permanentCorruption);
     const indResources = actor && getSetting(SETTINGS.SHOW_IND_RESOURCES)
       ? IndResourcesIntegration.context(actor, {
           containerId: this.#storageContainerId
@@ -418,6 +420,7 @@ export class SymbaroumHud extends ApplicationV2 {
             },
             corruption: {
               temporary: temporaryCorruption,
+              longterm: longtermCorruption,
               permanent: permanentCorruption,
               total: totalCorruption,
               max: corruptionMax,
@@ -429,7 +432,7 @@ export class SymbaroumHud extends ApplicationV2 {
             img: "icons/svg/mystery-man.svg",
             deathFailures: [],
             vitality: { value: 0, max: 0, percent: 0 },
-            corruption: { temporary: 0, permanent: 0, total: 0, max: 0, percent: 0 }
+            corruption: { temporary: 0, longterm: 0, permanent: 0, total: 0, max: 0, percent: 0 }
           }
     };
   }
@@ -1468,7 +1471,7 @@ export class SymbaroumHud extends ApplicationV2 {
     }
 
     const dropData = this.#readDocumentDragData(dataTransfer);
-    return this.#isItemDropData(dropData);
+    return this.#isItemDropData(dropData) || Array.from(dataTransfer?.types ?? []).includes("text/plain");
   }
 
   #canDropOnRituals(dataTransfer) {
@@ -1482,7 +1485,7 @@ export class SymbaroumHud extends ApplicationV2 {
     }
 
     const dropData = this.#readDocumentDragData(dataTransfer);
-    return this.#isItemDropData(dropData);
+    return this.#isItemDropData(dropData) || Array.from(dataTransfer?.types ?? []).includes("text/plain");
   }
 
   #canDropOnMysticalPowers(dataTransfer) {
@@ -1496,7 +1499,7 @@ export class SymbaroumHud extends ApplicationV2 {
     }
 
     const dropData = this.#readDocumentDragData(dataTransfer);
-    return this.#isItemDropData(dropData);
+    return this.#isItemDropData(dropData) || Array.from(dataTransfer?.types ?? []).includes("text/plain");
   }
 
   #canDropOnTraits(dataTransfer) {
@@ -1510,7 +1513,7 @@ export class SymbaroumHud extends ApplicationV2 {
     }
 
     const dropData = this.#readDocumentDragData(dataTransfer);
-    return this.#isItemDropData(dropData);
+    return this.#isItemDropData(dropData) || Array.from(dataTransfer?.types ?? []).includes("text/plain");
   }
 
   #clearAttackDropTargets(root) {
@@ -1540,7 +1543,7 @@ export class SymbaroumHud extends ApplicationV2 {
   #canDropOnSimplifiedPowers(dataTransfer) {
     if (!ActorService.canUpdate(this.#actor)) return false;
     const dropData = this.#readDocumentDragData(dataTransfer);
-    return this.#isItemDropData(dropData);
+    return this.#isItemDropData(dropData) || Array.from(dataTransfer?.types ?? []).includes("text/plain");
   }
 
   #clearSimplifiedPowersDropTargets(root) {
@@ -1808,7 +1811,7 @@ export class SymbaroumHud extends ApplicationV2 {
       button.type = "button";
       button.className = `symbaroum-hud-context-menu-item${opt.isDestructive ? " is-destructive" : ""}`;
       button.setAttribute("role", "menuitem");
-      button.disabled = !ActorService.canUpdate(actor);
+      button.disabled = opt.action === "open-sheet" ? !ActorService.isUsable(actor) : !ActorService.canUpdate(actor);
 
       const icon = document.createElement("i");
       icon.className = opt.icon;
@@ -1875,14 +1878,14 @@ export class SymbaroumHud extends ApplicationV2 {
     if (typeof DialogV2?.confirm === "function") {
       confirmed = await DialogV2.confirm({
         window: { title: game.i18n.localize("SYMBAROUMHUD.SimplifiedInventory.DeleteItem") },
-        content: `<p>${game.i18n.format("SYMBAROUMHUD.SimplifiedInventory.DeleteItemConfirm", { name: itemName })}</p>`,
+        content: `<p>${escapeHtml(game.i18n.format("SYMBAROUMHUD.SimplifiedInventory.DeleteItemConfirm", { name: itemName }))}</p>`,
         yes: { default: false },
         rejectClose: false
       });
     } else if (typeof Dialog?.confirm === "function") {
       confirmed = await Dialog.confirm({
         title: game.i18n.localize("SYMBAROUMHUD.SimplifiedInventory.DeleteItem"),
-        content: `<p>${game.i18n.format("SYMBAROUMHUD.SimplifiedInventory.DeleteItemConfirm", { name: itemName })}</p>`,
+        content: `<p>${escapeHtml(game.i18n.format("SYMBAROUMHUD.SimplifiedInventory.DeleteItemConfirm", { name: itemName }))}</p>`,
         defaultYes: false,
         rejectClose: false
       });
@@ -2380,7 +2383,7 @@ export class SymbaroumHud extends ApplicationV2 {
       }
 
       if (action === "reload-quiver") {
-        return IndResourcesIntegration.reloadQuiver(actor, element.dataset.quiverId);
+        return this.#reloadQuiver(actor, element.dataset.quiverId || element.dataset.containerId);
       }
       if (action === "open-money") {
         return IndResourcesIntegration.openMoney(actor);
@@ -2563,11 +2566,6 @@ export class SymbaroumHud extends ApplicationV2 {
         await IndResourcesIntegration.withdrawFromContainer(actor, itemId, containerId);
         return this.render();
       }
-      if (action === "reload-quiver") {
-        const containerId = element.dataset.containerId;
-        if (!containerId) return;
-        return this.#reloadQuiver(actor, containerId);
-      }
       if (action === "toggle-armor-equip") {
         const item = findActorItem(actor, element.dataset.itemId);
         if (!item || !ActorService.canUpdate(actor)) return null;
@@ -2700,7 +2698,7 @@ export class SymbaroumHud extends ApplicationV2 {
   }
 
   async #reloadQuiver(actor, quiverId) {
-    if (!actor || !quiverId) return;
+    if (!ActorService.canUpdate(actor) || !quiverId) return;
 
     if (typeof IndResourcesIntegration.api?.ammo?.reloadQuiverPrompt === "function") {
       const res = await IndResourcesIntegration.reloadQuiver(actor, quiverId);
@@ -2852,9 +2850,18 @@ export class SymbaroumHud extends ApplicationV2 {
   }
 
   async #withdrawFromQuiver(actor, quiverItem, entryId) {
-    if (!actor || !quiverItem || !entryId) return;
+    if (!ActorService.canUpdate(actor) || !quiverItem || !entryId) return;
+
+    const ammo = IndResourcesIntegration.api?.ammo;
+    if (entryId.startsWith("loaded-") || Array.from(quiverItem.flags?.["symbaroum-ind-resources"]?.loadedAmmo ?? []).some((entry) => entry.id === entryId)) {
+      if (typeof ammo?.unloadQuiver === "function") return ammo.unloadQuiver(actor, quiverItem);
+    }
 
     let loadedAmmo = Array.from(quiverItem.flags?.["symbaroum-ind-resources"]?.loadedAmmo ?? []);
+    if (!loadedAmmo.length && entryId === "loaded-legacy") {
+      const quantity = Number(quiverItem.flags?.["symbaroum-ind-resources"]?.usesRemaining ?? quiverItem.system?.uses?.value ?? 0);
+      if (quantity > 0) loadedAmmo = [{ id: entryId, name: "Flechas/Virotes - Regulares", quantity }];
+    }
     const entryIndex = loadedAmmo.findIndex((e, idx) => e.id === entryId || `loaded-${idx}` === entryId || e.name === entryId);
 
     if (entryIndex >= 0) {
@@ -2862,6 +2869,10 @@ export class SymbaroumHud extends ApplicationV2 {
       const qtyToWithdraw = Number(entry.quantity) || 1;
       loadedAmmo.splice(entryIndex, 1);
       await quiverItem.setFlag("symbaroum-ind-resources", "loadedAmmo", loadedAmmo);
+      if (!loadedAmmo.length) {
+        await quiverItem.unsetFlag?.("symbaroum-ind-resources", "usesRemaining");
+        if (entryId === "loaded-legacy" && quiverItem.system?.uses) await quiverItem.update?.({ "system.uses.value": 0 });
+      }
 
       const allItems = Array.from(actor.items?.values?.() ?? actor.items ?? []);
       const existingLoose = allItems.find((i) => i.name === entry.name && !i.flags?.["symbaroum-ind-resources"]?.storedIn && !i.system?.storedIn);
@@ -2976,6 +2987,7 @@ export class SymbaroumHud extends ApplicationV2 {
 
     const corruption = actor.system?.health?.corruption ?? {};
     const temporary = number(corruption.temporary);
+    const longterm = number(corruption.longterm);
     const permanent = number(corruption.permanent);
     const max = number(corruption.max);
     const content = `
@@ -2984,7 +2996,7 @@ export class SymbaroumHud extends ApplicationV2 {
         <div class="symbaroum-hud-corruption-current">
           <i class="fa-solid fa-droplet" aria-hidden="true"></i>
           <span>${escapeHtml(game.i18n.localize("SYMBAROUMHUD.Corruption.Current"))}</span>
-          <strong>${temporary}+${permanent}/${max}</strong>
+          <strong>${temporary}${longterm ? `+${longterm}` : ""}+${permanent}/${max}</strong>
         </div>
         <label>
           <span>${escapeHtml(game.i18n.localize("SYMBAROUMHUD.Corruption.Amount"))}</span>
@@ -3347,9 +3359,9 @@ export class SymbaroumHud extends ApplicationV2 {
   }
 }
 
-function number(value) {
+function number(value, fallback = 0) {
   const result = Number(value);
-  return Number.isFinite(result) ? result : 0;
+  return Number.isFinite(result) ? result : fallback;
 }
 
 function resourcePercent(value, max) {

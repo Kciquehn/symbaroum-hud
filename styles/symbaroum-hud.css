@@ -2829,7 +2829,8 @@ body:has(#symbaroum-hud) > #tenebre-weapon-readiness-floating {
   display: none !important;
 }
 
-body:has(#symbaroum-hud .symbaroum-hud-ammo-recovery-slot) > #tenebre-ammo-hud-left {
+body:has(#symbaroum-hud .symbaroum-hud-ammo-recovery-slot) > #tenebre-ammo-hud-left,
+body:has(#symbaroum-hud .is-ammo-recovery) > #tenebre-ammo-hud-left {
   display: none !important;
 }
 
@@ -4802,7 +4803,7 @@ body:has(#symbaroum-hud .symbaroum-hud-ammo-recovery-slot) > #tenebre-ammo-hud-l
 
 #symbaroum-hud .symbaroum-hud-simplified-info-bar {
   display: grid;
-  grid-template-columns: repeat(2, calc((100% - 12px) / 3));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   grid-template-rows: repeat(2, 28px);
   align-items: stretch;
   justify-content: flex-start;
@@ -4816,6 +4817,11 @@ body:has(#symbaroum-hud .symbaroum-hud-ammo-recovery-slot) > #tenebre-ammo-hud-l
   border-radius: 0;
   box-shadow: none;
   width: 100%;
+}
+
+#symbaroum-hud button.symbaroum-hud-simplified-info-chip.is-ammo-recovery {
+  grid-column: 3;
+  grid-row: 1;
 }
 
 #symbaroum-hud button.symbaroum-hud-simplified-info-chip {

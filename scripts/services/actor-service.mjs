@@ -130,7 +130,10 @@ export class ActorService {
       const item = this.item(actor, itemId);
       if (item) {
         armorTitle = item.name;
-        formula = item.system?.displayTextShort
+        const prepared = (actor.system?.armors ?? []).find((armor) => String(armor.id ?? armor._id) === String(itemId));
+        formula = prepared?.displayTextShort
+          ?? prepared?.protectionPc
+          ?? item.system?.displayTextShort
           ?? item.system?.baseProtection
           ?? item.system?.protection
           ?? item.system?.damage?.displayTextShort;
@@ -174,7 +177,7 @@ export class ActorService {
 
       return await roll.toMessage({
         speaker,
-        flavor: `<div class="symbaroum-hud-roll-flavor"><strong>${actor.name ?? ""}</strong>: ${armorTitle} (${label} ${cleanFormula})</div>`
+        flavor: `<div class="symbaroum-hud-roll-flavor"><strong>${escapeHtml(actor.name)}</strong>: ${escapeHtml(armorTitle)} (${escapeHtml(label)} ${escapeHtml(cleanFormula)})</div>`
       });
     } catch (err) {
       console.error("SymbaroumHUD | Error rolling armor protection:", err);
@@ -185,11 +188,21 @@ export class ActorService {
 
   static async rollDeathTest(actor, { showDialog = false } = {}) {
     if (!this.#canAct(actor) || actor.type !== "player") return;
+    const death = IndResourcesIntegration.api?.death;
+    if (death?.isEnabled?.()) {
+      await death.ensurePrompt?.(actor);
+      ui.notifications.info(game.i18n.localize("SYMBAROUMHUD.Notifications.DeathTestUseChat"));
+      return true;
+    }
     return SymbaroumIntegration.rollDeathTest(actor, { showDialog });
   }
 
   static async recoverDeath(actor) {
     if (!this.#canAct(actor) || actor.type !== "player") return;
+    const death = IndResourcesIntegration.api?.death;
+    if (death?.isEnabled?.() && typeof death.recoverActor === "function") {
+      return death.recoverActor(actor, { announce: false });
+    }
     return actor.update({ "system.nbrOfFailedDeathRoll": 0 });
   }
 
@@ -321,6 +334,15 @@ export class ActorService {
       return;
     }
 
+    const costs = game.symbaroum?.config?.expCosts?.ritual ?? { free: 6, cost: 10 };
+    const known = Array.from(actor.items?.values?.() ?? actor.items ?? []).filter(isRitualItem).length;
+    const cost = game.settings?.get?.("symbaroum", "optionalMoreRituals") === true && known >= costs.free
+      ? Number(costs.cost) : 0;
+    if (cost > 0 && Number(actor.system?.experience?.available ?? 0) < cost) {
+      ui.notifications.warn(game.i18n.localize("SYMBAROUMHUD.Notifications.NotEnoughExperience"));
+      return;
+    }
+
     const source = item.toObject?.() ?? item;
     const data = foundry.utils.deepClone(source);
     delete data._id;
@@ -439,7 +461,9 @@ export class ActorService {
     const defeated = path === "system.health.toughness.value" && value > 0 && next === 0;
     const result = await actor.update({ [path]: next });
     if (corruptionAlert) await this.#postCorruptionAlert(actor, corruptionAlert);
-    if (defeated) await this.#handleDefeat(actor);
+    if (defeated && !(actor.type === "player" && IndResourcesIntegration.api?.death?.isEnabled?.())) {
+      await this.#handleDefeat(actor);
+    }
     return result;
   }
 
@@ -558,7 +582,7 @@ export class ActorService {
       const corruption = actor.system?.health?.corruption ?? {};
       return {
         min: 0,
-        max: Math.max(0, (Number(corruption.max) || 0) - (Number(corruption.permanent) || 0))
+        max: Math.max(0, (Number(corruption.max) || 0) - (Number(corruption.permanent) || 0) - (Number(corruption.longterm) || 0))
       };
     }
 

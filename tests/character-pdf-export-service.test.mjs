@@ -140,6 +140,15 @@ test("actorPdfFieldData maps actor, items, ranks, friends, and money", () => {
   assert.equal(data.values["Defense 1"], "14", "uses the final prepared defense");
 });
 
+test("an unarmored character retains prepared defense in the PDF", () => {
+  const actor = actorFixture();
+  actor.items = actor.items.filter((item) => item.type !== "armor");
+  actor.system.combat = { defense: 12, displayTextShort: "0" };
+  const data = actorPdfFieldData(actor);
+  assert.equal(data.values["Defense 1"], "12");
+  assert.equal(data.values["Defense Protection 1"], "0");
+});
+
 test("fillActorPdf preserves editable text fields and checkboxes", async () => {
   const template = await PDFDocument.create();
   const page = template.addPage([600, 800]);
