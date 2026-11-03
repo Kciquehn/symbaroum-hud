@@ -1,5 +1,7 @@
 import { IND_RESOURCES_ID, MODULE_ID, SETTINGS } from "./constants.mjs";
 import { applyPlayerListVisibility } from "./settings.mjs";
+import { syncPlayerListPosition } from "./integrations/player-list-position.mjs";
+import { syncHudRestoreControl } from "./integrations/hud-restore-control.mjs";
 
 export function registerRefreshHooks(hud) {
   const refresh = foundry.utils.debounce(() => {
@@ -124,6 +126,9 @@ export function registerSceneControlsHooks() {
       : container?.[0] || document.getElementById("players");
     if (!root) return;
 
+    syncPlayerListPosition(root);
+    if (!game.settings?.get?.(MODULE_ID, SETTINGS.ENABLED)) return;
+
     let closeBtn = root.querySelector(".symbaroum-hud-players-close-btn");
     if (!closeBtn) {
       closeBtn = document.createElement("button");
@@ -148,14 +153,18 @@ export function registerSceneControlsHooks() {
 
   Hooks.on("renderSceneControls", (controlsApp, html) => {
     injectPlayersButton(html);
+    syncHudRestoreControl(html);
   });
 
   Hooks.on("canvasReady", () => {
     injectPlayersButton();
+    syncHudRestoreControl();
     injectPlayersCloseButton();
   });
 
-  Hooks.on("renderPlayerList", (playerListApp, html) => {
-    injectPlayersCloseButton(html);
-  });
+  for (const hook of ["renderPlayers", "renderPlayerList"]) {
+    Hooks.on(hook, (playerListApp, html) => {
+      injectPlayersCloseButton(html);
+    });
+  }
 }

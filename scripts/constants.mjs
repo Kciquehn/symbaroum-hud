@@ -26,7 +26,8 @@ export const SETTINGS = Object.freeze({
 export const SIMPLIFIED_HUD_MODES = Object.freeze({
   FULL: "full",
   MINIMAL: "minimal",
-  HIDDEN: "hidden"
+  HIDDEN: "hidden",
+  EMPTY: "empty"
 });
 
 export const THEMES = Object.freeze({

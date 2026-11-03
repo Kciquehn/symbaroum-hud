@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.91
+
+- Mantém o HUD ancorado na mesma posição inferior ao alternar para o modo Mínimo.
+- Adiciona o modo Vazio após o modo Oculto, escondendo todo o HUD e oferecendo um botão de retorno abaixo dos controles oficiais do Foundry.
+- Permite arrastar a lista de jogadores pela alça no topo, mantendo a posição por usuário ao ocultar, reabrir e recarregar o mundo.
+- Restaura a alça nas atualizações nativas da lista de jogadores e mantém a posição acessível ao reduzir a janela.
+
 ## 0.1.90
 
 - Encaminha o saque de armas de personagens para o Ind Resources antes de alterar o item, permitindo confirmar ou cancelar a troca sem ativação antecipada.

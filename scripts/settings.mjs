@@ -6,6 +6,8 @@ import {
   STORAGE_VIEW_MODES,
   THEMES
 } from "./constants.mjs";
+import { syncPlayerListPosition } from "./integrations/player-list-position.mjs";
+import { syncHudRestoreControl } from "./integrations/hud-restore-control.mjs";
 export function registerSettings(onChange) {
 
   game.settings.register(MODULE_ID, SETTINGS.ENABLED, {
@@ -18,6 +20,7 @@ export function registerSettings(onChange) {
     onChange: () => {
       applyPlayerListVisibility();
       applyHudTheme();
+      syncHudRestoreControl();
       void ui.hotbar?.render({ force: true });
       onChange();
     }
@@ -41,7 +44,10 @@ export function registerSettings(onChange) {
     config: false,
     type: String,
     default: SIMPLIFIED_HUD_MODES.FULL,
-    onChange: () => onChange()
+    onChange: () => {
+      syncHudRestoreControl();
+      onChange();
+    }
   });
 
   game.settings.register(MODULE_ID, SETTINGS.SELECTION_MODE, {
@@ -207,6 +213,7 @@ export function getStorageViewMode() {
 export function applyPlayerListVisibility(hidden = getSetting(SETTINGS.HIDE_PLAYERS)) {
   const enabled = getSetting(SETTINGS.ENABLED);
   document.body?.classList.toggle("symbaroum-hud-hide-players", Boolean(enabled && hidden));
+  syncPlayerListPosition();
 
   const controlBtn = typeof document !== "undefined"
     ? document.querySelector(".symbaroum-hud-players-control button, button.symbaroum-hud-players-control, .symbaroum-hud-players-control")

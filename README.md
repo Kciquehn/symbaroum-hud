@@ -14,7 +14,7 @@ A auditoria de código de 19/10/2026 comparou o módulo aos arquivos locais do S
 
 ## Recursos disponíveis
 
-- HUD simplificado com modos Completo, Mínimo e Oculto.
+- HUD simplificado com modos Completo, Mínimo, Oculto e Vazio. No modo Vazio, o botão abaixo dos controles de cena restaura o HUD completo.
 - Retrato, Vitalidade, Corrupção, Defesa, proteção de armadura, oito Atributos, dinheiro e experiência.
 - Corrupção temporária, de longo prazo e permanente, usando o total preparado pelo sistema.
 - Seleção por token controlado, turno de combate ou personagem atribuído; seleção manual de atores acessíveis.

@@ -290,17 +290,20 @@ export class SymbaroumHud extends ApplicationV2 {
       simplifiedModeIcon: {
         [SIMPLIFIED_HUD_MODES.FULL]: "fa-table-cells-large",
         [SIMPLIFIED_HUD_MODES.MINIMAL]: "fa-table-cells",
-        [SIMPLIFIED_HUD_MODES.HIDDEN]: "fa-eye-slash"
+        [SIMPLIFIED_HUD_MODES.HIDDEN]: "fa-eye-slash",
+        [SIMPLIFIED_HUD_MODES.EMPTY]: "fa-eye"
       }[getSimplifiedHudMode()] ?? "fa-table-cells-large",
       simplifiedModeLabel: {
         [SIMPLIFIED_HUD_MODES.FULL]: game.i18n?.localize?.("SYMBAROUMHUD.SimplifiedMode.Full") ?? "Completo",
         [SIMPLIFIED_HUD_MODES.MINIMAL]: game.i18n?.localize?.("SYMBAROUMHUD.SimplifiedMode.Minimal") ?? "Mínimo",
-        [SIMPLIFIED_HUD_MODES.HIDDEN]: game.i18n?.localize?.("SYMBAROUMHUD.SimplifiedMode.Hidden") ?? "Oculto"
+        [SIMPLIFIED_HUD_MODES.HIDDEN]: game.i18n?.localize?.("SYMBAROUMHUD.SimplifiedMode.Hidden") ?? "Oculto",
+        [SIMPLIFIED_HUD_MODES.EMPTY]: game.i18n?.localize?.("SYMBAROUMHUD.SimplifiedMode.Empty") ?? "Vazio"
       }[getSimplifiedHudMode()] ?? "Completo",
       simplifiedModeTooltip: {
         [SIMPLIFIED_HUD_MODES.FULL]: game.i18n?.localize?.("SYMBAROUMHUD.SimplifiedMode.TooltipFull") ?? "Modo do HUD: Completo (clique para Mínimo)",
         [SIMPLIFIED_HUD_MODES.MINIMAL]: game.i18n?.localize?.("SYMBAROUMHUD.SimplifiedMode.TooltipMinimal") ?? "Modo do HUD: Mínimo (clique para Oculto)",
-        [SIMPLIFIED_HUD_MODES.HIDDEN]: game.i18n?.localize?.("SYMBAROUMHUD.SimplifiedMode.TooltipHidden") ?? "Modo do HUD: Oculto (clique para Completo)"
+        [SIMPLIFIED_HUD_MODES.HIDDEN]: game.i18n?.localize?.("SYMBAROUMHUD.SimplifiedMode.TooltipHidden") ?? "Modo do HUD: Oculto (clique para Vazio)",
+        [SIMPLIFIED_HUD_MODES.EMPTY]: game.i18n?.localize?.("SYMBAROUMHUD.SimplifiedMode.TooltipEmpty") ?? "Modo do HUD: Vazio (clique para Completo)"
       }[getSimplifiedHudMode()] ?? "Modo do HUD: Completo (clique para Mínimo)",
       isManualActor: Boolean(this.#manualActorKey),
       playersHidden: getSetting(SETTINGS.HIDE_PLAYERS),
@@ -471,6 +474,7 @@ export class SymbaroumHud extends ApplicationV2 {
     content.classList.toggle("symbaroum-hud--simplified", currentTheme === THEMES.SIMPLIFIED);
     content.classList.toggle("symbaroum-hud--simplified-minimal", currentTheme === THEMES.SIMPLIFIED && simplifiedMode === SIMPLIFIED_HUD_MODES.MINIMAL);
     content.classList.toggle("symbaroum-hud--simplified-hidden", currentTheme === THEMES.SIMPLIFIED && simplifiedMode === SIMPLIFIED_HUD_MODES.HIDDEN);
+    content.classList.toggle("symbaroum-hud--simplified-empty", currentTheme === THEMES.SIMPLIFIED && simplifiedMode === SIMPLIFIED_HUD_MODES.EMPTY);
     this.#updateHostilityTint(content);
     this.#dockHotbar(content, hotbar);
     this.#activateListeners(content);
@@ -2650,7 +2654,8 @@ export class SymbaroumHud extends ApplicationV2 {
     const modes = [
       SIMPLIFIED_HUD_MODES.FULL,
       SIMPLIFIED_HUD_MODES.MINIMAL,
-      SIMPLIFIED_HUD_MODES.HIDDEN
+      SIMPLIFIED_HUD_MODES.HIDDEN,
+      SIMPLIFIED_HUD_MODES.EMPTY
     ];
     const next = modes[(modes.indexOf(current) + 1) % modes.length];
     await game.settings.set(MODULE_ID, SETTINGS.SIMPLIFIED_HUD_MODE, next);

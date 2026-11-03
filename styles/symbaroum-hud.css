@@ -2545,14 +2545,31 @@ body:has(#symbaroum-hud .symbaroum-hud-character-card) #ui-left-column-1 #player
 body:has(#symbaroum-hud .symbaroum-hud-simplified-portrait-card) #ui-left-column-1 #players,
 body:has(#symbaroum-hud) #players {
   position: fixed !important;
-  left: 65px !important;
-  top: 50px !important;
+  left: var(--symbaroum-hud-players-left, 65px) !important;
+  top: var(--symbaroum-hud-players-top, 50px) !important;
   bottom: auto !important;
   margin: 0 !important;
   z-index: 60 !important;
   max-height: calc(100vh - 250px) !important;
   overflow-y: auto !important;
   pointer-events: auto !important;
+}
+
+#players .symbaroum-hud-players-drag-handle {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  flex: 0 0 20px;
+  min-height: 20px;
+  padding: 2px 28px 2px 8px;
+  color: #c5ae45;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+#players.symbaroum-hud-players-dragging .symbaroum-hud-players-drag-handle {
+  cursor: grabbing;
 }
 
 #players .symbaroum-hud-players-close-btn {
@@ -4402,7 +4419,9 @@ body:has(#symbaroum-hud .is-ammo-recovery) > #tenebre-ammo-hud-left {
   --symbaroum-hud-green-ornament: none;
 
   /* ── Root styling ────────────────────────────────────────────────────── */
-  inset: auto auto 8px 10px;
+  /* Preserve Full's visible bottom gap (8px + the old 10px of empty space). */
+  inset: auto auto 18px 10px;
+  height: auto;
   font-family: "Signika", var(--font-primary), sans-serif;
   filter: drop-shadow(0 2px 12px rgba(0, 0, 0, 0.58));
   color: var(--shud-text);
@@ -4746,7 +4765,11 @@ body:has(#symbaroum-hud .is-ammo-recovery) > #tenebre-ammo-hud-left {
   box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4) !important;
 }
 
-/* ── Simplified Modes (Minimal & Hidden) ────────────────────────────────── */
+/* ── Simplified Modes (Minimal, Hidden & Empty) ─────────────────────────── */
+#symbaroum-hud.symbaroum-hud--simplified-empty {
+  display: none !important;
+}
+
 #symbaroum-hud .symbaroum-hud-simplified[data-simplified-mode="hidden"] .symbaroum-hud-simplified-main-column {
   display: none !important;
 }

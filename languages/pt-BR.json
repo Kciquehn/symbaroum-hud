@@ -396,6 +396,8 @@
       "RemoveShortcut": "Remover da hotbar",
       "HidePlayers": "Ocultar lista de jogadores",
       "ShowPlayers": "Mostrar lista de jogadores",
+      "MovePlayers": "Arraste para mover a lista de jogadores",
+      "SavePlayerListPositionError": "Não foi possível salvar a posição da lista de jogadores.",
       "CollapseHud": "Recolher HUD",
       "ExpandHud": "Expandir HUD",
       "HideTactics": "Ocultar táticas",
@@ -616,9 +618,12 @@
       "Full": "Completo",
       "Minimal": "Mínimo",
       "Hidden": "Oculto",
+      "Empty": "Vazio",
+      "Restore": "Mostrar HUD completo",
       "TooltipFull": "Modo do HUD: Completo (clique para Mínimo)",
       "TooltipMinimal": "Modo do HUD: Mínimo (clique para Oculto)",
-      "TooltipHidden": "Modo do HUD: Oculto (clique para Completo)"
+      "TooltipHidden": "Modo do HUD: Oculto (clique para Vazio)",
+      "TooltipEmpty": "Modo do HUD: Vazio (clique para Completo)"
     },
     "Keybindings": {
       "ActivateShortcut": "Ativar atalho {number} da hotbar"

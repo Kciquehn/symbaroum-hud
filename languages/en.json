@@ -396,6 +396,8 @@
       "RemoveShortcut": "Remove from hotbar",
       "HidePlayers": "Hide player list",
       "ShowPlayers": "Show player list",
+      "MovePlayers": "Drag to move the player list",
+      "SavePlayerListPositionError": "Could not save the player list position.",
       "CollapseHud": "Collapse HUD",
       "ExpandHud": "Expand HUD",
       "HideTactics": "Hide tactics",
@@ -616,9 +618,12 @@
       "Full": "Full",
       "Minimal": "Minimal",
       "Hidden": "Hidden",
+      "Empty": "Empty",
+      "Restore": "Show full HUD",
       "TooltipFull": "HUD Mode: Full (click for Minimal)",
       "TooltipMinimal": "HUD Mode: Minimal (click for Hidden)",
-      "TooltipHidden": "HUD Mode: Hidden (click for Full)"
+      "TooltipHidden": "HUD Mode: Hidden (click for Empty)",
+      "TooltipEmpty": "HUD Mode: Empty (click for Full)"
     },
     "Keybindings": {
       "ActivateShortcut": "Activate hotbar shortcut {number}"
