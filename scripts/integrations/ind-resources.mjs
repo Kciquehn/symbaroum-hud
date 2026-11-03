@@ -304,6 +304,10 @@ export class IndResourcesIntegration {
     const weapon = actorItems(actor).find((item) => item?.id === itemId);
     if (!weapon) return false;
 
+    if (actor.type !== "monster" && this.api?.weaponReadiness?.setDrawn) {
+      return Boolean(await this.api.weaponReadiness.setDrawn(weapon, true));
+    }
+
     if (weapon.system?.state !== "active" || !weapon.system?.isActive) {
       await updateActorItem(actor, weapon, {
         "system.state": "active",
@@ -313,11 +317,6 @@ export class IndResourcesIntegration {
 
     const state = this.weaponReadinessState(actor, itemId);
     if (state?.drawn && actor.type === "monster") return true;
-
-    if (this.api?.weaponReadiness?.setDrawn) {
-      const drawn = await this.api.weaponReadiness.setDrawn(weapon, true);
-      return Boolean(drawn);
-    }
 
     return true;
   }

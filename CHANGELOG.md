@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.90
+
+- Encaminha o saque de armas de personagens para o Ind Resources antes de alterar o item, permitindo confirmar ou cancelar a troca sem ativação antecipada.
+- Com Ind Resources 0.18.52, a troca confirmada preserva o combatente, a iniciativa e o turno; cancelar mantém a arma atual. O fluxo nativo de armas de monstros permanece disponível.
+- Testes automatizados de integração cobrem a delegação antes da persistência e o cancelamento sem alterações. Validação em sessões reais Foundry v13/v14 permanece pendente.
+
 ## 0.1.89
 
 - Corrige as seis pendências de loja/contratos: autoridade única no mestre, validação administrativa, preservação de registros, consumo concorrente, garantia/diagnóstico de essenciais e documentos individuais de armadura.

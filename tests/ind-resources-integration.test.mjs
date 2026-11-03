@@ -447,6 +447,33 @@ test("detects and draws a specific sheathed weapon through the public readiness 
   assert.deepEqual(drawnWeapons.at(-1), [shield.id, true]);
 });
 
+test("player drawing delegates to readiness before any native item update", async (t) => {
+  const weapon = { id: "bow", type: "weapon", system: { state: "equipped", isActive: false } };
+  const actor = {
+    id: "hero", type: "player", items: new Map([[weapon.id, weapon]]),
+    async updateEmbeddedDocuments() { assert.fail("readiness must perform the whole swap atomically"); }
+  };
+  t.mock.method(game.tenebreResources.weaponReadiness, "setDrawn", async (item, drawn) => {
+    assert.equal(item, weapon);
+    assert.equal(drawn, true);
+    assert.equal(item.system.state, "equipped");
+    return true;
+  });
+  assert.equal(await IndResourcesIntegration.drawWeapon(actor, weapon.id), true);
+});
+
+test("cancelled readiness confirmation leaves the HUD weapon sheathed", async (t) => {
+  const weapon = { id: "bow", type: "weapon", system: { state: "equipped", isActive: false } };
+  const actor = {
+    id: "hero", type: "player", items: new Map([[weapon.id, weapon]]),
+    async updateEmbeddedDocuments() { assert.fail("cancelling must not persist item changes"); }
+  };
+  t.mock.method(game.tenebreResources.weaponReadiness, "setDrawn", async () => false);
+  assert.equal(await IndResourcesIntegration.drawWeapon(actor, weapon.id), false);
+  assert.equal(weapon.system.state, "equipped");
+  assert.equal(weapon.system.isActive, false);
+});
+
 test("monster weapons track drawn state via system active status and drawWeapon equips unequipped monster weapons", async () => {
   const bow = {
     id: "bow",
